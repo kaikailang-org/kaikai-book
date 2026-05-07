@@ -116,38 +116,39 @@ lenguajes que confunden los dos.
 Los operadores aritméticos:
 
 ```
-+   suma
--   resta (también negación unaria)
-*   producto
-/   división
-//  división entera explícita
-%   módulo
++   suma                  (Int o Real)
+-   resta / negación      (Int o Real)
+*   producto              (Int o Real)
+/   división              (Int o Real)
+%   módulo                (Int o Real)
 ```
 
-Hay un detalle del que conviene hablar de inmediato. Cuando los
-dos operandos son `Int`, **`/` hace división entera**, igual que
-`//`:
+Los cinco están **sobrecargados por tipo**: funcionan tanto
+con `Int` como con `Real`, y el resultado tiene el tipo de
+los operandos. Lo que **no** existe es coerción implícita
+entre `Int` y `Real`: no puedes mezclarlos en una misma
+expresión. Si lo necesitas, conviertes explícitamente con
+`int_to_real(...)` o `real_to_int(...)`.
+
+El detalle que conviene fijar: `/` con dos `Int` ya trunca el
+resto. Para obtener un cociente con parte fraccionaria, los
+dos operandos tienen que ser `Real`.
 
 ```kai
 let a : Int = 7
 let b : Int = 2
-println("a / b  = #{a / b}")     # 3
-println("a // b = #{a // b}")    # 3
+println("a / b  = #{a / b}")     # 3 — sobre Int, / trunca
+
+let x : Real = 7.0
+let y : Real = 2.0
+println("x / y = #{x / y}")      # 3.5 — sobre Real, hay parte
+                                 #       fraccionaria
 ```
 
-Si quieres una división con parte fraccionaria, los operandos
-tienen que ser `Real`:
-
-```kai
-println("7.0 / 2.0 = #{7.0 / 2.0}")    # 3.5
-```
-
-Esto va a parecer raro si vienes de Python 3, donde `/` siempre
-devuelve flotante y `//` es el que trunca. La convención de
-kaikai es la opuesta: el operador respeta el tipo de los
-operandos. La razón es que en kaikai no hay coerciones implícitas
-entre `Int` y `Real`. Si quieres pasar uno a otro, lo conviertes
-explícitamente con `int_to_real(...)` o `real_to_int(...)`.
+Si vienes de Python 3, hay un cambio de hábito. Allá `/`
+siempre devuelve flotante; en kaikai el tipo manda: `Int /
+Int` es `Int`, y si quieres parte fraccionaria conviertes
+explícitamente o trabajas con `Real` desde el principio.
 
 Los operadores lógicos son palabras, no símbolos:
 
@@ -258,10 +259,14 @@ Cada llave abre un bloque cuyo valor es el resultado de la rama.
 La función entera es una sola expresión, atada a la firma con
 `=`. No hay `return`.
 
-Una variante que conviene fijar: si un `if` no tiene `else`, su
-valor implícito en la rama "falsa" es `()` — el único habitante
-de `Unit`. Por eso un `if` sin `else` solo tiene sentido cuando
-el cuerpo produce `Unit`:
+Una variante que conviene fijar: **un `if` sin `else` siempre
+tiene tipo `Unit`**. El compilador no completa la rama faltante
+con un valor sintetizado; toma la decisión más simple posible y
+dice "el tipo del `if` es `Unit`, y si la condición es falsa, el
+valor es `()`".
+
+Por eso la forma usual de un `if` sin `else` es un cuerpo que
+se ejecuta por sus efectos:
 
 ```kai
 if i <= n {
@@ -270,10 +275,28 @@ if i <= n {
 }
 ```
 
-Es la forma habitual de "haz algo o sigue". Si una rama produce
-un valor que no usas y la otra no produce nada, el sistema de
-tipos se queja: o agregas un `else`, o cambias el `if` por algo
-que solo se ejecuta por su efecto.
+Es la forma habitual de "haz algo o sigue". Y si la rama del
+`then` produce un valor de otro tipo, ese valor **se descarta
+en silencio** — el `if` sigue siendo `Unit`:
+
+```kai
+if x > 0 {
+  x + 1     # Int, pero se tira a la basura
+}
+```
+
+Esto compila, no produce advertencia, y rara vez es lo que
+querías. El error suele aparecer un poco más allá, cuando
+intentas usar el resultado del `if`:
+
+```kai
+let r = if x > 0 { 42 }
+println(int_to_string(r))   # error: r es Unit, no Int
+```
+
+La regla práctica es simple: si **te interesa el valor**, escribe
+un `if/else` exhaustivo; si **te interesa el efecto**, escribe
+un `if` solo, sin atarlo a nada.
 
 ## 3.6 Bloques y el valor de un bloque
 
