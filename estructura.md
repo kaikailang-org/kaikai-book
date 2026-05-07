@@ -201,58 +201,77 @@ escogió kaikai y por qué.
 - 9.6 Operadores: `+`, `==`, `<` como protocolos
 - *5 ejercicios*
 
+#### Capítulo 10 · Unidades de medida y branded types
+
+kaikai trae units of measure al estilo F#, una herramienta rara
+en lenguajes mainstream. El capítulo cubre dos casos: la
+familia clásica (física, finanzas, tiempo) y los branded types
+(`String<UserId>`), que es donde más impacto tiene en código
+web/fintech del día a día.
+
+- 10.1 `unit` y literales anotados (`1.50<USD>`)
+- 10.2 Tipos dimensionados: `Real<USD>`, `Int<Seconds>`
+- 10.3 Aritmética con unidades: qué se permite y qué no
+- 10.4 Álgebra de unidades: producto, cociente, potencia
+       (`m/s^2`, `kg * m / s^2`)
+- 10.5 Unidades genéricas
+- 10.6 Conversiones explícitas
+- 10.7 Branded types: `String<UserId>` vs `String<OrderId>`
+- 10.8 Caso de estudio: cartera de monedas con `Money<C>`
+- *5 ejercicios*
+
 ### Parte III — Lo distintivo
 
-#### Capítulo 10 · Efectos algebraicos
+#### Capítulo 11 · Efectos algebraicos
 
 El capítulo más largo y más importante del libro. Acá pagamos la
 deuda con LYAH: tono cálido, repetir cuando hace falta, un
 concepto a la vez. Pero sin diluir.
 
-- 10.1 La fricción que los efectos resuelven (excepciones,
+- 11.1 La fricción que los efectos resuelven (excepciones,
        async/await, dependency injection vista junta)
-- 10.2 Declarar un `effect`
-- 10.3 Llamar a una operación: la firma cambia
-- 10.4 Instalar un handler con `handle ... with`
-- 10.5 `resume`: por qué un handler decide qué pasa después
-- 10.6 Efectos del stdlib: `Stdout`, `Stdin`, `Env`, `File`,
+- 11.2 Declarar un `effect`
+- 11.3 Llamar a una operación: la firma cambia
+- 11.4 Instalar un handler con `handle ... with`
+- 11.5 `resume`: por qué un handler decide qué pasa después
+- 11.6 Efectos del stdlib: `Stdout`, `Stdin`, `Env`, `File`,
        `Random`, `Fail`
-- 10.7 Handlers por defecto (los efectos "implícitos" de programas
+- 11.7 Handlers por defecto (los efectos "implícitos" de programas
        simples)
-- 10.8 Componer efectos: filas, polimorfismo de filas
-- 10.9 Aliases de efectos
-- 10.10 Caso de estudio: parser de configuración con `Reader`,
+- 11.8 Componer efectos: filas, polimorfismo de filas
+- 11.9 Aliases de efectos
+- 11.10 Caso de estudio: parser de configuración con `Reader`,
         `Writer`, `Fail`
 - *7 ejercicios*
 
-#### Capítulo 11 · Concurrencia y memoria
+#### Capítulo 12 · Concurrencia y memoria
 
 Perceus y fibras juntos. Cada uno explica al otro: la mutación
 visible vive bajo `Mutable`, las fibras son aisladas porque la
 memoria es por-fibra.
 
-- 11.1 El modelo: fibras aisladas, RC por fibra
-- 11.2 Perceus en una página: por qué no hay GC ni borrow checker
-- 11.3 `fiber_spawn`, `fiber_yield`, `fiber_await`
-- 11.4 Cancelación cooperativa con el efecto `Cancel`
-- 11.5 Nurseries y concurrencia estructurada
-- 11.6 El efecto `Mutable` y arrays: cuándo se ve, cuándo se
+- 12.1 El modelo: fibras aisladas, RC por fibra
+- 12.2 Perceus en una página: por qué no hay GC ni borrow checker
+- 12.3 `fiber_spawn`, `fiber_yield`, `fiber_await`
+- 12.4 Cancelación cooperativa con el efecto `Cancel`
+- 12.5 Nurseries y concurrencia estructurada
+- 12.6 El efecto `Mutable` y arrays: cuándo se ve, cuándo se
        enmascara
-- 11.7 Por qué las fibras no pueden escapar de su nursery
-- 11.8 Caso de estudio: servidor concurrente de eco
+- 12.7 Por qué las fibras no pueden escapar de su nursery
+- 12.8 Caso de estudio: servidor concurrente de eco
 - *6 ejercicios*
 
-#### Capítulo 12 · Actores
+#### Capítulo 13 · Actores
 
-- 12.1 `Actor[Msg]`: efecto parametrizado
-- 12.2 `spawn_actor`, `with_mailbox`
-- 12.3 `send`, `receive`, `self`
-- 12.4 Link y monitor: supervisión al estilo BEAM
-- 12.5 Patrones request/reply
-- 12.6 Caso de estudio: actor supervisado con reintentos
+- 13.1 `Actor[Msg]`: efecto parametrizado
+- 13.2 `spawn_actor`, `with_mailbox`
+- 13.3 `send`, `receive`, `self`
+- 13.4 Link y monitor: supervisión al estilo BEAM
+- 13.5 Patrones request/reply
+- 13.6 Caso de estudio: actor supervisado con reintentos
 - *5 ejercicios*
 
-#### Capítulo 13 · kaikai y los LLMs
+#### Capítulo 14 · kaikai y los LLMs
 
 La apuesta estratégica del lenguaje (Tier 3 en `design.md`):
 diseñar para que un LLM pueda autorearlo, aunque su corpus de
@@ -266,35 +285,35 @@ jefe*, *Kimun*): la IA no reemplaza al programador, lo apalanca
 si las herramientas están bien diseñadas. kaikai es un
 experimento en esa dirección.
 
-- 13.1 La apuesta: por qué un lenguaje nuevo se diseña pensando
+- 14.1 La apuesta: por qué un lenguaje nuevo se diseña pensando
        en LLMs
-- 13.2 De qué sirve la información de tipos y efectos cuando el
+- 14.2 De qué sirve la información de tipos y efectos cuando el
        que escribe el código no eres tú
-- 13.3 Holes tipados: `?` y `?nombre`
-- 13.4 `--holes-json`: salida estructurada del compilador
-- 13.5 Más allá de holes: `kai type --json`, contraejemplos de
+- 14.3 Holes tipados: `?` y `?nombre`
+- 14.4 `--holes-json`: salida estructurada del compilador
+- 14.5 Más allá de holes: `kai type --json`, contraejemplos de
        `match` no exhaustivo, diagnósticos en JSON
-- 13.6 Un loop de trabajo con un agente: investigar, planificar,
+- 14.6 Un loop de trabajo con un agente: investigar, planificar,
        ejecutar (siguiendo lo que ya describí en el blog)
-- 13.7 Lo que el lenguaje **no** automatiza: juicio, gusto,
+- 14.7 Lo que el lenguaje **no** automatiza: juicio, gusto,
        arquitectura
-- 13.8 Caso de estudio: completar una función no trivial dejando
+- 14.8 Caso de estudio: completar una función no trivial dejando
        holes y dejando que el agente itere
 - *4 ejercicios* (un par requieren acceso a un LLM; los otros se
   resuelven a mano leyendo la salida del compilador)
 
 ### Parte IV — Práctica
 
-#### Capítulo 14 · Tooling: el binario `kai`
+#### Capítulo 15 · Tooling: el binario `kai`
 
-- 14.1 `kai run`, `kai build`, `kai test`, `kai check`, `kai bench`
-- 14.2 `kai fmt`
-- 14.3 `kai repl` y el flujo iterativo
-- 14.4 `kai lsp` e integración con editores
-- 14.5 Estructura típica de un proyecto kaikai
+- 15.1 `kai run`, `kai build`, `kai test`, `kai check`, `kai bench`
+- 15.2 `kai fmt`
+- 15.3 `kai repl` y el flujo iterativo
+- 15.4 `kai lsp` e integración con editores
+- 15.5 Estructura típica de un proyecto kaikai
 - *Sin ejercicios* — capítulo de referencia.
 
-#### Capítulo 15 · Caso de estudio integrador
+#### Capítulo 16 · Caso de estudio integrador
 
 Un programa real, completo, comentado paso a paso. Candidato
 inicial: un mini servidor HTTP de notas con persistencia en
@@ -321,16 +340,16 @@ sintaxis y estilo de ejemplos.
 
 ## Cuenta gruesa
 
-- 15 capítulos + 5 apéndices.
-- ≈ 360 páginas en la edición impresa estimada (asumiendo 18–22
-  páginas promedio por capítulo principal; el cap. 13 es algo
+- 16 capítulos + 5 apéndices.
+- ≈ 380 páginas en la edición impresa estimada (asumiendo 18–22
+  páginas promedio por capítulo principal; el cap. 14 es algo
   más largo que la versión "solo holes").
-- 6 casos de estudio integradores: evaluador de expresiones
-  (cap. 5), pipeline de transformación (cap. 6), parser de
-  configuración con efectos (cap. 10), servidor de eco
-  concurrente (cap. 11), actor supervisado (cap. 12), completar
-  función con holes + agente (cap. 13), servidor HTTP de notas
-  (cap. 15).
+- 7 casos de estudio integradores: evaluador de expresiones
+  (cap. 5), pipeline de transformación (cap. 6), cartera de
+  monedas con `Money<C>` (cap. 10), parser de configuración con
+  efectos (cap. 11), servidor de eco concurrente (cap. 12),
+  actor supervisado (cap. 13), completar función con holes +
+  agente (cap. 14), servidor HTTP de notas (cap. 16).
 
 ## Orden de escritura sugerido
 
@@ -341,10 +360,10 @@ capítulos que más estabilizan vocabulario y estilo de ejemplos:
    ejemplos. Si esto está bien, el resto fluye.
 2. **Cap. 5 — Sum types.** Es el corazón del modelo de tipos. Si
    queda claro, la mitad del libro queda ordenada.
-3. **Cap. 10 — Efectos.** Capítulo más difícil. Escribirlo
+3. **Cap. 11 — Efectos.** Capítulo más difícil. Escribirlo
    temprano destapa cualquier ambigüedad de la doc del lenguaje.
-4. **Cap. 11 — Concurrencia y memoria.** Depende del 10.
+4. **Cap. 12 — Concurrencia y memoria.** Depende del 11.
 5. Resto en orden de tabla.
 
-El cap. 15 (caso de estudio integrador) y los apéndices se
+El cap. 16 (caso de estudio integrador) y los apéndices se
 escriben al final.

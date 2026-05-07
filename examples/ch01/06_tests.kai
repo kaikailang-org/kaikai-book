@@ -1,0 +1,18 @@
+# Inline tests. They live alongside the code they exercise, in
+# the same file.
+#
+# Run with: kai test examples/ch01/06_tests.kai
+
+fn square(n: Int) : Int = n * n
+
+test "square of zero" {
+  assert square(0) == 0
+}
+
+test "square preserves positives" {
+  assert square(7) == 49
+}
+
+test "square of negatives" {
+  assert square(-5) == 25
+}

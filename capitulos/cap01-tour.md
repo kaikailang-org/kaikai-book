@@ -1,11 +1,12 @@
 # Capítulo 1 · Tour de kaikai
 
 La mejor forma de conocer un lenguaje es leerlo y correrlo. Este
-capítulo es un recorrido panorámico por kaikai en cinco programas.
-Ninguno pasa de unas treinta líneas, todos compilan, y juntos
-cubren las formas que vas a ver una y otra vez en el resto del
-libro: declaraciones, tipos algebraicos, pattern matching,
-efectos, fibras.
+capítulo es un recorrido panorámico por kaikai en ocho programas
+cortos. Ninguno pasa de unas treinta líneas, todos compilan, y
+juntos cubren las formas que vas a ver una y otra vez en el
+resto del libro: declaraciones, tipos algebraicos, pattern
+matching, efectos, fibras, protocolos, unidades de medida y
+pruebas inline.
 
 No vamos a explicar cada detalle todavía. La idea es que termines
 el capítulo con el lenguaje mirado desde arriba y la sensación de
@@ -14,8 +15,8 @@ Esas precisiones llegan en los capítulos siguientes.
 
 Si quieres seguir los ejemplos en tu computador, los archivos
 están en `ejemplos/cap01/` del repositorio del libro. La
-instalación de `kai` viene al final del capítulo, en §1.6 — si te
-urge, salta ahí primero y vuelve.
+instalación de `kai` viene al final del capítulo, en §1.9 — si
+te urge, salta ahí primero y vuelve.
 
 ## 1.1 Hola, kaikai
 
@@ -44,7 +45,7 @@ Cuatro cosas que mirar antes de seguir:
   es el valor del bloque. Acá no nos interesa, pero lo vas a usar.
 - `println` no requiere `import`. Está disponible en todos los
   programas porque escribe a la salida estándar mediante un
-  efecto que kaikai instala por defecto. En el capítulo 9 vamos a
+  efecto que kaikai instala por defecto. En el capítulo 11 vamos a
   abrir esa caja; por ahora basta con que funciona.
 
 No hay punto y coma al final de la línea. No hay `return` para
@@ -131,7 +132,7 @@ posición de cola no consume stack. `loop(1, 1_000_000)`
 funciona sin reventar.
 
 Una sola cosa que va a parecer rara y que dejamos para el
-capítulo 9: la firma de `loop` dice `: Unit / Stdout`. La parte
+capítulo 11: la firma de `loop` dice `: Unit / Stdout`. La parte
 después del `/` es el conjunto de **efectos** que la función usa.
 `Stdout` significa "esta función escribe al terminal". Si no
 estuviera ahí, el compilador no te dejaría llamar a `println`
@@ -191,7 +192,7 @@ horas. El capítulo 5 lo explora con calma; por ahora confía.
 derecho. No hay `var`, no hay `mutable`, no hay reasignación:
 `let e = ...` ata `e` a un valor y ese valor no cambia. Si
 necesitas mutar algo, kaikai te lo permite, pero te pide
-declararlo (capítulo 10). Esta es la otra mitad del cambio de
+declararlo (capítulo 12). Esta es la otra mitad del cambio de
 hábito: **inmutabilidad por defecto**.
 
 ## 1.4 Un efecto propio con su handler
@@ -252,7 +253,7 @@ Lo que está pasando es lo siguiente:
 Esto se parece a try/catch, a un dependency injection container,
 a un middleware, a callbacks. Pero **es una sola idea** que
 subsume a las cuatro. Si la primera vez te confunde, está bien.
-Volvemos en el capítulo 9 con tiempo y con varios ejemplos antes
+Volvemos en el capítulo 11 con tiempo y con varios ejemplos antes
 de pedirte que escribas un handler tuyo.
 
 Lo que sí conviene retener desde ya: el tipo de `greet` te dice
@@ -263,7 +264,7 @@ de los lenguajes que tienen excepciones invisibles.
 
 ## 1.5 Dos fibras cooperativas
 
-El último programa del tour usa concurrencia.
+El quinto programa del tour usa concurrencia.
 
 ```kai
 import spawn
@@ -317,12 +318,136 @@ a `fiber_spawn` para que la corra dentro de la fibra nueva.
 
 Hay mucho que decir sobre el modelo de concurrencia de kaikai
 — por qué las fibras son aisladas, cómo se cancelan, qué pasa
-con la memoria — pero todo eso vive en el capítulo 11. Lo que
+con la memoria — pero todo eso vive en el capítulo 12. Lo que
 importa para el tour es que el lenguaje tiene concurrencia
 estructurada de primera clase y que se trata, una vez más,
 como un efecto.
 
-## 1.6 Pruebas en el mismo archivo
+## 1.6 Tipos a la medida con protocolos
+
+A esta altura ya viste tipos primitivos y tipos suma. Falta una
+construcción más: los **records**, que son lo que en la mayoría
+de los lenguajes llamarías un *struct* — un agregado con campos
+nombrados.
+
+```kai
+type Punto = { x: Int, y: Int }
+```
+
+Y con eso aparece la pregunta natural: ¿cómo se le "agregan
+operaciones" a un tipo? Por ejemplo, ¿cómo le decimos al
+compilador que mi `Punto` sabe imprimirse como string?
+
+La respuesta de kaikai son los **protocolos**: un contrato con
+nombre y un puñado de operaciones, que cualquier tipo puede
+satisfacer. Es el equivalente conceptual a las interfaces de
+Go, los traits de Rust o los protocols de Clojure y Elixir.
+
+```kai
+#derive(Show)
+type Punto = { x: Int, y: Int }
+
+fn main() {
+  let p = Punto { x: 3, y: 4 }
+  println(show(p))
+}
+```
+
+```
+$ kai run ejemplos/cap01/07_protocolos.kai
+Punto { x: 3, y: 4 }
+```
+
+`Show` es uno de los protocolos del stdlib (`Eq`, `Ord`,
+`Hash`, `Show`, `Serialize`). Su contrato es una sola
+operación: dado un valor, devolver un `String`. La línea
+`#derive(Show)` arriba del record le dice al compilador que
+**genere automáticamente** una implementación de `Show` para
+`Punto`, recorriendo los campos y delegando en el `Show` de
+cada uno. Como `Int` ya implementa `Show` en el stdlib, el
+record entero queda cubierto sin que tengamos que escribir
+nada más.
+
+Si quisieras una implementación a mano, en vez de `#derive`
+escribirías:
+
+```kai
+impl Show for Punto {
+  fn show(p: Punto) : String =
+    "(" ++ show(p.x) ++ ", " ++ show(p.y) ++ ")"
+}
+```
+
+Y `show(Punto { x: 3, y: 4 })` ahora devolvería `"(3, 4)"` en
+vez del formato del record.
+
+Lo importante para el tour: **kaikai elige single-dispatch
+explícito**, no typeclasses al estilo Haskell. No hay
+inferencia de constraints, no hay tipos de orden superior, no
+hay polimorfismo paramétrico ad-hoc encadenado. Una sola
+mecánica simple, igual que en Go o Clojure. El capítulo 9
+desarrolla la idea.
+
+## 1.7 Unidades de medida
+
+kaikai trae una herramienta poco común en lenguajes
+*mainstream*: las **unidades de medida**. F# las tiene desde
+2010 y prácticamente ningún otro lenguaje las ofrece de
+fábrica. La idea es marcar un número con una unidad
+(`Real<USD>`, `Real<m/s>`, `Int<Seconds>`) y dejar que el
+compilador rechace mezclas incompatibles.
+
+```kai
+unit USD
+unit EUR
+
+fn main() {
+  let precio : Real<USD> = 1.50<USD>
+  let total  : Real<USD> = precio + 2.00<USD>
+  println("total = #{total}")
+}
+```
+
+```
+$ kai run ejemplos/cap01/08_unidades.kai
+total = 3.5 USD
+```
+
+`unit USD` declara una unidad. `1.50<USD>` es un literal
+anotado. `Real<USD>` es el tipo de un real con esa unidad. Y
+si intentas:
+
+```kai
+let mezcla = precio + 1.00<EUR>     # error: USD ≠ EUR
+```
+
+el compilador se queja antes de que el programa corra. Esto
+captura una clase entera de bugs que normalmente se descubren
+en producción: el clásico de Mars Climate Orbiter[^mco], el
+de sumar saldos en monedas distintas, el de pasar un timeout
+en milisegundos donde se esperaban segundos.
+
+[^mco]: La sonda Mars Climate Orbiter de la NASA se perdió en
+    septiembre de 1999 al entrar en la atmósfera marciana. La
+    causa raíz: un módulo de software calculaba el empuje en
+    libras-fuerza por segundo (unidades imperiales) y el otro
+    leía ese valor como newtons por segundo (unidades métricas).
+    Nadie había anotado las unidades en la interfaz. La misión
+    costó 327 millones de dólares.
+
+Lo más bonito del esquema es que **las unidades se borran en
+tiempo de compilación**. El binario que produce `kai build`
+opera con `Real` plano, sin overhead. Es la misma promesa de
+los efectos: información en el tipo, costo cero en runtime.
+
+El tema da para mucho más — unidades genéricas, álgebra de
+unidades (`m/s^2`, `kg * m / s^2`), conversiones explícitas, y
+una variante muy útil llamada *branded types* que marca strings
+y enteros con tags como `UserId` o `OrderId` para que el
+compilador no te deje confundirlos. Todo eso aparece en el
+capítulo 10. Por ahora basta saber que existe.
+
+## 1.8 Pruebas en el mismo archivo
 
 kaikai trata las pruebas como ciudadanas de primera: viven en
 el mismo archivo que el código que prueban, con su propia
@@ -372,7 +497,7 @@ Las tres formas se complementan: `test` para casos fijos,
 entrada, `bench` para medir rendimiento sin adivinar. El
 capítulo 7 entra en cada una con tiempo.
 
-## 1.7 Cómo instalar y correr `kai`
+## 1.9 Cómo instalar y correr `kai`
 
 Para correr cualquiera de los programas anteriores necesitas el
 binario `kai`. El proyecto está en
@@ -403,24 +528,25 @@ $ kai test archivo.kai    # ejecuta los bloques `test "..." { ... }` del archivo
 `kai run` es el caballo de batalla mientras lees el libro.
 Edita un archivo, córrelo, mira la salida, vuelve a editar.
 
-El capítulo 14 cubre el resto del tooling — `fmt`, `repl`,
+El capítulo 15 cubre el resto del tooling — `fmt`, `repl`,
 `lsp`, integración con editores. Por ahora con `run` te basta.
 
-## 1.8 Cómo está organizado el resto del libro
+## 1.10 Cómo está organizado el resto del libro
 
 Vimos en este capítulo, sin profundizar, prácticamente todo lo
 que hace distinto a kaikai. El resto del libro toma cada cosa y
 la trata en serio.
 
-- **Parte II — El lenguaje** (capítulos 3 a 9) cubre los tipos
+- **Parte II — El lenguaje** (capítulos 3 a 10) cubre los tipos
   básicos, los tipos compuestos, los tipos suma y `match`, las
-  funciones, las pruebas y benchmarks, los módulos y los
-  protocolos. Es la mitad sólida y predecible.
-- **Parte III — Lo distintivo** (capítulos 10 a 13) toma los
+  funciones, las pruebas y benchmarks, los módulos, los
+  protocolos y las unidades de medida. Es la mitad sólida y
+  predecible.
+- **Parte III — Lo distintivo** (capítulos 11 a 14) toma los
   efectos algebraicos, la concurrencia con fibras, los actores
   y la apuesta del lenguaje en torno a los LLMs. Es la mitad
   donde kaikai paga su novedad.
-- **Parte IV — Práctica** (capítulos 14 y 15) se ocupa del
+- **Parte IV — Práctica** (capítulos 15 y 16) se ocupa del
   tooling y cierra con un caso de estudio integrador.
 - Antes, el **capítulo 2** te ablanda algunas asunciones si
   vienes de un mundo imperativo: expresiones vs sentencias,

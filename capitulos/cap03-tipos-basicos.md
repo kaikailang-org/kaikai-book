@@ -174,7 +174,7 @@ Los operadores de comparación son los habituales:
 
 Devuelven `Bool`. Funcionan sobre cualquier tipo que implemente
 los protocolos `Eq` (para `==`/`!=`) y `Ord` (para los demás).
-Eso lo veremos en el capítulo 8; por ahora, todos los tipos
+Eso lo veremos en el capítulo 9; por ahora, todos los tipos
 primitivos los implementan.
 
 ## 3.4 `let` y la propagación local de tipos
@@ -231,7 +231,7 @@ fue tocado.
 
 Para los casos donde necesitas una celda mutable de verdad,
 kaikai te da `var`, junto con `@nombre` y `nombre := v`. Lo
-viste en §2.2 y volveremos a ello en el capítulo 9 cuando
+viste en §2.2 y volveremos a ello en el capítulo 11 cuando
 hablemos de efectos.
 
 ## 3.5 `if` como expresión

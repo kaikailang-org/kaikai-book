@@ -1,0 +1,15 @@
+# Protocolos: extender tipos con operaciones declaradas aparte.
+#
+# Un `protocol` declara un contrato de operaciones; un `impl ... for T`
+# las define para un tipo concreto. `#derive(...)` deriva la
+# implementación estructuralmente para records cuyos campos ya
+# cumplen el protocolo (acá `Show` para `Int`, que ya viene del
+# stdlib).
+
+#derive(Show)
+type Punto = { x: Int, y: Int }
+
+fn main() {
+  let p = Punto { x: 3, y: 4 }
+  println(show(p))
+}

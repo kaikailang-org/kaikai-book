@@ -1,0 +1,15 @@
+# Unidades de medida: tipos como USD o EUR que el compilador
+# verifica en aritmética y desaparecen en runtime.
+
+unit USD
+unit EUR
+
+fn main() {
+  let precio : Real<USD> = 1.50<USD>
+  let total  : Real<USD> = precio + 2.00<USD>
+  println("total = #{total}")
+
+  # Mezclar unidades incompatibles es un error de compilación:
+  # let mezcla = precio + 1.00<EUR>
+  #              ^ error: USD ≠ EUR
+}

@@ -137,7 +137,7 @@ in kaikai that means one of two things:
   case, and kaikai gives it to you, but it asks you to declare
   it. Mutation of an array, for example, lives under the
   `Mutable` effect, which appears in the signature of any
-  function that uses it. We'll cover this calmly in chapter 10.
+  function that uses it. We'll cover this calmly in chapter 12.
 
 Why take this path? Because most of the time, "changing a
 variable" is a habit inherited from the imperative model, not
@@ -173,7 +173,7 @@ construct in the language. It is **syntactic sugar** over the
 `handle ... with State[Int](0) as n { ... }` covering the rest
 of the block. `@n` rewrites to `n.get()`, and `n := v` to
 `n.set(v)`. The base language is the same algebraic-effects
-machinery from chapter 9; what changes is the face it shows
+machinery from chapter 11; what changes is the face it shows
 for common cases.
 
 What matters for your mental model is that this rewrite happens
@@ -186,7 +186,7 @@ More visible mutations — writing to an array that lives beyond
 the block, sending to another actor's mailbox, modifying memory
 observed from outside — *do* show up in the signature, under
 effects like `Mutable`, `Actor`, or whichever fits. We'll see
-that distinction in chapter 10.
+that distinction in chapter 12.
 
 The practical rule is simple: use `let` by default; if you
 need a local variable that changes, `var` with `@` and `:=`;
@@ -256,7 +256,7 @@ of what Python leaves to your memory.
 
 What about exceptions? kaikai has an equivalent mechanism — the
 `Fail` effect, and more generally the algebraic effects from
-chapter 9 — but there too, what can fail appears in the type.
+chapter 11 — but there too, what can fail appears in the type.
 The "invisible exceptions" that in Java or Python can spring
 out of any call do not exist in kaikai. If a function can jump
 elsewhere, its signature says so.
@@ -398,7 +398,7 @@ old itches:
   the caller.
 
 If you've never seen this before, it sounds too ambitious to be
-true. It is and it isn't. Chapter 9 gives it the space it
+true. It is and it isn't. Chapter 11 gives it the space it
 deserves. For now, it is enough to know that the signatures you
 see with `/ something` are not noise: they are information
 about what that function can do to your program.
