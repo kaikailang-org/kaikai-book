@@ -53,16 +53,15 @@ qué es una función, un tipo, una lista y un test.
 El libro se publica en dos ediciones, ambas de primera clase —
 ninguna es traducción de la otra:
 
-- **Español** — capítulos en `capitulos/es/`. Voz calibrada
-  contra mi [blog](https://lnds.net).
-- **Inglés** — capítulos en `capitulos/en/`. Voz calibrada
-  contra los documentos de diseño en `kaikai/docs/` y otra
-  prosa técnica adyacente.
+- **Español** — capítulos en `capitulos/`, ejemplos en
+  `ejemplos/`. Voz calibrada contra mi [blog](https://lnds.net).
+- **Inglés** — capítulos en `chapters/`, ejemplos en
+  `examples/`. Voz calibrada contra los documentos de diseño en
+  `kaikai/docs/` y otra prosa técnica adyacente.
 
-Los ejemplos de código son específicos de cada idioma: cada
-edición tiene sus propias fuentes bajo `ejemplos/es/` y
-`ejemplos/en/`, con strings, comentarios y nombres de archivo en
-el idioma de la edición. Los identificadores, palabras clave del
+Los ejemplos de código son específicos de cada idioma: strings,
+comentarios y nombres de archivo viven en el idioma de la
+edición que los cita. Los identificadores, palabras clave del
 lenguaje y APIs del stdlib de kaikai se quedan en su forma
 original (inglés). Las figuras viven una sola vez bajo
 `figuras/` cuando son neutrales al idioma.
@@ -72,12 +71,10 @@ original (inglés). Las figuras viven una sola vez bajo
 ```
 CLAUDE.md             — instrucciones para el agente que asiste la escritura
 estructura.md         — tabla de contenidos completa (14 capítulos + 5 apéndices)
-capitulos/
-  es/                 — edición en español, un .md por capítulo
-  en/                 — edición en inglés, mismos nombres lógicos
-ejemplos/
-  es/capNN/           — fuentes citadas por la edición en español
-  en/capNN/           — fuentes citadas por la edición en inglés
+capitulos/            — capítulos en español, capNN-*.md
+chapters/             — capítulos en inglés, chNN-*.md
+ejemplos/capNN/       — fuentes citadas por la edición en español
+examples/chNN/        — fuentes citadas por la edición en inglés
 figuras/              — diagramas e imágenes (comunes cuando son neutrales)
 borradores/           — notas y material que aún no es capítulo
 README.md             — versión en inglés de este archivo
@@ -98,8 +95,8 @@ Una vez que `kai` esté en tu `PATH`, cada ejemplo del libro corre
 con:
 
 ```sh
-kai run ejemplos/es/capNN/<archivo>.kai     # edición en español
-kai run ejemplos/en/capNN/<archivo>.kai     # edición en inglés
+kai run ejemplos/capNN/<archivo>.kai     # edición en español
+kai run examples/chNN/<archivo>.kai      # edición en inglés
 ```
 
 Los ejemplos se verifican contra la versión de `kai` que está en

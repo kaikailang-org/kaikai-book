@@ -13,7 +13,7 @@ que ya puedes leer código kaikai aunque te falten precisiones.
 Esas precisiones llegan en los capítulos siguientes.
 
 Si quieres seguir los ejemplos en tu computador, los archivos
-están en `ejemplos/es/cap01/` del repositorio del libro. La
+están en `ejemplos/cap01/` del repositorio del libro. La
 instalación de `kai` viene al final del capítulo, en §1.6 — si te
 urge, salta ahí primero y vuelve.
 
@@ -28,7 +28,7 @@ fn main() {
 ```
 
 ```
-$ kai run ejemplos/es/cap01/01_hola.kai
+$ kai run ejemplos/cap01/01_hola.kai
 Hola, kaikai
 ```
 
@@ -166,7 +166,7 @@ fn main() {
 ```
 
 ```
-$ kai run ejemplos/es/cap01/03_calculadora.kai
+$ kai run ejemplos/cap01/03_calculadora.kai
 14
 ```
 
@@ -223,7 +223,7 @@ fn main() {
 ```
 
 ```
-$ kai run ejemplos/es/cap01/04_efecto.kai
+$ kai run ejemplos/cap01/04_efecto.kai
 [INFO] hola, kaikai
 [INFO] hola, mundo
 ```
@@ -284,7 +284,7 @@ fn main() {
 ```
 
 ```
-$ kai run ejemplos/es/cap01/05_concurrente.kai
+$ kai run ejemplos/cap01/05_concurrente.kai
 A
 B
 A

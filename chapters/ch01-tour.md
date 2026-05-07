@@ -14,7 +14,7 @@ still blurry. The corners come into focus in the chapters that
 follow.
 
 If you want to follow along on your own machine, the source
-files for this chapter live under `ejemplos/cap01/` in the book
+files for this chapter live under `examples/ch01/` in the book
 repository. Installation of `kai` is covered at the end of the
 chapter, in §1.6 — if you need it now, jump there first and come
 back.
@@ -30,7 +30,7 @@ fn main() {
 ```
 
 ```
-$ kai run ejemplos/en/cap01/01_hello.kai
+$ kai run examples/ch01/01_hello.kai
 Hello, kaikai
 ```
 
@@ -168,7 +168,7 @@ fn main() {
 ```
 
 ```
-$ kai run ejemplos/en/cap01/03_calculator.kai
+$ kai run examples/ch01/03_calculator.kai
 14
 ```
 
@@ -225,7 +225,7 @@ fn main() {
 ```
 
 ```
-$ kai run ejemplos/en/cap01/04_effect.kai
+$ kai run examples/ch01/04_effect.kai
 [INFO] hello, kaikai
 [INFO] hello, world
 ```
@@ -287,7 +287,7 @@ fn main() {
 ```
 
 ```
-$ kai run ejemplos/en/cap01/05_concurrent.kai
+$ kai run examples/ch01/05_concurrent.kai
 A
 B
 A
@@ -382,6 +382,6 @@ lives in Part III. If you come from Python, Go, Java,
 JavaScript, or C#, read chapter 2 carefully and do the
 exercises in Part II.
 
-Either way: the example sources are in `ejemplos/` in the
+Either way: the example sources are in `examples/` in the
 book repository. Compile everything. Run everything. The only
 way to learn a language is to write it.

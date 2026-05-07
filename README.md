@@ -51,30 +51,27 @@ what a function, a type, a list, and a test are.
 The book ships in two editions, both first-class — neither is a
 translation of the other:
 
-- **Spanish** — chapters under `capitulos/es/`. Voice calibrated
-  on my [blog](https://lnds.net).
-- **English** — chapters under `capitulos/en/`. Voice calibrated
-  on the design docs of `kaikai/docs/` and adjacent technical
-  writing.
+- **Spanish** — chapters under `capitulos/`, examples under
+  `ejemplos/`. Voice calibrated on my [blog](https://lnds.net).
+- **English** — chapters under `chapters/`, examples under
+  `examples/`. Voice calibrated on the design docs of
+  `kaikai/docs/` and adjacent technical writing.
 
-Code samples are language-specific: each edition has its own
-sources under `ejemplos/es/` and `ejemplos/en/`, with strings,
-comments and file names in the language of the edition.
-Identifiers, language keywords and kaikai stdlib APIs stay in
-their original form (English). Figures live once under
-`figuras/` when they are language-neutral.
+Code samples are language-specific: strings, comments and file
+names live in the language of the citing edition. Identifiers,
+language keywords and kaikai stdlib APIs stay in their original
+form (English). Figures live once under `figuras/` when they are
+language-neutral.
 
 ## Repository layout
 
 ```
 CLAUDE.md             — instructions for the agent assisting the writing
 estructura.md         — full table of contents (14 chapters + 5 appendices)
-capitulos/
-  es/                 — Spanish edition, one .md per chapter
-  en/                 — English edition, same logical filenames
-ejemplos/
-  es/capNN/           — sources cited by the Spanish edition
-  en/capNN/           — sources cited by the English edition
+capitulos/            — Spanish chapters, capNN-*.md
+chapters/             — English chapters, chNN-*.md
+ejemplos/capNN/       — sources cited by the Spanish edition
+examples/chNN/        — sources cited by the English edition
 figuras/              — diagrams and images (shared when neutral)
 borradores/           — raw notes and material that is not yet a chapter
 README.md             — this file
@@ -95,8 +92,8 @@ Once `kai` is on your `PATH`, every example in this book runs
 with:
 
 ```sh
-kai run ejemplos/en/capNN/<file>.kai     # English edition sources
-kai run ejemplos/es/capNN/<file>.kai     # Spanish edition sources
+kai run examples/chNN/<file>.kai     # English edition sources
+kai run ejemplos/capNN/<file>.kai    # Spanish edition sources
 ```
 
 Examples are verified against the version of `kai` in use at the

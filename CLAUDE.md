@@ -151,15 +151,16 @@ distintos.
 
 Implicaciones prácticas:
 
-- **Cada capítulo se mantiene en paralelo** bajo `capitulos/es/` y
-  `capitulos/en/`, con el mismo nombre de archivo.
-- **Los ejemplos también son paralelos**: `ejemplos/es/capNN/` y
-  `ejemplos/en/capNN/`. Los strings literales, los comentarios y
-  los nombres de archivo están en el idioma de la edición que los
-  cita; identificadores, palabras clave del lenguaje y APIs de
-  kaikai se quedan en su forma original (inglés). Si la versión
-  en un idioma agrega un ejemplo, la otra debe alcanzarla antes
-  de publicar.
+- **Cada edición vive en su propio árbol de carpetas, en su
+  idioma:**
+  - Español: `capitulos/capNN-*.md`, `ejemplos/capNN/`.
+  - Inglés: `chapters/chNN-*.md`, `examples/chNN/`.
+- **Los ejemplos son paralelos por idioma.** Los strings
+  literales, los comentarios y los nombres de archivo están en
+  el idioma de la edición que los cita; identificadores,
+  palabras clave del lenguaje y APIs de kaikai se quedan en su
+  forma original (inglés). Si una edición agrega un ejemplo, la
+  otra debe alcanzarla antes de publicar.
 - **No traducir literal.** Cada edición se redacta en la voz nativa
   de su idioma. Un giro chileno puede tener un equivalente
   anglosajón distinto, no una traducción palabra por palabra. La
@@ -211,11 +212,13 @@ y nombres de archivos siempre en su forma original (inglés).
 - **Mostrar la salida del programa** debajo del código, prefijada
   con `$` para el comando y sin prefijo para el output:
   ```
-  $ kai run ejemplos/cap02/hola.kai
+  $ kai run ejemplos/cap02/hola.kai            # edición en español
+  $ kai run examples/ch02/hello.kai            # edición en inglés
   Hola, kaikai
   ```
 - **Numerar los ejemplos por capítulo** y guardarlos bajo
-  `ejemplos/capNN/`. El texto referencia por nombre de archivo.
+  `ejemplos/capNN/` (español) o `examples/chNN/` (inglés). El
+  texto referencia por nombre de archivo.
 - **Diagramas mínimos.** Cuando hagan falta, ASCII o un .png
   generado aparte. Evitar dependencias de herramientas exóticas.
 - **Pies de figura y de código numerados** (Figura 2.3, Listado
@@ -251,13 +254,11 @@ sintaxis, los efectos, el stdlib y el toolchain.
 CLAUDE.md             — este archivo
 README.md             — descripción pública del proyecto del libro
 estructura.md         — tabla de contenidos detallada (próximo paso)
-capitulos/
-  es/                 — un .md por capítulo en español
-  en/                 — un .md por capítulo en inglés (mismo nombre lógico)
-ejemplos/
-  es/capNN/           — código .kai citado por la edición en español
-  en/capNN/           — código .kai citado por la edición en inglés
-figuras/              — imágenes y diagramas, comunes cuando son neutrales
+capitulos/            — capítulos en español, capNN-*.md
+chapters/             — capítulos en inglés, chNN-*.md
+ejemplos/capNN/       — código .kai de la edición en español
+examples/chNN/        — código .kai de la edición en inglés
+figuras/              — imágenes y diagramas comunes cuando son neutrales
 borradores/           — material en bruto, ideas, notas que no
                         califican aún como capítulo
 ```
