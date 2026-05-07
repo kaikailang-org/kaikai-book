@@ -1,0 +1,35 @@
+# Un efecto propio con su handler.
+#
+# Los efectos algebraicos son el diferenciador de kaikai: una
+# función declara los efectos que usa en su tipo, y quien la
+# llama tiene que o declararlos también, o instalar un handler
+# que los maneje.
+#
+# Acá `Log` es un efecto custom con una operación, `log`. `greet`
+# lo usa, pero no dice CÓMO se hace el logging. `main` decide al
+# momento del llamado: prefijar cada registro con `[INFO]` y
+# mandarlo a stdout.
+#
+#   $ kai run ejemplos/cap01/04_efecto.kai
+#   [INFO] hola, kaikai
+#   [INFO] hola, mundo
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+fn greet(name: String) : Unit / Log {
+  Log.log("hola, " ++ name)
+}
+
+fn main() {
+  handle {
+    greet("kaikai")
+    greet("mundo")
+  } with Log {
+    log(msg, resume) -> {
+      println("[INFO] " ++ msg)
+      resume(())
+    }
+  }
+}

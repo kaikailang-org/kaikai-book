@@ -1,0 +1,48 @@
+# FizzBuzz.
+#
+# Tipos suma + pattern match. kaikai está orientado a expresiones:
+# `if`, `match` y los bloques producen un valor.
+#
+#   $ kai run ejemplos/cap01/02_fizzbuzz.kai
+#   1
+#   2
+#   Fizz
+#   4
+#   Buzz
+#   ...
+#   FizzBuzz
+
+type Tag
+  = Both
+  | Fizz
+  | Buzz
+  | Other(Int)
+
+fn classify(n: Int) : Tag {
+  if n % 15 == 0     { Both }
+  else if n % 3 == 0 { Fizz }
+  else if n % 5 == 0 { Buzz }
+  else               { Other(n) }
+}
+
+fn label(c: Tag) : String {
+  match c {
+    Both     -> "FizzBuzz"
+    Fizz     -> "Fizz"
+    Buzz     -> "Buzz"
+    Other(n) -> int_to_string(n)
+  }
+}
+
+fn loop(i: Int, n: Int) : Unit / Stdout {
+  # Un `if` sin `else` devuelve `()` implícito cuando la condición
+  # es falsa — la forma habitual de "haz algo o detén la recursión".
+  if i <= n {
+    println(label(classify(i)))
+    loop(i + 1, n)
+  }
+}
+
+fn main() {
+  loop(1, 15)
+}

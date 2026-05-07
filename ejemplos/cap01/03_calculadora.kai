@@ -1,0 +1,30 @@
+# Mini calculadora — tipo suma recursivo + pattern match.
+#
+# `Expr` es un tipo suma que se menciona a sí mismo en sus
+# constructores, así que un `Expr` puede ser un árbol de cualquier
+# profundidad. `eval` recorre el árbol con `match`, recurriendo
+# sobre los hijos.
+#
+#   $ kai run ejemplos/cap01/03_calculadora.kai
+#   14
+
+type Expr
+  = Lit(Int)
+  | Add(Expr, Expr)
+  | Mul(Expr, Expr)
+  | Neg(Expr)
+
+fn eval(e: Expr) : Int {
+  match e {
+    Lit(n)    -> n
+    Add(l, r) -> eval(l) + eval(r)
+    Mul(l, r) -> eval(l) * eval(r)
+    Neg(x)    -> -eval(x)
+  }
+}
+
+fn main() {
+  # 2 + 3 * 4 = 14
+  let e = Add(Lit(2), Mul(Lit(3), Lit(4)))
+  println(int_to_string(eval(e)))
+}
