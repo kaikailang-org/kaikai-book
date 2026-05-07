@@ -1,0 +1,12 @@
+# Hello, kaikai.
+#
+# Every kaikai program starts at `fn main()`. `println` rides on
+# a Stdout effect that ships with a default handler, so no
+# `import` is needed.
+#
+#   $ kai run ejemplos/en/cap01/01_hello.kai
+#   Hello, kaikai
+
+fn main() {
+  println("Hello, kaikai")
+}

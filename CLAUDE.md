@@ -152,9 +152,14 @@ distintos.
 Implicaciones prácticas:
 
 - **Cada capítulo se mantiene en paralelo** bajo `capitulos/es/` y
-  `capitulos/en/`, con el mismo nombre de archivo. Los ejemplos de
-  código viven una sola vez bajo `ejemplos/capNN/` y se referencian
-  desde ambas versiones.
+  `capitulos/en/`, con el mismo nombre de archivo.
+- **Los ejemplos también son paralelos**: `ejemplos/es/capNN/` y
+  `ejemplos/en/capNN/`. Los strings literales, los comentarios y
+  los nombres de archivo están en el idioma de la edición que los
+  cita; identificadores, palabras clave del lenguaje y APIs de
+  kaikai se quedan en su forma original (inglés). Si la versión
+  en un idioma agrega un ejemplo, la otra debe alcanzarla antes
+  de publicar.
 - **No traducir literal.** Cada edición se redacta en la voz nativa
   de su idioma. Un giro chileno puede tener un equivalente
   anglosajón distinto, no una traducción palabra por palabra. La
@@ -167,9 +172,10 @@ Implicaciones prácticas:
   escribiendo.** Si un capítulo nace en español, redactar primero
   en español y abrir la versión en inglés cuando esté pulido (o al
   revés). No mezclar idiomas dentro de un mismo borrador.
-- **Estructura, ejemplos, ejercicios y figuras son comunes** a
-  ambas ediciones. Si una edición agrega un ejemplo, la otra debe
-  alcanzarla antes de publicar.
+- **Estructura, ejercicios y figuras** son comunes a ambas
+  ediciones; los ejercicios viven dentro del capítulo (donde
+  pueden adaptarse al idioma del texto), las figuras viven una
+  sola vez bajo `figuras/` cuando son neutrales al idioma.
 
 Reglas de español (cuando aplica):
 
@@ -247,9 +253,11 @@ README.md             — descripción pública del proyecto del libro
 estructura.md         — tabla de contenidos detallada (próximo paso)
 capitulos/
   es/                 — un .md por capítulo en español
-  en/                 — un .md por capítulo en inglés (mismo nombre)
-ejemplos/capNN/       — código .kai citado, común a ambas ediciones
-figuras/              — imágenes y diagramas, comunes
+  en/                 — un .md por capítulo en inglés (mismo nombre lógico)
+ejemplos/
+  es/capNN/           — código .kai citado por la edición en español
+  en/capNN/           — código .kai citado por la edición en inglés
+figuras/              — imágenes y diagramas, comunes cuando son neutrales
 borradores/           — material en bruto, ideas, notas que no
                         califican aún como capítulo
 ```
