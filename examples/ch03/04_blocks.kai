@@ -1,0 +1,12 @@
+# A block `{ ... }` is an expression.
+# Its value is the value of the last expression inside.
+
+fn square_plus_one(x: Int) : Int = {
+  let square = x * x
+  square + 1                  # the block's value
+}
+
+fn main() {
+  println("f(3) = #{square_plus_one(3)}")     # 10
+  println("f(5) = #{square_plus_one(5)}")     # 26
+}

@@ -1,0 +1,17 @@
+# `let` binds a name to a value; `if` is an expression.
+
+fn sign(n: Int) : String =
+  if n < 0 { "negative" }
+  else if n == 0 { "zero" }
+  else { "positive" }
+
+fn main() {
+  let x = 42                   # inferred type: Int
+  let y : Real = 3.14          # explicit annotation
+  let message = "x is #{x}, y is #{y}"
+  println(message)
+
+  println("sign(-5) = #{sign(-5)}")
+  println("sign(0)  = #{sign(0)}")
+  println("sign(7)  = #{sign(7)}")
+}

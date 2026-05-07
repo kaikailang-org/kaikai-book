@@ -1,0 +1,26 @@
+# Strings: interpolation, concatenation, and triple-quote.
+
+fn main() {
+  let name = "kaikai"
+  let age  = 1
+
+  # Interpolation with #{...}
+  println("Hello, #{name}. The language is #{age} year old.")
+
+  # Concatenation with ++
+  let greeting = "Hello, " ++ name
+  println(greeting)
+
+  # Any expression fits inside #{...}
+  let a = 7
+  let b = 2
+  println("The sum of #{a} and #{b} is #{a + b}.")
+
+  # Triple-quote for multi-line
+  let message = """
+    This is a multi-line
+    message that preserves indentation
+    relative to the closing fence.
+    """
+  println(message)
+}
