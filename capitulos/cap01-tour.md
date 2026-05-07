@@ -317,12 +317,62 @@ a `fiber_spawn` para que la corra dentro de la fibra nueva.
 
 Hay mucho que decir sobre el modelo de concurrencia de kaikai
 — por qué las fibras son aisladas, cómo se cancelan, qué pasa
-con la memoria — pero todo eso vive en el capítulo 10. Lo que
+con la memoria — pero todo eso vive en el capítulo 11. Lo que
 importa para el tour es que el lenguaje tiene concurrencia
 estructurada de primera clase y que se trata, una vez más,
 como un efecto.
 
-## 1.6 Cómo instalar y correr `kai`
+## 1.6 Pruebas en el mismo archivo
+
+kaikai trata las pruebas como ciudadanas de primera: viven en
+el mismo archivo que el código que prueban, con su propia
+sintaxis al lado de las funciones.
+
+```kai
+fn cuadrado(n: Int) : Int = n * n
+
+test "cuadrado de cero" {
+  assert cuadrado(0) == 0
+}
+
+test "cuadrado preserva positivos" {
+  assert cuadrado(7) == 49
+}
+
+test "cuadrado de negativos" {
+  assert cuadrado(-5) == 25
+}
+```
+
+```
+$ kai test ejemplos/cap01/06_pruebas.kai
+  ok   cuadrado de cero
+  ok   cuadrado preserva positivos
+  ok   cuadrado de negativos
+
+3/3 tests passed
+```
+
+`test "..." { ... }` es un bloque top-level. Adentro usas
+`assert` para escribir aserciones — si una falla, el test
+falla y el runner sigue con los siguientes. En una build
+normal (`kai run`, `kai build`) los bloques `test` se
+ignoran: no agregan peso al binario que despliegas.
+
+Hay dos parientes cercanos que usan la misma forma:
+
+- **`check "..." with x: T { ... }`** declara una **propiedad**
+  que el runner verifica con valores generados al azar. Es lo
+  que en otros lenguajes se llama property-based testing.
+- **`bench "..." { ... }`** es un benchmark: el runner ejecuta
+  el bloque muchas veces y reporta nanosegundos por iteración.
+
+Las tres formas se complementan: `test` para casos fijos,
+`check` para invariantes que deben valer sobre cualquier
+entrada, `bench` para medir rendimiento sin adivinar. El
+capítulo 7 entra en cada una con tiempo.
+
+## 1.7 Cómo instalar y correr `kai`
 
 Para correr cualquiera de los programas anteriores necesitas el
 binario `kai`. El proyecto está en
@@ -353,24 +403,24 @@ $ kai test archivo.kai    # ejecuta los bloques `test "..." { ... }` del archivo
 `kai run` es el caballo de batalla mientras lees el libro.
 Edita un archivo, córrelo, mira la salida, vuelve a editar.
 
-El capítulo 13 cubre el resto del tooling — `fmt`, `repl`,
+El capítulo 14 cubre el resto del tooling — `fmt`, `repl`,
 `lsp`, integración con editores. Por ahora con `run` te basta.
 
-## 1.7 Cómo está organizado el resto del libro
+## 1.8 Cómo está organizado el resto del libro
 
 Vimos en este capítulo, sin profundizar, prácticamente todo lo
 que hace distinto a kaikai. El resto del libro toma cada cosa y
 la trata en serio.
 
-- **Parte II — El lenguaje** (capítulos 3 a 8) cubre los tipos
+- **Parte II — El lenguaje** (capítulos 3 a 9) cubre los tipos
   básicos, los tipos compuestos, los tipos suma y `match`, las
-  funciones, los módulos y los protocolos. Es la mitad sólida y
-  predecible.
-- **Parte III — Lo distintivo** (capítulos 9 a 12) toma los
+  funciones, las pruebas y benchmarks, los módulos y los
+  protocolos. Es la mitad sólida y predecible.
+- **Parte III — Lo distintivo** (capítulos 10 a 13) toma los
   efectos algebraicos, la concurrencia con fibras, los actores
   y la apuesta del lenguaje en torno a los LLMs. Es la mitad
   donde kaikai paga su novedad.
-- **Parte IV — Práctica** (capítulos 13 y 14) se ocupa del
+- **Parte IV — Práctica** (capítulos 14 y 15) se ocupa del
   tooling y cierra con un caso de estudio integrador.
 - Antes, el **capítulo 2** te ablanda algunas asunciones si
   vienes de un mundo imperativo: expresiones vs sentencias,
