@@ -1,0 +1,19 @@
+# Aritmética básica.
+#
+# `/` con dos Int hace división entera (descarta el resto).
+# `//` es la forma explícita de la división entera.
+# Para obtener un Real, los operandos deben ser Real.
+
+fn main() {
+  let a : Int = 7
+  let b : Int = 2
+
+  println("a + b  = #{a + b}")
+  println("a * b  = #{a * b}")
+  println("a / b  = #{a / b}")     # 3 (división entera)
+  println("a // b = #{a // b}")    # 3 (forma explícita)
+  println("a % b  = #{a % b}")     # 1 (módulo)
+
+  println("7.0 / 2.0 = #{7.0 / 2.0}")    # 3.5
+  println("9.0 / 2.0 = #{9.0 / 2.0}")    # 4.5
+}
