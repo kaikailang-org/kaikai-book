@@ -1,0 +1,36 @@
+# Option y Result: codificar la posibilidad de fallar en el tipo.
+
+type ErrorEdad = NoNumerica | FueraDeRango
+
+fn primer_par(xs: [Int]) : Option[Int] =
+  match xs {
+    [] -> None
+    [h, ...t] -> if h % 2 == 0 { Some(h) } else { primer_par(t) }
+  }
+
+fn parsear_edad(s: String) : Result[ErrorEdad, Int] =
+  match string_to_int(s) {
+    None -> Err(NoNumerica)
+    Some(n) ->
+      if n < 0 or n > 130 { Err(FueraDeRango) }
+      else { Ok(n) }
+  }
+
+fn describir_edad(s: String) : String =
+  match parsear_edad(s) {
+    Ok(n) -> "edad válida: #{n}"
+    Err(NoNumerica) -> "no es un número"
+    Err(FueraDeRango) -> "fuera de rango"
+  }
+
+fn main() {
+  let xs = [1, 3, 5, 6, 7]
+  match primer_par(xs) {
+    Some(n) -> println("primer par: #{n}")
+    None    -> println("no hay pares")
+  }
+
+  println(describir_edad("42"))
+  println(describir_edad("hola"))
+  println(describir_edad("999"))
+}

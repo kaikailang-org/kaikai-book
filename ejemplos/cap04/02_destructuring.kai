@@ -1,0 +1,25 @@
+# Destructuring: descomponer un record en sus campos sin
+# escribir los accesos uno por uno.
+
+type Punto = { x: Int, y: Int }
+
+fn describir(p: Punto) : String = {
+  let Punto { x, y } = p
+  "(" ++ int_to_string(x) ++ ", " ++ int_to_string(y) ++ ")"
+}
+
+fn clasificar(p: Punto) : String =
+  match p {
+    Punto { x: 0, y: 0 } -> "origen"
+    Punto { x: 0, y: _ } -> "eje Y"
+    Punto { x: _, y: 0 } -> "eje X"
+    Punto { x, y }       -> "punto en (#{x}, #{y})"
+  }
+
+fn main() {
+  println(describir(Punto { x: 3, y: 4 }))
+  println(clasificar(Punto { x: 0, y: 0 }))
+  println(clasificar(Punto { x: 0, y: 7 }))
+  println(clasificar(Punto { x: 5, y: 0 }))
+  println(clasificar(Punto { x: 2, y: 9 }))
+}

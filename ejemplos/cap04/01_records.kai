@@ -1,0 +1,36 @@
+# Records: agregados con campos nombrados.
+
+type Punto = { x: Int, y: Int }
+
+type Empleado = {
+  nombre: String,
+  edad: Int,
+  sueldo: Int,
+}
+
+fn distancia(a: Punto, b: Punto) : Int = {
+  let dx = a.x - b.x
+  let dy = a.y - b.y
+  dx * dx + dy * dy
+}
+
+fn main() {
+  let origen = Punto { x: 0, y: 0 }
+  let p      = Punto { x: 3, y: 4 }
+
+  println("origen.x = #{origen.x}, origen.y = #{origen.y}")
+  println("p en (#{p.x}, #{p.y})")
+  println("distancia² = #{distancia(origen, p)}")
+
+  # Update funcional con `...`: copia todos los campos y
+  # reemplaza los que se nombran después.
+  let p2 = Punto { ...p, x: 7 }
+  println("p2 en (#{p2.x}, #{p2.y})")
+
+  let ada = Empleado { nombre: "Ada", edad: 30, sueldo: 1500 }
+  println("#{ada.nombre} tiene #{ada.edad} años, sueldo #{ada.sueldo}")
+
+  # Promoción: mismo empleado, sueldo nuevo.
+  let ada_post = Empleado { ...ada, sueldo: 2200 }
+  println("#{ada_post.nombre} ahora gana #{ada_post.sueldo}")
+}

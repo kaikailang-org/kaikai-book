@@ -1,0 +1,25 @@
+# Listas: construcción, rangos, recorrido recursivo, patrones.
+
+fn suma(xs: [Int]) : Int =
+  match xs {
+    [] -> 0
+    [h, ...t] -> h + suma(t)
+  }
+
+fn longitud[a](xs: [a]) : Int =
+  match xs {
+    [] -> 0
+    [_, ...t] -> 1 + longitud(t)
+  }
+
+fn main() {
+  let primos = [2, 3, 5, 7, 11]
+  let rango  = [1..10]                  # [1, ..., 10]
+  let pares  = [2..20..2]               # [2, 4, ..., 20]
+  let combinada = [0, ...primos, 13]    # spread
+
+  println("primos: longitud=#{longitud(primos)}, suma=#{suma(primos)}")
+  println("rango : longitud=#{longitud(rango)}, suma=#{suma(rango)}")
+  println("pares : longitud=#{longitud(pares)}, suma=#{suma(pares)}")
+  println("combo : longitud=#{longitud(combinada)}, suma=#{suma(combinada)}")
+}

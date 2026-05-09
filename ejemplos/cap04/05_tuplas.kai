@@ -1,0 +1,14 @@
+# Tuplas: agrupación posicional. Azúcar para Pair, Triple, Quad.
+# Arity 2 a 4.
+
+fn divmod(a: Int, b: Int) : (Int, Int) = (a / b, a % b)
+
+fn main() {
+  let (cociente, resto) = divmod(17, 5)
+  println("17 / 5 = #{cociente}, resto = #{resto}")
+
+  # Una tupla de tres
+  let punto3d = (1, 2, 3)
+  let (x, y, z) = punto3d
+  println("(#{x}, #{y}, #{z})")
+}
