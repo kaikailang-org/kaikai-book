@@ -1,0 +1,35 @@
+# Recursión con TCO obligatoria.
+#
+# kaikai garantiza que una llamada recursiva en posición de
+# cola no consume stack. Eso te deja escribir loops sin
+# `for`/`while` sin reventar el stack en entradas grandes.
+
+# Recursión lineal NO en posición de cola: cada llamada deja
+# pendiente la suma `h + ...`. Funciona pero crece en stack.
+fn suma_naive(xs: [Int]) : Int =
+  match xs {
+    []        -> 0
+    [h, ...t] -> h + suma_naive(t)
+  }
+
+# Recursión en posición de cola: la última cosa que hace cada
+# rama recursiva es **solo** la llamada, sin operación
+# pendiente. kaikai la convierte a un loop.
+fn suma_tco_loop(xs: [Int], acc: Int) : Int =
+  match xs {
+    []        -> acc
+    [h, ...t] -> suma_tco_loop(t, acc + h)
+  }
+
+fn suma(xs: [Int]) : Int = suma_tco_loop(xs, 0)
+
+fn main() {
+  let mil = [1..1000]
+  println("suma 1..1000 (naive) = #{suma_naive(mil)}")
+  println("suma 1..1000 (tco)   = #{suma(mil)}")
+
+  # Con TCO podemos sumar listas mucho más grandes sin
+  # preocuparnos por el stack:
+  let cien_mil = [1..100_000]
+  println("suma 1..100_000 (tco) = #{suma(cien_mil)}")
+}

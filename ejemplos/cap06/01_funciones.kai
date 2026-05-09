@@ -1,0 +1,23 @@
+# Funciones: declaración con cuerpo corto y largo, anotaciones
+# de parámetros y retorno, recursión.
+
+# Cuerpo corto: una expresión, separada por `=`.
+fn doble(x: Int) : Int = x * 2
+
+# Cuerpo largo: bloque con `let`s y expresión final.
+fn cuadrado_mas_uno(x: Int) : Int = {
+  let cuadrado = x * x
+  cuadrado + 1
+}
+
+# Función pura sin valor útil de retorno: sirve para efectos.
+# Aunque devolver `Unit` es opcional en `main`, en una función
+# auxiliar conviene anotarlo cuando hay efectos involucrados.
+fn anunciar(mensaje: String) : Unit / Stdout =
+  println("[ANUNCIO] " ++ mensaje)
+
+fn main() {
+  println("doble(7) = #{doble(7)}")
+  println("f(3)     = #{cuadrado_mas_uno(3)}")
+  anunciar("listo")
+}

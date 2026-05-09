@@ -1,0 +1,52 @@
+# Caso de estudio: pipeline de transformación de datos.
+#
+# Tomamos una lista de pedidos, filtramos los pendientes,
+# calculamos descuentos según una tabla, y producimos el
+# total a cobrar. Una sola línea de pipes encadena todo el
+# proceso.
+
+type Estado = Pendiente | Pagado | Cancelado
+
+type Pedido = {
+  id: Int,
+  monto: Int,
+  estado: Estado,
+}
+
+# Funciones pequeñas, cada una hace una sola cosa.
+fn esta_pendiente(p: Pedido) : Bool =
+  match p.estado {
+    Pendiente -> true
+    Pagado    -> false
+    Cancelado -> false
+  }
+
+# Descuento: 10% sobre montos >= 1000, 0% en el resto.
+fn aplicar_descuento(p: Pedido) : Pedido =
+  if p.monto >= 1000 {
+    Pedido { ...p, monto: p.monto - p.monto / 10 }
+  } else {
+    p
+  }
+
+fn monto_de(p: Pedido) : Int = p.monto
+
+fn main() {
+  let pedidos = [
+    Pedido { id: 1, monto: 500,  estado: Pendiente },
+    Pedido { id: 2, monto: 2000, estado: Pendiente },
+    Pedido { id: 3, monto: 1500, estado: Pagado },
+    Pedido { id: 4, monto: 800,  estado: Cancelado },
+    Pedido { id: 5, monto: 1200, estado: Pendiente },
+  ]
+
+  # Pipeline: filtrar pendientes, aplicar descuento, sumar.
+  let total =
+    pedidos
+    |> list.filter(esta_pendiente)
+    | aplicar_descuento
+    | monto_de
+    |> list.sum
+
+  println("total a cobrar: #{total}")
+}

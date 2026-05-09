@@ -1,0 +1,34 @@
+# Tres operadores pipe: `|>`, `|`, `||`.
+
+fn doble(n: Int) : Int = n * 2
+fn es_par(n: Int) : Bool = n % 2 == 0
+
+# `|>` — apply: el lado izquierdo es el primer argumento del
+# llamado de la derecha. `xs |> f` ≡ `f(xs)`.
+fn ejemplo_apply() : Int = {
+  let xs = [1, 2, 3, 4, 5]
+  xs |> list.sum               # ≡ list.sum(xs)
+}
+
+# `|` — map sobre listas: `xs | f` ≡ `list.map(xs, f)`.
+fn ejemplo_map() : Int = {
+  let xs = [1, 2, 3, 4, 5]
+  let dobles = xs | doble
+  list.sum(dobles)
+}
+
+# `||` — flat-map: `xs || f` ≡ `list.flat_map(xs, f)`.
+# Cada elemento produce una lista, y todas se concatenan.
+fn vecinos(n: Int) : [Int] = [n - 1, n, n + 1]
+
+fn ejemplo_flat_map() : Int = {
+  let xs = [10, 20, 30]
+  let extendido = xs || vecinos
+  list.length(extendido)
+}
+
+fn main() {
+  println("|>: total = #{ejemplo_apply()}")
+  println("|:  suma de dobles = #{ejemplo_map()}")
+  println("||: longitud extendido = #{ejemplo_flat_map()}")
+}

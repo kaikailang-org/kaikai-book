@@ -1,0 +1,25 @@
+# Funciones de orden superior: aceptan funciones como
+# argumento o las devuelven.
+
+# Acepta una función como argumento.
+fn dos_veces[a](f: (a) -> a, x: a) : a = f(f(x))
+
+# Devuelve una función nueva (closure que captura `n`).
+fn sumar(n: Int) : (Int) -> Int = (x) => x + n
+
+# Componer dos funciones es una función de orden superior
+# que acepta dos funciones y devuelve una nueva.
+fn componer[a, b, c](f: (b) -> c, g: (a) -> b) : (a) -> c =
+  (x) => f(g(x))
+
+fn main() {
+  let mas_uno = (x) => x + 1
+  println("dos_veces(+1, 5) = #{dos_veces(mas_uno, 5)}")
+
+  let mas_diez = sumar(10)
+  println("mas_diez(7) = #{mas_diez(7)}")
+
+  let cuadrado = (x) => x * x
+  let comp = componer(cuadrado, mas_uno)
+  println("(cuadrado . +1)(4) = #{comp(4)}")
+}
