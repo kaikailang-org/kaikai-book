@@ -238,6 +238,58 @@ sintaxis, los efectos, el stdlib y el toolchain.
   que apunta a un problema del diseño, anotarlo aparte y
   comentarlo con el autor — no resolverlo modificando `../kaikai`
   desde este repo.
+
+### Validar antes de afirmar (regla absoluta)
+
+**Toda afirmación sobre kaikai que aparezca en el libro debe
+validarse antes de publicarse.** No basta con que la sintaxis se
+parezca a lo que dice la doc, ni con que el patrón sea común en
+otros lenguajes. Hay que escribir el código, correrlo con `kai`
+en la versión actual, y comparar el output contra lo que el
+texto promete.
+
+Esto se hace **al momento de escribir** la afirmación, no al
+final del capítulo. Cada bloque ejecutable se prueba apenas se
+introduce.
+
+#### Cuando el ejemplo no compila o produce el output equivocado
+
+No asumir nada. Diagnosticar:
+
+1. **Releer la doc** del lenguaje (`../kaikai/docs/`) para
+   confirmar la sintaxis y semántica que el ejemplo asume. La
+   doc puede haber cambiado, o uno la puede haber malinterpretado.
+2. **Reducir a un repro mínimo** — el archivo más corto posible
+   que reproduce el problema. Esto separa el bug del ruido del
+   ejemplo grande.
+3. **Decidir la naturaleza:**
+   - **Error del libro** (sintaxis mal usada, función inexistente,
+     tipo equivocado): se corrige en el libro y listo.
+   - **Bug del lenguaje** (la doc dice X, el compilador hace Y, o
+     el comportamiento contradice un principio del lenguaje):
+     **consultarlo con el autor antes de seguir.** No asumir que
+     el ejemplo está mal y reescribirlo silenciosamente.
+4. **Si es bug y el autor da el OK**, abrir un issue en
+   `lnds/kaikai` con el repro mínimo, hipótesis de causa, y
+   workaround. El libro queda escrito en la forma idiomática
+   asumiendo el fix; el ejemplo en disco puede fallar hoy hasta
+   que se cierre el issue. Esa decisión es deliberada y queda
+   registrada en el commit message.
+5. **Si es error del libro**, corregir y seguir.
+
+#### Por qué esta regla es absoluta
+
+El libro se escribe rápido y un error sutil se propaga. Si una
+afirmación es falsa y nadie la verifica, queda dicho con
+autoridad y enseña el lenguaje equivocado. Es peor que no
+escribir nada. La validación es barata (un `kai run` por
+afirmación) y el costo de ahorrársela es alto.
+
+Pasados los capítulos 1, 3 y 4 ya se documentaron varios
+casos donde la doc del lenguaje sugería una sintaxis que no
+estaba implementada (#311, #312, #325, #326, #328) o que tenía
+una semántica distinta a la documentada (#318). En todos esos
+casos la regla evitó publicar el libro con afirmaciones falsas.
 - Documentos clave en `../kaikai/docs/` para tener a mano:
   `design.md` (principios y tier list), `kaikai-minimal.md`
   (gramática y precedencia), `effects.md` /
