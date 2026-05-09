@@ -132,7 +132,7 @@ en kaikai eso significa una de dos cosas:
   pero pequeño, y kaikai te lo da, pero te pide declararlo. La
   mutación de un array, por ejemplo, vive bajo el efecto
   `Mutable`, que aparece en la firma de cualquier función que la
-  use. Lo veremos con calma en el capítulo 12.
+  use. Lo veremos con calma en el capítulo 13.
 
 ¿Por qué tomar este camino? Porque la mayoría de las veces
 "cambiar una variable" es una limitación heredada del modelo
@@ -170,7 +170,7 @@ el efecto `State`. La línea `var n = 0` se reescribe a un
 `handle ... with State[Int](0) as n { ... }` que abarca el
 resto del bloque. `@n` se reescribe a `n.get()`, y `n := v` a
 `n.set(v)`. El lenguaje base es el mismo de los efectos
-algebraicos del capítulo 11; lo que cambia es la cara que muestra
+algebraicos del capítulo 12; lo que cambia es la cara que muestra
 para los casos comunes.
 
 Lo importante para tu modelo mental es que esa traducción ocurre
@@ -183,7 +183,7 @@ Mutaciones más visibles — escribir un array que vive más allá
 del bloque, enviar a la mailbox de otro actor, modificar memoria
 que se observa desde fuera — sí aparecen en la firma, bajo
 efectos como `Mutable`, `Actor` o los que correspondan. Esa
-distinción la veremos en el capítulo 12.
+distinción la veremos en el capítulo 13.
 
 La regla práctica es simple: usa `let` por defecto; si
 necesitas una variable local que cambia, `var` con `@` y `:=`;
@@ -253,7 +253,7 @@ en Python depende de tu memoria.
 
 ¿Y las excepciones? kaikai tiene un mecanismo equivalente — el
 efecto `Fail` y, más en general, los efectos algebraicos del
-capítulo 11 — pero también ahí lo que puede fallar aparece en el
+capítulo 12 — pero también ahí lo que puede fallar aparece en el
 tipo. Las "excepciones invisibles" que en Java o Python pueden
 brotar de cualquier llamada, en kaikai no existen. Si una
 función puede saltar a otro lado, su firma lo declara.
@@ -395,7 +395,7 @@ varias incomodidades viejas:
   el tipo, y elegirse por el caller.
 
 Si nunca has visto esto, suena demasiado ambicioso para ser
-cierto. Lo es y no lo es. El capítulo 11 le dedica todo el
+cierto. Lo es y no lo es. El capítulo 12 le dedica todo el
 espacio que merece. Por ahora basta con saber que las firmas que
 ves con `/ algo` no son ruido: son información sobre lo que esa
 función puede hacerle a tu programa.

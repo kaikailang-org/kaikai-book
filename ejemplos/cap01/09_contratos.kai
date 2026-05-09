@@ -1,0 +1,20 @@
+# Programación por contrato: pre y postcondiciones en la firma.
+#
+# `requires` declara lo que debe valer al entrar a la función.
+# `ensures` declara lo que la función garantiza al salir, donde
+# `result` es el valor de retorno.
+
+fn divide(a: Int, b: Int) : Int
+  requires b != 0
+  ensures  result * b + (a % b) == a
+= a / b
+
+fn main() {
+  println("10 / 2 = #{divide(10, 2)}")
+  println("17 / 3 = #{divide(17, 3)}")
+
+  # Si descomentas la línea siguiente, el programa aborta al
+  # entrar a `divide` porque `b` vale 0:
+  #
+  #   println("10 / 0 = #{divide(10, 0)}")
+}

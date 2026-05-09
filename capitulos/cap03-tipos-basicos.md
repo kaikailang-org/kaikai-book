@@ -231,7 +231,7 @@ fue tocado.
 
 Para los casos donde necesitas una celda mutable de verdad,
 kaikai te da `var`, junto con `@nombre` y `nombre := v`. Lo
-viste en §2.2 y volveremos a ello en el capítulo 11 cuando
+viste en §2.2 y volveremos a ello en el capítulo 12 cuando
 hablemos de efectos.
 
 ## 3.5 `if` como expresión

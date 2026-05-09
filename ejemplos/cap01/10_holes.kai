@@ -1,0 +1,22 @@
+# Holes tipados: dejar agujeros en el código y compilar
+# igual.
+#
+# `?` y `?nombre` son expresiones válidas. El compilador
+# acepta el programa, infiere el tipo esperado en cada
+# agujero, y deja el resto del archivo compilando. En runtime,
+# evaluar un agujero hace `panic: unfilled hole`.
+#
+# Esto es la apuesta del cap. 15 hecha sintaxis: kaikai
+# diseñado para conversación con el compilador (humano o
+# agente IA).
+
+fn area_circulo(r: Real) : Real = ?formula
+
+fn perimetro_circulo(r: Real) : Real = ?
+
+fn main() {
+  # El programa compila completo, pero llamar a `area_circulo`
+  # o `perimetro_circulo` aborta con `panic: unfilled hole`.
+  # Lo dejamos sin llamar para que el ejemplo termine bien.
+  println("compiló: el cuerpo está pendiente")
+}

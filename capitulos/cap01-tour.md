@@ -1,12 +1,12 @@
 # Capítulo 1 · Tour de kaikai
 
 La mejor forma de conocer un lenguaje es leerlo y correrlo. Este
-capítulo es un recorrido panorámico por kaikai en ocho programas
-cortos. Ninguno pasa de unas treinta líneas, todos compilan, y
-juntos cubren las formas que vas a ver una y otra vez en el
-resto del libro: declaraciones, tipos algebraicos, pattern
-matching, efectos, fibras, protocolos, unidades de medida y
-pruebas inline.
+capítulo es un recorrido panorámico por kaikai en diez
+programas cortos. Ninguno pasa de unas treinta líneas, todos
+compilan, y juntos cubren las formas que vas a ver una y otra
+vez en el resto del libro: declaraciones, tipos algebraicos,
+pattern matching, efectos, fibras, protocolos, unidades de
+medida, contratos, pruebas inline y holes tipados.
 
 No vamos a explicar cada detalle todavía. La idea es que termines
 el capítulo con el lenguaje mirado desde arriba y la sensación de
@@ -15,7 +15,7 @@ Esas precisiones llegan en los capítulos siguientes.
 
 Si quieres seguir los ejemplos en tu computador, los archivos
 están en `ejemplos/cap01/` del repositorio del libro. La
-instalación de `kai` viene al final del capítulo, en §1.9 — si
+instalación de `kai` viene al final del capítulo, en §1.11 — si
 te urge, salta ahí primero y vuelve.
 
 ## 1.1 Hola, kaikai
@@ -45,7 +45,7 @@ Cuatro cosas que mirar antes de seguir:
   es el valor del bloque. Acá no nos interesa, pero lo vas a usar.
 - `println` no requiere `import`. Está disponible en todos los
   programas porque escribe a la salida estándar mediante un
-  efecto que kaikai instala por defecto. En el capítulo 11 vamos a
+  efecto que kaikai instala por defecto. En el capítulo 12 vamos a
   abrir esa caja; por ahora basta con que funciona.
 
 No hay punto y coma al final de la línea. No hay `return` para
@@ -132,7 +132,7 @@ posición de cola no consume stack. `loop(1, 1_000_000)`
 funciona sin reventar.
 
 Una sola cosa que va a parecer rara y que dejamos para el
-capítulo 11: la firma de `loop` dice `: Unit / Stdout`. La parte
+capítulo 12: la firma de `loop` dice `: Unit / Stdout`. La parte
 después del `/` es el conjunto de **efectos** que la función usa.
 `Stdout` significa "esta función escribe al terminal". Si no
 estuviera ahí, el compilador no te dejaría llamar a `println`
@@ -192,7 +192,7 @@ horas. El capítulo 5 lo explora con calma; por ahora confía.
 derecho. No hay `var`, no hay `mutable`, no hay reasignación:
 `let e = ...` ata `e` a un valor y ese valor no cambia. Si
 necesitas mutar algo, kaikai te lo permite, pero te pide
-declararlo (capítulo 12). Esta es la otra mitad del cambio de
+declararlo (capítulo 13). Esta es la otra mitad del cambio de
 hábito: **inmutabilidad por defecto**.
 
 ## 1.4 Un efecto propio con su handler
@@ -253,7 +253,7 @@ Lo que está pasando es lo siguiente:
 Esto se parece a try/catch, a un dependency injection container,
 a un middleware, a callbacks. Pero **es una sola idea** que
 subsume a las cuatro. Si la primera vez te confunde, está bien.
-Volvemos en el capítulo 11 con tiempo y con varios ejemplos antes
+Volvemos en el capítulo 12 con tiempo y con varios ejemplos antes
 de pedirte que escribas un handler tuyo.
 
 Lo que sí conviene retener desde ya: el tipo de `greet` te dice
@@ -318,7 +318,7 @@ a `fiber_spawn` para que la corra dentro de la fibra nueva.
 
 Hay mucho que decir sobre el modelo de concurrencia de kaikai
 — por qué las fibras son aisladas, cómo se cancelan, qué pasa
-con la memoria — pero todo eso vive en el capítulo 12. Lo que
+con la memoria — pero todo eso vive en el capítulo 13. Lo que
 importa para el tour es que el lenguaje tiene concurrencia
 estructurada de primera clase y que se trata, una vez más,
 como un efecto.
@@ -447,7 +447,71 @@ y enteros con tags como `UserId` o `OrderId` para que el
 compilador no te deje confundirlos. Todo eso aparece en el
 capítulo 10. Por ahora basta saber que existe.
 
-## 1.8 Pruebas en el mismo archivo
+## 1.8 Programación por contrato
+
+kaikai trae otra herramienta heredada de pocos lenguajes —
+Eiffel en los ochenta, Ada 2012, D — para declarar lo que una
+función espera de quien la llama y lo que garantiza a cambio:
+las **precondiciones** y **postcondiciones**.
+
+```kai
+fn divide(a: Int, b: Int) : Int
+  requires b != 0
+  ensures  result * b + (a % b) == a
+= a / b
+
+fn main() {
+  println("10 / 2 = #{divide(10, 2)}")
+  println("17 / 3 = #{divide(17, 3)}")
+}
+```
+
+```
+$ kai run ejemplos/cap01/09_contratos.kai
+10 / 2 = 5
+17 / 3 = 5
+```
+
+`requires b != 0` dice "esta función exige que `b` no sea
+cero al momento de llamarla". El compilador hace dos cosas
+con esa precondición: si puede **probarla en tiempo de
+compilación** (porque los argumentos son literales o porque
+ya conoce los rangos posibles), rechaza la llamada antes de
+emitir código — `divide(10, 0)` literal es un error de
+compilación, no de ejecución. Si los argumentos son
+dinámicos y el compilador no alcanza a decidir, inserta un
+assert que se verifica **al entrar** a la función, y el
+programa aborta si la precondición falla.
+
+`ensures result * b + (a % b) == a` dice "esta función
+garantiza que la identidad fundamental de la división entera
+se cumple al salir". `result` es un nombre reservado dentro
+del `ensures` que se refiere al valor de retorno. Esta
+postcondición se chequea **al salir** del cuerpo: si por
+algún bug interno la función devolviera algo que no cumple,
+el programa también aborta.
+
+Los contratos no son comentarios. Son código que el compilador
+emite como verificaciones reales — estáticas cuando puede,
+dinámicas cuando hace falta. El día que algo viole un
+contrato, vas a saberlo en el lugar exacto.
+
+¿En qué se diferencian de las pruebas que vienen en la próxima
+sección? Una prueba dice "para esta entrada específica, espero
+esta salida específica". Un contrato dice "para **toda**
+entrada que cumpla esta precondición, la salida cumple esta
+postcondición". Una es un caso fijo; el otro, una promesa
+universal documentada en la firma.
+
+Hay un mecanismo hermano que kaikai usa para extender la
+misma idea a los **valores**, no a las operaciones: los
+**refinement types**, que te dejan declarar tipos como `Int
+where >= 0` o `Real where 0.0 <= self <= 1.0`. Son la
+contraparte estructural de los contratos: el tipo describe qué
+valores son válidos, el contrato describe qué hacen las
+operaciones con ellos. Los dos viven juntos en el capítulo 11.
+
+## 1.9 Pruebas en el mismo archivo
 
 kaikai trata las pruebas como ciudadanas de primera: viven en
 el mismo archivo que el código que prueban, con su propia
@@ -497,7 +561,63 @@ Las tres formas se complementan: `test` para casos fijos,
 entrada, `bench` para medir rendimiento sin adivinar. El
 capítulo 7 entra en cada una con tiempo.
 
-## 1.9 Cómo instalar y correr `kai`
+## 1.10 Holes: agujeros que compilan
+
+Hay una última construcción del lenguaje que vale la pena
+ver en el tour, porque cambia un poco la forma de escribir
+código. kaikai te deja dejar **agujeros** en lugares donde
+todavía no sabes qué poner, y el programa compila igual.
+
+```kai
+fn area_circulo(r: Real) : Real = ?formula
+
+fn perimetro_circulo(r: Real) : Real = ?
+
+fn main() {
+  println("compiló: el cuerpo está pendiente")
+}
+```
+
+```
+$ kai run ejemplos/cap01/10_holes.kai
+compiló: el cuerpo está pendiente
+```
+
+`?` y `?nombre` son **expresiones tipadas**. El compilador
+acepta el programa, infiere el tipo esperado en cada
+agujero (en `?formula`, sabe que tienes que producir un
+`Real`), y te deja el resto del archivo compilando. Si
+alguien llama a `area_circulo` en runtime sin haber
+rellenado el agujero, el programa aborta con
+`panic: unfilled hole`. Como `main` no la llama, el
+programa de arriba termina bien.
+
+¿Para qué sirve esto? Para tres cosas:
+
+- **Diseñar de arriba hacia abajo.** Escribes la firma de la
+  función, dejas el cuerpo en `?`, y compilas. El compilador
+  te dice qué tipo se espera ahí y qué valores tienes en
+  alcance. Conversas con el compilador antes de escribir el
+  cuerpo.
+- **Avanzar con un programa parcial.** Tienes diez funciones
+  por escribir, pero quieres que el programa compile y
+  correr la primera para ver si la idea va. Las otras nueve
+  quedan en `?`; el código compila; pruebas la primera; el
+  resto espera.
+- **Trabajar con un agente IA.** Le pasas la firma con holes
+  al agente y le pides que los rellene. La doc del compilador
+  se diseñó para que esa información — tipo esperado,
+  bindings en alcance, candidatos posibles — se pueda emitir
+  como JSON estructurado, listo para alimentar al agente.
+
+Las dos primeras son útiles para el programador humano. La
+tercera es la apuesta más estratégica del lenguaje: kaikai
+quiere ser un lenguaje en el que un LLM pueda escribir bien
+aun cuando su corpus de entrenamiento contenga poco kaikai,
+porque el compilador hace gran parte del trabajo. El
+capítulo 15 entra en esa apuesta con tiempo.
+
+## 1.11 Cómo instalar y correr `kai`
 
 Para correr cualquiera de los programas anteriores necesitas el
 binario `kai`. El proyecto está en
@@ -528,25 +648,25 @@ $ kai test archivo.kai    # ejecuta los bloques `test "..." { ... }` del archivo
 `kai run` es el caballo de batalla mientras lees el libro.
 Edita un archivo, córrelo, mira la salida, vuelve a editar.
 
-El capítulo 15 cubre el resto del tooling — `fmt`, `repl`,
+El capítulo 16 cubre el resto del tooling — `fmt`, `repl`,
 `lsp`, integración con editores. Por ahora con `run` te basta.
 
-## 1.10 Cómo está organizado el resto del libro
+## 1.12 Cómo está organizado el resto del libro
 
 Vimos en este capítulo, sin profundizar, prácticamente todo lo
 que hace distinto a kaikai. El resto del libro toma cada cosa y
 la trata en serio.
 
-- **Parte II — El lenguaje** (capítulos 3 a 10) cubre los tipos
-  básicos, los tipos compuestos, los tipos suma y `match`, las
-  funciones, las pruebas y benchmarks, los módulos, los
-  protocolos y las unidades de medida. Es la mitad sólida y
-  predecible.
-- **Parte III — Lo distintivo** (capítulos 11 a 14) toma los
+- **Parte II — El lenguaje** (capítulos 3 a 11) cubre los
+  tipos básicos, los tipos compuestos, los tipos suma y
+  `match`, las funciones, las pruebas y benchmarks, los
+  módulos, los protocolos, las unidades de medida y la
+  programación por contrato. Es la mitad sólida y predecible.
+- **Parte III — Lo distintivo** (capítulos 12 a 15) toma los
   efectos algebraicos, la concurrencia con fibras, los actores
   y la apuesta del lenguaje en torno a los LLMs. Es la mitad
   donde kaikai paga su novedad.
-- **Parte IV — Práctica** (capítulos 15 y 16) se ocupa del
+- **Parte IV — Práctica** (capítulos 16 y 17) se ocupa del
   tooling y cierra con un caso de estudio integrador.
 - Antes, el **capítulo 2** te ablanda algunas asunciones si
   vienes de un mundo imperativo: expresiones vs sentencias,

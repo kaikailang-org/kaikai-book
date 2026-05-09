@@ -220,100 +220,145 @@ web/fintech del día a día.
 - 10.8 Caso de estudio: cartera de monedas con `Money<C>`
 - *5 ejercicios*
 
+#### Capítulo 11 · Programación por contrato y refinement types
+
+kaikai recoge dos mecanismos de Eiffel, Ada y D que conviven
+mejor de lo que se reconoce en el mainstream: **contratos** —
+precondiciones y postcondiciones que viven en la firma — y
+**refinement types** — restricciones sobre los valores que un
+tipo admite. Los dos cierran la Parte II del libro como
+remate del hilo "información en el tipo, costo cero en
+runtime" que arrancan los efectos y que continúan UoM.
+
+- 11.1 Por qué contratos y refinements van juntos
+- 11.2 `requires` y `ensures` en una firma
+- 11.3 `result` y los nombres en alcance dentro del `ensures`
+- 11.4 Refinement types: `Int where >= 0`, `Real where 0.0 <=
+       self <= 1.0`
+- 11.5 Cuándo el compilador puede probarlo, cuándo se posterga
+       a runtime
+- 11.6 Comparación con pruebas (cap. 7) y con tipos suma
+       (cap. 5): tres formas de garantía
+- 11.7 La familia Design by Contract: Eiffel, Ada 2012, D — qué
+       toma kaikai de cada uno y dónde se aparta. Cubre el
+       paralelo con Eiffel (`old` no necesario por inmutabilidad,
+       sin invariants de clase porque no hay clases), con Ada
+       2012 (misma forma anotacional `with Pre =>` /
+       `requires`, subtypes con predicados → refinements), y
+       con SPARK (kaikai descarta SMT solving a propósito).
+- 11.8 Lo que kaikai **no** hace: SMT solving, refinements
+       arbitrarios. Y por qué no.
+- 11.9 Caso de estudio: cuenta bancaria con saldo no negativo
+       y operaciones contractadas
+- *6 ejercicios*
+
 ### Parte III — Lo distintivo
 
-#### Capítulo 11 · Efectos algebraicos
+#### Capítulo 12 · Efectos algebraicos
 
 El capítulo más largo y más importante del libro. Acá pagamos la
 deuda con LYAH: tono cálido, repetir cuando hace falta, un
 concepto a la vez. Pero sin diluir.
 
-- 11.1 La fricción que los efectos resuelven (excepciones,
+- 12.1 La fricción que los efectos resuelven (excepciones,
        async/await, dependency injection vista junta)
-- 11.2 Declarar un `effect`
-- 11.3 Llamar a una operación: la firma cambia
-- 11.4 Instalar un handler con `handle ... with`
-- 11.5 `resume`: por qué un handler decide qué pasa después
-- 11.6 Efectos del stdlib: `Stdout`, `Stdin`, `Env`, `File`,
+- 12.2 Declarar un `effect`
+- 12.3 Llamar a una operación: la firma cambia
+- 12.4 Instalar un handler con `handle ... with`
+- 12.5 `resume`: por qué un handler decide qué pasa después
+- 12.6 Efectos del stdlib: `Stdout`, `Stdin`, `Env`, `File`,
        `Random`, `Fail`
-- 11.7 Handlers por defecto (los efectos "implícitos" de programas
+- 12.7 Handlers por defecto (los efectos "implícitos" de programas
        simples)
-- 11.8 Componer efectos: filas, polimorfismo de filas
-- 11.9 Aliases de efectos
-- 11.10 Caso de estudio: parser de configuración con `Reader`,
+- 12.8 Componer efectos: filas, polimorfismo de filas
+- 12.9 Aliases de efectos
+- 12.10 Caso de estudio: parser de configuración con `Reader`,
         `Writer`, `Fail`
 - *7 ejercicios*
 
-#### Capítulo 12 · Concurrencia y memoria
+#### Capítulo 13 · Concurrencia y memoria
 
 Perceus y fibras juntos. Cada uno explica al otro: la mutación
 visible vive bajo `Mutable`, las fibras son aisladas porque la
 memoria es por-fibra.
 
-- 12.1 El modelo: fibras aisladas, RC por fibra
-- 12.2 Perceus en una página: por qué no hay GC ni borrow checker
-- 12.3 `fiber_spawn`, `fiber_yield`, `fiber_await`
-- 12.4 Cancelación cooperativa con el efecto `Cancel`
-- 12.5 Nurseries y concurrencia estructurada
-- 12.6 El efecto `Mutable` y arrays: cuándo se ve, cuándo se
+- 13.1 El modelo: fibras aisladas, RC por fibra
+- 13.2 Perceus en una página: por qué no hay GC ni borrow checker
+- 13.3 `fiber_spawn`, `fiber_yield`, `fiber_await`
+- 13.4 Cancelación cooperativa con el efecto `Cancel`
+- 13.5 Nurseries y concurrencia estructurada
+- 13.6 El efecto `Mutable` y arrays: cuándo se ve, cuándo se
        enmascara
-- 12.7 Por qué las fibras no pueden escapar de su nursery
-- 12.8 Caso de estudio: servidor concurrente de eco
+- 13.7 Por qué las fibras no pueden escapar de su nursery
+- 13.8 Caso de estudio: servidor concurrente de eco
 - *6 ejercicios*
 
-#### Capítulo 13 · Actores
+#### Capítulo 14 · Actores
 
-- 13.1 `Actor[Msg]`: efecto parametrizado
-- 13.2 `spawn_actor`, `with_mailbox`
-- 13.3 `send`, `receive`, `self`
-- 13.4 Link y monitor: supervisión al estilo BEAM
-- 13.5 Patrones request/reply
-- 13.6 Caso de estudio: actor supervisado con reintentos
+- 14.1 `Actor[Msg]`: efecto parametrizado
+- 14.2 `spawn_actor`, `with_mailbox`
+- 14.3 `send`, `receive`, `self`
+- 14.4 Link y monitor: supervisión al estilo BEAM
+- 14.5 Patrones request/reply
+- 14.6 Caso de estudio: actor supervisado con reintentos
 - *5 ejercicios*
 
-#### Capítulo 14 · kaikai y los LLMs
+#### Capítulo 15 · Holes y kaikai con agentes IA
 
-La apuesta estratégica del lenguaje (Tier 3 en `design.md`):
-diseñar para que un LLM pueda autorearlo, aunque su corpus de
-entrenamiento contenga poca o nada de kaikai. El capítulo no es
-un panfleto sobre IA; es la explicación honesta de un principio
-de diseño y de las herramientas concretas que lo sostienen.
+Holes (`?`, `?nombre`) son una herramienta de **diálogo con
+el compilador** que sirve a dos audiencias: el programador
+humano que diseña de arriba hacia abajo, y el agente IA al
+que le pides que rellene un programa parcialmente
+especificado. El capítulo abre con la utilidad humana —
+porque holes son útiles aunque nunca uses un LLM — y escala
+a la apuesta estratégica del lenguaje (Tier 3 en
+`design.md`): kaikai diseñado para que un LLM pueda
+autorearlo, aunque su corpus de entrenamiento contenga poca
+o nada de kaikai.
 
 Acá pagamos la deuda con varios posts del blog (*Juicio y
-estilo*, *El poder de los agentes*, *Tus agentes necesitan un
-jefe*, *Kimun*): la IA no reemplaza al programador, lo apalanca
-si las herramientas están bien diseñadas. kaikai es un
-experimento en esa dirección.
+estilo*, *El poder de los agentes*, *Tus agentes necesitan
+un jefe*, *Kimun*): la IA no reemplaza al programador, lo
+apalanca si las herramientas están bien diseñadas. kaikai es
+un experimento en esa dirección.
 
-- 14.1 La apuesta: por qué un lenguaje nuevo se diseña pensando
-       en LLMs
-- 14.2 De qué sirve la información de tipos y efectos cuando el
-       que escribe el código no eres tú
-- 14.3 Holes tipados: `?` y `?nombre`
-- 14.4 `--holes-json`: salida estructurada del compilador
-- 14.5 Más allá de holes: `kai type --json`, contraejemplos de
-       `match` no exhaustivo, diagnósticos en JSON
-- 14.6 Un loop de trabajo con un agente: investigar, planificar,
-       ejecutar (siguiendo lo que ya describí en el blog)
-- 14.7 Lo que el lenguaje **no** automatiza: juicio, gusto,
-       arquitectura
-- 14.8 Caso de estudio: completar una función no trivial dejando
-       holes y dejando que el agente itere
-- *4 ejercicios* (un par requieren acceso a un LLM; los otros se
+- 15.1 Holes tipados: `?` y `?nombre` para dejar agujeros que
+       compilan
+- 15.2 Conversación con el compilador: tipo esperado,
+       bindings en alcance, candidatos
+- 15.3 Diseñar de arriba hacia abajo: empezar por la firma,
+       holes para los cuerpos, completar uno por uno
+- 15.4 Programa parcial: avanzar con holes mientras el resto
+       del archivo compila
+- 15.5 La apuesta LLM: por qué un lenguaje nuevo se diseña
+       pensando en agentes
+- 15.6 De qué sirve la información de tipos, efectos y holes
+       cuando el que escribe el código no eres tú
+- 15.7 `--holes-json`: salida estructurada del compilador
+- 15.8 Más allá de holes: `kai type --json`, contraejemplos
+       de `match` no exhaustivo, diagnósticos en JSON
+- 15.9 Un loop de trabajo con un agente: investigar,
+       planificar, ejecutar (siguiendo lo que ya describí en
+       el blog)
+- 15.10 Lo que el lenguaje **no** automatiza: juicio, gusto,
+        arquitectura
+- 15.11 Caso de estudio: completar una función no trivial
+        dejando holes y dejando que el agente itere
+- *5 ejercicios* (un par requieren acceso a un LLM; los otros se
   resuelven a mano leyendo la salida del compilador)
 
 ### Parte IV — Práctica
 
-#### Capítulo 15 · Tooling: el binario `kai`
+#### Capítulo 16 · Tooling: el binario `kai`
 
-- 15.1 `kai run`, `kai build`, `kai test`, `kai check`, `kai bench`
-- 15.2 `kai fmt`
-- 15.3 `kai repl` y el flujo iterativo
-- 15.4 `kai lsp` e integración con editores
-- 15.5 Estructura típica de un proyecto kaikai
+- 16.1 `kai run`, `kai build`, `kai test`, `kai check`, `kai bench`
+- 16.2 `kai fmt`
+- 16.3 `kai repl` y el flujo iterativo
+- 16.4 `kai lsp` e integración con editores
+- 16.5 Estructura típica de un proyecto kaikai
 - *Sin ejercicios* — capítulo de referencia.
 
-#### Capítulo 16 · Caso de estudio integrador
+#### Capítulo 17 · Caso de estudio integrador
 
 Un programa real, completo, comentado paso a paso. Candidato
 inicial: un mini servidor HTTP de notas con persistencia en
@@ -340,16 +385,17 @@ sintaxis y estilo de ejemplos.
 
 ## Cuenta gruesa
 
-- 16 capítulos + 5 apéndices.
-- ≈ 380 páginas en la edición impresa estimada (asumiendo 18–22
-  páginas promedio por capítulo principal; el cap. 14 es algo
+- 17 capítulos + 5 apéndices.
+- ≈ 400 páginas en la edición impresa estimada (asumiendo 18–22
+  páginas promedio por capítulo principal; el cap. 15 es algo
   más largo que la versión "solo holes").
-- 7 casos de estudio integradores: evaluador de expresiones
+- 8 casos de estudio integradores: evaluador de expresiones
   (cap. 5), pipeline de transformación (cap. 6), cartera de
-  monedas con `Money<C>` (cap. 10), parser de configuración con
-  efectos (cap. 11), servidor de eco concurrente (cap. 12),
-  actor supervisado (cap. 13), completar función con holes +
-  agente (cap. 14), servidor HTTP de notas (cap. 16).
+  monedas con `Money<C>` (cap. 10), cuenta bancaria con
+  contratos y refinements (cap. 11), parser de configuración
+  con efectos (cap. 12), servidor de eco concurrente (cap. 13),
+  actor supervisado (cap. 14), completar función con holes +
+  agente (cap. 15), servidor HTTP de notas (cap. 17).
 
 ## Orden de escritura sugerido
 
@@ -360,10 +406,10 @@ capítulos que más estabilizan vocabulario y estilo de ejemplos:
    ejemplos. Si esto está bien, el resto fluye.
 2. **Cap. 5 — Sum types.** Es el corazón del modelo de tipos. Si
    queda claro, la mitad del libro queda ordenada.
-3. **Cap. 11 — Efectos.** Capítulo más difícil. Escribirlo
+3. **Cap. 12 — Efectos.** Capítulo más difícil. Escribirlo
    temprano destapa cualquier ambigüedad de la doc del lenguaje.
-4. **Cap. 12 — Concurrencia y memoria.** Depende del 11.
+4. **Cap. 13 — Concurrencia y memoria.** Depende del 12.
 5. Resto en orden de tabla.
 
-El cap. 16 (caso de estudio integrador) y los apéndices se
+El cap. 17 (caso de estudio integrador) y los apéndices se
 escriben al final.
