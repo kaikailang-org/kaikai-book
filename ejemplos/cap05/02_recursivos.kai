@@ -1,0 +1,44 @@
+# Tipos recursivos: el árbol y la expresión aritmética.
+# Un constructor menciona al tipo en sus campos.
+
+type Arbol
+  = Hoja
+  | Nodo(Int, Arbol, Arbol)
+
+fn altura(t: Arbol) : Int =
+  match t {
+    Hoja              -> 0
+    Nodo(_, izq, der) -> 1 + max_int(altura(izq), altura(der))
+  }
+
+fn max_int(a: Int, b: Int) : Int =
+  if a > b { a } else { b }
+
+# AST de expresiones aritméticas
+type Expr
+  = Lit(Int)
+  | Suma(Expr, Expr)
+  | Mul(Expr, Expr)
+  | Neg(Expr)
+
+fn eval(e: Expr) : Int =
+  match e {
+    Lit(n)       -> n
+    Suma(a, b)   -> eval(a) + eval(b)
+    Mul(a, b)    -> eval(a) * eval(b)
+    Neg(x)       -> -eval(x)
+  }
+
+fn main() {
+  # Árbol:    1
+  #          / \
+  #         2   3
+  #        /
+  #       4
+  let t = Nodo(1, Nodo(2, Nodo(4, Hoja, Hoja), Hoja), Nodo(3, Hoja, Hoja))
+  println("altura = #{altura(t)}")
+
+  # Expresión: -(2 + 3) * 4
+  let e = Mul(Neg(Suma(Lit(2), Lit(3))), Lit(4))
+  println("eval = #{eval(e)}")
+}

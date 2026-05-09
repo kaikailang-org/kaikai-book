@@ -1,0 +1,35 @@
+# Tipos suma con `|`. Sin payload (constructores "vacíos") y
+# con payload posicional.
+
+type Color = Rojo | Verde | Azul
+
+type Forma
+  = Circulo(Real)
+  | Rectangulo(Real, Real)
+  | Triangulo(Real, Real, Real)
+
+fn area(f: Forma) : Real =
+  match f {
+    Circulo(r)         -> 3.14159 * r * r
+    Rectangulo(w, h)   -> w * h
+    Triangulo(a, b, c) -> {
+      let s = (a + b + c) / 2.0
+      # Heron — los Reales se manipulan sin coerción a Int.
+      s
+    }
+  }
+
+fn nombre(c: Color) : String =
+  match c {
+    Rojo  -> "rojo"
+    Verde -> "verde"
+    Azul  -> "azul"
+  }
+
+fn main() {
+  println("color: #{nombre(Rojo)}, #{nombre(Verde)}, #{nombre(Azul)}")
+  let c = Circulo(2.0)
+  let r = Rectangulo(3.0, 4.0)
+  println("círculo: área = #{area(c)}")
+  println("rectángulo: área = #{area(r)}")
+}

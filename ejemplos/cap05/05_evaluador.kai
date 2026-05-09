@@ -1,0 +1,104 @@
+# Caso de estudio: evaluador de expresiones con errores
+# tipados.
+#
+# `Expr` es el AST. El evaluador puede fallar de tres formas
+# distintas — divisiones por cero, raíces de negativos, y
+# referencias a variables no definidas. Cada error se
+# representa como un tipo aparte; el resultado del evaluador
+# devuelve `Result[ErrorEval, Real]`.
+#
+# La unión `ErrorEval = ErrorAritmetico | ErrorAmbiente` no
+# requiere wrappers ni conversiones explícitas.
+
+type Expr
+  = Lit(Real)
+  | Var(String)
+  | Suma(Expr, Expr)
+  | Mul(Expr, Expr)
+  | Div(Expr, Expr)
+  | Raiz(Expr)
+
+# Errores aritméticos: división por cero, raíz negativa.
+type ErrorAritmetico = DivCero | RaizNegativa(Real)
+
+# Errores de ambiente: variable no definida.
+type ErrorAmbiente = NoDefinida(String)
+
+# Unión de las dos categorías.
+type ErrorEval = ErrorAritmetico | ErrorAmbiente
+
+# Ambiente: par nombre -> valor. Lookup recursivo.
+type Env = [(String, Real)]
+
+fn lookup(env: Env, nombre: String) : Result[ErrorEval, Real] =
+  match env {
+    []                 -> Err(NoDefinida(nombre))
+    [(k, v), ...resto] -> if k == nombre { Ok(v) } else { lookup(resto, nombre) }
+  }
+
+# Aproximación entera de raíz cuadrada (para no depender de
+# math.sqrt). Solo para Reales >= 0.
+fn raiz(x: Real) : Real =
+  if x < 0.0 { 0.0 }      # protegido por el caller con `requires`
+  else { raiz_loop(x, x / 2.0 + 1.0, 20) }
+
+fn raiz_loop(x: Real, guess: Real, fuel: Int) : Real =
+  if fuel <= 0 { guess }
+  else { raiz_loop(x, (guess + x / guess) / 2.0, fuel - 1) }
+
+fn eval(env: Env, e: Expr) : Result[ErrorEval, Real] =
+  match e {
+    Lit(n)      -> Ok(n)
+    Var(nombre) -> lookup(env, nombre)
+    Suma(a, b)  -> {
+      let va = eval(env, a)!
+      let vb = eval(env, b)!
+      Ok(va + vb)
+    }
+    Mul(a, b)   -> {
+      let va = eval(env, a)!
+      let vb = eval(env, b)!
+      Ok(va * vb)
+    }
+    Div(a, b)   -> {
+      let va = eval(env, a)!
+      let vb = eval(env, b)!
+      if vb == 0.0 { Err(DivCero) } else { Ok(va / vb) }
+    }
+    Raiz(x)     -> {
+      let v = eval(env, x)!
+      if v < 0.0 { Err(RaizNegativa(v)) } else { Ok(raiz(v)) }
+    }
+  }
+
+fn describir(e: ErrorEval) : String =
+  match e {
+    DivCero            -> "división por cero"
+    RaizNegativa(v)    -> "raíz de número negativo (" ++ real_to_string(v) ++ ")"
+    NoDefinida(nombre) -> "variable no definida: " ++ nombre
+  }
+
+fn imprimir(r: Result[ErrorEval, Real]) : Unit =
+  match r {
+    Ok(v)  -> println("ok: " ++ real_to_string(v))
+    Err(e) -> println("error: " ++ describir(e))
+  }
+
+fn main() {
+  let env : Env = [("x", 9.0), ("y", 4.0)]
+
+  # x + y         = 13
+  imprimir(eval(env, Suma(Var("x"), Var("y"))))
+
+  # √x            = 3
+  imprimir(eval(env, Raiz(Var("x"))))
+
+  # 10 / 0        — DivCero
+  imprimir(eval(env, Div(Lit(10.0), Lit(0.0))))
+
+  # √(-1)         — RaizNegativa
+  imprimir(eval(env, Raiz(Lit(0.0 - 1.0))))
+
+  # z             — NoDefinida
+  imprimir(eval(env, Var("z")))
+}

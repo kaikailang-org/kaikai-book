@@ -1,0 +1,39 @@
+# Uniones de tipos existentes y el upcast implícito.
+# El operador `|` es el mismo de los sum types: kaikai no
+# distingue entre "declarar un sum type nuevo" y "componer
+# tipos ya existentes".
+
+type ErrorIdentidad = CuentaNoExiste | KycVencido | Congelada
+type ErrorAuth      = SaldoInsuficiente | LimiteDiario
+
+# Union de dos tipos ya declarados.
+type ErrorConsulta = ErrorIdentidad | ErrorAuth
+
+fn id_str(e: ErrorIdentidad) : String =
+  match e {
+    CuentaNoExiste -> "cuenta no existe"
+    KycVencido     -> "KYC vencido"
+    Congelada      -> "cuenta congelada"
+  }
+
+fn auth_str(e: ErrorAuth) : String =
+  match e {
+    SaldoInsuficiente -> "saldo insuficiente"
+    LimiteDiario      -> "límite diario"
+  }
+
+# Match con narrowing: cada componente se delega a su handler.
+fn describir(e: ErrorConsulta) : String =
+  match e {
+    ie : ErrorIdentidad -> "id: " ++ id_str(ie)
+    ae : ErrorAuth      -> "auth: " ++ auth_str(ae)
+  }
+
+fn main() {
+  # Upcast implícito: ErrorIdentidad <: ErrorConsulta
+  let e1 : ErrorConsulta = CuentaNoExiste
+  let e2 : ErrorConsulta = LimiteDiario
+
+  println(describir(e1))
+  println(describir(e2))
+}

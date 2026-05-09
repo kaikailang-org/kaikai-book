@@ -1,0 +1,30 @@
+# `match` con guardas y el wildcard `_`.
+
+fn signo(n: Int) : String =
+  match n {
+    0           -> "cero"
+    k if k > 0  -> "positivo"
+    _           -> "negativo"
+  }
+
+# Guardas con bindings y patrones
+type Punto = { x: Int, y: Int }
+
+fn cuadrante(p: Punto) : String = {
+  let Punto { x, y } = p
+  if x == 0 and y == 0 { "origen" }
+  else if x > 0 and y > 0 { "I" }
+  else if x < 0 and y > 0 { "II" }
+  else if x < 0 and y < 0 { "III" }
+  else if x > 0 and y < 0 { "IV" }
+  else { "sobre un eje" }
+}
+
+fn main() {
+  println("signo(-5) = #{signo(-5)}")
+  println("signo(0)  = #{signo(0)}")
+  println("signo(7)  = #{signo(7)}")
+  println("cuadrante(3,4)   = #{cuadrante(Punto{x: 3, y: 4})}")
+  println("cuadrante(-1,-1) = #{cuadrante(Punto{x: -1, y: -1})}")
+  println("cuadrante(0,0)   = #{cuadrante(Punto{x: 0, y: 0})}")
+}
