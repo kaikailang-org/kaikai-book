@@ -1,0 +1,86 @@
+# Case study: tests for a mini-evaluator.
+#
+# Run with:
+#   kai test  examples/ch07/05_evaluator_tests.kai
+#   kai check examples/ch07/05_evaluator_tests.kai
+#   kai bench examples/ch07/05_evaluator_tests.kai
+
+type Expr
+  = Lit(Int)
+  | Add(Expr, Expr)
+  | Mul(Expr, Expr)
+  | Div(Expr, Expr)
+
+type EvalError = DivByZero(Int)    # carries the numerator
+
+fn eval(e: Expr) : Result[EvalError, Int] =
+  match e {
+    Lit(n)    -> Ok(n)
+    Add(a, b) -> {
+      let va = eval(a)!
+      let vb = eval(b)!
+      Ok(va + vb)
+    }
+    Mul(a, b) -> {
+      let va = eval(a)!
+      let vb = eval(b)!
+      Ok(va * vb)
+    }
+    Div(a, b) -> {
+      let va = eval(a)!
+      let vb = eval(b)!
+      if vb == 0 { Err(DivByZero(va)) } else { Ok(va / vb) }
+    }
+  }
+
+# Helper: "I expect this to evaluate to v"
+fn must_yield(e: Expr, expected: Int) : Bool =
+  match eval(e) {
+    Ok(v)  -> v == expected
+    Err(_) -> false
+  }
+
+# Helper: "I expect it to fail"
+fn must_fail(e: Expr) : Bool =
+  match eval(e) {
+    Ok(_)  -> false
+    Err(_) -> true
+  }
+
+# Tests: fixed cases.
+
+test "literal" {
+  assert must_yield(Lit(42), 42)
+}
+
+test "simple add" {
+  assert must_yield(Add(Lit(2), Lit(3)), 5)
+}
+
+test "combined: 2 + 3 * 4 = 14" {
+  assert must_yield(Add(Lit(2), Mul(Lit(3), Lit(4))), 14)
+}
+
+test "division by zero is an error" {
+  assert must_fail(Div(Lit(10), Lit(0)))
+}
+
+# Checks: universal invariants.
+
+check "Lit(n) evaluates to n" with n: Int {
+  must_yield(Lit(n), n)
+}
+
+check "Add(a, b) == Add(b, a)" with a: Int, b: Int {
+  must_yield(Add(Lit(a), Lit(b)), a + b) and must_yield(Add(Lit(b), Lit(a)), a + b)
+}
+
+# Bench: measure cost.
+
+bench "literal" {
+  eval(Lit(42))
+}
+
+bench "deep expression (3 levels)" {
+  eval(Add(Mul(Lit(2), Lit(3)), Add(Lit(4), Mul(Lit(5), Lit(6)))))
+}

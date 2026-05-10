@@ -1,0 +1,26 @@
+# Property-based: declare an invariant and the runner
+# verifies it with randomly-generated values.
+#
+# Run with: kai check examples/ch07/03_check_properties.kai
+
+fn double(n: Int) : Int = n * 2
+
+# A property over a single Int.
+check "double is even" with n: Int {
+  double(n) % 2 == 0
+}
+
+# Addition is commutative for any pair.
+check "addition is commutative" with a: Int, b: Int {
+  a + b == b + a
+}
+
+# Addition is associative.
+check "addition is associative" with a: Int, b: Int, c: Int {
+  (a + b) + c == a + (b + c)
+}
+
+# Over lists: reversing twice is identity.
+check "reverse of reverse" with xs: [Int] {
+  list.reverse(list.reverse(xs)) == xs
+}

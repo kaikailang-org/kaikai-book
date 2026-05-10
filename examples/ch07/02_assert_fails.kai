@@ -1,0 +1,22 @@
+# What the reader sees when an `assert` fails.
+#
+# Run with: kai test examples/ch07/02_assert_fails.kai
+#
+# The runner reports the line, the expression, and continues
+# with the remaining tests. A test that fails does not stop
+# the rest.
+
+fn double(n: Int) : Int = n * 2
+
+test "double preserves positives" {
+  assert double(7) == 14
+}
+
+# Deliberately broken test: double(3) is 6, not 7.
+test "broken test: assert will fail" {
+  assert double(3) == 7
+}
+
+test "this test still runs" {
+  assert double(0) == 0
+}
