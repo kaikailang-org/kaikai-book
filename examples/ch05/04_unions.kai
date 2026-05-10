@@ -1,0 +1,39 @@
+# Unions of existing types and implicit upcast.
+# The `|` operator is the same one from sum types: kaikai
+# does not distinguish between "declaring a new sum type"
+# and "composing existing types".
+
+type IdentityError = AccountNotFound | KycExpired | Frozen
+type AuthError     = InsufficientBalance | OverDailyLimit
+
+# Union of two already-declared types.
+type QueryError = IdentityError | AuthError
+
+fn id_str(e: IdentityError) : String =
+  match e {
+    AccountNotFound -> "account not found"
+    KycExpired      -> "KYC expired"
+    Frozen          -> "frozen account"
+  }
+
+fn auth_str(e: AuthError) : String =
+  match e {
+    InsufficientBalance -> "insufficient balance"
+    OverDailyLimit      -> "over daily limit"
+  }
+
+# Match with narrowing: each component delegates to its handler.
+fn describe(e: QueryError) : String =
+  match e {
+    ie : IdentityError -> "id: " ++ id_str(ie)
+    ae : AuthError     -> "auth: " ++ auth_str(ae)
+  }
+
+fn main() {
+  # Implicit upcast: IdentityError <: QueryError
+  let e1 : QueryError = AccountNotFound
+  let e2 : QueryError = OverDailyLimit
+
+  println(describe(e1))
+  println(describe(e2))
+}

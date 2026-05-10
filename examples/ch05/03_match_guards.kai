@@ -1,0 +1,30 @@
+# `match` with guards and the wildcard `_`.
+
+fn sign(n: Int) : String =
+  match n {
+    0           -> "zero"
+    k if k > 0  -> "positive"
+    _           -> "negative"
+  }
+
+# Guards with bindings and patterns
+type Point = { x: Int, y: Int }
+
+fn quadrant(p: Point) : String = {
+  let Point { x, y } = p
+  if x == 0 and y == 0 { "origin" }
+  else if x > 0 and y > 0 { "I" }
+  else if x < 0 and y > 0 { "II" }
+  else if x < 0 and y < 0 { "III" }
+  else if x > 0 and y < 0 { "IV" }
+  else { "on an axis" }
+}
+
+fn main() {
+  println("sign(-5) = #{sign(-5)}")
+  println("sign(0)  = #{sign(0)}")
+  println("sign(7)  = #{sign(7)}")
+  println("quadrant(3,4)   = #{quadrant(Point{x: 3, y: 4})}")
+  println("quadrant(-1,-1) = #{quadrant(Point{x: -1, y: -1})}")
+  println("quadrant(0,0)   = #{quadrant(Point{x: 0, y: 0})}")
+}

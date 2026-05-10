@@ -1,0 +1,43 @@
+# Recursive types: the tree and the arithmetic expression.
+# A constructor mentions the type in its fields.
+
+type Tree
+  = Leaf
+  | Node(Int, Tree, Tree)
+
+fn height(t: Tree) : Int {
+  case Leaf            -> 0
+  case Node(_, l, r)   -> 1 + max_int(height(l), height(r))
+}
+
+fn max_int(a: Int, b: Int) : Int =
+  if a > b { a } else { b }
+
+# Arithmetic expression AST
+type Expr
+  = Lit(Int)
+  | Add(Expr, Expr)
+  | Mul(Expr, Expr)
+  | Neg(Expr)
+
+fn eval(e: Expr) : Int =
+  match e {
+    Lit(n)     -> n
+    Add(a, b)  -> eval(a) + eval(b)
+    Mul(a, b)  -> eval(a) * eval(b)
+    Neg(x)     -> -eval(x)
+  }
+
+fn main() {
+  # Tree:    1
+  #         / \
+  #        2   3
+  #       /
+  #      4
+  let t = Node(1, Node(2, Node(4, Leaf, Leaf), Leaf), Node(3, Leaf, Leaf))
+  println("height = #{height(t)}")
+
+  # Expression: -(2 + 3) * 4
+  let e = Mul(Neg(Add(Lit(2), Lit(3))), Lit(4))
+  println("eval = #{eval(e)}")
+}

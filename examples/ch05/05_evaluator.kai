@@ -1,0 +1,93 @@
+# Case study: evaluator with typed errors.
+#
+# `Expr` is the AST. The evaluator can fail in three distinct
+# ways — division by zero, square root of a negative, references
+# to undefined variables. Each error is its own type; the
+# evaluator returns `Result[EvalError, Real]`.
+#
+# The union `EvalError = ArithError | EnvError` requires no
+# wrappers or explicit conversions.
+
+type Expr
+  = Lit(Real)
+  | Var(String)
+  | Add(Expr, Expr)
+  | Mul(Expr, Expr)
+  | Div(Expr, Expr)
+  | Sqrt(Expr)
+
+# Arithmetic errors: division by zero, sqrt of negative.
+type ArithError = DivByZero | NegativeSqrt(Real)
+
+# Environment errors: undefined variable.
+type EnvError = Undefined(String)
+
+# Union of the two categories.
+type EvalError = ArithError | EnvError
+
+# Environment: name -> value pairs. Recursive lookup.
+type Env = [(String, Real)]
+
+fn lookup(env: Env, name: String) : Result[EvalError, Real] {
+  case [], _                          -> Err(Undefined(name))
+  case [(k, v), ...], n when k == n   -> Ok(v)
+  case [_, ...rest], n                -> lookup(rest, n)
+}
+
+# Integer-approximation square root (so we don't depend on
+# math.sqrt). Only for x >= 0.
+fn sqrt(x: Real) : Real =
+  if x < 0.0 { 0.0 }
+  else { sqrt_loop(x, x / 2.0 + 1.0, 20) }
+
+fn sqrt_loop(x: Real, guess: Real, fuel: Int) : Real =
+  if fuel <= 0 { guess }
+  else { sqrt_loop(x, (guess + x / guess) / 2.0, fuel - 1) }
+
+fn eval(env: Env, e: Expr) : Result[EvalError, Real] =
+  match e {
+    Lit(n)     -> Ok(n)
+    Var(name)  -> lookup(env, name)
+    Add(a, b)  -> {
+      let va = eval(env, a)!
+      let vb = eval(env, b)!
+      Ok(va + vb)
+    }
+    Mul(a, b)  -> {
+      let va = eval(env, a)!
+      let vb = eval(env, b)!
+      Ok(va * vb)
+    }
+    Div(a, b)  -> {
+      let va = eval(env, a)!
+      let vb = eval(env, b)!
+      if vb == 0.0 { Err(DivByZero) } else { Ok(va / vb) }
+    }
+    Sqrt(x)    -> {
+      let v = eval(env, x)!
+      if v < 0.0 { Err(NegativeSqrt(v)) } else { Ok(sqrt(v)) }
+    }
+  }
+
+fn describe(e: EvalError) : String =
+  match e {
+    DivByZero        -> "division by zero"
+    NegativeSqrt(v)  -> "sqrt of negative (" ++ real_to_string(v) ++ ")"
+    Undefined(name)  -> "undefined variable: " ++ name
+  }
+
+fn print_result(r: Result[EvalError, Real]) : Unit =
+  match r {
+    Ok(v)  -> println("ok: " ++ real_to_string(v))
+    Err(e) -> println("error: " ++ describe(e))
+  }
+
+fn main() {
+  let env : Env = [("x", 9.0), ("y", 4.0)]
+
+  print_result(eval(env, Add(Var("x"), Var("y"))))    # ok: 13
+  print_result(eval(env, Sqrt(Var("x"))))             # ok: 3
+  print_result(eval(env, Div(Lit(10.0), Lit(0.0))))   # DivByZero
+  print_result(eval(env, Sqrt(Lit(0.0 - 1.0))))       # NegativeSqrt
+  print_result(eval(env, Var("z")))                    # Undefined
+}
