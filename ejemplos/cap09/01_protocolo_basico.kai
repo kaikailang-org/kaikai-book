@@ -1,0 +1,23 @@
+# Declarar un protocolo y dar una implementación para un tipo
+# propio. El stdlib ya provee Show para los tipos primitivos;
+# acá lo extendemos a un record nuevo.
+
+type Punto = { x: Int, y: Int }
+
+# Implementación manual: damos al record un Show que produzca
+# el formato cartesiano "(x, y)".
+impl Show for Punto {
+  fn show(p: Punto) : String =
+    "(" ++ int_to_string(p.x) ++ ", " ++ int_to_string(p.y) ++ ")"
+}
+
+fn main() {
+  let origen = Punto { x: 0, y: 0 }
+  let p      = Punto { x: 3, y: 4 }
+  println(show(origen))
+  println(show(p))
+
+  # Como Show está implementado, la interpolación lo usa
+  # automáticamente:
+  println("p está en #{p}")
+}

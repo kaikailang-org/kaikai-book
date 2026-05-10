@@ -1,0 +1,35 @@
+# `#derive(...)` deriva la implementación estructuralmente:
+# para cada campo del record, delega en el `impl` del campo.
+#
+# Para `Show`, esto produce el formato canónico
+# `TipoNombre { campo1: ..., campo2: ... }` reutilizando el
+# `Show` de cada tipo de campo.
+
+#derive(Show)
+type Persona = {
+  nombre: String,
+  edad: Int,
+}
+
+#derive(Show, Eq)
+type Punto = {
+  x: Int,
+  y: Int,
+}
+
+fn main() {
+  let ada = Persona { nombre: "Ada", edad: 30 }
+  println(show(ada))
+
+  # Show automático en interpolación.
+  println("registro: #{ada}")
+
+  let p = Punto { x: 3, y: 4 }
+  let q = Punto { x: 3, y: 4 }
+  let r = Punto { x: 5, y: 5 }
+
+  let igual_pq = eq(p, q)
+  let igual_pr = eq(p, r)
+  println("p == q: #{igual_pq}")    # true
+  println("p == r: #{igual_pr}")    # false
+}

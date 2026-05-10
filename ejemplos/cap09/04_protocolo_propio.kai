@@ -1,0 +1,39 @@
+# Declarar un protocolo propio.
+#
+# `Drawable` declara un contrato: cualquier tipo que implemente
+# `dibujar` puede ser pasado a funciones que esperen `Drawable`.
+
+protocol Drawable {
+  dibujar(x: Self) : String
+}
+
+# Tres tipos distintos, tres implementaciones.
+
+type Circulo = { radio: Int }
+type Cuadrado = { lado: Int }
+type Triangulo = { base: Int, altura: Int }
+
+impl Drawable for Circulo {
+  fn dibujar(c: Circulo) : String =
+    "Círculo de radio " ++ int_to_string(c.radio)
+}
+
+impl Drawable for Cuadrado {
+  fn dibujar(c: Cuadrado) : String =
+    "Cuadrado de lado " ++ int_to_string(c.lado)
+}
+
+impl Drawable for Triangulo {
+  fn dibujar(t: Triangulo) : String =
+    "Triángulo " ++ int_to_string(t.base) ++ "x" ++ int_to_string(t.altura)
+}
+
+fn main() {
+  let c = Circulo { radio: 5 }
+  let s = Cuadrado { lado: 3 }
+  let t = Triangulo { base: 4, altura: 6 }
+
+  println(dibujar(c))
+  println(dibujar(s))
+  println(dibujar(t))
+}
