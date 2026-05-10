@@ -557,22 +557,33 @@ de la variable que faltaba.
 ```kai
 type Env = [(String, Real)]
 
-fn lookup(env: Env, nombre: String) : Result[ErrorEval, Real] =
-  match env {
-    []                 -> Err(NoDefinida(nombre))
-    [(k, v), ...resto] -> if k == nombre { Ok(v) } else { lookup(resto, nombre) }
-  }
+fn lookup(env: Env, nombre: String) : Result[ErrorEval, Real] {
+  case [], _                          -> Err(NoDefinida(nombre))
+  case [(k, v), ...], n when k == n   -> Ok(v)
+  case [_, ...resto], n               -> lookup(resto, n)
+}
 ```
 
 `Env` es un alias para una lista de pares — recorrido lineal,
-suficiente para un evaluador de juguete. `lookup` recorre la
-lista buscando el nombre; si lo encuentra, devuelve `Ok(v)`;
-si llega al final, devuelve `Err(NoDefinida(nombre))`.
+suficiente para un evaluador de juguete. `lookup` está escrito
+en la **forma multi-clause** del cap. 6: cada `case` lista un
+patrón por argumento separado por coma (acá `env` y `nombre`),
+con un `when` opcional para guardas. Tres casos:
+
+- Lista vacía: la variable no estaba; devolvemos un error.
+- Cabeza con la clave que buscamos: éxito.
+- Cualquier otra cabeza: seguimos en la cola.
 
 Fíjate que el `Err` es del tipo `ErrorEval`, no
 `ErrorAmbiente` — pero `NoDefinida(nombre)` se construye como
 `ErrorAmbiente` y el upcast implícito lo promueve a
 `ErrorEval` en el sitio del retorno, sin conversión explícita.
+
+`eval` (a continuación) usa la forma con `match` envoltorio
+porque dispatcha sobre un tipo suma con muchos constructores
+y la forma `match e { ... }` se lee mejor cuando el discrimen
+es sobre un solo argumento de tipo bien marcado. Las dos
+formas conviven en el mismo archivo sin tensión.
 
 ### El evaluador
 

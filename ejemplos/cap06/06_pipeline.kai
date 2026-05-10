@@ -43,7 +43,7 @@ fn main() {
   # Pipeline: filtrar pendientes, aplicar descuento, sumar.
   let total =
     pedidos
-    |> list.filter(esta_pendiente)
+    |? esta_pendiente
     | aplicar_descuento
     | monto_de
     |> list.sum

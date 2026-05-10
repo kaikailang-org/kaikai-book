@@ -1,4 +1,4 @@
-# Tres operadores pipe: `|>`, `|`, `||`.
+# Cuatro operadores pipe: `|>`, `|`, `||`, `|?`.
 
 fn doble(n: Int) : Int = n * 2
 fn es_par(n: Int) : Bool = n % 2 == 0
@@ -27,8 +27,16 @@ fn ejemplo_flat_map() : Int = {
   list.length(extendido)
 }
 
+# `|?` — filter sobre listas: `xs |? p` ≡ `list.filter(xs, p)`.
+fn ejemplo_filter() : Int = {
+  let xs = [1, 2, 3, 4, 5, 6]
+  let pares = xs |? es_par
+  list.sum(pares)
+}
+
 fn main() {
-  println("|>: total = #{ejemplo_apply()}")
-  println("|:  suma de dobles = #{ejemplo_map()}")
+  println("|>: total              = #{ejemplo_apply()}")
+  println("|:  suma de dobles     = #{ejemplo_map()}")
   println("||: longitud extendido = #{ejemplo_flat_map()}")
+  println("|?: suma de pares      = #{ejemplo_filter()}")
 }

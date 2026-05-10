@@ -30,11 +30,11 @@ type ErrorEval = ErrorAritmetico | ErrorAmbiente
 # Ambiente: par nombre -> valor. Lookup recursivo.
 type Env = [(String, Real)]
 
-fn lookup(env: Env, nombre: String) : Result[ErrorEval, Real] =
-  match env {
-    []                 -> Err(NoDefinida(nombre))
-    [(k, v), ...resto] -> if k == nombre { Ok(v) } else { lookup(resto, nombre) }
-  }
+fn lookup(env: Env, nombre: String) : Result[ErrorEval, Real] {
+  case [], _                          -> Err(NoDefinida(nombre))
+  case [(k, v), ...], n when k == n   -> Ok(v)
+  case [_, ...resto], n               -> lookup(resto, n)
+}
 
 # Aproximación entera de raíz cuadrada (para no depender de
 # math.sqrt). Solo para Reales >= 0.

@@ -1,0 +1,28 @@
+# `|>` con `_`: indicar la posición exacta donde aterriza el
+# lado izquierdo del pipe.
+#
+# Sin guión bajo, el valor va al primer argumento (forma
+# corta). Con guión bajo, va donde lo pongas.
+
+fn divide(a: Int, b: Int) : Int = a / b
+
+fn entre(low: Int, x: Int, high: Int) : Bool =
+  x >= low and x <= high
+
+fn main() {
+  # Sin _: el valor va al primer argumento.
+  let r1 = 100 |> divide(4)        # ≡ divide(100, 4) = 25
+  println("100 / 4    = #{r1}")
+
+  # Con _ en posición 1: explícito, mismo efecto.
+  let r2 = 100 |> divide(_, 4)
+  println("100 / 4    = #{r2}")
+
+  # Con _ en posición 2: el valor va como divisor.
+  let r3 = 100 |> divide(1000, _)
+  println("1000 / 100 = #{r3}")
+
+  # Con _ en una posición intermedia.
+  let r4 = 50 |> entre(0, _, 100)
+  println("entre 0 y 100: #{r4}")
+}

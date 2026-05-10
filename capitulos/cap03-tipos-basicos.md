@@ -321,10 +321,11 @@ bloque, una rama de `match` también, el cuerpo de una lambda
 también. Todo el lenguaje se reduce a expresiones que devuelven
 valores.
 
-## 3.7 La diferencia entre `=` y `{ ... }` en el cuerpo de una función
+## 3.7 Tres formas de cuerpo de función
 
-El cuerpo de una función puede tomar dos formas. Lo viste en el
-capítulo 1; lo fijamos acá.
+El cuerpo de una función puede tomar **tres formas**. Lo viste
+en el capítulo 1 y lo fijamos acá; el cap. 6 vuelve sobre ellas
+con más profundidad.
 
 Forma corta, con `=` y una sola expresión:
 
@@ -337,7 +338,7 @@ fn signo(n: Int) : String =
   else { "positivo" }
 ```
 
-Forma larga, con `{ ... }`:
+Forma larga, con `{ ... }` y bindings intermedios:
 
 ```kai
 fn cuadrado_mas_uno(x: Int) : Int = {
@@ -346,17 +347,29 @@ fn cuadrado_mas_uno(x: Int) : Int = {
 }
 ```
 
-El compilador acepta las dos. La diferencia es para quien lee:
+Forma multi-clause, con `case` arms cuando la función decide
+por la forma de sus argumentos:
+
+```kai
+fn signo(n: Int) : String {
+  case 0            -> "cero"
+  case k when k > 0 -> "positivo"
+  case _            -> "negativo"
+}
+```
+
+El compilador acepta las tres. La diferencia es para quien lee:
 
 - **Forma corta** cuando la función es una expresión directa,
   sin pasos intermedios. Lee como una definición matemática.
 - **Forma larga** cuando hay bindings intermedios o varios pasos
   que ayuda separar visualmente.
+- **Multi-clause** cuando la función dispatcha por patrones
+  sobre sus argumentos. Es lo natural para muchas funciones
+  recursivas y para deciders sobre tipos suma.
 
 No hay forma "preferida": elige la que comunica mejor la
-intención de esa función en particular. La regla habitual es
-que las funciones de una línea van con `=`, y las que necesitan
-respirar van con `{ ... }`.
+intención de esa función en particular.
 
 ## Ejercicios
 

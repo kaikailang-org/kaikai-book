@@ -1,0 +1,29 @@
+# Trailing lambdas y bloque-como-lambda en pipes.
+#
+# Cuando una función toma una lambda como último argumento,
+# puedes sacarla de los paréntesis y ponerla en llaves con la
+# sintaxis `{ param -> body }`. Sobre `|` y `||` la forma se
+# vuelve aún más compacta porque ya esperan una función.
+
+fn main() {
+  let xs = [1, 2, 3, 4, 5]
+
+  # 1. Forma con paréntesis y flecha clásica.
+  let a = list.map(xs, (n) => n * 2)
+  println("a sum=#{list.sum(a)}")
+
+  # 2. Trailing lambda: el cuerpo va en llaves al final.
+  let b = list.map(xs) { n -> n * 2 }
+  println("b sum=#{list.sum(b)}")
+
+  # 3. Bloque-lambda en pipe: la forma más compacta.
+  let c = xs | { n -> n * 2 }
+  println("c sum=#{list.sum(c)}")
+
+  # Cuerpos de varias líneas: la forma con llaves se lee mejor.
+  let d = xs | { n ->
+    let cuadrado = n * n
+    cuadrado + 1
+  }
+  println("d sum=#{list.sum(d)}")
+}

@@ -15,7 +15,7 @@ Esas precisiones llegan en los capítulos siguientes.
 
 Si quieres seguir los ejemplos en tu computador, los archivos
 están en `ejemplos/cap01/` del repositorio del libro. La
-instalación de `kai` viene al final del capítulo, en §1.11 — si
+instalación de `kai` viene al final del capítulo, en §1.12 — si
 te urge, salta ahí primero y vuelve.
 
 ## 1.1 Hola, kaikai
@@ -617,7 +617,56 @@ aun cuando su corpus de entrenamiento contenga poco kaikai,
 porque el compilador hace gran parte del trabajo. El
 capítulo 15 entra en esa apuesta con tiempo.
 
-## 1.11 Cómo instalar y correr `kai`
+## 1.11 Dependencias y proyectos: `kai.toml`
+
+Hasta acá los ejemplos del tour fueron archivos sueltos. La
+realidad de un proyecto es distinta: vas a tener varios
+archivos, vas a depender de bibliotecas que otros publicaron,
+y vas a querer que tu colega clone el repo y obtenga
+exactamente la misma compilación que la tuya.
+
+kaikai resuelve esto con un manifest mínimo, **`kai.toml`**:
+
+```toml
+name = "mi_app"
+version = "0.1.0"
+
+[dependencies]
+manutara = "github.com/lnds/manutara@v0.1"
+local    = { path = "../local-thing" }
+```
+
+El flujo del día a día son tres comandos:
+
+```
+$ kai init                                       # crea kai.toml en el directorio actual
+$ kai add github.com/lnds/manutara@v0.1          # agrega una dependencia
+$ kai run main.kai                               # compila y corre
+```
+
+`kai add` clona el repositorio de la dependencia, lo cachea
+bajo `~/.cache/kai/pkg/` direccionado por SHA, y actualiza
+dos archivos: `kai.toml` (qué se quería) y **`kai.lock`** (qué
+versión exacta se resolvió). El lockfile es lo que garantiza
+**builds reproducibles**: cuando tu colega clone el repo y
+corra `kai install`, va a obtener bit-por-bit las mismas
+dependencias que tú.
+
+La resolución de dependencias es **git-first**: una URL puede
+ser un tag (`@v0.1`), una rama (`@main`) o un commit
+específico (`@abc123`). No hace falta registry centralizado,
+no hace falta TLS, no hace falta autenticarse. Si el repo está
+en GitHub, GitLab o tu servidor privado de git, kaikai sabe
+ir a buscarlo.
+
+El capítulo 8 cubre esto con detalle: cómo organizar un
+proyecto en módulos, qué entra en `[dependencies]`, cómo
+funciona la selección de versiones cuando dos dependencias
+piden cosas distintas. Por ahora basta saber que existe y que
+**no necesitas un sistema de build externo**: `kai` es el
+único binario.
+
+## 1.12 Cómo instalar y correr `kai`
 
 Para correr cualquiera de los programas anteriores necesitas el
 binario `kai`. El proyecto está en
@@ -648,10 +697,11 @@ $ kai test archivo.kai    # ejecuta los bloques `test "..." { ... }` del archivo
 `kai run` es el caballo de batalla mientras lees el libro.
 Edita un archivo, córrelo, mira la salida, vuelve a editar.
 
-El capítulo 16 cubre el resto del tooling — `fmt`, `repl`,
-`lsp`, integración con editores. Por ahora con `run` te basta.
+El capítulo 16 cubre el resto del tooling — `fmt`, `lsp`,
+integración con editores, y los comandos de paquetes (`init`,
+`add`, `install`, `update`). Por ahora con `run` te basta.
 
-## 1.12 Cómo está organizado el resto del libro
+## 1.13 Cómo está organizado el resto del libro
 
 Vimos en este capítulo, sin profundizar, prácticamente todo lo
 que hace distinto a kaikai. El resto del libro toma cada cosa y

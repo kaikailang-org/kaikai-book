@@ -114,10 +114,10 @@ que ocurren las transformaciones, y no requiere variables
 intermedias. Solo es posible porque cada paso es una expresión
 que se puede componer con la siguiente.
 
-`|>` es el más general de tres operadores que kaikai ofrece para
-encadenar. Los otros dos — `|` (map sobre listas) y `||`
-(flat-map) — son atajos para los casos que aparecen una y otra
-vez. Los vemos en detalle en el capítulo 6.
+`|>` es el más general de cuatro operadores que kaikai ofrece
+para encadenar. Los otros tres — `|` (map sobre listas), `||`
+(flat-map) y `|?` (filter) — son atajos para los casos que
+aparecen una y otra vez. Los vemos en detalle en el capítulo 6.
 
 ## 2.2 Inmutabilidad por defecto
 

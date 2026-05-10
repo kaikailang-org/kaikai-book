@@ -182,11 +182,26 @@ archivo, y se ejecutan vía el driver `kai`.
 
 #### Capítulo 8 · Módulos, imports, organización del código
 
+Un archivo es un módulo. Varios archivos forman un proyecto.
+Varios proyectos se componen vía el package manager. Este
+capítulo recorre las tres escalas.
+
 - 8.1 Un archivo, un módulo
 - 8.2 `import`, visibilidad (`pub`)
 - 8.3 Nombres calificados y resolución
 - 8.4 El stdlib que viene gratis (`stdlib/core/`)
-- *4 ejercicios*
+- 8.5 Proyectos con `kai.toml`: `name`, `version`,
+       `[dependencies]`
+- 8.6 Dependencias git: tags, branches, commits, paths
+       locales para desarrollo
+- 8.7 Lockfile y reproducibilidad: cómo `kai.lock` cierra el
+       contrato entre tu máquina y la del próximo desarrollador
+- 8.8 Selección de versiones: minimum-version selection (MVS),
+       por qué no hay diamond-dependency hell
+- 8.9 Cache local y `kai install`
+- 8.10 Caso de estudio: refactorizar un proyecto monolítico
+       en un proyecto principal + dos dependencias locales
+- *6 ejercicios*
 
 #### Capítulo 9 · Protocolos
 
@@ -353,9 +368,12 @@ un experimento en esa dirección.
 
 - 16.1 `kai run`, `kai build`, `kai test`, `kai check`, `kai bench`
 - 16.2 `kai fmt`
-- 16.3 `kai repl` y el flujo iterativo
+- 16.3 `kai init`, `kai add`, `kai install`, `kai update` —
+       gestión de paquetes (extiende lo del cap. 8)
 - 16.4 `kai lsp` e integración con editores
-- 16.5 Estructura típica de un proyecto kaikai
+- 16.5 Variables de entorno: `KAI_NO_STDLIB`, `KAI_STDLIB`,
+       `CC`, `CFLAGS`
+- 16.6 Estructura típica de un proyecto kaikai
 - *Sin ejercicios* — capítulo de referencia.
 
 #### Capítulo 17 · Caso de estudio integrador

@@ -6,7 +6,7 @@ sus dos formas de cuerpo, las recursivas del cap. 5 que
 descomponen tipos suma. Este capítulo pone todo junto y
 agrega lo que faltaba: cómo declarar funciones con cuidado,
 cómo escribir lambdas, qué son las funciones de orden
-superior, y los tres operadores pipe que kaikai usa para
+superior, y los cuatro operadores pipe que kaikai usa para
 encadenar transformaciones.
 
 Vamos también a ver con detalle algo que kaikai promete y que
@@ -23,9 +23,11 @@ tipo de retorno, y un cuerpo separado por `=`:
 fn doble(x: Int) : Int = x * 2
 ```
 
-El cuerpo puede ser una sola expresión, como arriba, o un
-bloque `{ ... }` con `let`s intermedios y la expresión final
-implícita:
+El cuerpo puede tomar **tres formas**. La primera es la que
+acabas de ver: una sola expresión.
+
+La segunda es un bloque `{ ... }` con `let`s intermedios y la
+expresión final implícita:
 
 ```kai
 fn cuadrado_mas_uno(x: Int) : Int = {
@@ -34,9 +36,60 @@ fn cuadrado_mas_uno(x: Int) : Int = {
 }
 ```
 
-La regla práctica que ya viste en §3.7: cuerpo corto cuando
-la función es directa, bloque cuando hay pasos intermedios.
-El compilador acepta los dos.
+La tercera son **arms con patrones**, donde la función decide
+qué hacer según la forma de sus argumentos. Cada arm empieza
+con `case`, va seguido de un patrón, una flecha `->` y la
+expresión que ese caso produce:
+
+```kai
+fn signo(n: Int) : String {
+  case 0          -> "cero"
+  case k when k > 0 -> "positivo"
+  case _          -> "negativo"
+}
+```
+
+Es exactamente equivalente a:
+
+```kai
+fn signo(n: Int) : String =
+  match n {
+    0          -> "cero"
+    k if k > 0 -> "positivo"
+    _          -> "negativo"
+  }
+```
+
+solo que sin el `match` envoltorio. Cuando la función tiene
+**varios parámetros**, los patrones se listan separados por
+comas, uno por argumento:
+
+```kai
+fn divide(a: Real, b: Real) : Result[Error, Real] {
+  case _, 0.0 -> Err(DivCero)
+  case a, b   -> Ok(a / b)
+}
+```
+
+Una regla del lenguaje: dentro del bloque `{ ... }` de una
+función, **o todo son `case` arms o todo son sentencias**.
+Mezclar es un error de parseo. Si necesitas setup antes de
+discriminar, envuelve un `match` en la forma corta o extrae
+un helper.
+
+La regla práctica para elegir entre las tres:
+
+- **Cuerpo corto con `=`** cuando la función es una expresión
+  directa, sin pasos intermedios.
+- **Bloque con `{ ... }`** cuando hay `let`s intermedios o
+  varios pasos visualmente separados.
+- **Multi-clause con `case`** cuando la función decide
+  principalmente por la forma de sus argumentos. Es la forma
+  natural para muchas funciones recursivas y para
+  dispatchers sobre tipos suma.
+
+Las tres son aceptadas por el compilador; la elección es
+para quien lee.
 
 Algunas notas que conviene fijar:
 
@@ -173,7 +226,7 @@ funcional.
 
 ## 6.4 Pipes: `|>`, `|`, `||`
 
-kaikai trae tres operadores para encadenar. Los tres son
+kaikai trae cuatro operadores para encadenar. Los cuatro son
 distintos y cada uno comunica una intención específica.
 
 ### `|>` — apply
@@ -189,8 +242,35 @@ xs |> list.filter(es_par)        # ≡ list.filter(xs, es_par)
 xs |> list.map((n) => n * 2)     # ≡ list.map(xs, (n) => n * 2)
 ```
 
-Es un operador **general**: el lado derecho puede ser
-cualquier llamada. Es lo que viene de Elixir y de F#.
+Pero hay un detalle útil: a veces el valor del pipe **no
+quiere ir como primer argumento**. Por ejemplo, una función
+de división donde lo que estás canalizando es el divisor, no
+el dividendo. kaikai te deja indicar la posición exacta con
+un guión bajo `_`:
+
+```kai
+fn divide(a: Int, b: Int) : Int = a / b
+
+100 |> divide(_, 4)        # ≡ divide(100, 4) = 25
+100 |> divide(1000, _)     # ≡ divide(1000, 100) = 10
+```
+
+El `_` es el **hueco** donde aterriza el lado izquierdo. Sin
+guión bajo, el lado izquierdo va al primer argumento — es la
+forma corta de `f(_, a, b)`. Con guión bajo, va donde lo
+pongas. Esto te deja escribir pipelines naturales aun cuando
+las funciones del stdlib no estén diseñadas con el "argumento
+principal" en la primera posición.
+
+```kai
+fn entre(low: Int, x: Int, high: Int) : Bool =
+  x >= low and x <= high
+
+50 |> entre(0, _, 100)     # ≡ entre(0, 50, 100) = true
+```
+
+Es lo que viene de Elixir y F#: un pipe **general** con
+control de posición opcional.
 
 ### `|` — map
 
@@ -236,20 +316,58 @@ fn vecinos(n: Int) : [Int] = [n - 1, n, n + 1]
 # = [9, 10, 11, 19, 20, 21, 29, 30, 31]
 ```
 
-`||` aparece menos que los otros dos en código del día a día,
-pero cuando lo necesitas — expandir cada elemento a múltiples,
-encadenar transformaciones que producen listas — la
-alternativa es `xs |> list.map(f) |> list.concat`, que es
-peor de leer.
+`||` desazucara directamente a `list.flat_map(xs, f)`, igual
+que `|` desazucara a `list.map(xs, f)`. Las tres formas
+siguientes son equivalentes:
+
+```kai
+let extendido = [10, 20, 30] || vecinos                  # azúcar
+let extendido = list.flat_map([10, 20, 30], vecinos)     # llamada directa
+let extendido = [10, 20, 30] | vecinos |> list.concat    # map + concat
+```
+
+Las tres producen `[9, 10, 11, 19, 20, 21, 29, 30, 31]`. La
+primera dice "expande cada elemento". La segunda es la
+llamada con su nombre real. La tercera muestra cómo flat-map
+se define: mapear y aplanar. Usa `||` cuando quieras hacer
+evidente la operación dentro de un pipeline, y la llamada
+directa cuando no estés en pipeline.
+
+### `|?` — filter
+
+`xs |? p` es exactamente `list.filter(xs, p)`. El operador
+**filtra** la lista quedándose con los elementos para los que
+el predicado es verdadero:
+
+```kai
+fn es_par(n: Int) : Bool = n % 2 == 0
+
+[1, 2, 3, 4, 5, 6] |? es_par      # ≡ list.filter(xs, es_par) = [2, 4, 6]
+```
+
+El predicado es cualquier expresión que el contexto admita
+como `(a) -> Bool`: un nombre de función, una flecha, una
+lambda en bloque:
+
+```kai
+xs |? es_par                       # nombre
+xs |? (n) => n > 3                 # flecha
+xs |? { n -> n % 3 == 0 }          # bloque
+```
+
+`|?` cierra la familia de pipes específicos para listas: `|`
+es map, `||` es flat-map, `|?` es filter. Las tres
+operaciones canónicas de transformación de secuencias tienen
+su propio operador.
 
 ### Todo junto
 
-Los tres operadores se mezclan libremente:
+Los cuatro operadores se mezclan libremente:
 
 ```kai
 let total =
   pedidos
-  |> list.filter(esta_pendiente)
+  |? esta_pendiente
   | aplicar_descuento
   | monto_de
   |> list.sum
@@ -258,8 +376,8 @@ let total =
 Cada paso del pipeline hace una sola cosa. La firma del
 resultado se entiende de izquierda a derecha. No hay
 variables temporales, no hay anidamiento de paréntesis. Esto
-es la principal razón de que kaikai tenga tres operadores y
-no uno.
+es la principal razón de que kaikai tenga cuatro operadores
+y no uno.
 
 ## 6.5 Trailing lambdas y otros azúcares
 
@@ -271,15 +389,30 @@ superior. Los principales:
 
 Cuando una función toma una lambda como **último**
 argumento, puedes sacarla de los paréntesis y ponerla en
-llaves al final:
+llaves al final, con la sintaxis `{ param -> body }`:
 
 ```kai
-xs |> list.map { (n) => n * 2 }
-xs |> list.filter { (n) => n > 0 }
+list.map(xs) { n -> n * 2 }
+list.filter(xs) { n -> n > 0 }
 ```
 
-Es equivalente a `xs |> list.map((n) => n * 2)`, solo más
-amigable de leer cuando el cuerpo de la lambda es largo.
+Es equivalente a `list.map(xs, (n) => n * 2)`. Las dos formas
+son aceptadas; la trailing es más amigable cuando el cuerpo
+de la lambda es largo.
+
+Cuando estás dentro de un pipeline con `|`, el bloque-lambda
+es aún más compacto. `|` ya espera una función como segundo
+argumento, así que puedes escribir el cuerpo directamente:
+
+```kai
+xs | { n -> n * 2 }              # equivalente a xs | ((n) => n * 2)
+xs | { n -> n * n + 1 }
+```
+
+Esto se lee casi como prosa: "los xs, cada uno transformado a
+n por dos". La forma vale tanto para `|` como para `||` (que
+también esperan una función), y se mezcla con el resto del
+pipeline sin ruido.
 
 ### Doble trailing lambda
 
@@ -329,11 +462,10 @@ hacer antes de devolver. Compara estas dos versiones de
 
 ```kai
 # NO en posición de cola: la llamada deja pendiente `h + ...`
-fn suma_naive(xs: [Int]) : Int =
-  match xs {
-    []        -> 0
-    [h, ...t] -> h + suma_naive(t)
-  }
+fn suma_naive(xs: [Int]) : Int {
+  case []         -> 0
+  case [h, ...t]  -> h + suma_naive(t)
+}
 ```
 
 Acá, después de que `suma_naive(t)` devuelve, todavía hay que
@@ -343,11 +475,10 @@ pendiente. Cada llamada consume un frame del stack.
 ```kai
 # En posición de cola: la última cosa que hace cada rama es
 # **solo** la llamada, sin operación pendiente.
-fn suma_tco_loop(xs: [Int], acc: Int) : Int =
-  match xs {
-    []        -> acc
-    [h, ...t] -> suma_tco_loop(t, acc + h)
-  }
+fn suma_tco_loop(xs: [Int], acc: Int) : Int {
+  case [], a         -> a
+  case [h, ...t], a  -> suma_tco_loop(t, a + h)
+}
 
 fn suma(xs: [Int]) : Int = suma_tco_loop(xs, 0)
 ```
@@ -437,7 +568,7 @@ Y el pipeline las compone:
 ```kai
 let total =
   pedidos
-  |> list.filter(esta_pendiente)
+  |? esta_pendiente
   | aplicar_descuento
   | monto_de
   |> list.sum
@@ -459,7 +590,7 @@ fn cargo_si_grande(p: Pedido) : Pedido =
 
 let total =
   pedidos
-  |> list.filter(esta_pendiente)
+  |? esta_pendiente
   | aplicar_descuento
   | cargo_si_grande
   | monto_de

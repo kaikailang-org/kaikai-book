@@ -6,20 +6,18 @@
 
 # Recursión lineal NO en posición de cola: cada llamada deja
 # pendiente la suma `h + ...`. Funciona pero crece en stack.
-fn suma_naive(xs: [Int]) : Int =
-  match xs {
-    []        -> 0
-    [h, ...t] -> h + suma_naive(t)
-  }
+fn suma_naive(xs: [Int]) : Int {
+  case []        -> 0
+  case [h, ...t] -> h + suma_naive(t)
+}
 
 # Recursión en posición de cola: la última cosa que hace cada
 # rama recursiva es **solo** la llamada, sin operación
 # pendiente. kaikai la convierte a un loop.
-fn suma_tco_loop(xs: [Int], acc: Int) : Int =
-  match xs {
-    []        -> acc
-    [h, ...t] -> suma_tco_loop(t, acc + h)
-  }
+fn suma_tco_loop(xs: [Int], acc: Int) : Int {
+  case [], a        -> a
+  case [h, ...t], a -> suma_tco_loop(t, a + h)
+}
 
 fn suma(xs: [Int]) : Int = suma_tco_loop(xs, 0)
 
