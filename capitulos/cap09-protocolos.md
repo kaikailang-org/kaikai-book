@@ -19,7 +19,7 @@ de Haskell. Pero kaikai elige un punto preciso del espacio de
 diseño: **single-dispatch explícito, sin propagación de
 constraints, sin tipos de orden superior**. Eso le saca
 complejidad al sistema de tipos a cambio de algunas cosas que
-no se pueden expresar — y este capítulo cubre las dos caras.
+no se pueden expresar, y este capítulo cubre las dos caras.
 
 ## 9.1 Por qué hay protocolos
 
@@ -61,7 +61,7 @@ protocol Show {
 
 `Self` es un nombre reservado que se refiere al tipo que más
 adelante implemente el protocolo. Cada operación menciona
-`Self` al menos una vez — por eso se llama **single-dispatch**:
+`Self` al menos una vez: por eso se llama **single-dispatch**,
 la operación se decide a partir de un único tipo, el de
 `Self`.
 
@@ -116,8 +116,8 @@ implementar para él.
 
 `Ord` merece una nota: tiene **tres operaciones**, no una.
 `cmp(a, b) : Int` devuelve un entero negativo si `a < b`, cero
-si son iguales, positivo si `a > b`. Las otras dos —
-`min(a, b)` y `max(a, b)` — devuelven uno de los dos
+si son iguales, positivo si `a > b`. Las otras dos,
+`min(a, b)` y `max(a, b)`, devuelven uno de los dos
 argumentos según el orden. Las tres se implementan juntas en
 el mismo bloque:
 
@@ -168,7 +168,7 @@ $ kai run ejemplo.kai
 Persona { nombre: Ada, edad: 30 }
 ```
 
-El formato canónico — `TipoNombre { campo: valor, ... }` —
+El formato canónico, `TipoNombre { campo: valor, ... }`,
 es lo que el `#derive(Show)` produce, y es razonable para
 debugging y logs. Si quieres otro formato (por ejemplo, el
 clásico `(3, 4)` para un punto), escribes el `impl` a mano,
@@ -182,7 +182,7 @@ con un mensaje que apunta al campo problemático.
 
 La regla práctica:
 
-- **Empieza con `#derive`** — es la forma más rápida y casi
+- **Empieza con `#derive`**: es la forma más rápida y casi
   siempre correcta para records.
 - **Cambia a `impl` manual** cuando la implementación derivada
   no te sirve: formato distinto, igualdad solo por algunos
@@ -239,7 +239,7 @@ es candidato.
 ## 9.6 Por qué no hay typeclasses al estilo Haskell
 
 Los protocolos de kaikai pueden parecerse a las typeclasses
-de Haskell — y se inspiran en ellas — pero son **deliberadamente
+de Haskell (y se inspiran en ellas), pero son **deliberadamente
 más simples**. Tres cosas que kaikai no hace y que Haskell sí:
 
 **Sin constraints en firmas de funciones.** Esta es la
@@ -279,7 +279,7 @@ list.sort_by(transacciones, cmp)   # cmp viene de impl Ord for Transaccion
 
 La diferencia es chica de escribir pero grande conceptualmente:
 en Haskell el `Ord` está implícito, en kaikai está explícito.
-La función `sort_by` no "exige" que `T` tenga `Ord` — solo
+La función `sort_by` no "exige" que `T` tenga `Ord`: solo
 exige que **alguien le pase una función de comparación**. Que
 esa función venga de un `impl Ord for T` es decisión del que
 llama, no de la firma de `sort_by`.
@@ -287,7 +287,7 @@ llama, no de la firma de `sort_by`.
 **Sin tipos de orden superior** (HKT). `protocol Functor[F[_]]`
 no parsea. Los parámetros de tipo son siempre de primer
 orden. Esto descarta una familia de abstracciones (Functor,
-Monad, Applicative, etc.) que en Haskell son centrales — y
+Monad, Applicative, etc.) que en Haskell son centrales y
 que en kaikai se resuelven con efectos algebraicos (cap. 12)
 y combinadores explícitos.
 
@@ -310,7 +310,7 @@ llamas a algo que requiere `Ord`, le pasas el comparador.
   qué `Ord` se está usando.
 
 ¿Qué se pierde? Algunas abstracciones que en Haskell son
-elegantes — particularmente todo lo que vive sobre Functor y
+elegantes, particularmente todo lo que vive sobre Functor y
 amigos. Ese trade-off es deliberado: las abstracciones que
 kaikai prioriza viven en el sistema de efectos (cap. 12), no
 en el sistema de tipos.
@@ -335,7 +335,7 @@ fn main() {
 ```
 
 Esto unifica la sintaxis: `+` para `Int`, `Real`, vectores,
-matrices, monedas — todos los que tengan `impl Add for ...`.
+matrices, monedas, todos los que tengan `impl Add for ...`.
 `==` para todo lo que tenga `Eq`. La uniformidad no es
 casualidad; es el primer beneficio de tener un mecanismo
 único para "operaciones dispatched por tipo".
@@ -351,8 +351,8 @@ Los operadores que kaikai trata como protocolos:
 
 Los tipos primitivos los implementan todos. Los tipos tuyos
 los implementan cuando los declaras. Y cuando algún operador
-no tiene sentido para un tipo, simplemente no lo implementas
-— y el compilador rechaza esa expresión.
+no tiene sentido para un tipo, simplemente no lo implementas,
+y el compilador rechaza esa expresión.
 
 ## Ejercicios
 
@@ -381,6 +381,6 @@ de manera que rechace edades negativas o mayores a 130.
 `stdlib/protocols.kai`. ¿Cuántas operaciones tiene `Hash`?
 ¿Cómo se usaría para implementar una tabla de hash de
 `Cuenta`? Diseña la firma de la función que harías para
-"buscar una cuenta por id" en una tabla de hash hipotética
-— ¿qué tendría que estar implementado en `Cuenta` para que
+"buscar una cuenta por id" en una tabla de hash hipotética:
+¿qué tendría que estar implementado en `Cuenta` para que
 funcionara?

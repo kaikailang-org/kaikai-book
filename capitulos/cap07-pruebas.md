@@ -3,8 +3,8 @@
 Hasta acá estuviste escribiendo funciones y mirando la salida.
 Es un ciclo razonable mientras tu programa cabe en la cabeza,
 pero no escala. Apenas tu código pasa de unas decenas de
-líneas — apenas hay más de tres funciones que se llaman entre
-sí —, dejas de poder verificar a ojo que cada cambio
+líneas (apenas hay más de tres funciones que se llaman entre
+sí), dejas de poder verificar a ojo que cada cambio
 mantiene el comportamiento.
 
 Para eso están las pruebas. kaikai trae **tres construcciones
@@ -35,7 +35,7 @@ test "casos pequeños" {
 }
 ```
 
-`test` es un **bloque top-level** — convive con `fn` en el
+`test` es un **bloque top-level**: convive con `fn` en el
 mismo archivo, no se anida en otra función. Su nombre es un
 literal de string que el runner reporta tal cual. Adentro vas
 escribiendo aserciones con `assert`: una expresión `Bool` que
@@ -106,8 +106,8 @@ edición → prueba toma uno o dos segundos en archivos chicos.
 
 Si llamas a `kai test` sin nombre de archivo, no hay un
 descubrimiento automático estilo `pytest` o `cargo test`. Eso
-es deliberado — kaikai todavía no tiene un layout de proyecto
-estándar — pero conviene saber el flujo: tú apuntas al archivo,
+es deliberado (kaikai todavía no tiene un layout de proyecto
+estándar), pero conviene saber el flujo: tú apuntas al archivo,
 el runner corre todo lo que ese archivo y sus imports declaren
 con `test`.
 
@@ -126,7 +126,7 @@ las pocas semanas:
   `"validar email rechaza espacios"` se entiende; `"test_3"`
   no.
 
-## 7.3 `check "..."` — propiedades
+## 7.3 `check "..."`: propiedades
 
 Los tests que viste hasta acá comprueban **casos fijos**:
 "para esta entrada, espero esta salida". Es lo que en otros
@@ -224,7 +224,7 @@ Si lo que quieres comprobar es "para la entrada 7, sale 14",
 eso es un `test`. Si es "para cualquier entrada, lo que sale
 duplica el valor", es un `check`.
 
-## 7.4 `bench "..." { ... }` — medir, no adivinar
+## 7.4 `bench "..." { ... }`: medir, no adivinar
 
 La tercera construcción es para **performance**. `bench` toma
 un bloque y mide cuánto tarda en ejecutarse, repetido muchas
@@ -260,8 +260,8 @@ $ kai bench ejemplos/cap07/04_bench_basico.kai
 Cada bench corre 1000 iteraciones (configurable con
 `KAI_BENCH_ITERS`) y reporta nanosegundos por iteración.
 
-Lo importante de los benchmarks no es el número absoluto —
-depende de la máquina y de qué más esté corriendo —, sino la
+Lo importante de los benchmarks no es el número absoluto
+(depende de la máquina y de qué más esté corriendo), sino la
 **comparación**. Cuando refactorizas una función crítica,
 corres el bench antes y después. Cuando tu pipeline empieza
 a sentirse lento, comparas las versiones de funciones
@@ -308,7 +308,7 @@ pocas funciones críticas donde la performance importa.
 Una nota sobre el orden de escritura. La secuencia natural
 suele ser:
 
-1. **Empieza con un `test`** — el caso concreto del feature
+1. **Empieza con un `test`**: el caso concreto del feature
    que estás desarrollando. Es la prueba más fácil de
    escribir y la más fácil de mirar cuando algo falla.
 2. **Agrega `test`s** para casos de borde a medida que
@@ -406,7 +406,7 @@ check "Suma(a, b) == Suma(b, a)" with a: Int, b: Int {
 ```
 
 Dos propiedades. La primera dice que un literal evalúa a sí
-mismo — una invariante trivial pero importante: si fallara,
+mismo: una invariante trivial pero importante. Si fallara,
 algo está muy mal en el evaluador. La segunda comprueba que
 la suma es conmutativa **a través del evaluador**, no solo
 a nivel de aritmética entera.
@@ -417,8 +417,8 @@ a nivel de aritmética entera.
 
 Cien iteraciones por cada una con valores generados al azar.
 Ninguna falló. Si en el futuro alguien rompe la
-conmutatividad — por ejemplo, agregando un efecto secundario
-al evaluar `Suma` que dependa del orden — los `check`s
+conmutatividad (por ejemplo, agregando un efecto secundario
+al evaluar `Suma` que dependa del orden), los `check`s
 detectan el contraejemplo de inmediato.
 
 ### Benchmarks para las decisiones de performance
@@ -460,7 +460,7 @@ $ kai bench ejemplos/cap07/05_evaluador_pruebas.kai
 
 Y `kai run` y `kai build` ignoran las tres construcciones.
 El binario que despliegas no carga ni los tests ni los
-checks ni los benches — solo el código de producción.
+checks ni los benches: solo el código de producción.
 
 Esa unificación es lo que hace al modelo cómodo. No hay
 proyecto de tests aparte, no hay frameworks que importar, no
@@ -470,8 +470,8 @@ respuesta posible: al lado de la función.
 
 ## Ejercicios
 
-**7.1.** Toma una función simple que ya hayas escrito —
-puede ser de los capítulos anteriores o algo nuevo —, y
+**7.1.** Toma una función simple que ya hayas escrito
+(puede ser de los capítulos anteriores o algo nuevo) y
 escribe tres tests para ella: uno con un caso típico, uno
 con un caso de borde, y uno con un input inválido (si el
 tipo lo admite). Corre `kai test` y verifica que pasen los
@@ -481,8 +481,8 @@ tres.
 devuelva `true` si la lista está ordenada de menor a mayor.
 Después escribe un `check` que verifique
 `esta_ordenada(list.sort(xs))` para todo `xs : [Int]`. ¿Qué
-pasa si tu `esta_ordenada` tiene un bug — por ejemplo,
-acepta listas que tienen un elemento "saltado"? El runner
+pasa si tu `esta_ordenada` tiene un bug (por ejemplo,
+acepta listas que tienen un elemento "saltado")? El runner
 te debería entregar un contraejemplo.
 
 **7.3.** Vuelve al evaluador del §7.6. Agrega un constructor
@@ -511,5 +511,5 @@ check "concatenar listas preserva el largo" with xs: [Int], ys: [Int] {
 debería pasar si alguien (tú, en seis meses, con prisa)
 "optimiza" `list.concat` y rompe la propiedad? Escribe el
 check, córrelo, y luego prueba romper `list.concat`
-mentalmente — ¿en qué iteración crees que el contraejemplo
+mentalmente: ¿en qué iteración crees que el contraejemplo
 aparecería?

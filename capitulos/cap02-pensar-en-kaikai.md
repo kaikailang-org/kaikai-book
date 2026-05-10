@@ -12,7 +12,7 @@ sonar familiar; pasa a la Parte II y nos vemos en el capítulo
 que pide. Te van a ahorrar incomodidades en los siguientes
 ciento cincuenta páginas.
 
-No vamos a abrir la teoría de cada idea — eso es trabajo de los
+No vamos a abrir la teoría de cada idea: eso es trabajo de los
 capítulos siguientes. Lo que queremos es nombrar el cambio de
 hábito, mostrarlo, y darle al lector las palabras para
 reconocerlo cuando aparezca.
@@ -31,7 +31,7 @@ expresiones, no: se componen anidándose.
 
 kaikai borra esa frontera. **Casi todo es expresión.** Un `if`
 produce un valor. Un `match` produce un valor. Un bloque
-`{ ... }` produce un valor — el de la última expresión adentro.
+`{ ... }` produce un valor: el de la última expresión adentro.
 Una función no necesita `return` porque su cuerpo *es* la
 expresión que devuelve.
 
@@ -115,8 +115,8 @@ intermedias. Solo es posible porque cada paso es una expresión
 que se puede componer con la siguiente.
 
 `|>` es el más general de cuatro operadores que kaikai ofrece
-para encadenar. Los otros tres — `|` (map sobre listas), `||`
-(flat-map) y `|?` (filter) — son atajos para los casos que
+para encadenar. Los otros tres (`|` map sobre listas, `||`
+flat-map y `|?` filter) son atajos para los casos que
 aparecen una y otra vez. Los vemos en detalle en el capítulo 6.
 
 ## 2.2 Inmutabilidad por defecto
@@ -147,14 +147,14 @@ que no cambian:
 - **Los bugs disminuyen.** Una clase entera de errores
   ("esperaba X, pero al final del método era Y") simplemente no
   existe.
-- **Los tests son más simples.** Una función pura — entrada,
-  salida, sin estado escondido — se prueba dándole entradas y
+- **Los tests son más simples.** Una función pura (entrada,
+  salida, sin estado escondido) se prueba dándole entradas y
   comparando salidas. Eso es todo.
 
 Una nota sobre vocabulario. La forma habitual de atar un nombre
 es `let`, que es inmutable. Para los casos en que de verdad
-necesitas una celda mutable local — un contador, un acumulador,
-un cursor — kaikai te da `var`, junto a dos azúcares que
+necesitas una celda mutable local (un contador, un acumulador,
+un cursor), kaikai te da `var`, junto a dos azúcares que
 acompañan: `@nombre` para leer la celda y `nombre := v` para
 escribirla.
 
@@ -179,9 +179,9 @@ mismo, así que el efecto `State` no se asoma a la firma de la
 función. Una función con `var` adentro tiene la misma firma que
 si no lo tuviera.
 
-Mutaciones más visibles — escribir un array que vive más allá
+Mutaciones más visibles (escribir un array que vive más allá
 del bloque, enviar a la mailbox de otro actor, modificar memoria
-que se observa desde fuera — sí aparecen en la firma, bajo
+que se observa desde fuera) sí aparecen en la firma, bajo
 efectos como `Mutable`, `Actor` o los que correspondan. Esa
 distinción la veremos en el capítulo 13.
 
@@ -251,9 +251,9 @@ En la versión kaikai, el `match` es exhaustivo: si te olvidas
 del caso `None`, no compila. El compilador te recuerda lo que
 en Python depende de tu memoria.
 
-¿Y las excepciones? kaikai tiene un mecanismo equivalente — el
+¿Y las excepciones? kaikai tiene un mecanismo equivalente (el
 efecto `Fail` y, más en general, los efectos algebraicos del
-capítulo 12 — pero también ahí lo que puede fallar aparece en el
+capítulo 12), pero también ahí lo que puede fallar aparece en el
 tipo. Las "excepciones invisibles" que en Java o Python pueden
 brotar de cualquier llamada, en kaikai no existen. Si una
 función puede saltar a otro lado, su firma lo declara.
@@ -328,8 +328,8 @@ match x {
 }
 ```
 
-Los patrones también pueden traer **guardas** — condiciones
-adicionales que se evalúan después del match estructural —, y
+Los patrones también pueden traer **guardas** (condiciones
+adicionales que se evalúan después del match estructural) y
 caracteres comodín (`_`) cuando no te interesa el dato.
 
 Lo importante: el compilador verifica **exhaustividad**. Si
@@ -432,7 +432,7 @@ ven como se ven.
   de mantener pocas formas en el lenguaje.
 - **De Rust** kaikai aprende qué *no* hacer: los tipos suma y
   el pattern matching son lecciones que Rust enseña bien. El
-  borrow checker, en cambio, kaikai prefiere evitarlo —
+  borrow checker, en cambio, kaikai prefiere evitarlo:
   Perceus + fibras aisladas resuelven el problema sin pedirle
   al programador que entienda lifetimes.
 
@@ -449,8 +449,8 @@ decisiones. Si llegaste hasta acá, ya tienes el mapa.
 
 **2.1.** Vuelve al programa `02_fizzbuzz.kai` del capítulo 1.
 Identifica todas las **expresiones** que devuelven un valor.
-¿Cuántas hay? ¿Hay alguna **sentencia** estricta — algo que se
-ejecute por su efecto sin producir nada útil — fuera de las
+¿Cuántas hay? ¿Hay alguna **sentencia** estricta (algo que se
+ejecute por su efecto sin producir nada útil) fuera de las
 llamadas a `println`?
 
 **2.2.** En tu lenguaje habitual, escribe una versión corta del

@@ -5,7 +5,7 @@ lenguaje de programación funcional, con tipado estático, efectos
 algebraicos como primitiva de primera clase, pipelines al estilo
 Elixir, compilación a código nativo vía LLVM y un modelo de
 memoria basado en reference counting Perceus más fibras aisladas
-estilo BEAM — sin garbage collector y sin borrow checker.
+estilo BEAM: sin garbage collector y sin borrow checker.
 
 Por Eduardo Díaz ([lnds](https://github.com/lnds)).
 
@@ -39,7 +39,7 @@ imperativo u orientado a objetos (Python, Go, Java, JavaScript,
 C#, Rust) **pero que no necesariamente ha trabajado en un
 lenguaje funcional**. Conceptos como tipos algebraicos, pattern
 matching, inmutabilidad por defecto y efectos-en-los-tipos se
-introducen con puentes desde lo que ya conoces — no se asumen.
+introducen con puentes desde lo que ya conoces, no se asumen.
 
 Si ya manejas Haskell, OCaml, Elixir o Scala, los primeros
 capítulos puedes hojearlos; el material distintivo vive en la
@@ -50,12 +50,12 @@ qué es una función, un tipo, una lista y un test.
 
 ## Ediciones
 
-El libro se publica en dos ediciones, ambas de primera clase —
-ninguna es traducción de la otra:
+El libro se publica en dos ediciones, ambas de primera clase:
+ninguna es traducción de la otra.
 
-- **Español** — capítulos en `capitulos/`, ejemplos en
+- **Español**: capítulos en `capitulos/`, ejemplos en
   `ejemplos/`. Voz calibrada contra mi [blog](https://lnds.net).
-- **Inglés** — capítulos en `chapters/`, ejemplos en
+- **Inglés**: capítulos en `chapters/`, ejemplos en
   `examples/`. Voz calibrada contra los documentos de diseño en
   `kaikai/docs/` y otra prosa técnica adyacente.
 
@@ -69,16 +69,16 @@ original (inglés). Las figuras viven una sola vez bajo
 ## Estructura del repositorio
 
 ```
-CLAUDE.md             — instrucciones para el agente que asiste la escritura
-estructura.md         — tabla de contenidos completa (14 capítulos + 5 apéndices)
-capitulos/            — capítulos en español, capNN-*.md
-chapters/             — capítulos en inglés, chNN-*.md
-ejemplos/capNN/       — fuentes citadas por la edición en español
-examples/chNN/        — fuentes citadas por la edición en inglés
-figuras/              — diagramas e imágenes (comunes cuando son neutrales)
-borradores/           — notas y material que aún no es capítulo
-README.md             — versión en inglés de este archivo
-LEEME.md              — este archivo
+CLAUDE.md             instrucciones para el agente que asiste la escritura
+estructura.md         tabla de contenidos completa (14 capítulos + 5 apéndices)
+capitulos/            capítulos en español, capNN-*.md
+chapters/             capítulos en inglés, chNN-*.md
+ejemplos/capNN/       fuentes citadas por la edición en español
+examples/chNN/        fuentes citadas por la edición en inglés
+figuras/              diagramas e imágenes (comunes cuando son neutrales)
+borradores/           notas y material que aún no es capítulo
+README.md             versión en inglés de este archivo
+LEEME.md              este archivo
 ```
 
 ## Compilar y correr los ejemplos

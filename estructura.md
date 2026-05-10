@@ -74,7 +74,7 @@ encaja:
 Cierre con una frase con peso (estilo blog), no con un resumen
 del libro.
 
-### Parte I — Introducción
+### Parte I: Introducción
 
 #### Capítulo 1 · Tour de kaikai
 
@@ -109,10 +109,10 @@ necesita ablandar algunas asunciones antes de seguir.
 - 2.4 Funciones puras y efectos visibles en el tipo
 - 2.5 Pattern matching como herramienta de control de flujo
 - 2.6 Una breve genealogía: ML, Haskell, Erlang, Elixir, Koka,
-      Effekt — qué tomó kaikai de cada uno
+      Effekt; qué tomó kaikai de cada uno
 - *3 ejercicios* de comprensión, no de código.
 
-### Parte II — El lenguaje
+### Parte II: El lenguaje
 
 #### Capítulo 3 · Tipos básicos y expresiones
 
@@ -132,7 +132,7 @@ necesita ablandar algunas asunciones antes de seguir.
 - 4.2 Acceso a campos, sugar posicional
 - 4.3 Listas: construcción, recorrido, patrones
 - 4.4 Strings como entidades aparte (no listas de chars)
-- 4.5 `Option[T]` y `Result[E, T]` — uso cotidiano
+- 4.5 `Option[T]` y `Result[E, T]`: uso cotidiano
 - 4.6 Tuples y cuándo usarlas vs. records
 - *6 ejercicios*
 
@@ -172,8 +172,8 @@ archivo, y se ejecutan vía el driver `kai`.
 
 - 7.1 `test "..." { ... }` y `assert`
 - 7.2 `kai test` y el ciclo de feedback corto
-- 7.3 `check "..." with x: T { ... }` — property-based
-- 7.4 `bench "..." { ... }` — medir, no adivinar
+- 7.3 `check "..." with x: T { ... }`: property-based
+- 7.4 `bench "..." { ... }`: medir, no adivinar
 - 7.5 Cuándo usar cuál (regla mental: caso fijo → `test`,
        invariante → `check`, rendimiento → `bench`)
 - 7.6 Caso de estudio: tests + checks para el evaluador del
@@ -238,10 +238,10 @@ web/fintech del día a día.
 #### Capítulo 11 · Programación por contrato y refinement types
 
 kaikai recoge dos mecanismos de Eiffel, Ada y D que conviven
-mejor de lo que se reconoce en el mainstream: **contratos** —
-precondiciones y postcondiciones que viven en la firma — y
-**refinement types** — restricciones sobre los valores que un
-tipo admite. Los dos cierran la Parte II del libro como
+mejor de lo que se reconoce en el mainstream: **contratos**
+(precondiciones y postcondiciones que viven en la firma) y
+**refinement types** (restricciones sobre los valores que un
+tipo admite). Los dos cierran la Parte II del libro como
 remate del hilo "información en el tipo, costo cero en
 runtime" que arrancan los efectos y que continúan UoM.
 
@@ -254,7 +254,7 @@ runtime" que arrancan los efectos y que continúan UoM.
        a runtime
 - 11.6 Comparación con pruebas (cap. 7) y con tipos suma
        (cap. 5): tres formas de garantía
-- 11.7 La familia Design by Contract: Eiffel, Ada 2012, D — qué
+- 11.7 La familia Design by Contract: Eiffel, Ada 2012, D; qué
        toma kaikai de cada uno y dónde se aparta. Cubre el
        paralelo con Eiffel (`old` no necesario por inmutabilidad,
        sin invariants de clase porque no hay clases), con Ada
@@ -267,7 +267,7 @@ runtime" que arrancan los efectos y que continúan UoM.
        y operaciones contractadas
 - *6 ejercicios*
 
-### Parte III — Lo distintivo
+### Parte III: Lo distintivo
 
 #### Capítulo 12 · Efectos algebraicos
 
@@ -324,8 +324,8 @@ Holes (`?`, `?nombre`) son una herramienta de **diálogo con
 el compilador** que sirve a dos audiencias: el programador
 humano que diseña de arriba hacia abajo, y el agente IA al
 que le pides que rellene un programa parcialmente
-especificado. El capítulo abre con la utilidad humana —
-porque holes son útiles aunque nunca uses un LLM — y escala
+especificado. El capítulo abre con la utilidad humana
+(porque holes son útiles aunque nunca uses un LLM) y escala
 a la apuesta estratégica del lenguaje (Tier 3 en
 `design.md`): kaikai diseñado para que un LLM pueda
 autorearlo, aunque su corpus de entrenamiento contenga poca
@@ -362,19 +362,19 @@ un experimento en esa dirección.
 - *5 ejercicios* (un par requieren acceso a un LLM; los otros se
   resuelven a mano leyendo la salida del compilador)
 
-### Parte IV — Práctica
+### Parte IV: Práctica
 
 #### Capítulo 16 · Tooling: el binario `kai`
 
 - 16.1 `kai run`, `kai build`, `kai test`, `kai check`, `kai bench`
 - 16.2 `kai fmt`
-- 16.3 `kai init`, `kai add`, `kai install`, `kai update` —
+- 16.3 `kai init`, `kai add`, `kai install`, `kai update`:
        gestión de paquetes (extiende lo del cap. 8)
 - 16.4 `kai lsp` e integración con editores
 - 16.5 Variables de entorno: `KAI_NO_STDLIB`, `KAI_STDLIB`,
        `CC`, `CFLAGS`
 - 16.6 Estructura típica de un proyecto kaikai
-- *Sin ejercicios* — capítulo de referencia.
+- *Sin ejercicios*: capítulo de referencia.
 
 #### Capítulo 17 · Caso de estudio integrador
 
@@ -420,13 +420,13 @@ sintaxis y estilo de ejemplos.
 No coincide con el orden de lectura. Conviene escribir primero los
 capítulos que más estabilizan vocabulario y estilo de ejemplos:
 
-1. **Cap. 1 — Tour.** Establece el tono y el formato de los
+1. **Cap. 1: Tour.** Establece el tono y el formato de los
    ejemplos. Si esto está bien, el resto fluye.
-2. **Cap. 5 — Sum types.** Es el corazón del modelo de tipos. Si
+2. **Cap. 5: Sum types.** Es el corazón del modelo de tipos. Si
    queda claro, la mitad del libro queda ordenada.
-3. **Cap. 12 — Efectos.** Capítulo más difícil. Escribirlo
+3. **Cap. 12: Efectos.** Capítulo más difícil. Escribirlo
    temprano destapa cualquier ambigüedad de la doc del lenguaje.
-4. **Cap. 13 — Concurrencia y memoria.** Depende del 12.
+4. **Cap. 13: Concurrencia y memoria.** Depende del 12.
 5. Resto en orden de tabla.
 
 El cap. 17 (caso de estudio integrador) y los apéndices se

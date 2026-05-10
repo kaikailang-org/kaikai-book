@@ -137,11 +137,11 @@ dos operandos tienen que ser `Real`.
 ```kai
 let a : Int = 7
 let b : Int = 2
-println("a / b  = #{a / b}")     # 3 — sobre Int, / trunca
+println("a / b  = #{a / b}")     # 3: sobre Int, / trunca
 
 let x : Real = 7.0
 let y : Real = 2.0
-println("x / y = #{x / y}")      # 3.5 — sobre Real, hay parte
+println("x / y = #{x / y}")      # 3.5: sobre Real, hay parte
                                  #       fraccionaria
 ```
 
@@ -212,7 +212,7 @@ let x = 7        # error: nombre ya definido en este ámbito
 ```
 
 Lo que sí puedes hacer es atar el mismo nombre **en un ámbito
-interno**, lo que produce un *shadowing* — el nombre local
+interno**, lo que produce un *shadowing*: el nombre local
 oculta al externo:
 
 ```kai
@@ -221,7 +221,7 @@ let x = 42
   let x = 7      # OK: shadowing dentro del bloque
   println("#{x}")    # 7
 }
-println("#{x}")      # 42 — el de afuera no cambió
+println("#{x}")      # 42: el de afuera no cambió
 ```
 
 Esto es ortogonal a la mutación. No estás "cambiando `x`":
@@ -277,7 +277,7 @@ if i <= n {
 
 Es la forma habitual de "haz algo o sigue". Y si la rama del
 `then` produce un valor de otro tipo, ese valor **se descarta
-en silencio** — el `if` sigue siendo `Unit`:
+en silencio**: el `if` sigue siendo `Unit`:
 
 ```kai
 if x > 0 {

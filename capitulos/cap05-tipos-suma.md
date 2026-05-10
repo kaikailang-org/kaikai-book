@@ -11,7 +11,7 @@ vez que los manejas, no quieres soltarlos.
 El capítulo va de menos a más. Empezamos por los sum types
 básicos, pasamos por la recursión en tipos, vemos `match` con
 todas sus formas, llegamos a las uniones de tipos existentes
-— una idea poco común en lenguajes mainstream — y cerramos
+(una idea poco común en lenguajes mainstream) y cerramos
 con un evaluador completo de expresiones aritméticas con
 errores tipados.
 
@@ -29,7 +29,7 @@ type Color = Rojo | Verde | Azul
 de los tres. No hay un cuarto valor escondido, no hay `null`,
 no hay "color desconocido". El tipo lo dice todo.
 
-Si vienes de un lenguaje con `enum`, esto se le parece — pero
+Si vienes de un lenguaje con `enum`, esto se le parece, pero
 con dos diferencias: los constructores **pueden cargar datos**,
 y el compilador **verifica que los uses todos** cuando
 decides según el constructor.
@@ -108,8 +108,8 @@ Lo viste arriba pero conviene fijarlo. Un constructor puede:
   `Rectangulo(Real, Real)`). El constructor se aplica como una
   función a los datos para producir el valor.
 
-No hay límite en cuántos datos puede cargar un constructor — la
-gramática los acepta todos — pero por ergonomía, si pasas de
+No hay límite en cuántos datos puede cargar un constructor: la
+gramática los acepta todos, pero por ergonomía, si pasas de
 tres o cuatro datos posicionales conviene declarar un record y
 ponerlo en el payload. La diferencia entre
 
@@ -129,8 +129,8 @@ type Evento = Login(DatosLogin) | Logout(DatosLogout)
 
 es que el segundo se lee mejor en cualquier lugar donde
 construyas o destructures un evento. La regla práctica: si los
-datos se nombran solos por su posición — un punto es `(Real,
-Real)` — quedan posicionales. Si los datos requieren que el
+datos se nombran solos por su posición (un punto es `(Real,
+Real)`), quedan posicionales. Si los datos requieren que el
 lector recuerde el orden, conviene un record.
 
 ## 5.3 Recursión en tipos
@@ -229,8 +229,8 @@ sola pasada.
 
 ### Guardas
 
-Un patrón puede ir seguido de `if` y una condición — una
-**guarda** — que se evalúa después del match estructural. Si
+Un patrón puede ir seguido de `if` y una condición, una
+**guarda**, que se evalúa después del match estructural. Si
 la guarda es falsa, la rama no se considera y se sigue con la
 siguiente:
 
@@ -246,7 +246,7 @@ fn signo(n: Int) : String =
 El patrón `k if k > 0` calza con cualquier entero, lo ata a
 `k`, y entonces evalúa `k > 0`. Si es verdad, ejecuta la rama;
 si no, sigue. La rama final con `_` no tiene guarda y calza
-con todo lo restante — los enteros que no son cero ni
+con todo lo restante: los enteros que no son cero ni
 positivos.
 
 Las guardas son convenientes pero no participan en el
@@ -259,7 +259,7 @@ omites, no compila.
 
 El compilador verifica que **todos los habitantes posibles**
 del tipo del escrutinio estén cubiertos. Si tu `Expr` tiene
-cuatro constructores y tu `match` cubre tres, no compila —
+cuatro constructores y tu `match` cubre tres, no compila,
 con un mensaje que te dice cuál falta:
 
 ```
@@ -281,8 +281,8 @@ te importan, escribe los tres.
 ## 5.5 Uniones de tipos existentes
 
 Hasta ahora todos los `|` que hemos visto tenían **nombres
-nuevos** del lado derecho — `Rojo`, `Verde`, `Lit`,
-`Circulo` — que kaikai auto-declara como constructores. Pero
+nuevos** del lado derecho (`Rojo`, `Verde`, `Lit`,
+`Circulo`) que kaikai auto-declara como constructores. Pero
 el operador `|` no exige nombres nuevos. Si los nombres del
 lado derecho **ya están declarados como tipos**, kaikai
 construye una **unión** que puede llevar cualquier valor de
@@ -340,8 +340,8 @@ fn describir(e: ErrorConsulta) : String =
 ```
 
 Esto funciona, pero es tedioso para uniones grandes. Y peor,
-si un componente crece — agregas `RegulatoryHold` a
-`ErrorAuth` —, el `match` se vuelve un error de compilación
+si un componente crece (agregas `RegulatoryHold` a
+`ErrorAuth`), el `match` se vuelve un error de compilación
 en cinco lugares en vez de uno.
 
 El segundo sabor es el **patrón de narrowing** `bind :
@@ -475,7 +475,7 @@ Tres cosas que conviene fijar:
   nivel**, no más allá.
 - **Solo funciona si la función actual devuelve un tipo
   compatible.** Si tu función devuelve `Int`, no puedes usar
-  `!` sobre un `Result` adentro — el `return Err(e)` no
+  `!` sobre un `Result` adentro: el `return Err(e)` no
   tendría dónde aterrizar. El compilador te lo dice claro.
 - **El upcast sucede en el `return`.** Cuando
   `check_identidad(req)` devuelve `Result[ErrorIdentidad, _]`
@@ -501,7 +501,7 @@ def consultar_saldo(req):
 ```
 
 El que llama a `consultar_saldo` en Python tiene que leer el
-código de las funciones internas — o la doc, si la hay — para
+código de las funciones internas (o la doc, si la hay) para
 saber qué excepciones esperar. En kaikai, la firma se lo dice.
 
 ## 5.7 Caso de estudio: evaluador con errores tipados
@@ -548,7 +548,7 @@ type ErrorEval       = ErrorAritmetico | ErrorAmbiente
 Tres tipos: dos categorías y la unión. Cuatro constructores
 en total, pero distribuidos en categorías que tienen sentido
 por sí mismas. `RaizNegativa(Real)` carga el valor que se
-intentó pasar a la raíz — es información útil para el
+intentó pasar a la raíz: es información útil para el
 mensaje de error final. `NoDefinida(String)` carga el nombre
 de la variable que faltaba.
 
@@ -564,7 +564,7 @@ fn lookup(env: Env, nombre: String) : Result[ErrorEval, Real] {
 }
 ```
 
-`Env` es un alias para una lista de pares — recorrido lineal,
+`Env` es un alias para una lista de pares: recorrido lineal,
 suficiente para un evaluador de juguete. `lookup` está escrito
 en la **forma multi-clause** del cap. 6: cada `case` lista un
 patrón por argumento separado por coma (acá `env` y `nombre`),
@@ -575,7 +575,7 @@ con un `when` opcional para guardas. Tres casos:
 - Cualquier otra cabeza: seguimos en la cola.
 
 Fíjate que el `Err` es del tipo `ErrorEval`, no
-`ErrorAmbiente` — pero `NoDefinida(nombre)` se construye como
+`ErrorAmbiente`, pero `NoDefinida(nombre)` se construye como
 `ErrorAmbiente` y el upcast implícito lo promueve a
 `ErrorEval` en el sitio del retorno, sin conversión explícita.
 
@@ -650,8 +650,8 @@ fn imprimir(r: Result[ErrorEval, Real]) : Unit =
 
 `describir` consume un `ErrorEval` enumerando sus tres
 constructores. Acá el `match` enumera porque queremos
-mensajes específicos por constructor; en otros casos —
-cuando la lógica para cada categoría difiere — usaríamos
+mensajes específicos por constructor; en otros casos,
+cuando la lógica para cada categoría difiere, usaríamos
 narrowing.
 
 El programa principal arma el ambiente, evalúa varias
@@ -709,7 +709,7 @@ una hoja, o `None` si en alguna pregunta no hay respuesta.
 `ErrorAuth`. Agrega un tercer componente `ErrorRedAdministrativa`
 con dos constructores. Reescribe el `match` con narrowing
 para que el código quede igual de corto. Luego agrega un
-constructor nuevo a `ErrorAuth` (digamos `Bloqueado`) — ¿qué
+constructor nuevo a `ErrorAuth` (digamos `Bloqueado`): ¿qué
 pasa con tu código? ¿En cuántos lugares interviene el
 compilador?
 

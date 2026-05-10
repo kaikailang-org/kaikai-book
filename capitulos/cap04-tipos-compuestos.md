@@ -69,7 +69,7 @@ que conviene tener presentes:
   posición, di posición.
 
 - **El spread tiene reglas.** Solo un spread por literal, y
-  tiene que ir primero — `Punto { x: 7, ...p }` es un error
+  tiene que ir primero: `Punto { x: 7, ...p }` es un error
   de parseo. Los inicializadores que sigan al spread tienen
   que ser nombrados (`x: expr`), no abreviados ni
   posicionales. Estas restricciones son a propósito: hacen
@@ -92,7 +92,7 @@ fn distancia_cuadrada(a: Punto, b: Punto) : Int = {
 ```
 
 Cuando los nombres de los campos te sirven tal cual, puedes
-omitir el `:` y dejar solo el nombre — atando el campo a una
+omitir el `:` y dejar solo el nombre, atando el campo a una
 variable del mismo nombre:
 
 ```kai
@@ -182,12 +182,12 @@ match xs {
 
 El compilador requiere que cubras todos los casos, así que si
 escribes solo `[]` y `[h, ...t]` te alcanza para cualquier
-lista — pero si quieres distinguir el caso de "exactamente un
+lista; pero si quieres distinguir el caso de "exactamente un
 elemento", escribes `[unico]` antes del catch-all.
 
 Una convención del lenguaje: si la cola **te interesa**, le
-das un nombre — `[h, ...t]` y después usas `t`. Si **no te
-interesa**, escribes `...` solo, sin nombre — `[h, ...]`. Es
+das un nombre, `[h, ...t]`, y después usas `t`. Si **no te
+interesa**, escribes `...` solo, sin nombre: `[h, ...]`. Es
 la diferencia entre "tomo la cabeza, el resto lo guardo para
 después" y "tomo la cabeza, el resto lo descarto". Un nombre
 inventado que no se usa es ruido visual; la forma corta
@@ -201,7 +201,7 @@ let tercero = list.nth(xs, 2)    # Option[Int]
 ```
 
 Fíjate en el tipo de retorno: **`Option[a]`**, no `a`. Una
-lista enlazada no garantiza que un índice exista — si pides
+lista enlazada no garantiza que un índice exista: si pides
 el elemento número 99 de una lista de tres, no hay valor que
 devolver. El tipo te obliga a considerarlo. Esto es coherente
 con `Option` y `Result` que vimos en §4.5: kaikai prefiere
@@ -209,7 +209,7 @@ encerrar la posibilidad de fallar en el tipo antes que
 abortar en runtime.
 
 Hay dos cosas más que conviene saber sobre el acceso por
-índice. Una es que es **`O(n)`** — las listas son enlazadas, no
+índice. Una es que es **`O(n)`**: las listas son enlazadas, no
 indexadas; recorrer hasta la posición `i` cuesta `i` pasos.
 Para acceso aleatorio rápido kaikai tiene `Array[T]`, que
 veremos en el capítulo 13.
@@ -250,7 +250,7 @@ code points; una letra acentuada puede tener una o dos
 representaciones; un grafema puede saltar bytes y code points
 arbitrariamente. Tratar a un string como lista de chars te
 obliga a tomar una decisión sobre qué cuenta como
-"carácter" — y todas las decisiones son malas para algún caso.
+"carácter", y todas las decisiones son malas para algún caso.
 
 kaikai opta por hacer al `String` **opaco**: las operaciones
 que tienen sentido se exponen en el módulo `string` del
@@ -308,7 +308,7 @@ match primer_par(xs) {
 ```
 
 Una función que parsea una edad de un string puede fallar de
-dos formas distintas — y eso es exactamente para lo que sirve
+dos formas distintas, y eso es exactamente para lo que sirve
 `Result`:
 
 ```kai
@@ -326,7 +326,7 @@ fn parsear_edad(s: String) : Result[ErrorEdad, Int] =
 `Result[ErrorEdad, Int]` se lee como "un `Int` o un error de
 tipo `ErrorEdad`". El error está en el primer parámetro y el
 valor exitoso en el segundo, al revés de la convención que
-usan algunos lenguajes — kaikai sigue la tradición de Haskell
+usan algunos lenguajes; kaikai sigue la tradición de Haskell
 en este punto.
 
 Tres patrones que vas a ver mucho:
@@ -344,7 +344,7 @@ Tres patrones que vas a ver mucho:
 
 `Option` y `Result` son tipos suma como cualquier otro. Los
 hemos separado del capítulo 5 porque su rol en el diseño
-cotidiano es central — los vas a usar antes de empezar a
+cotidiano es central: los vas a usar antes de empezar a
 declarar tus propios tipos suma.
 
 ## 4.6 Tuplas
@@ -360,7 +360,7 @@ let trio    = ("Ada", 30, true)
 Su tipo se escribe igual: `(Int, Int)`, `(String, Int, Bool)`.
 
 kaikai admite tuplas de **arity 2 a 4**. No hay tuplas de un
-elemento — un paréntesis solo, `(e)`, es agrupación, no
+elemento: un paréntesis solo, `(e)`, es agrupación, no
 tupla. Y `(a, b, c, d, e)` es un error de parseo.
 
 ¿Por qué la cota? Porque las tuplas largas son ilegibles. Si
@@ -441,7 +441,7 @@ por qué tupla y no un record?
 escribe `fn centro(ps: [Punto]) : Option[Punto]` que devuelva
 el promedio de coordenadas, o `None` si la lista está vacía.
 Pista: vas a necesitar dos pasadas o un acumulador, y
-`int_to_real` para promediar — pero nota que el resultado
+`int_to_real` para promediar, pero nota que el resultado
 final tiene que volver a ser `Punto` con campos `Int`, así
 que también necesitas `real_to_int` (o conformarte con la
 parte entera).

@@ -4,10 +4,10 @@ Este capítulo cierra la Parte II y completa el hilo
 "información en el tipo, costo cero en runtime" que arrancan
 los efectos algebraicos (cap. 12), continúan las unidades de
 medida (cap. 10) y rematan acá con dos mecanismos que
-provienen de Eiffel (1986) y Ada 2012: los **contratos** —
-precondiciones y postcondiciones que viven en la firma de
-una función — y los **refinement types** — restricciones
-sobre los valores que un tipo admite.
+provienen de Eiffel (1986) y Ada 2012: los **contratos**
+(precondiciones y postcondiciones que viven en la firma de
+una función) y los **refinement types** (restricciones
+sobre los valores que un tipo admite).
 
 Los dos mecanismos comparten la misma idea: **enunciar
 restricciones en el tipo, hacer que el compilador las
@@ -64,13 +64,13 @@ fn divide(a: Int, b: Int) : Int
 
 Tres componentes:
 
-- **`requires <expr>`** — una **precondición**. La expresión
+- **`requires <expr>`**: una **precondición**. La expresión
   tiene que ser `true` al **entrar** a la función. El caller
   es responsable. Si se viola, el bug es del caller.
-- **`ensures <expr>`** — una **postcondición**. La expresión
+- **`ensures <expr>`**: una **postcondición**. La expresión
   tiene que ser `true` al **salir** de la función. Tu cuerpo
   es responsable. Si se viola, el bug es interno.
-- **`result`** — un nombre reservado dentro del `ensures`
+- **`result`**: un nombre reservado dentro del `ensures`
   que se refiere al valor de retorno.
 
 Una función puede tener múltiples `requires` y múltiples
@@ -105,7 +105,7 @@ Tres detalles que vale fijar:
 
 - **El compilador prueba estáticamente lo que puede**. Si
   llamas a `divide(10, 0)` con literales, el compilador ve
-  que `b == 0` y rechaza la llamada en compile time — no
+  que `b == 0` y rechaza la llamada en compile time: no
   esperas a runtime. Si llamas con valores dinámicos, inserta
   el assert.
 
@@ -118,8 +118,8 @@ Tres detalles que vale fijar:
 
 Dentro de una postcondición tienes a disposición:
 
-- **`result`** — el valor de retorno.
-- **Los nombres de los parámetros** — sus valores de entrada.
+- **`result`**: el valor de retorno.
+- **Los nombres de los parámetros**: sus valores de entrada.
 - **Cualquier función pura** que el módulo provea.
 
 Esto te deja escribir relaciones entre la entrada y la salida:
@@ -136,9 +136,9 @@ fn ordenar(xs: [Int]) : [Int]
 
 La primera dice "la salida es el doble de la entrada". La
 segunda dice "la lista resultante tiene el mismo largo que
-la entrada" — un invariante razonable de cualquier
+la entrada": un invariante razonable de cualquier
 ordenamiento. Notar que **no** estamos diciendo que `result`
-está ordenado — solo que conserva el largo. Las
+está ordenado, solo que conserva el largo. Las
 postcondiciones documentan lo que vale la pena documentar; no
 tienen que ser exhaustivas.
 
@@ -163,7 +163,7 @@ type Edad = Int where self >= 0 and self <= 130
 type Puerto = Int where self >= 1 and self <= 65535
 ```
 
-El predicado se refiere a `self` — el valor que estamos
+El predicado se refiere a `self`, el valor que estamos
 restringiendo. Cualquier valor de tipo `NoNeg` cumple `self
 >= 0` por construcción; cualquier `Probabilidad` cae en el
 intervalo unitario; cualquier `Puerto` está dentro del rango
@@ -179,7 +179,7 @@ let y : NoNeg = 0 - 5     # ERROR: -5 no satisface self >= 0
 ```
 
 Si lo cumples con un valor dinámico, el compilador inserta un
-chequeo en runtime — igual que con un `requires` cuyo argumento
+chequeo en runtime: igual que con un `requires` cuyo argumento
 no se puede deducir estáticamente.
 
 Las funciones que aceptan tipos refinados **se benefician de
@@ -238,8 +238,8 @@ Lo que kaikai **no hace**, deliberadamente, es **invocar un
 solver SMT como Z3 o CVC5** para probar contratos
 arbitrariamente complejos. Esa es la frontera con SPARK (el
 subset verificable de Ada). kaikai prefiere un evaluador de
-intervalos pequeño, decidible, lineal — y diferir el resto a
-runtime — sobre tener compilación impredecible y dependencias
+intervalos pequeño, decidible, lineal (y diferir el resto a
+runtime), sobre tener compilación impredecible y dependencias
 externas pesadas.
 
 La regla mental: **lo que el compilador puede probar barato, lo
@@ -378,7 +378,7 @@ Vale enumerar lo que kaikai **deliberadamente** no soporta:
 
 ¿Por qué estas restricciones? El argumento es el mismo de
 todo el lenguaje: **simplicidad y predecibilidad**. Un sistema
-de tipos que invoca un solver es opaco — el programador no
+de tipos que invoca un solver es opaco: el programador no
 sabe por qué su programa compila o no, y los mensajes de
 error se vuelven incomprensibles. Un sistema acotado, que
 prueba lo obvio y difiere lo demás, da garantías más débiles
@@ -428,15 +428,15 @@ Lectura humana:
 - **`retirar`** exige monto positivo y suficiente saldo, y
   promete que el saldo final es el inicial menos el monto.
 
-¿Qué pasa si alguien — tú, en seis meses, con prisa —
+¿Qué pasa si alguien (tú, en seis meses, con prisa)
 escribe `retirar(cuenta, 0 - 50)` (pasando un negativo)? El
 contrato `requires monto > 0` se viola y el programa aborta
 con un mensaje que apunta a la línea exacta del `requires`.
 No silencio, no comportamiento extraño, no saldo
 inconsistente: aborto inmediato y diagnóstico.
 
-¿Y si el cuerpo de `retirar` tuviera un bug — alguien cambia
-`c.saldo - monto` por `c.saldo + monto` accidentalmente — el
+¿Y si el cuerpo de `retirar` tuviera un bug (alguien cambia
+`c.saldo - monto` por `c.saldo + monto` accidentalmente)? El
 `ensures result.saldo == c.saldo - monto` se viola al salir
 y aborta también. La postcondición es tu seguro contra bugs
 internos, así como el `requires` es tu seguro contra abusos
@@ -489,6 +489,6 @@ contrato) usarías para cada restricción?
 **11.5.** Lee `docs/refinements-and-contracts.md` del repo
 de kaikai. Identifica una restricción que la doc menciona
 como "post-MVP". Discute con un colega o con un agente IA
-qué consecuencias tendría implementarla — qué clase de
+qué consecuencias tendría implementarla: qué clase de
 errores nuevos atraparía, qué clase de programas se
 volverían más cargados de chequeos.

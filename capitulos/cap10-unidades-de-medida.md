@@ -1,7 +1,7 @@
 # Capítulo 10 · Unidades de medida y branded types
 
-En 1999, la NASA perdió la sonda Mars Climate Orbiter — 327
-millones de dólares de proyecto — porque dos módulos de
+En 1999, la NASA perdió la sonda Mars Climate Orbiter (327
+millones de dólares de proyecto) porque dos módulos de
 software se intercambiaban valores numéricos sin acuerdo
 sobre las unidades. Uno producía empuje en libras-fuerza por
 segundo, otro lo leía como newtons por segundo. Nadie había
@@ -44,7 +44,7 @@ unit kg
 
 Eso es todo. `unit USD` introduce un símbolo `USD` que el
 sistema de tipos puede usar como anotación. No hay
-implementación, no hay valor en runtime — `unit` solo
+implementación, no hay valor en runtime: `unit` solo
 declara la existencia del símbolo.
 
 Para anotar un número con una unidad, usas paréntesis
@@ -71,7 +71,7 @@ Tres cosas que vale fijar:
   (`m`, `s`, `kg`), las nombradas por personas en titlecase
   (`Newton`, `Pascal`), y las monedas en mayúsculas según ISO
   4217 (`USD`, `EUR`, `CLP`). El compilador no fuerza ninguna
-  de estas convenciones — es estilo de la comunidad.
+  de estas convenciones: es estilo de la comunidad.
 
 ## 10.2 Aritmética con unidades
 
@@ -92,8 +92,8 @@ let mezcla = precio + 1.20<EUR>     # error de tipo
 ```
 
 el compilador rechaza con un error que dice "esperaba `USD`,
-encontré `EUR`". El programa nunca corre con valores mezclados
-— el bug se detecta antes de que exista.
+encontré `EUR`". El programa nunca corre con valores mezclados:
+el bug se detecta antes de que exista.
 
 La regla más amplia es:
 
@@ -107,7 +107,7 @@ La regla más amplia es:
 
 La aritmética con un valor sin unidad y uno con unidad es
 asimétrica. Multiplicar por un escalar (`2.0 * precio`) es
-legal — el escalar se trata como adimensional. Sumar un
+legal: el escalar se trata como adimensional. Sumar un
 escalar (`precio + 1.0`) es error: no sabemos en qué unidad
 está el `1.0`.
 
@@ -136,7 +136,7 @@ let presion : Real<kg / (m * sec^2)> = fuerza / area
 El sistema de tipos hace **álgebra de unidades**. `m * m` se
 simplifica a `m^2`, `sec / sec` se cancela a sin-unidad,
 `(m / sec) * (sec)` se cancela a `m`. Es álgebra abeliana
-sobre los símbolos de unidad — y cualquier expresión legal en
+sobre los símbolos de unidad, y cualquier expresión legal en
 matemática elemental sobre unidades es legal en kaikai.
 
 ### Alias para unidades derivadas
@@ -151,7 +151,7 @@ unit Hertz  = 1 / sec
 ```
 
 Y a partir de ahí, `Real<Newton>` es exactamente lo mismo que
-`Real<kg * m / sec^2>` — el compilador los acepta
+`Real<kg * m / sec^2>`: el compilador los acepta
 intercambiables. La diferencia es para quien lee:
 `Real<Newton>` comunica intención; `Real<kg * m / sec^2>`
 comunica derivación.
@@ -159,7 +159,7 @@ comunica derivación.
 ## 10.4 Unidades genéricas
 
 Hasta acá, cada función opera sobre una unidad concreta. Pero
-muchas operaciones son **agnósticas a la unidad** — promediar,
+muchas operaciones son **agnósticas a la unidad**: promediar,
 sumar, ordenar, encontrar el máximo. Esas funciones se
 escriben **genéricas sobre la unidad**, igual que una función
 puede ser genérica sobre el tipo de los elementos de una
@@ -173,7 +173,7 @@ fn promedio[u: Measure](a: Real<u>, b: Real<u>) : Real<u> =
 `u : Measure` declara `u` como un parámetro de tipo en el
 **kind** `Measure`. Lo único que `u` admite es ser una
 unidad. La función `promedio` acepta dos `Real<u>` y devuelve
-un `Real<u>` — el "para cualquier u" es lo que permite usarla
+un `Real<u>`: el "para cualquier u" es lo que permite usarla
 con `USD`, `kg`, `m/sec`, lo que sea, **siempre y cuando los
 dos argumentos tengan la misma unidad**.
 
@@ -218,7 +218,7 @@ let monto_usd : Real<USD> = monto_eur * tasa    # 88 USD
 
 La aritmética se sigue: `EUR * (USD / EUR)` cancela `EUR` y
 deja `USD`. El compilador verifica que la cancelación sea
-correcta — si pones la tasa al revés (`Real<EUR / USD>`), la
+correcta: si pones la tasa al revés (`Real<EUR / USD>`), la
 multiplicación produce `Real<EUR^2 / USD>`, que no calza con
 el tipo `Real<USD>` esperado en el `let`.
 
@@ -277,16 +277,16 @@ de usar una unidad como **etiqueta** sobre un tipo numérico
 se llama **branded type**, y es uno de los usos que más rinde
 en código del día a día. Casos típicos:
 
-- `Int<UserId>` vs `Int<OrderId>` — identificadores que
+- `Int<UserId>` vs `Int<OrderId>`: identificadores que
   comparten tipo subyacente.
-- `Int<Cents>` vs `Int<Quantity>` — un dinero en centavos vs
+- `Int<Cents>` vs `Int<Quantity>`: un dinero en centavos vs
   una cantidad de unidades.
-- `Int<Seconds>` vs `Int<Milliseconds>` — los timeouts mal
+- `Int<Seconds>` vs `Int<Milliseconds>`: los timeouts mal
   expresados son responsable de un porcentaje no menor de
   bugs intermitentes.
-- `String<Email>` vs `String<Username>` — strings que pasaron
+- `String<Email>` vs `String<Username>`: strings que pasaron
   por validaciones distintas.
-- `String<RawHtml>` vs `String<Sanitized>` — input sin escapar
+- `String<RawHtml>` vs `String<Sanitized>`: input sin escapar
   vs ya escapado para inyección segura.
 
 Los dos primeros casos sobre `Int` funcionan en cualquier
@@ -322,7 +322,7 @@ fn convertir[origen: Measure, destino: Measure](monto: Real<origen>, tasa: Real<
 ```
 
 Tres declaraciones. `sumar` es genérica sobre la moneda y
-preserva la unidad de los argumentos — la misma técnica del
+preserva la unidad de los argumentos: la misma técnica del
 §10.4. `convertir` toma un monto y una tasa, y devuelve el
 monto en la unidad destino, gracias a la cancelación de
 unidades.
@@ -358,7 +358,7 @@ sostiene.
 ¿Qué pasa el día que un colega llega y agrega una nueva
 moneda? Declara un `unit JPY`, agrega su tasa, y el resto del
 código sigue compilando o no según corresponda. Ningún
-cálculo viejo se rompe — los tipos son orthogonales — y los
+cálculo viejo se rompe (los tipos son ortogonales), y los
 cálculos que necesitan considerar JPY tienen que decirlo
 explícito. Es el mismo principio que el cap. 5 mostró con las
 uniones de errores: agregar un componente nuevo es seguro
@@ -378,7 +378,7 @@ let total = sumar(saldo_usd, saldo_eur)   # compila, suma valores
 Funciona, devuelve un número, y produce un total que **no
 significa nada**. En kaikai con unidades, ese mismo programa
 no compila. El bug que en otros lenguajes se descubre en
-producción — o nunca, según la suerte — acá no existe.
+producción (o nunca, según la suerte) aquí no existe.
 
 ## Ejercicios
 

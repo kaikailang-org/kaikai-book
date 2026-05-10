@@ -121,19 +121,19 @@ evalúa a un valor de tipo función. kaikai te da tres formas
 para escribirlas:
 
 ```kai
-# Forma 1 — flecha con un argumento
+# Forma 1: flecha con un argumento
 let cuadrado = (x) => x * x
 
-# Forma 2 — flecha con varios argumentos
+# Forma 2: flecha con varios argumentos
 let suma = (a, b) => a + b
 
-# Forma 3 — placeholder, lambda implícita unaria
+# Forma 3: placeholder, lambda implícita unaria
 xs |> list.filter(. > 0)
 ```
 
 Las dos primeras son intercambiables; la elección es de
 estilo. La tercera es **azúcar** que solo aplica cuando el
-contexto **espera una función** — el segundo argumento de
+contexto **espera una función**: el segundo argumento de
 `list.filter`, por ejemplo, es de tipo `(Int) -> Bool`, y el
 compilador convierte `. > 0` en `(n) => n > 0`.
 
@@ -178,7 +178,7 @@ El caso más simple es una función que aplica otra dos veces:
 fn dos_veces[a](f: (a) -> a, x: a) : a = f(f(x))
 ```
 
-`f` es el primer parámetro y su tipo es `(a) -> a` —
+`f` es el primer parámetro y su tipo es `(a) -> a`:
 cualquier función que vaya de `a` a `a`. `dos_veces(mas_uno,
 5)` calcula `mas_uno(mas_uno(5))` = `7`. La función es
 **genérica** sobre el tipo `a`: funciona con `Int`, con
@@ -187,7 +187,7 @@ tipo de entrada que de salida. Las anotaciones `[a]` después
 del nombre declaran el parámetro de tipo.
 
 Un caso más interesante es una función que **devuelve** otra
-función — un *closure*:
+función: un *closure*.
 
 ```kai
 fn sumar(n: Int) : (Int) -> Int = (x) => x + n
@@ -229,7 +229,7 @@ funcional.
 kaikai trae cuatro operadores para encadenar. Los cuatro son
 distintos y cada uno comunica una intención específica.
 
-### `|>` — apply
+### `|>`: apply
 
 `xs |> f` es exactamente `f(xs)`. El operador toma el lado
 izquierdo y lo pone como **primer argumento** del llamado de
@@ -256,7 +256,7 @@ fn divide(a: Int, b: Int) : Int = a / b
 ```
 
 El `_` es el **hueco** donde aterriza el lado izquierdo. Sin
-guión bajo, el lado izquierdo va al primer argumento — es la
+guión bajo, el lado izquierdo va al primer argumento: es la
 forma corta de `f(_, a, b)`. Con guión bajo, va donde lo
 pongas. Esto te deja escribir pipelines naturales aun cuando
 las funciones del stdlib no estén diseñadas con el "argumento
@@ -272,7 +272,7 @@ fn entre(low: Int, x: Int, high: Int) : Bool =
 Es lo que viene de Elixir y F#: un pipe **general** con
 control de posición opcional.
 
-### `|` — map
+### `|`: map
 
 `xs | f` es exactamente `list.map(xs, f)`. Es un operador
 **específico** para mapear listas:
@@ -303,7 +303,7 @@ sintáctico** porque las dos transformaciones unitarias usan
 derecho es un llamado más complejo (con argumentos extra,
 sumas, lookups).
 
-### `||` — flat-map
+### `||`: flat-map
 
 `xs || f` es `list.flat_map(xs, f)`. Cada elemento `x` produce
 una **lista** `f(x)`, y el resultado es la concatenación de
@@ -333,7 +333,7 @@ se define: mapear y aplanar. Usa `||` cuando quieras hacer
 evidente la operación dentro de un pipeline, y la llamada
 directa cuando no estés en pipeline.
 
-### `|?` — filter
+### `|?`: filter
 
 `xs |? p` es exactamente `list.filter(xs, p)`. El operador
 **filtra** la lista quedándose con los elementos para los que
@@ -619,7 +619,7 @@ for p in pedidos:
 
 Funciona, pero la lógica del cálculo está enredada con la
 mecánica del bucle. Cambiar el orden de las
-transformaciones, agregar un paso, sacar un paso — todas
+transformaciones, agregar un paso, sacar un paso: todas
 operaciones que en el pipeline son una línea, en la versión
 imperativa son un refactor.
 
@@ -660,5 +660,5 @@ camino.
 **sí son números válidos**, ignorando los demás. Construye
 un pipeline usando `list.flat_map` (o `||`) y la función
 `string_to_int : String -> Option[Int]`. Pista: una función
-`Option[a] -> [a]` te ayuda — si es `Some(x)` devuelve `[x]`,
+`Option[a] -> [a]` te ayuda: si es `Some(x)` devuelve `[x]`,
 si es `None` devuelve `[]`. Ese paso es el flat-map natural.

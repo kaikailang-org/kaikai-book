@@ -15,7 +15,7 @@ Esas precisiones llegan en los capítulos siguientes.
 
 Si quieres seguir los ejemplos en tu computador, los archivos
 están en `ejemplos/cap01/` del repositorio del libro. La
-instalación de `kai` viene al final del capítulo, en §1.12 — si
+instalación de `kai` viene al final del capítulo, en §1.12; si
 te urge, salta ahí primero y vuelve.
 
 ## 1.1 Hola, kaikai
@@ -239,7 +239,7 @@ Lo que está pasando es lo siguiente:
 - `effect Log { log(msg: String) : Unit }` declara un nuevo
   efecto llamado `Log` con una operación, `log`, que recibe un
   string y devuelve nada.
-- `greet` usa esa operación. Su firma — `: Unit / Log` —
+- `greet` usa esa operación. Su firma, `: Unit / Log`,
   declara que la función tiene el efecto `Log`, sin decir cómo
   se realiza ese efecto. `greet` es agnóstica: no sabe si los
   mensajes van al terminal, a un archivo, a la nada.
@@ -317,8 +317,8 @@ sin parámetros que llama a `worker`. La pasamos como argumento
 a `fiber_spawn` para que la corra dentro de la fibra nueva.
 
 Hay mucho que decir sobre el modelo de concurrencia de kaikai
-— por qué las fibras son aisladas, cómo se cancelan, qué pasa
-con la memoria — pero todo eso vive en el capítulo 13. Lo que
+(por qué las fibras son aisladas, cómo se cancelan, qué pasa
+con la memoria), pero todo eso vive en el capítulo 13. Lo que
 importa para el tour es que el lenguaje tiene concurrencia
 estructurada de primera clase y que se trata, una vez más,
 como un efecto.
@@ -327,7 +327,7 @@ como un efecto.
 
 A esta altura ya viste tipos primitivos y tipos suma. Falta una
 construcción más: los **records**, que son lo que en la mayoría
-de los lenguajes llamarías un *struct* — un agregado con campos
+de los lenguajes llamarías un *struct*: un agregado con campos
 nombrados.
 
 ```kai
@@ -440,7 +440,7 @@ tiempo de compilación**. El binario que produce `kai build`
 opera con `Real` plano, sin overhead. Es la misma promesa de
 los efectos: información en el tipo, costo cero en runtime.
 
-El tema da para mucho más — unidades genéricas, álgebra de
+El tema da para mucho más: unidades genéricas, álgebra de
 unidades (`m/s^2`, `kg * m / s^2`), conversiones explícitas, y
 una variante muy útil llamada *branded types* que marca strings
 y enteros con tags como `UserId` o `OrderId` para que el
@@ -449,8 +449,8 @@ capítulo 10. Por ahora basta saber que existe.
 
 ## 1.8 Programación por contrato
 
-kaikai trae otra herramienta heredada de pocos lenguajes —
-Eiffel en los ochenta, Ada 2012, D — para declarar lo que una
+kaikai trae otra herramienta heredada de pocos lenguajes
+(Eiffel en los ochenta, Ada 2012, D) para declarar lo que una
 función espera de quien la llama y lo que garantiza a cambio:
 las **precondiciones** y **postcondiciones**.
 
@@ -477,7 +477,7 @@ cero al momento de llamarla". El compilador hace dos cosas
 con esa precondición: si puede **probarla en tiempo de
 compilación** (porque los argumentos son literales o porque
 ya conoce los rangos posibles), rechaza la llamada antes de
-emitir código — `divide(10, 0)` literal es un error de
+emitir código: `divide(10, 0)` literal es un error de
 compilación, no de ejecución. Si los argumentos son
 dinámicos y el compilador no alcanza a decidir, inserta un
 assert que se verifica **al entrar** a la función, y el
@@ -492,7 +492,7 @@ algún bug interno la función devolviera algo que no cumple,
 el programa también aborta.
 
 Los contratos no son comentarios. Son código que el compilador
-emite como verificaciones reales — estáticas cuando puede,
+emite como verificaciones reales: estáticas cuando puede,
 dinámicas cuando hace falta. El día que algo viole un
 contrato, vas a saberlo en el lugar exacto.
 
@@ -543,7 +543,7 @@ $ kai test ejemplos/cap01/06_pruebas.kai
 ```
 
 `test "..." { ... }` es un bloque top-level. Adentro usas
-`assert` para escribir aserciones — si una falla, el test
+`assert` para escribir aserciones: si una falla, el test
 falla y el runner sigue con los siguientes. En una build
 normal (`kai run`, `kai build`) los bloques `test` se
 ignoran: no agregan peso al binario que despliegas.
@@ -606,8 +606,8 @@ programa de arriba termina bien.
   resto espera.
 - **Trabajar con un agente IA.** Le pasas la firma con holes
   al agente y le pides que los rellene. La doc del compilador
-  se diseñó para que esa información — tipo esperado,
-  bindings en alcance, candidatos posibles — se pueda emitir
+  se diseñó para que esa información (tipo esperado,
+  bindings en alcance, candidatos posibles) se pueda emitir
   como JSON estructurado, listo para alimentar al agente.
 
 Las dos primeras son útiles para el programador humano. La
@@ -697,7 +697,7 @@ $ kai test archivo.kai    # ejecuta los bloques `test "..." { ... }` del archivo
 `kai run` es el caballo de batalla mientras lees el libro.
 Edita un archivo, córrelo, mira la salida, vuelve a editar.
 
-El capítulo 16 cubre el resto del tooling — `fmt`, `lsp`,
+El capítulo 16 cubre el resto del tooling: `fmt`, `lsp`,
 integración con editores, y los comandos de paquetes (`init`,
 `add`, `install`, `update`). Por ahora con `run` te basta.
 
@@ -707,16 +707,16 @@ Vimos en este capítulo, sin profundizar, prácticamente todo lo
 que hace distinto a kaikai. El resto del libro toma cada cosa y
 la trata en serio.
 
-- **Parte II — El lenguaje** (capítulos 3 a 11) cubre los
+- **Parte II: El lenguaje** (capítulos 3 a 11) cubre los
   tipos básicos, los tipos compuestos, los tipos suma y
   `match`, las funciones, las pruebas y benchmarks, los
   módulos, los protocolos, las unidades de medida y la
   programación por contrato. Es la mitad sólida y predecible.
-- **Parte III — Lo distintivo** (capítulos 12 a 15) toma los
+- **Parte III: Lo distintivo** (capítulos 12 a 15) toma los
   efectos algebraicos, la concurrencia con fibras, los actores
   y la apuesta del lenguaje en torno a los LLMs. Es la mitad
   donde kaikai paga su novedad.
-- **Parte IV — Práctica** (capítulos 16 y 17) se ocupa del
+- **Parte IV: Práctica** (capítulos 16 y 17) se ocupa del
   tooling y cierra con un caso de estudio integrador.
 - Antes, el **capítulo 2** te ablanda algunas asunciones si
   vienes de un mundo imperativo: expresiones vs sentencias,
