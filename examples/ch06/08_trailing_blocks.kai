@@ -1,0 +1,29 @@
+# Trailing lambdas and block-as-lambda in pipes.
+#
+# When a function takes a lambda as its last argument, you
+# can pull it out of the parens and put it in braces with
+# the syntax `{ param -> body }`. With `|` and `||` the form
+# is even more compact since they already expect a function.
+
+fn main() {
+  let xs = [1, 2, 3, 4, 5]
+
+  # 1. Form with parens and classic arrow.
+  let a = list.map(xs, (n) => n * 2)
+  println("a sum=#{list.sum(a)}")
+
+  # 2. Trailing lambda: body in braces at the end.
+  let b = list.map(xs) { n -> n * 2 }
+  println("b sum=#{list.sum(b)}")
+
+  # 3. Block-lambda in pipe: shortest form.
+  let c = xs | { n -> n * 2 }
+  println("c sum=#{list.sum(c)}")
+
+  # Multi-line bodies: braces form reads better.
+  let d = xs | { n ->
+    let square = n * n
+    square + 1
+  }
+  println("d sum=#{list.sum(d)}")
+}

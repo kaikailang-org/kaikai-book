@@ -1,0 +1,28 @@
+# `|>` with `_`: indicate the exact position where the LHS
+# of the pipe lands.
+#
+# Without `_`, the value goes to the first argument. With `_`,
+# wherever you put it.
+
+fn divide(a: Int, b: Int) : Int = a / b
+
+fn between(low: Int, x: Int, high: Int) : Bool =
+  x >= low and x <= high
+
+fn main() {
+  # Without _: value goes to the first argument.
+  let r1 = 100 |> divide(4)        # ≡ divide(100, 4) = 25
+  println("100 / 4    = #{r1}")
+
+  # With _ at position 1: explicit, same effect.
+  let r2 = 100 |> divide(_, 4)
+  println("100 / 4    = #{r2}")
+
+  # With _ at position 2: value goes as the divisor.
+  let r3 = 100 |> divide(1000, _)
+  println("1000 / 100 = #{r3}")
+
+  # With _ at an intermediate position.
+  let r4 = 50 |> between(0, _, 100)
+  println("between 0 and 100: #{r4}")
+}

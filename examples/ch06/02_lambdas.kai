@@ -1,0 +1,23 @@
+# Lambdas: three forms, depending on the case.
+
+fn call_with(f: (Int) -> Int, x: Int) : Int = f(x)
+
+fn main() {
+  # Form 1 — single-argument arrow.
+  let square = (x) => x * x
+  println("square(7)    = #{square(7)}")
+
+  # Form 2 — multi-argument arrow.
+  let sum = (a, b) => a + b
+  println("sum(3, 4)    = #{sum(3, 4)}")
+
+  # Form 3 — placeholder, implicit unary lambda.
+  # Only valid where a function is expected.
+  let xs = [1, 2, 3, 4, 5]
+  let doubles = xs |> list.map((n) => n * 2)
+  println("sum of doubles = #{list.sum(doubles)}")
+
+  # Lambdas are first-class values: pass them as arguments,
+  # bind to `let`, return them from functions.
+  println("call_with(square, 5) = #{call_with(square, 5)}")
+}

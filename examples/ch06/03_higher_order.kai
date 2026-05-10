@@ -1,0 +1,23 @@
+# Higher-order functions: take or return functions.
+
+# Takes a function as argument.
+fn twice[a](f: (a) -> a, x: a) : a = f(f(x))
+
+# Returns a new function (closure that captures `n`).
+fn add_n(n: Int) : (Int) -> Int = (x) => x + n
+
+# Function composition is a higher-order function.
+fn compose[a, b, c](f: (b) -> c, g: (a) -> b) : (a) -> c =
+  (x) => f(g(x))
+
+fn main() {
+  let plus_one = (x) => x + 1
+  println("twice(+1, 5)        = #{twice(plus_one, 5)}")
+
+  let plus_ten = add_n(10)
+  println("plus_ten(7)         = #{plus_ten(7)}")
+
+  let square = (x) => x * x
+  let comp = compose(square, plus_one)
+  println("(square . +1)(4)    = #{comp(4)}")
+}

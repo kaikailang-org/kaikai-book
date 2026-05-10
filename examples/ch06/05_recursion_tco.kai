@@ -1,0 +1,32 @@
+# Recursion with mandatory TCO.
+#
+# kaikai guarantees that a recursive call in tail position
+# does not consume stack. This lets you write loops without
+# `for`/`while` without blowing the stack on large inputs.
+
+# Linear recursion NOT in tail position: each call leaves
+# `h + ...` pending. Works but grows the stack.
+fn sum_naive(xs: [Int]) : Int {
+  case []         -> 0
+  case [h, ...t]  -> h + sum_naive(t)
+}
+
+# Tail-recursive: the last thing each branch does is **only**
+# the call, no pending operation. kaikai compiles to a loop.
+fn sum_tco_loop(xs: [Int], acc: Int) : Int {
+  case [], a         -> a
+  case [h, ...t], a  -> sum_tco_loop(t, a + h)
+}
+
+fn sum(xs: [Int]) : Int = sum_tco_loop(xs, 0)
+
+fn main() {
+  let thousand = [1..1000]
+  println("sum 1..1000 (naive) = #{sum_naive(thousand)}")
+  println("sum 1..1000 (tco)   = #{sum(thousand)}")
+
+  # With TCO we can sum much larger lists without worrying
+  # about the stack:
+  let hundred_k = [1..100_000]
+  println("sum 1..100_000 (tco) = #{sum(hundred_k)}")
+}

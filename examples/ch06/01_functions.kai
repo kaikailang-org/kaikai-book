@@ -1,0 +1,23 @@
+# Functions: short and long body forms, parameter and
+# return-type annotations, recursion.
+
+# Short body: a single expression after `=`.
+fn double(x: Int) : Int = x * 2
+
+# Long body: a block with `let`s and a final expression.
+fn square_plus_one(x: Int) : Int = {
+  let square = x * x
+  square + 1
+}
+
+# Pure function with no useful return value: serves an effect.
+# Although `Unit` is optional in `main`, in helper functions it
+# pays to annotate when there are effects involved.
+fn announce(message: String) : Unit / Stdout =
+  println("[ANNOUNCE] " ++ message)
+
+fn main() {
+  println("double(7)         = #{double(7)}")
+  println("square_plus_one(3) = #{square_plus_one(3)}")
+  announce("ready")
+}
