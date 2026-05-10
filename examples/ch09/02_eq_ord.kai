@@ -1,0 +1,46 @@
+# Implementing Eq and Ord for a custom type.
+#
+# `Eq` defines equality (`a == b`). `Ord` defines total
+# ordering via `cmp(a, b) : Int`, plus `min` and `max`.
+
+type Account = {
+  id: Int,
+  balance: Int,
+}
+
+impl Eq for Account {
+  fn eq(a: Account, b: Account) : Bool = a.id == b.id
+}
+
+# Ordering by balance, not id. The implementor chooses.
+impl Ord for Account {
+  fn cmp(a: Account, b: Account) : Int =
+    if a.balance < b.balance { 0 - 1 }
+    else if a.balance > b.balance { 1 }
+    else { 0 }
+
+  fn min(a: Account, b: Account) : Account =
+    if a.balance < b.balance { a } else { b }
+
+  fn max(a: Account, b: Account) : Account =
+    if a.balance > b.balance { a } else { b }
+}
+
+fn main() {
+  let a1 = Account { id: 1, balance: 100 }
+  let a2 = Account { id: 1, balance: 999 }    # same id, different balance
+  let a3 = Account { id: 2, balance: 50 }
+
+  let same_id_12 = eq(a1, a2)
+  let same_id_13 = eq(a1, a3)
+  println("a1 == a2: #{same_id_12}")    # true: id wins
+  println("a1 == a3: #{same_id_13}")    # false
+
+  let cmp12 = cmp(a1, a2)
+  let cmp13 = cmp(a1, a3)
+  println("cmp(a1, a2): #{cmp12}")      # negative: 100 < 999
+  println("cmp(a1, a3): #{cmp13}")      # positive: 100 > 50
+
+  let smaller = min(a1, a3)
+  println("smaller balance: #{smaller.balance}")    # 50
+}

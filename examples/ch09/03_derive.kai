@@ -1,0 +1,35 @@
+# `#derive(...)` derives the implementation structurally:
+# for each field of the record, delegates to its impl.
+#
+# For `Show`, this produces the canonical format
+# `TypeName { field1: ..., field2: ... }` reusing the `Show`
+# of each field type.
+
+#derive(Show)
+type Person = {
+  name: String,
+  age: Int,
+}
+
+#derive(Show, Eq)
+type Point = {
+  x: Int,
+  y: Int,
+}
+
+fn main() {
+  let ada = Person { name: "Ada", age: 30 }
+  println(show(ada))
+
+  # Automatic Show in interpolation.
+  println("record: #{ada}")
+
+  let p = Point { x: 3, y: 4 }
+  let q = Point { x: 3, y: 4 }
+  let r = Point { x: 5, y: 5 }
+
+  let pq_eq = eq(p, q)
+  let pr_eq = eq(p, r)
+  println("p == q: #{pq_eq}")    # true
+  println("p == r: #{pr_eq}")    # false
+}

@@ -1,0 +1,22 @@
+# Declare a protocol implementation for a custom type. The
+# stdlib already provides Show for primitive types; here we
+# extend it to a new record.
+
+type Point = { x: Int, y: Int }
+
+# Manual implementation: format as Cartesian "(x, y)".
+impl Show for Point {
+  fn show(p: Point) : String =
+    "(" ++ int_to_string(p.x) ++ ", " ++ int_to_string(p.y) ++ ")"
+}
+
+fn main() {
+  let origin = Point { x: 0, y: 0 }
+  let p      = Point { x: 3, y: 4 }
+  println(show(origin))
+  println(show(p))
+
+  # Since Show is implemented, interpolation uses it
+  # automatically:
+  println("p is at #{p}")
+}
