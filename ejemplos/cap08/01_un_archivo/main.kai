@@ -1,0 +1,13 @@
+# Un archivo, un módulo. No hay declaración `module Foo`.
+# Las funciones sin `pub` son privadas al archivo;
+# `pub` las hace visibles a otros módulos que importen este.
+
+pub fn duplicar(x: Int) : Int = x * 2
+
+fn helper(x: Int) : Int = x + 1
+
+pub fn doble_mas_uno(x: Int) : Int = helper(duplicar(x))
+
+fn main() {
+  println("doble_mas_uno(5) = #{doble_mas_uno(5)}")
+}

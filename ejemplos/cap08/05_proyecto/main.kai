@@ -1,0 +1,5 @@
+import util.matematica
+
+fn main() {
+  println("3^4 = #{matematica.pow(3, 4)}")
+}

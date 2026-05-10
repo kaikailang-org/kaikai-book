@@ -1,0 +1,11 @@
+# `import geometria` deja accesibles las cosas `pub` del módulo
+# bajo el prefijo `geometria.`. Para construir un record del
+# módulo importado usamos la forma con campos `{}` calificada.
+
+import geometria.{Punto, distancia}
+
+fn main() {
+  let a : Punto = Punto { x: 0.0, y: 0.0 }
+  let b : Punto = Punto { x: 3.0, y: 4.0 }
+  println("distancia = #{distancia(a, b)}")
+}

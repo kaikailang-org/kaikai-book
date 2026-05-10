@@ -1,0 +1,14 @@
+# Cuando importas sin desempaquetar nombres, las funciones se
+# acceden con el prefijo del módulo.
+
+import geometria
+
+fn main() {
+  # Un constructor de un módulo importado se accede con prefijo,
+  # pero la sintaxis de record literal con prefijo no está
+  # disponible: hay que importar el constructor explícito si se
+  # necesita aquí (ver `02_dos_archivos`). Aquí usamos solo la
+  # función pública.
+  let d = geometria.distancia_origen(3.0, 4.0)
+  println("distancia al origen = #{d}")
+}

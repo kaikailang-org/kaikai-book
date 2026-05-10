@@ -1,0 +1,7 @@
+pub fn pow(base: Int, exp: Int) : Int {
+  if exp == 0 {
+    1
+  } else {
+    base * pow(base, exp - 1)
+  }
+}
