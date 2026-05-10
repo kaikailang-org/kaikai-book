@@ -1,0 +1,22 @@
+# Basic units of measure: declaration, literals, arithmetic.
+#
+# `unit X` declares a unit. `Real<X>` is the type. `1.50<X>`
+# is an annotated literal. Arithmetic between values of the
+# same unit works; mixing different units is a compile error.
+
+unit USD
+unit EUR
+
+fn main() {
+  let price : Real<USD> = 1.50<USD>
+  let tip   : Real<USD> = 0.30<USD>
+  let total : Real<USD> = price + tip
+  println("total = #{total}")
+
+  # Units are preserved in return types.
+  let value_eur : Real<EUR> = 1.20<EUR>
+  println("value_eur = #{value_eur}")
+
+  # The next line does NOT compile — USD + EUR is a type error.
+  # let mix = price + value_eur
+}

@@ -1,0 +1,35 @@
+# Case study: a multi-currency wallet where the compiler
+# guarantees you never sum USD with EUR.
+
+unit USD
+unit EUR
+unit CLP
+
+fn add[c: Measure](a: Real<c>, b: Real<c>) : Real<c> = a + b
+
+# Explicit conversion: the factor carries the quotient unit
+# `dest/source`; multiplying cancels the source unit and
+# leaves the destination one.
+fn convert[source: Measure, dest: Measure](amount: Real<source>, rate: Real<dest / source>) : Real<dest> = amount * rate
+
+fn main() {
+  let usd_balance_1 : Real<USD> = 100.0<USD>
+  let usd_balance_2 : Real<USD> = 50.0<USD>
+  let total_usd : Real<USD> = add(usd_balance_1, usd_balance_2)
+  println("total USD = #{total_usd}")
+
+  let eur_balance : Real<EUR> = 80.0<EUR>
+
+  # To combine USD and EUR, convert explicitly:
+  let eur_to_usd_rate : Real<USD / EUR> = 1.10<USD / EUR>
+  let eur_in_usd : Real<USD> = convert(eur_balance, eur_to_usd_rate)
+  let global_total : Real<USD> = add(total_usd, eur_in_usd)
+  println("total converted to USD = #{global_total}")
+
+  # Convert CLP to USD with its own rate.
+  let clp_balance : Real<CLP> = 100000.0<CLP>
+  let clp_to_usd_rate : Real<USD / CLP> = 0.0011<USD / CLP>
+  let clp_in_usd : Real<USD> = convert(clp_balance, clp_to_usd_rate)
+  let final_total : Real<USD> = add(global_total, clp_in_usd)
+  println("final total = #{final_total}")
+}

@@ -1,0 +1,17 @@
+# Unit aliases: name a composition.
+
+unit m
+unit sec
+unit kg
+unit Newton = kg * m / sec^2
+
+fn main() {
+  let g : Real<m / sec^2> = 9.81<m / sec^2>
+  let mass : Real<kg> = 70.0<kg>
+  let force : Real<Newton> = mass * g
+  println("F = #{force}")
+
+  # Newton and kg*m/sec^2 are the same unit — interchangeable.
+  let force_explicit : Real<kg * m / sec^2> = force
+  println("same unit: #{force_explicit}")
+}

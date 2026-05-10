@@ -1,0 +1,26 @@
+# Generic units: a function that works for any unit without
+# knowing which.
+#
+# The parameter `u` with kind `Measure` keeps the unit
+# abstract. The function averages two values of the same
+# unit and returns a value with the same unit.
+
+fn average[u: Measure](a: Real<u>, b: Real<u>) : Real<u> =
+  (a + b) / 2.0
+
+unit USD
+unit kg
+
+fn main() {
+  let p1 : Real<USD> = 10.0<USD>
+  let p2 : Real<USD> = 20.0<USD>
+  let pp : Real<USD> = average(p1, p2)
+  println("avg prices = #{pp}")
+
+  let m1 : Real<kg> = 70.0<kg>
+  let m2 : Real<kg> = 80.0<kg>
+  let pm : Real<kg> = average(m1, m2)
+  println("avg masses = #{pm}")
+
+  # average(p1, m1) would be a type error: USD ≠ kg.
+}

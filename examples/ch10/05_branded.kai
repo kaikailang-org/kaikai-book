@@ -1,0 +1,36 @@
+# Branded types: tag a value with a label the compiler
+# respects as a distinct type.
+#
+# In v1, units apply to `Real` and `Int`. The extension to
+# `String<UserId>` is post-MVP — this example assumes the
+# fix. Meanwhile, `Int<UserId>` covers the pattern.
+
+unit UserId
+unit OrderId
+unit Seconds
+unit Milliseconds
+
+fn cancel_order(id: Int<OrderId>) : Unit / Stdout =
+  println("cancelling order #{id}")
+
+fn timeout_ms(t: Int<Milliseconds>) : Unit / Stdout =
+  println("timeout = #{t}")
+
+fn main() {
+  let _uid : Int<UserId>  = 42<UserId>
+  let oid  : Int<OrderId> = 99<OrderId>
+
+  cancel_order(oid)
+
+  # The next line does NOT compile: a UserId where an OrderId
+  # is expected, even though both are Int.
+  # cancel_order(_uid)
+
+  let _wait_sec : Int<Seconds>      = 30<Seconds>
+  let wait_ms   : Int<Milliseconds> = 30<Milliseconds>
+
+  timeout_ms(wait_ms)
+
+  # Nor this: passing seconds where milliseconds were expected.
+  # timeout_ms(_wait_sec)
+}
