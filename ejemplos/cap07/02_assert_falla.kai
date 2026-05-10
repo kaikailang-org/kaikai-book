@@ -1,0 +1,21 @@
+# Qué ve el lector cuando un `assert` falla.
+#
+# Correr con: kai test ejemplos/cap07/02_assert_falla.kai
+#
+# El runner reporta la línea, la expresión, y sigue con los
+# tests siguientes. Un test que falla no detiene a los demás.
+
+fn doble(n: Int) : Int = n * 2
+
+test "doble preserva positivos" {
+  assert doble(7) == 14
+}
+
+# Test deliberadamente roto: doble(3) es 6, no 7.
+test "test roto: el assert va a fallar" {
+  assert doble(3) == 7
+}
+
+test "este test sigue corriendo" {
+  assert doble(0) == 0
+}

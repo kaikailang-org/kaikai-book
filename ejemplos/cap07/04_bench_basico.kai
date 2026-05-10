@@ -1,0 +1,25 @@
+# Benchmarks: medir, no adivinar.
+#
+# Correr con: kai bench ejemplos/cap07/04_bench_basico.kai
+#
+# Cada bloque `bench` se ejecuta 1000 iteraciones (configurable
+# con `KAI_BENCH_ITERS`) y reporta nanosegundos por iteración.
+
+fn fib(n: Int) : Int =
+  if n < 2 { n } else { fib(n - 1) + fib(n - 2) }
+
+bench "aritmética: 2 + 3 * 4" {
+  2 + 3 * 4
+}
+
+bench "fib(10): recursión sin memo" {
+  fib(10)
+}
+
+bench "fib(15): el costo crece exponencial" {
+  fib(15)
+}
+
+bench "list.sum [1..100]" {
+  list.sum([1..100])
+}

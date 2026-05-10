@@ -1,0 +1,98 @@
+# Caso de estudio: pruebas para un mini-evaluador.
+#
+# Versión simplificada del evaluador del cap. 5 (sin `Var` ni
+# ambiente, una sola categoría de error). Probamos con tres
+# herramientas:
+#
+#   - `test`  para casos fijos (entradas concretas, salidas
+#             concretas).
+#   - `check` para invariantes que valen sobre cualquier input.
+#   - `bench` para medir cuánto cuesta evaluar.
+#
+# Correr con:
+#   kai test  ejemplos/cap07/05_evaluador_pruebas.kai
+#   kai check ejemplos/cap07/05_evaluador_pruebas.kai
+#   kai bench ejemplos/cap07/05_evaluador_pruebas.kai
+
+type Expr
+  = Lit(Int)
+  | Suma(Expr, Expr)
+  | Mul(Expr, Expr)
+  | Div(Expr, Expr)
+
+type ErrorEval = DivCero(Int)    # carga el numerador en cuestión
+
+fn eval(e: Expr) : Result[ErrorEval, Int] =
+  match e {
+    Lit(n)     -> Ok(n)
+    Suma(a, b) -> {
+      let va = eval(a)!
+      let vb = eval(b)!
+      Ok(va + vb)
+    }
+    Mul(a, b)  -> {
+      let va = eval(a)!
+      let vb = eval(b)!
+      Ok(va * vb)
+    }
+    Div(a, b)  -> {
+      let va = eval(a)!
+      let vb = eval(b)!
+      if vb == 0 { Err(DivCero(va)) } else { Ok(va / vb) }
+    }
+  }
+
+# Helper para usar dentro de los tests: "espero que evalúe a v"
+fn debe_dar(e: Expr, esperado: Int) : Bool =
+  match eval(e) {
+    Ok(v)  -> v == esperado
+    Err(_) -> false
+  }
+
+# Helper para "espero que falle"
+fn debe_fallar(e: Expr) : Bool =
+  match eval(e) {
+    Ok(_)  -> false
+    Err(_) -> true
+  }
+
+# Tests: casos fijos que no dejan dudas.
+
+test "literal" {
+  assert debe_dar(Lit(42), 42)
+}
+
+test "suma simple" {
+  assert debe_dar(Suma(Lit(2), Lit(3)), 5)
+}
+
+test "expresión combinada: 2 + 3 * 4 = 14" {
+  assert debe_dar(Suma(Lit(2), Mul(Lit(3), Lit(4))), 14)
+}
+
+test "división por cero da error" {
+  assert debe_fallar(Div(Lit(10), Lit(0)))
+}
+
+# Checks: invariantes universales.
+# Si la propiedad vale para todo n entre -50 y 50 (el rango
+# por defecto del generador), es muy probable que valga para
+# todo Int.
+
+check "Lit(n) evalúa a n" with n: Int {
+  debe_dar(Lit(n), n)
+}
+
+check "Suma(a, b) == Suma(b, a)" with a: Int, b: Int {
+  debe_dar(Suma(Lit(a), Lit(b)), a + b) and debe_dar(Suma(Lit(b), Lit(a)), a + b)
+}
+
+# Bench: medir cuánto cuesta evaluar.
+
+bench "literal" {
+  eval(Lit(42))
+}
+
+bench "expresión profunda (3 niveles)" {
+  eval(Suma(Mul(Lit(2), Lit(3)), Suma(Lit(4), Mul(Lit(5), Lit(6)))))
+}
