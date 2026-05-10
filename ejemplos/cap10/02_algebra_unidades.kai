@@ -1,0 +1,28 @@
+# Álgebra de unidades: producto, cociente, potencia.
+#
+# kaikai sabe componer unidades: `kg * m / sec^2` es la unidad
+# de fuerza, derivada de las tres básicas. El compilador
+# verifica que la aritmética sea dimensionalmente consistente.
+
+unit m
+unit sec
+unit kg
+
+fn main() {
+  let velocidad : Real<m / sec> = 9.81<m / sec>
+  println("v = #{velocidad}")
+
+  # Unidad compuesta: aceleración.
+  let g : Real<m / sec^2> = 9.81<m / sec^2>
+  println("g = #{g}")
+
+  # Producto de unidades: F = m * a tiene unidad kg*m/sec^2.
+  let masa : Real<kg> = 70.0<kg>
+  let fuerza : Real<kg * m / sec^2> = masa * g
+  println("F = m * g = #{fuerza}")
+
+  # Producto de la misma unidad consigo misma: tiempo cuadrado.
+  let t : Real<sec> = 3.0<sec>
+  let t2 : Real<sec^2> = t * t
+  println("t² = #{t2}")
+}

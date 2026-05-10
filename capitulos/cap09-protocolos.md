@@ -189,8 +189,9 @@ La regla práctica:
   campos, comparación según un campo específico (no el orden
   natural).
 
-El cap. 9 del libro original usaba `#derive(Show)` para
-`Punto` en el tour (§1.6); acá lo abrimos al manual también.
+Ya viste `#derive(Show)` sobre `Punto` en el tour (§1.6); acá
+mostramos también la implementación manual y cuándo conviene
+una sobre la otra.
 
 ## 9.5 Protocolos propios
 
@@ -241,18 +242,47 @@ Los protocolos de kaikai pueden parecerse a las typeclasses
 de Haskell — y se inspiran en ellas — pero son **deliberadamente
 más simples**. Tres cosas que kaikai no hace y que Haskell sí:
 
-**Sin constraints en firmas de funciones.** No existe
-`fn ordenar[T : Ord](xs: [T]) : [T]`. Si quieres ordenar una
-lista, pasas un comparador explícito:
+**Sin constraints en firmas de funciones.** Esta es la
+diferencia más visible. En Haskell, una función que ordena
+una lista declara que el tipo del elemento tiene que tener
+`Ord`:
 
-```kai
-list.sort_by(transacciones, cmp)   # cmp viene de Ord para Transaccion
+```haskell
+sort :: Ord a => [a] -> [a]
 ```
 
-`cmp` se obtiene de `Ord` para `Transaccion`, sí, pero el
-sitio de la llamada **lo nombra**. La función `sort_by` no
-"requiere" que `T` tenga `Ord`; recibe la función `cmp`
-explícita.
+El `Ord a =>` es la **constraint**. Cuando llamas a `sort
+xs`, el compilador busca por su cuenta el `Ord` para el tipo
+de `xs` y se lo "inyecta" a la función sin que tú escribas
+nada. La constraint viaja escondida.
+
+En kaikai eso no existe. No puedes escribir:
+
+```kai
+fn ordenar[T : Ord](xs: [T]) : [T] = ...    # ERROR: kaikai no admite constraints
+```
+
+¿Cómo se ordena entonces una lista? La función recibe el
+**comparador como un argumento explícito**:
+
+```kai
+fn sort_by[T](xs: [T], cmp: (T, T) -> Int) : [T] = ...
+```
+
+Y el call site **nombra** el comparador. Si `Transaccion`
+implementa `Ord`, su `cmp` está disponible como una función
+ordinaria, y la pasas:
+
+```kai
+list.sort_by(transacciones, cmp)   # cmp viene de impl Ord for Transaccion
+```
+
+La diferencia es chica de escribir pero grande conceptualmente:
+en Haskell el `Ord` está implícito, en kaikai está explícito.
+La función `sort_by` no "exige" que `T` tenga `Ord` — solo
+exige que **alguien le pase una función de comparación**. Que
+esa función venga de un `impl Ord for T` es decisión del que
+llama, no de la firma de `sort_by`.
 
 **Sin tipos de orden superior** (HKT). `protocol Functor[F[_]]`
 no parsea. Los parámetros de tipo son siempre de primer

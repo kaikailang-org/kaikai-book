@@ -1,0 +1,40 @@
+# Caso de estudio: una cartera multi-moneda donde el compilador
+# garantiza que nunca sumas USD con EUR.
+#
+# El truco: una función genérica `sumar` que acepta cualquier
+# moneda, pero solo combina valores de la **misma** moneda.
+# Sumar dos saldos en la misma moneda es legal; mezclar
+# requiere conversión explícita vía `convertir`.
+
+unit USD
+unit EUR
+unit CLP
+
+fn sumar[c: Measure](a: Real<c>, b: Real<c>) : Real<c> = a + b
+
+# Conversión explícita: el factor lleva la unidad cociente
+# `destino/origen` y multiplicar por él cancela la unidad
+# origen y deja la destino.
+fn convertir[origen: Measure, destino: Measure](monto: Real<origen>, tasa: Real<destino / origen>) : Real<destino> = monto * tasa
+
+fn main() {
+  let saldo_usd_1 : Real<USD> = 100.0<USD>
+  let saldo_usd_2 : Real<USD> = 50.0<USD>
+  let total_usd : Real<USD> = sumar(saldo_usd_1, saldo_usd_2)
+  println("total USD = #{total_usd}")
+
+  let saldo_eur : Real<EUR> = 80.0<EUR>
+
+  # Para combinar USD y EUR hay que convertir explícito:
+  let tasa_eur_usd : Real<USD / EUR> = 1.10<USD / EUR>
+  let eur_en_usd : Real<USD> = convertir(saldo_eur, tasa_eur_usd)
+  let total_global : Real<USD> = sumar(total_usd, eur_en_usd)
+  println("total convertido a USD = #{total_global}")
+
+  # Convertir CLP a USD con su propia tasa.
+  let saldo_clp : Real<CLP> = 100000.0<CLP>
+  let tasa_clp_usd : Real<USD / CLP> = 0.0011<USD / CLP>
+  let clp_en_usd : Real<USD> = convertir(saldo_clp, tasa_clp_usd)
+  let total_final : Real<USD> = sumar(total_global, clp_en_usd)
+  println("total final = #{total_final}")
+}

@@ -1,0 +1,36 @@
+# Branded types: marcar un valor con una etiqueta que el
+# compilador respeta como un tipo distinto.
+#
+# En v1 las unidades aplican a `Real` e `Int`. La extensión a
+# `String<UserId>` está post-MVP — este ejemplo asume el fix.
+# Mientras tanto, `Int<UserId>` cubre el patrón.
+
+unit UserId
+unit OrderId
+unit Seconds
+unit Milliseconds
+
+fn cancelar_orden(id: Int<OrderId>) : Unit / Stdout =
+  println("cancelando orden #{id}")
+
+fn timeout_ms(t: Int<Milliseconds>) : Unit / Stdout =
+  println("timeout = #{t}")
+
+fn main() {
+  let _uid : Int<UserId>  = 42<UserId>
+  let oid  : Int<OrderId> = 99<OrderId>
+
+  cancelar_orden(oid)
+
+  # Lo siguiente NO compila: el compilador no deja pasar un
+  # UserId donde se espera un OrderId, aunque ambos son Int.
+  # cancelar_orden(_uid)
+
+  let _espera_seg : Int<Seconds>      = 30<Seconds>
+  let espera_ms   : Int<Milliseconds> = 30<Milliseconds>
+
+  timeout_ms(espera_ms)
+
+  # Y esto tampoco: pasar segundos donde se esperaban milisegundos.
+  # timeout_ms(_espera_seg)
+}

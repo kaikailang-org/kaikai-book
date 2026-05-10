@@ -1,0 +1,26 @@
+# Unidades genéricas: una función que funciona para cualquier
+# unidad sin saber cuál.
+#
+# El parámetro `u` con kind `Measure` deja la unidad abstracta.
+# La función promedia dos valores de la misma unidad y devuelve
+# un valor con esa misma unidad.
+
+fn promedio[u: Measure](a: Real<u>, b: Real<u>) : Real<u> =
+  (a + b) / 2.0
+
+unit USD
+unit kg
+
+fn main() {
+  let p1 : Real<USD> = 10.0<USD>
+  let p2 : Real<USD> = 20.0<USD>
+  let pp : Real<USD> = promedio(p1, p2)
+  println("promedio precios = #{pp}")
+
+  let m1 : Real<kg> = 70.0<kg>
+  let m2 : Real<kg> = 80.0<kg>
+  let pm : Real<kg> = promedio(m1, m2)
+  println("promedio masas = #{pm}")
+
+  # promedio(p1, m1) sería un error de tipo: USD ≠ kg.
+}
