@@ -1,0 +1,24 @@
+# Refinement types: declare types as subsets of others,
+# restricted by a predicate.
+
+type NonNeg = Int where self >= 0
+type Probability = Real where self >= 0.0 and self <= 1.0
+
+fn double(n: NonNeg) : NonNeg = n + n
+
+fn event(p: Probability, description: String) : Unit / Stdout =
+  println(description ++ " with prob " ++ real_to_string(p))
+
+fn main() {
+  let x : NonNeg = 16
+  println("double(16) = #{double(x)}")
+
+  let pr : Probability = 0.3
+  event(pr, "rain tomorrow")
+
+  # The next line does NOT compile: -5 doesn't satisfy NonNeg.
+  # let y : NonNeg = 0 - 5
+
+  # Nor this: 1.5 doesn't satisfy 0.0 <= self <= 1.0.
+  # let pr2 : Probability = 1.5
+}

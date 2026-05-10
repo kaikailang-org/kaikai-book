@@ -1,0 +1,41 @@
+# Case study: bank account with non-negative balance and
+# contracted operations.
+
+type Account = {
+  holder: String,
+  balance: Int,
+}
+
+fn open(holder: String, initial_deposit: Int) : Account
+  requires initial_deposit >= 0
+  ensures  result.balance == initial_deposit
+=
+  Account { holder: holder, balance: initial_deposit }
+
+fn deposit(c: Account, amount: Int) : Account
+  requires amount > 0
+  ensures  result.balance == c.balance + amount
+=
+  Account { ...c, balance: c.balance + amount }
+
+fn withdraw(c: Account, amount: Int) : Account
+  requires amount > 0
+  requires c.balance >= amount
+  ensures  result.balance == c.balance - amount
+=
+  Account { ...c, balance: c.balance - amount }
+
+fn main() {
+  let ada = open("Ada", 100)
+  println("initial balance: #{ada.balance}")
+
+  let ada2 = deposit(ada, 50)
+  println("after depositing 50: #{ada2.balance}")
+
+  let ada3 = withdraw(ada2, 30)
+  println("after withdrawing 30: #{ada3.balance}")
+
+  # This compiles, but at runtime aborts:
+  # withdrawing more than available violates requires.
+  # let ada_bad = withdraw(ada3, 999)
+}

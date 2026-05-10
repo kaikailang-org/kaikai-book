@@ -1,0 +1,21 @@
+# Contracts: pre- and postconditions in the signature.
+#
+# `requires` declares what the caller must guarantee.
+# `ensures` declares what the function promises on exit.
+# `result` is the name of the return value inside `ensures`.
+
+fn divide(a: Int, b: Int) : Int
+  requires b != 0
+  ensures  result * b + (a % b) == a
+= a / b
+
+fn factorial(n: Int) : Int
+  requires n >= 0
+= if n <= 1 { 1 } else { n * factorial(n - 1) }
+
+fn main() {
+  println("10 / 3 = #{divide(10, 3)}")
+  println("17 / 5 = #{divide(17, 5)}")
+  println("5! = #{factorial(5)}")
+  println("10! = #{factorial(10)}")
+}

@@ -1,0 +1,21 @@
+# What happens when a contract is violated.
+#
+# If arguments are literals and the typer can deduce it at
+# compile time, violation is a compile error. If arguments
+# are dynamic, an assert is inserted that aborts with `panic`
+# at violation.
+
+fn divide(a: Int, b: Int) : Int
+  requires b != 0
+= a / b
+
+fn main() {
+  println("before")
+  # This does NOT compile — the compiler detects b == 0 with literal:
+  # let bad = divide(10, 0)
+
+  # But this does compile, and aborts at runtime:
+  let dynamic_zero = 10 - 10
+  let r = divide(10, dynamic_zero)
+  println("we never get here: #{r}")
+}
