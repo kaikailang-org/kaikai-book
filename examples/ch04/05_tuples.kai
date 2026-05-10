@@ -1,0 +1,14 @@
+# Tuples: positional aggregation. Sugar over Pair, Triple, Quad.
+# Arity 2 to 4.
+
+fn divmod(a: Int, b: Int) : (Int, Int) = (a / b, a % b)
+
+fn main() {
+  let (quotient, remainder) = divmod(17, 5)
+  println("17 / 5 = #{quotient}, remainder = #{remainder}")
+
+  # A 3-tuple
+  let point3d = (1, 2, 3)
+  let (x, y, z) = point3d
+  println("(#{x}, #{y}, #{z})")
+}

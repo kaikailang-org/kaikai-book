@@ -1,0 +1,36 @@
+# Option and Result: encode the possibility of failure in the type.
+
+type AgeError = NotNumeric | OutOfRange
+
+fn first_even(xs: [Int]) : Option[Int] =
+  match xs {
+    [] -> None
+    [h, ...t] -> if h % 2 == 0 { Some(h) } else { first_even(t) }
+  }
+
+fn parse_age(s: String) : Result[AgeError, Int] =
+  match string_to_int(s) {
+    None -> Err(NotNumeric)
+    Some(n) ->
+      if n < 0 or n > 130 { Err(OutOfRange) }
+      else { Ok(n) }
+  }
+
+fn describe_age(s: String) : String =
+  match parse_age(s) {
+    Ok(n) -> "valid age: #{n}"
+    Err(NotNumeric) -> "not a number"
+    Err(OutOfRange) -> "out of range"
+  }
+
+fn main() {
+  let xs = [1, 3, 5, 6, 7]
+  match first_even(xs) {
+    Some(n) -> println("first even: #{n}")
+    None    -> println("no evens")
+  }
+
+  println(describe_age("42"))
+  println(describe_age("hello"))
+  println(describe_age("999"))
+}

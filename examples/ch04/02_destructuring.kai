@@ -1,0 +1,24 @@
+# Destructuring: take a record apart in one move.
+
+type Point = { x: Int, y: Int }
+
+fn describe(p: Point) : String = {
+  let Point { x, y } = p
+  "(" ++ int_to_string(x) ++ ", " ++ int_to_string(y) ++ ")"
+}
+
+fn classify(p: Point) : String =
+  match p {
+    Point { x: 0, y: 0 } -> "origin"
+    Point { x: 0, y: _ } -> "Y axis"
+    Point { x: _, y: 0 } -> "X axis"
+    Point { x, y }       -> "point at (#{x}, #{y})"
+  }
+
+fn main() {
+  println(describe(Point { x: 3, y: 4 }))
+  println(classify(Point { x: 0, y: 0 }))
+  println(classify(Point { x: 0, y: 7 }))
+  println(classify(Point { x: 5, y: 0 }))
+  println(classify(Point { x: 2, y: 9 }))
+}

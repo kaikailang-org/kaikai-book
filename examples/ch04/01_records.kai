@@ -1,0 +1,36 @@
+# Records: aggregates with named fields.
+
+type Point = { x: Int, y: Int }
+
+type Employee = {
+  name: String,
+  age: Int,
+  salary: Int,
+}
+
+fn distance(a: Point, b: Point) : Int = {
+  let dx = a.x - b.x
+  let dy = a.y - b.y
+  dx * dx + dy * dy
+}
+
+fn main() {
+  let origin = Point { x: 0, y: 0 }
+  let p      = Point { x: 3, y: 4 }
+
+  println("origin.x = #{origin.x}, origin.y = #{origin.y}")
+  println("p at (#{p.x}, #{p.y})")
+  println("distance² = #{distance(origin, p)}")
+
+  # Functional update with `...`: copies all fields and
+  # overrides the named ones.
+  let p2 = Point { ...p, x: 7 }
+  println("p2 at (#{p2.x}, #{p2.y})")
+
+  let ada = Employee { name: "Ada", age: 30, salary: 1500 }
+  println("#{ada.name} is #{ada.age}, salary #{ada.salary}")
+
+  # Promotion: same employee, new salary.
+  let ada_post = Employee { ...ada, salary: 2200 }
+  println("#{ada_post.name} now earns #{ada_post.salary}")
+}
