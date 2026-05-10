@@ -1,0 +1,46 @@
+# Caso de estudio: cuenta bancaria con saldo no negativo y
+# operaciones contractadas.
+#
+# Las precondiciones documentan qué entradas son legales;
+# las postcondiciones documentan qué garantizamos al salir.
+# Si en un futuro alguien rompe la lógica, el contrato lo
+# detecta — en compilación si puede, en runtime si no.
+
+type Cuenta = {
+  titular: String,
+  saldo: Int,
+}
+
+fn abrir(titular: String, deposito_inicial: Int) : Cuenta
+  requires deposito_inicial >= 0
+  ensures  result.saldo == deposito_inicial
+=
+  Cuenta { titular: titular, saldo: deposito_inicial }
+
+fn depositar(c: Cuenta, monto: Int) : Cuenta
+  requires monto > 0
+  ensures  result.saldo == c.saldo + monto
+=
+  Cuenta { ...c, saldo: c.saldo + monto }
+
+fn retirar(c: Cuenta, monto: Int) : Cuenta
+  requires monto > 0
+  requires c.saldo >= monto
+  ensures  result.saldo == c.saldo - monto
+=
+  Cuenta { ...c, saldo: c.saldo - monto }
+
+fn main() {
+  let ada = abrir("Ada", 100)
+  println("saldo inicial: #{ada.saldo}")
+
+  let ada2 = depositar(ada, 50)
+  println("después de depositar 50: #{ada2.saldo}")
+
+  let ada3 = retirar(ada2, 30)
+  println("después de retirar 30: #{ada3.saldo}")
+
+  # Esto compila, pero al ejecutarse aborta:
+  # retirar más de lo que hay viola requires saldo >= monto.
+  # let ada_bad = retirar(ada3, 999)
+}

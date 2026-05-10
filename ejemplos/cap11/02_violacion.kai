@@ -1,0 +1,21 @@
+# Qué pasa cuando un contrato se viola.
+#
+# Si los argumentos son literales y el typer puede deducirlo
+# en compile time, la violación es un error de compilación.
+# Si los argumentos son dinámicos, se inserta un assert que
+# aborta el programa con `panic` al violarse.
+
+fn divide(a: Int, b: Int) : Int
+  requires b != 0
+= a / b
+
+fn main() {
+  println("antes")
+  # Esto NO compila — el compilador detecta b == 0 con literal:
+  # let bad = divide(10, 0)
+
+  # Pero esto sí compila, y aborta en runtime:
+  let cero_dinamico = 10 - 10
+  let r = divide(10, cero_dinamico)
+  println("nunca llegamos aquí: #{r}")
+}

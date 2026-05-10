@@ -1,0 +1,30 @@
+# Refinement types: declarar tipos como subconjuntos de
+# otros, restringidos por un predicado.
+#
+# `Int where self >= 0` es el tipo de los enteros no negativos.
+# `Real where 0.0 <= self <= 1.0` es el tipo de los reales en
+# el intervalo unitario. El compilador usa estas restricciones
+# para verificar pasos donde puede, y posterga a runtime
+# donde no.
+
+type NoNeg = Int where self >= 0
+type Probabilidad = Real where self >= 0.0 and self <= 1.0
+
+fn doblar(n: NoNeg) : NoNeg = n + n
+
+fn evento(p: Probabilidad, descripcion: String) : Unit / Stdout =
+  println(descripcion ++ " con prob " ++ real_to_string(p))
+
+fn main() {
+  let x : NoNeg = 16
+  println("doblar(16) = #{doblar(x)}")
+
+  let pr : Probabilidad = 0.3
+  evento(pr, "lluvia mañana")
+
+  # Lo siguiente NO compila: -5 no satisface NoNeg.
+  # let y : NoNeg = 0 - 5
+
+  # Y esto tampoco: 1.5 no satisface 0.0 <= self <= 1.0.
+  # let pr2 : Probabilidad = 1.5
+}
