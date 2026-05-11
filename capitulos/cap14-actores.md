@@ -156,11 +156,12 @@ La firma del trabajador declara `Actor[String]`: necesita el
 efecto para llamar a `Actor.receive()`.
 
 Fíjate que `main` también tiene `Actor[String]` en su fila.
-¿Por qué? Porque `Actor.send(pid, "tarea-1")` requiere el
-efecto: el handler que `with_mailbox` instaló es el que
-intercepta el `send` y lo enruta al mailbox correcto. El tipo
-`String` casualmente coincide con el del trabajador; eso no es
-obligatorio, solo conveniente en este ejemplo simple.
+¿Por qué? Porque `Actor.send(pid, "tarea-1")` es una
+invocación a una operación del efecto `Actor[String]`, y como
+toda invocación a un efecto, requiere que el efecto esté
+disponible en el contexto. El `with_mailbox` de `main` provee
+esa capacidad. El `pid` ya identifica al mailbox destino;
+el handler solo dispatcha la operación.
 
 Los `fiber_yield()` al final son para darle al scheduler la
 chance de correr al trabajador. Sin ellos, `main` saldría antes
@@ -275,10 +276,13 @@ fn main() : Unit / Console + Spawn + Cancel + Actor[Msg] {
 Lo importante de la estructura:
 
 - **Un solo tipo de mensaje, `Msg`**, con dos constructores.
-  Tanto el cliente como el servidor manejan el mismo tipo,
-  así sus mailboxes son interoperables. La doc del lenguaje
-  recomienda esto cuando dos actores conversan
-  bidireccionalmente.
+  Conceptualmente sería más limpio tener un `type Request` y
+  un `type Reply` separados, con cliente y servidor cada uno
+  manejando el suyo, pero en 0.51 una función que declara dos
+  efectos `Actor[T]` distintos en su fila se topa con un bug
+  de resolución. Mientras tanto, el patrón práctico es
+  unificar los dos roles en un solo sum type y dejar que cada
+  parte ignore con un `_` los constructores que no le tocan.
 - **`Query` incluye el `Pid` de retorno.** Sin eso, el
   servidor no sabe a quién contestarle.
 - **El servidor recursa** después de procesar el mensaje. Sin
@@ -300,17 +304,27 @@ En BEAM, los actores se supervisan con **links** (bidireccional)
 y **monitores** (unidireccional). Cuando un actor cae, los
 linkeados se enteran y deciden qué hacer.
 
-kaikai trae links y monitores en su API, pero en v1 el patrón
-recomendado para uso normal es **notificación explícita**: el
+kaikai documenta efectos `Link` y `Monitor` para cubrir ese
+caso, pero en 0.51 todavía no están implementados como API.
+El único primitivo de bajo nivel disponible es
+`fiber_set_trap_exit`, que opta por recibir notificaciones de
+muerte de fibras hermanas. Para uso normal, mientras tanto, el
+patrón recomendado es **notificación explícita**: el
 trabajador, antes de terminar, manda un mensaje a su
 supervisor diciendo cómo le fue. El supervisor recibe ese
 mensaje como cualquier otro y decide.
 
-¿Por qué? Porque los links/monitores son experimentales en la
-implementación actual (la doc los marca como Phase 5 Tier 2),
-y porque para la mayoría de los casos la notificación
-explícita es más clara: el protocolo de supervisión queda
-**en el tipo de mensajes**, visible para quien lee el código.
+Hay una ventaja conceptual además de la práctica: la
+notificación explícita deja el protocolo de supervisión **en
+el tipo de mensajes**, visible para quien lee el código. Lo
+que con `Link` y `Monitor` pasa por una capa runtime opaca,
+con notificación explícita pasa por un sum type. Cuando los
+efectos `Link` y `Monitor` aterricen, probablemente sigan
+siendo la herramienta de los casos especiales (supervisión
+sobre fibras que no controlas, propagación a través de capas
+de biblioteca); el patrón "incluir un canal de status en el
+sum del actor" va a seguir siendo la forma idiomática para la
+mayoría del código de aplicación.
 
 ## 14.7 Caso de estudio: supervisor con reintentos
 
@@ -406,8 +420,13 @@ cosas:
   `intento`.
 - **Cancelación del trabajador si el supervisor decide
   rendirse.** Hoy si decimos "me rindo", el trabajador
-  podría seguir corriendo si no fue él quien terminó. Con
-  links explícitos esto se resuelve.
+  podría seguir corriendo si no fue él quien terminó.
+  `spawn_actor` devuelve solo el `Pid`, no el `Fiber`, así que
+  para cancelar hace falta definir un mensaje en el protocolo
+  (`Stop`, por ejemplo) y mandárselo. Cuando los efectos
+  `Link` y `Monitor` aterricen, esa terminación va a poder
+  propagarse desde el supervisor sin que el trabajador la
+  observe explícitamente.
 - **Logging persistente.** En vez de `Stdout.print`, mandar a
   un actor logger con su propio mailbox bounded
   (`Bounded(1024, DropOldest)`).
