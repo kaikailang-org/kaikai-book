@@ -524,8 +524,8 @@ $ kai test file.kai    # run the `test "..." { ... }` blocks in the file
 `kai run` is the workhorse while you read this book. Edit a
 file, run it, look at the output, edit again.
 
-Chapter 15 covers the rest of the tooling — `fmt`, `repl`,
-`lsp`, editor integration. For now, `run` is enough.
+Chapter 16 covers the rest of the tooling: `fmt`, `lsp`,
+`watch`, editor integration. For now, `run` is enough.
 
 ## 1.10 How the rest of the book is laid out
 
