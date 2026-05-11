@@ -30,10 +30,12 @@ bibliotecas que cualquier lector puede leer.
 ## 14.1 `Actor[Msg]`: el efecto
 
 Un actor es una fibra dentro de un `handle ... with
-Actor[Msg]` que le da acceso a tres operaciones:
+Actor[Msg]` que le da acceso a tres operaciones. El efecto
+viene declarado en el stdlib:
 
 ```kai
-effect Actor[Msg] {
+# Declarado en stdlib/actor.kai, accesible vía `import actor`.
+pub effect Actor[Msg] {
   self()                         : Pid[Msg]
   send(pid: Pid[Msg], msg: Msg)  : Unit / Cancel
   receive()                      : Msg / Cancel
@@ -175,17 +177,13 @@ mientras no se lean. Es razonable para empezar, pero
 peligroso: si un productor manda más rápido de lo que un
 consumidor procesa, la memoria crece sin tope.
 
-Para casos reales, declara una policy:
+Para casos reales, eliges una policy. El stdlib (módulo
+`actor`) las expone como dos sum types:
 
 ```kai
-type MailboxPolicy
-  = Unbounded
-  | Bounded(Int, Overflow)
-
-type Overflow
-  = DropOldest
-  | DropNewest
-  | BlockSender
+# Definidos en stdlib/actor.kai, accesibles vía `import actor`.
+pub type MailboxPolicy = Unbounded | Bounded(Int, Overflow)
+pub type Overflow      = DropOldest | DropNewest | BlockSender
 ```
 
 `Bounded(capacity, on_full)` da un mailbox de tamaño fijo. El
@@ -305,14 +303,15 @@ y **monitores** (unidireccional). Cuando un actor cae, los
 actores que lo observan se enteran y deciden qué hacer.
 
 kaikai trae el mismo modelo, expresado como dos efectos del
-stdlib:
+módulo `actor` del stdlib:
 
 ```kai
-effect Link {
+# Declarados en stdlib/actor.kai, junto con Actor[Msg].
+pub effect Link {
   link(pid: Pid[_]) : Unit
 }
 
-effect Monitor {
+pub effect Monitor {
   monitor(pid: Pid[_]) : MonitorRef
   demonitor(ref: MonitorRef) : Unit
 }
@@ -337,12 +336,13 @@ para "supervisor observa worker": ese es el caso de monitores.
 saber cuándo `pid` termina, sin acoplar la vida del
 observador a la del observado. Cuando `pid` termina (normal,
 crash o cancelación), el observador recibe un mensaje
-`MonitorDown` en su mailbox:
+`MonitorDown` en su mailbox. El stdlib expone los tipos
+relevantes:
 
 ```kai
-type MonitorDown = MonitorDown(MonitorRef, TerminationCause)
-
-type TerminationCause
+# Definidos en stdlib/actor.kai junto con el efecto Monitor.
+pub type MonitorDown = MonitorDown(MonitorRef, TerminationCause)
+pub type TerminationCause
   = Normal
   | Crashed(String)
   | Cancelled
