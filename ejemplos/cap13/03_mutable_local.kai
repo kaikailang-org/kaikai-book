@@ -1,0 +1,19 @@
+# `var` introduce una celda local. Por debajo, esa celda usa el
+# efecto `Mutable`. Pero si la celda no escapa del bloque, el
+# compilador la "enmascara" y el efecto desaparece de la firma.
+# La función afuera se ve pura.
+
+fn contar_pares(xs: [Int]) : Int {
+  var n = 0
+  list.foreach(xs, (x) => {
+    if x % 2 == 0 {
+      n := @n + 1
+    }
+  })
+  @n
+}
+
+fn main() : Unit / Stdout {
+  println("pares en [1..10] = #{contar_pares([1,2,3,4,5,6,7,8,9,10])}")
+  println("pares en [] = #{contar_pares([])}")
+}

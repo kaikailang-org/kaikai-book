@@ -1,0 +1,55 @@
+# Cancelación con cleanup. Cuando una fibra hermana falla, el
+# nursery cancela las demás. Una fibra que tiene cosas que
+# limpiar (cerrar archivos, soltar conexiones, escribir un log)
+# instala un handler de `Cancel`. El handler corre el cleanup y
+# no llama a `resume`: la fibra se desenrolla.
+
+import spawn
+
+# Una fibra que cuenta mientras nadie la cancela.
+fn trabajador_largo(tag: String) : Unit / Stdout + Spawn + Cancel {
+  handle {
+    contar(tag, 0)
+  } with Cancel {
+    raise(resume) -> {
+      println("#{tag}: cancelado, hago cleanup")
+      # no llamamos a resume: la fibra se desenrolla
+    }
+  }
+}
+
+fn contar(tag: String, n: Int) : Unit / Stdout + Spawn + Cancel {
+  println("#{tag}: #{n}")
+  fiber_yield()
+  contar(tag, n + 1)
+}
+
+# Una fibra que se rinde después de unos pasos.
+fn renunciar(n: Int) : Unit / Stdout + Spawn + Fail {
+  if n > 2 {
+    Fail.fail("renuncio después de 3 pasos")
+  } else {
+    println("paso #{n}")
+    fiber_yield()
+    renunciar(n + 1)
+  }
+}
+
+effect Fail {
+  fail(motivo: String) : Nothing
+}
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  handle {
+    nursery { n ->
+      n.spawn(() => trabajador_largo("A"))
+      n.spawn(() => trabajador_largo("B"))
+      let r = n.spawn(() => renunciar(0))
+      n.await(r)
+    }
+  } with Fail {
+    fail(motivo, resume) -> {
+      println("main: el nursery falló porque #{motivo}")
+    }
+  }
+}

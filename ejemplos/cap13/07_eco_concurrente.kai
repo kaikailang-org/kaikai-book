@@ -1,0 +1,54 @@
+# Caso de estudio en miniatura: una cola de tareas servida por
+# un pool de "trabajadores". Cada trabajador toma la siguiente
+# tarea pendiente, la procesa, y vuelve por otra. Cuando la
+# cola se vacía, todos terminan y el nursery sale.
+#
+# La cola es un `State[[String]]`: el estado son las tareas
+# pendientes. `siguiente()` saca la primera y la devuelve
+# como `Option`. Cuando no hay más, devuelve `None`.
+
+import spawn
+
+effect State[T] {
+  get() : T
+  set(v: T) : Unit
+}
+
+fn siguiente() : Option[String] / State[[String]] {
+  match State.get() {
+    []           -> None
+    [h, ...rest] -> {
+      State.set(rest)
+      Some(h)
+    }
+  }
+}
+
+fn worker(id: Int) : Unit / Stdout + Spawn + State[[String]] {
+  match siguiente() {
+    None       -> println("worker #{id}: cola vacía, salgo")
+    Some(tarea) -> {
+      println("worker #{id}: procesando '#{tarea}'")
+      fiber_yield()
+      worker(id)
+    }
+  }
+}
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  handle {
+    nursery { n ->
+      let a = n.spawn(() => worker(1))
+      let b = n.spawn(() => worker(2))
+      let c = n.spawn(() => worker(3))
+      n.await(a)
+      n.await(b)
+      n.await(c)
+    }
+  } with State[[String]](["alpha", "bravo", "charlie", "delta", "echo", "foxtrot"]) {
+    get(resume)    -> resume(state)
+    set(v, resume) -> resume((), v)
+    return(x)      -> x
+  }
+  println("(todas las tareas procesadas)")
+}
