@@ -250,6 +250,38 @@ What the nursery guarantees:
 - **If the nursery is canceled from outside, the
   cancellation propagates to all children.**
 
+```
+        outside the nursery
+              |
+              v
+        +-----+-------------------------------------+
+        |   nursery { n ->                          |
+        |                                           |
+        |     n.spawn(...)    n.spawn(...)          |
+        |          |               |                |
+        |          v               v                |
+        |     +---------+     +---------+           |
+        |     | fiber A |     | fiber B |           |
+        |     +---------+     +---------+           |
+        |          \\               /                |
+        |           \\  if B fails  /                 |
+        |            v             v                |
+        |     +-------------------------+           |
+        |     |   cancellation cascade  |           |
+        |     +-------------------------+           |
+        |   }   <-- block exits only when           |
+        +-------     every child is done -----------+
+              ^
+              |
+        re-raises the cause if any child failed
+```
+
+Figure 13.1 · *Structured concurrency in one picture. The
+nursery is a lexical scope; child fibers live inside; nothing
+escapes. If one child fails, the nursery cancels the rest
+before re-raising; if the parent is canceled from outside,
+the cascade flows down.*
+
 This is called **structured concurrency**. The idea is
 Nathaniel Smith's, in his essay *"Notes on structured
 concurrency, or: Go statement considered harmful"* (2018),

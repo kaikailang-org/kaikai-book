@@ -248,6 +248,38 @@ Lo que el nursery garantiza:
 - **Si el nursery se cancela desde afuera, propaga la
   cancelación a todas sus hijas.**
 
+```
+        fuera del nursery
+              |
+              v
+        +-----+-------------------------------------+
+        |   nursery { n ->                          |
+        |                                           |
+        |     n.spawn(...)    n.spawn(...)          |
+        |          |               |                |
+        |          v               v                |
+        |     +---------+     +---------+           |
+        |     | fibra A |     | fibra B |           |
+        |     +---------+     +---------+           |
+        |          \\               /                |
+        |           \\  si B falla  /                 |
+        |            v             v                |
+        |     +-------------------------+           |
+        |     |  cascada de cancelación |           |
+        |     +-------------------------+           |
+        |   }   <-- el bloque solo sale cuando      |
+        +-------     toda hija terminó --------------+
+              ^
+              |
+        re-lanza la causa si alguna hija falló
+```
+
+Figura 13.1 · *Concurrencia estructurada en una imagen. El
+nursery es un ámbito léxico; las fibras hijas viven adentro;
+nada se escapa. Si una hija falla, el nursery cancela al
+resto antes de re-lanzar; si al padre lo cancelan desde
+afuera, la cascada baja.*
+
 Esto se llama **concurrencia estructurada**. La idea es de
 Nathaniel Smith en su ensayo *"Notes on structured concurrency,
 or: Go statement considered harmful"* (2018), y aparece también

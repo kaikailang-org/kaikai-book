@@ -101,6 +101,36 @@ $ kaic1 stage2/main.kai -o kaic2
 compilador que se distribuye. El usuario que instala kaikai
 recibe `kaic2`, no `kaic0` ni `kaic1`.
 
+Las tres etapas, de punta a punta:
+
+```
+                  +-----------+
+   cc (sistema)-->|  stage0   |--> kaic0          [en C]
+                  |  en C     |       |
+                  +-----------+       |
+                                      v
+                  +-----------+   +-------+
+                  |  stage1   |-->| kaic0 |--> kaic1   [en kai-minimal]
+                  |  en kai-  |   +-------+       |
+                  |  minimal  |                   |
+                  +-----------+                   v
+                  +-----------+               +-------+
+                  |  stage2   |-------------->| kaic1 |--> kaic2   [en kaikai completo]
+                  |  en kaikai|               +-------+       |
+                  |  completo |                               |
+                  +-----------+                               |
+                                                              |
+                  chequeo de punto fijo:                      v
+                  $ kaic2 stage2/main.kai -o kaic2-self  <----+
+                  $ diff kaic2 kaic2-self        # debe ser vacío
+```
+
+Figura A.1 · *El bootstrap en tres etapas. Cada caja a la
+izquierda es el **código fuente** de un compilador; el óvalo
+del medio es el compilador que lo compila; la flecha de la
+derecha produce la etapa siguiente. Solo `cc` es externo;
+una vez existe `kaic0`, la cadena se autosustenta.*
+
 ## A.5 El punto fijo: validación del bootstrap
 
 Hay una verificación crítica que hace al final del proceso:

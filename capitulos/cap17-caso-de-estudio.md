@@ -66,6 +66,58 @@ ortogonal: la lógica pura del dominio se puede testear sin
 arrancar fibras, el parser HTTP sin abrir sockets, el almacén
 sin tocar el disco. El `main` solo conecta las piezas.
 
+```
+              socket TCP (puerto 8080)
+                      |
+                      v
+              +---------------+
+              |   main.kai    |
+              |  (loop accept |
+              |   + nursery)  |
+              +-------+-------+
+                      |
+            lanza una fibra por conexión
+                      |
+                      v
+              +---------------+
+              | manejar_      |       parse + route
+              | conexion      | --------------------------+
+              +---+-------+---+                           |
+                  |       |                               v
+        consulta  |       |   registra              +---------------+
+        al almacén|       |   el evento             |   http.kai    |
+                  |       |                         | (parser puro, |
+                  v       v                         |  serializ.)   |
+        +---------+--+   +-+-----------------+      +---------------+
+        | almacen.   |   | persistencia.kai  |
+        |  kai       |   |   (actor:         |              ^
+        |  (actor:   |   |   appende a log)  |              |
+        |  notas +   |   |                   |              |
+        |  next_id)  |   +---------+---------+              |
+        +-----+------+             |                        |
+              |                    v                        |
+              v             +----+-----+                    |
+        +-----+-----+       | archivo  |                    |
+        | dominio.  | <---  | de log   |                    |
+        | kai (tipos|usa    | en disco |                    |
+        | puros)    |       +----------+                    |
+        +-----------+                                       |
+              ^                                             |
+              |                                             |
+              +--------------- comparten ---------------+---+
+                                                        (http.kai
+                                                         produce
+                                                         Comando desde
+                                                         ReqHttp)
+```
+
+Figura 17.1 · *Arquitectura del servidor de notas. Cinco
+módulos, dos actores (almacén y persistencia), una fibra
+por conexión entrante. Los módulos puros (`dominio.kai`,
+`http.kai`) abajo y sin efectos; los módulos con estado
+(`almacen.kai`, `persistencia.kai`) esconden su mutación
+detrás de un mailbox; `main.kai` es pegamento.*
+
 ## 17.2 El dominio: tipos puros
 
 Empezamos por el centro. `dominio.kai`:

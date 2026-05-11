@@ -67,6 +67,57 @@ starting fibers, the HTTP parser without opening sockets,
 the store without touching disk. `main` just connects the
 pieces.
 
+```
+              TCP socket (port 8080)
+                      |
+                      v
+              +---------------+
+              |   main.kai    |
+              |  (accept loop |
+              |   + nursery)  |
+              +-------+-------+
+                      |
+            spawns one fiber per connection
+                      |
+                      v
+              +---------------+
+              | handle_       |       parse + route
+              | connection    | --------------------------+
+              +---+-------+---+                           |
+                  |       |                               v
+        ask the   |       |   log the              +---------------+
+        store     |       |   event                |   http.kai    |
+                  |       |                        | (pure parser, |
+                  v       v                        |  serializer)  |
+        +---------+--+   +-+-----------------+     +---------------+
+        | store.kai  |   | persistence.kai   |
+        |  (actor:   |   |   (actor:         |             ^
+        |  notes +   |   |   appends to log) |             |
+        |  next_id)  |   |                   |             |
+        +-----+------+   +---------+---------+             |
+              |                    |                       |
+              v                    v                       |
+        +-----+-----+         +----+-----+                 |
+        | domain.   | <-----  | log file |                 |
+        | kai (pure | uses    | on disk  |                 |
+        | types)    |         +----------+                 |
+        +-----------+                                      |
+              ^                                            |
+              |                                            |
+              +--------------- shared by --------------+---+
+                                                       (http.kai
+                                                        produces
+                                                        Command from
+                                                        HttpReq)
+```
+
+Figure 17.1 · *Notes server architecture. Five modules,
+two actors (store and persistence), one fiber per
+incoming connection. The pure modules (`domain.kai`,
+`http.kai`) sit at the bottom and have no effects; the
+stateful modules (`store.kai`, `persistence.kai`) hide
+their mutation behind a mailbox; `main.kai` is glue.*
+
 ## 17.2 The domain: pure types
 
 We start in the center. `domain.kai`:

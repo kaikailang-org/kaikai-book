@@ -347,6 +347,43 @@ fn main() : Unit / Console + Spawn + Cancel + Actor[Reply] {
 }
 ```
 
+```
+      cliente                                servidor
+   +------------+                          +-------------+
+   |            |                          |             |
+   |  mailbox   |                          |   mailbox   |
+   |  [Reply]   |                          |  [Request]  |
+   |            |                          |             |
+   +--+------+--+                          +--+-------+--+
+      ^      |                                ^       |
+      |      |  Actor.send(server,            |       |
+      |      |    Query("dos+dos",            |       |
+      |      |       Actor.self())) --------->|       |
+      |      |                                |       |
+      |      |                                |       v
+      |      |                                |    receive()
+      |      |                                |       |
+      |      |                                |       v
+      |      |                                |    Query(q,cliente)
+      |      |                                |       |
+      |      |  Actor.send(cliente,           |       |
+      |      |       Answer("...")) <---------+-------+
+      |      |                                |
+      |      v                                |
+      |   receive()                           |
+      |      |                                |
+      |      v                                |
+      |   Answer(r)                           |
+      |                                       |
+      +---------------------------------------+
+```
+
+Figura 14.1 · *Request/reply entre dos actores. El cliente
+tiene un mailbox `Pid[Reply]`; el servidor tiene un mailbox
+`Pid[Request]`. La `Query` lleva adentro el PID del cliente
+para que el servidor sepa adónde mandar la respuesta. Dos
+mailboxes tipados, dos mensajes, una ida y vuelta.*
+
 Lo importante de la estructura:
 
 - **Dos tipos distintos, `Request` y `Reply`**, cada uno con

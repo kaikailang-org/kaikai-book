@@ -344,6 +344,43 @@ fn main() : Unit / Console + Spawn + Cancel + Actor[Reply] {
 }
 ```
 
+```
+       client                                  server
+   +------------+                          +-------------+
+   |            |                          |             |
+   |  mailbox   |                          |   mailbox   |
+   |  [Reply]   |                          |  [Request]  |
+   |            |                          |             |
+   +--+------+--+                          +--+-------+--+
+      ^      |                                ^       |
+      |      |  Actor.send(s,                 |       |
+      |      |    Query("two+two",            |       |
+      |      |          Actor.self())) ------>|       |
+      |      |                                |       |
+      |      |                                |       v
+      |      |                                |    receive()
+      |      |                                |       |
+      |      |                                |       v
+      |      |                                |    Query(q,client)
+      |      |                                |       |
+      |      |    Actor.send(client,          |       |
+      |      |       Answer("reply...")) <----+-------+
+      |      |                                |
+      |      v                                |
+      |   receive()                           |
+      |      |                                |
+      |      v                                |
+      |   Answer(r)                           |
+      |                                       |
+      +---------------------------------------+
+```
+
+Figure 14.1 · *Request/reply between two actors. The client
+holds a `Pid[Reply]` mailbox; the server holds a
+`Pid[Request]` mailbox. The `Query` carries the client's PID
+inside it so the server knows where to send the answer. Two
+typed mailboxes, two messages, one round trip.*
+
 A few things worth noting about the structure:
 
 - **Two distinct types, `Request` and `Reply`**, each with
