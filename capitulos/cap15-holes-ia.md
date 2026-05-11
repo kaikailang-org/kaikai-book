@@ -12,7 +12,7 @@ llega a uno.
 Los holes son útiles aunque nunca uses un LLM. Te permiten
 diseñar de arriba hacia abajo (escribir la firma primero,
 completar el cuerpo después) y avanzar en partes sin que el
-archivo entero deje de compilar. Esa es la audiencia humana.
+archivo entero deje de compilar. Eso sirve al lector humano.
 
 Pero los holes son también la pieza con la que kaikai se
 diseña para **agentes IA**. El compilador puede emitir su
@@ -494,10 +494,10 @@ todos los holes? ¿Qué información es específica de cada uno?
 del cap. 5 (digamos el evaluador de expresiones del §5.7) y
 borra el cuerpo de una de las ramas del `match`, reemplazándolo
 por un `?nombre`. Pídele al agente que la complete usando solo
-la salida JSON del compilador como input. ¿Qué tan rápido lo
+la salida JSON del compilador como entrada. ¿Qué tan rápido lo
 resuelve?
 
 **15.5.** Discute con un colega: ¿qué partes del trabajo que
 haces hoy programando son las que un agente podría hacer si
 le das suficiente información estructurada del compilador? ¿Qué
-partes definitivamente no? ¿Por qué?
+partes seguro que no? ¿Por qué?

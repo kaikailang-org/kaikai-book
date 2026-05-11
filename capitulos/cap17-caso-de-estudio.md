@@ -365,8 +365,8 @@ Cuatro líneas de "negocio":
 La fila de efectos del `main` lista todo lo que el programa
 usa: `Console` para imprimir, `NetTcp` para sockets, `File` para
 escribir, `Spawn + Cancel` para fibras, `Actor[X]` para cada uno
-de los tres canales de mensajes. Es honesto: si el `main`
-hiciera más cosas, su fila crecería en consecuencia.
+de los tres canales de mensajes. La firma no oculta nada: si
+el `main` hiciera más cosas, su fila crecería en consecuencia.
 
 El bucle de aceptación abre un nursery y por cada conexión
 nueva lanza una fibra:

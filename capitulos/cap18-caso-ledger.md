@@ -24,7 +24,7 @@ las descubras en producción.
 El programa: un ledger de doble entrada que mantiene cuentas
 con saldo, registra transacciones (cada una con débitos y
 créditos), valida que las transacciones cuadren, y persiste
-un audit log inmutable. Tamaño: unas 280 líneas en cuatro
+un log de auditoría inmutable. Tamaño: unas 280 líneas en cuatro
 módulos.
 
 ## 18.1 La forma del programa
@@ -38,7 +38,7 @@ ledger/
 ├── dominio.kai          # tipos: Cuenta, Movimiento, Transaccion
 ├── cuadre.kai           # validación de la invariante débito = crédito
 ├── almacen.kai          # actor que guarda cuentas y transacciones
-└── persistencia.kai     # actor que escribe el audit log
+└── persistencia.kai     # actor que escribe el log de auditoría
 ```
 
 La estructura es deliberadamente similar al cap. 17. Lo que
@@ -57,7 +57,7 @@ cambia es el énfasis:
   cuadre antes de aceptar una transacción y mantiene saldos
   por cuenta. Las transacciones son **inmutables**: solo se
   agregan, nunca se modifican.
-- **`persistencia.kai`** es el audit log. Idea conceptual
+- **`persistencia.kai`** es el log de auditoría. Idea conceptual
   fuerte: en contabilidad, lo escrito queda. El archivo es
   evidencia legal.
 
@@ -249,7 +249,7 @@ para el bucle del actor a menos que se quisiera, con `var` o
 `Array[T]`. Y como el actor recursa con el estado nuevo, cada
 "versión" del ledger sobrevive intacta hasta el próximo paso.
 
-## 18.5 El audit log
+## 18.5 El log de auditoría
 
 El módulo `persistencia.kai` es prácticamente idéntico al del
 cap. 17: un actor que recibe líneas de log y las agrega al
@@ -326,7 +326,7 @@ fn main() : Unit / Console + File + Spawn + Cancel + ... {
 ```
 
 `paso` es un helper que llama al almacén, imprime la
-respuesta, y registra el evento en el audit log. Después de
+respuesta, y registra el evento en el log de auditoría. Después de
 correr el `main`, el ledger tiene tres cuentas, dos
 transacciones registradas (la venta y el café), una rechazada
 (el intento descuadrado), y los saldos finales reflejan los
@@ -384,7 +384,7 @@ Ideas para profundizar el ejemplo, en orden de dificultad:
 - **Períodos contables.** Cerrar el ejercicio: todas las
   cuentas de ingresos y gastos se transfieren a resultado, y
   el ledger arranca el período nuevo con saldos iniciales.
-- **Reconstrucción desde el audit log.** Al arrancar, leer el
+- **Reconstrucción desde el log de auditoría.** Al arrancar, leer el
   archivo de log y replicar los eventos para reconstruir el
   estado en memoria. Esto es event sourcing canónico.
 - **Reportes.** Estado de resultados, balance, libro mayor
@@ -440,16 +440,16 @@ que paralelizan trabajo concurrente. Módulos que separan
 responsabilidades. Contratos que ponen las invariantes del
 dominio en la firma de las funciones que las preservan.
 
-Cada pieza se prueba en aislamiento. Cada pieza tiene una
-firma honesta. Cada pieza puede reemplazarse sin tocar el
-resto.
+Cada pieza se prueba en aislamiento. Cada pieza declara en su
+firma todo lo que hace. Cada pieza puede reemplazarse sin
+tocar el resto.
 
 Esto no es exclusivo de kaikai. Lo describen, con palabras
 distintas, *No Silver Bullet* de Brooks, *Simple Made Easy*
 de Hickey, *Out of the Tar Pit* de Marlow y Goldsmith. Lo que
 kaikai hace es ofrecer una sintaxis y un sistema de tipos
-que **vuelven natural** este estilo. Las firmas honestas son
-gratis porque los efectos están en el tipo. Las funciones
+que **vuelven natural** este estilo. Las firmas que no
+esconden nada salen gratis porque los efectos están en el tipo. Las funciones
 puras son baratas porque la inmutabilidad es por defecto.
 Los actores son una biblioteca porque los efectos
 algebraicos lo permiten. Las invariantes del dominio están

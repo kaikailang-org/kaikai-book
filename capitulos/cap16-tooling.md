@@ -55,7 +55,7 @@ pasar por LLVM. Para programas grandes hay un cache (cap. 8
 §8.8 cubre el cache de paquetes; el cache de compilación
 del propio archivo `.kai` es otra historia).
 
-Si querés un sentido del tiempo: un compilador de Rust de
+Si quieres un sentido del tiempo: un compilador de Rust de
 tamaño comparable puede tardar 30 segundos. Un compilador de
 kaikai del mismo tamaño tarda menos de un segundo. La
 diferencia se nota.
@@ -193,20 +193,20 @@ comando.
 
 El LSP es la pieza que vuelve el desarrollo en kaikai
 comparable, en ergonomía cotidiana, al de Rust o TypeScript:
-el feedback es instantáneo, sin necesidad de ir al terminal
-para descubrir un error.
+la retroalimentación es instantánea, sin necesidad de ir al
+terminal para descubrir un error.
 
 ## 16.7 Variables de entorno
 
 Tres variables de entorno controlan el comportamiento del
 binario `kai` para casos especiales:
 
-- **`CC`** (default: `cc`): el compilador de C que `kai`
-  invoca para producir el ejecutable final. Si tienes
-  múltiples versiones de C en el sistema, o querés usar
-  `clang` específicamente, lo seteas aquí: `CC=clang kai run
+- **`CC`** (valor por defecto: `cc`): el compilador de C que
+  `kai` invoca para producir el ejecutable final. Si tienes
+  varias versiones de C en el sistema, o quieres usar `clang`
+  específicamente, lo defines aquí: `CC=clang kai run
   archivo.kai`.
-- **`CFLAGS`** (default: vacío): flags adicionales para el
+- **`CFLAGS`** (valor por defecto: vacío): flags adicionales para el
   compilador C. Útil para optimización (`CFLAGS=-O3`) o
   warnings (`CFLAGS=-Wall`).
 - **`KAI_NO_STDLIB=1`**: salta la carga automática del
@@ -214,7 +214,7 @@ binario `kai` para casos especiales:
   embebidos sin libc completa, experimentos.
 - **`KAI_STDLIB`**: override de la raíz del stdlib. Por
   defecto, `kai` autodetecta dónde vive (instalado vs
-  checkout de desarrollo). Si querés usar una versión
+  checkout de desarrollo). Si quieres usar una versión
   alternativa, apuntas aquí.
 - **`KAI_INCLUDE`**: override de la raíz de los headers
   del runtime (`runtime.h`). Mismo principio que `KAI_STDLIB`.
