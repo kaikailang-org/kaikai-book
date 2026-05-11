@@ -56,8 +56,7 @@ llena de wrapping y unwrapping.
 
 En JavaScript, Python, C#, Rust, marcar una función como `async`
 te obliga a marcar como `async` también a todas las que la llaman.
-Es la "function coloring problem". Un cambio aparentemente local
-contagia el árbol entero de llamadas.
+Un cambio aparentemente local contagia el árbol entero de llamadas.
 
 ```js
 async function leer(path) { ... }
@@ -67,9 +66,29 @@ async function procesar(path) {
 }
 ```
 
-Y peor: `async` no compone con generadores, ni con excepciones, ni
-con código sincrónico que ya tenías. Cada combinación requiere su
-propio sintaxis.
+Bob Nystrom le puso nombre a esto en 2015 en un ensayo famoso:
+**"What Color is Your Function?"**. La idea es que `async` divide
+las funciones en dos colores. Las rojas (`async`) y las azules
+(no-async). Una roja puede llamar a una azul, pero una azul no
+puede llamar a una roja. Si tienes una función azul y necesitas
+usar una roja adentro, tienes que repintar la azul. Y la que la
+llamaba. Y así hasta arriba. Es una infección que no se queda
+local.
+
+El punto del ensayo no es que `async` sea malo. Es que esta clase
+de marcadores en la firma, cuando son específicos a un solo tipo
+de efecto, crean dos sistemas paralelos que no componen. `async`
+no compone con generadores: necesitas `async function*`. No
+compone con excepciones de la misma manera (las excepciones en
+funciones async se vuelven rejected promises). Cada combinación
+nueva requiere su propia sintaxis.
+
+Los efectos algebraicos resuelven el problema al nivel de raíz:
+**no hay colores especiales**, hay una sola dimensión que es la
+fila de efectos. `async` no necesita ser una propiedad sintáctica
+de la función; es simplemente un efecto entre otros. Y la fila se
+extiende sin sintaxis nueva: `/ Async + Fail` no es más raro que
+`/ Async`.
 
 ### Inyección de dependencias
 
@@ -170,11 +189,12 @@ fn main() : Unit / Log {       # propaga el efecto
 }
 ```
 
-Es el mismo principio que en `async`/`await`: el efecto se contagia
-hacia arriba. La diferencia es que en kaikai no hay sintaxis
-especial para "pagar el efecto" en la llamada: `Log.log(...)` es
-una llamada como cualquier otra. La fila en la firma es donde vive
-la disciplina.
+Es el mismo principio del contagio que vimos en `async`/`await`,
+pero sin el problema de los colores: aquí no hay sintaxis especial
+para "pagar el efecto" en la llamada. `Log.log(...)` es una
+llamada como cualquier otra. La fila en la firma es donde vive la
+disciplina, y agregar un efecto nuevo no introduce un color nuevo
+incompatible con el resto: solo extiende la fila.
 
 ### Varios efectos: la fila
 
