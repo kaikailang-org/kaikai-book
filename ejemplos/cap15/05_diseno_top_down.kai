@@ -1,0 +1,42 @@
+# Diseño top-down: empezar por la forma del programa con
+# holes para cada pieza, después rellenar una por una.
+#
+# Este archivo muestra el estado intermedio: la firma y la
+# estructura ya están, dos funciones están completas, dos
+# todavía esperan ser implementadas.
+
+type Token
+  = Num(Int)
+  | Plus
+  | Times
+
+type Expr
+  = Lit(Int)
+  | Suma(Expr, Expr)
+  | Mul(Expr, Expr)
+
+# Pieza 1: tokenizar (incompleta).
+fn tokenizar(s: String) : [Token] = ?tokens
+
+# Pieza 2: parsear (incompleta).
+fn parsear(ts: [Token]) : Expr = ?ast
+
+# Pieza 3: evaluar (completa).
+fn evaluar(e: Expr) : Int {
+  match e {
+    Lit(n)        -> n
+    Suma(a, b)    -> evaluar(a) + evaluar(b)
+    Mul(a, b)     -> evaluar(a) * evaluar(b)
+  }
+}
+
+# Pieza 4: la pipeline. Si las dos piezas faltantes
+# devolvieran lo correcto, esto correría sin tocarse.
+fn calcular(s: String) : Int = evaluar(parsear(tokenizar(s)))
+
+fn main() : Unit / Console {
+  # Probamos solo la parte completada: evaluar un AST
+  # construido a mano.
+  let ast = Suma(Lit(3), Mul(Lit(4), Lit(5)))
+  println("3 + 4*5 = #{evaluar(ast)}")
+}

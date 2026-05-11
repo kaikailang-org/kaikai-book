@@ -1,0 +1,20 @@
+# Un `?nombre` se identifica por nombre dentro de la misma
+# función. Si usas `?mismo` en dos ramas distintas, el
+# compilador unifica el tipo de ambas. Si después decides
+# rellenarlo, sabes que las dos posiciones tienen que ser
+# del mismo tipo.
+
+fn clasificar(n: Int) : String {
+  if n < 0 {
+    ?palabra
+  } else {
+    ?palabra
+  }
+}
+
+fn main() : Unit / Console {
+  # Ambas ramas son `?palabra`, así que el compilador sabe
+  # que cualquier valor que escojas para una vale para la
+  # otra.
+  println(clasificar(0 - 5))
+}

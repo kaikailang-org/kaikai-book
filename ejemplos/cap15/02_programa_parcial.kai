@@ -1,0 +1,15 @@
+# Un programa parcial: una función completa, otra con hole.
+# El archivo compila completo. La parte ya escrita corre
+# normalmente; el hole espera ser llenado.
+
+fn duplicar(x: Int) : Int = x * 2
+
+fn promedio(a: Int, b: Int) : Int = ?formula
+
+fn main() : Unit / Console {
+  # duplicar funciona, podemos probarlo:
+  println("duplicar(5) = #{duplicar(5)}")
+  # promedio todavía no, pero el archivo compila igual.
+  # Si descomentas la línea siguiente, el programa aborta:
+  # println("promedio(4, 8) = #{promedio(4, 8)}")
+}

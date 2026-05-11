@@ -1,0 +1,22 @@
+# Un hole puede ir en posición de patrón también. El
+# compilador te dice qué inhabitantes del tipo faltan cubrir.
+# Útil cuando estás escribiendo un match y sabes el caso que
+# te falta pero todavía no decidiste cómo manejarlo.
+
+type Forma
+  = Circulo(Real)
+  | Cuadrado(Real)
+  | Triangulo(Real, Real)
+
+fn area(f: Forma) : Real {
+  match f {
+    Circulo(r)       -> 3.14 * r * r
+    Cuadrado(l)      -> l * l
+    Triangulo(b, h)  -> ?formula_triangulo
+  }
+}
+
+fn main() : Unit / Console {
+  println("círculo 3 -> #{area(Circulo(3.0))}")
+  println("cuadrado 4 -> #{area(Cuadrado(4.0))}")
+}
