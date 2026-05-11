@@ -456,7 +456,7 @@ cubiertos cuando alguien la consume.
 ### Lo que `!` hace por dentro
 
 Vale la pena mirar el operador con un poco más de cuidado,
-porque la primera vez se siente mágico. **`!` es un `return`
+porque la primera vez parece mágico. **`!` es un `return`
 temprano disfrazado de operador.** La línea
 
 ```kai

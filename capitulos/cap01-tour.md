@@ -565,7 +565,7 @@ capítulo 7 entra en cada una con tiempo.
 
 Hay una última construcción del lenguaje que vale la pena
 ver en el tour, porque cambia un poco la forma de escribir
-código. kaikai te deja dejar **agujeros** en lugares donde
+código. kaikai te permite dejar **agujeros** en lugares donde
 todavía no sabes qué poner, y el programa compila igual.
 
 ```kai
