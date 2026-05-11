@@ -1,0 +1,25 @@
+# Domain types of the notes server.
+#
+# A note has an id (integer) and a body (string).
+# A command is what the handler interprets from the HTTP
+# request.
+# A response is what the handler returns for serialisation.
+
+#derive(Show)
+pub type Note = { id: Int, body: String }
+
+# Commands the server understands.
+pub type Command
+  = List
+  | Get(Int)
+  | Create(String)
+  | Delete(Int)
+
+# Domain-level responses. The HTTP translator turns these
+# into status codes + JSON bodies.
+pub type Response
+  = Ok(String)                      # 200, body = String
+  | Created(Note)                   # 201, body = serialised note
+  | NotFound                        # 404
+  | ClientError(String)             # 400
+  | ServerError(String)             # 500

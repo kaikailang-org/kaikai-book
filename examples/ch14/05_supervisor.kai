@@ -1,0 +1,69 @@
+# Case study: a supervisor that starts a worker, lets it
+# process some tasks, and retries the batch if a task fails.
+#
+# The pattern is what the language docs recommend for v1:
+# instead of Link/Monitor (still experimental), the worker
+# explicitly notifies its supervisor via a Done or Failed
+# message. The supervisor decides whether to retry.
+#
+# Each task is a division: the worker divides the first
+# number by the second. If the divisor is zero, the task
+# fails and the supervisor retries with different data.
+
+import actor
+
+#derive(Show)
+type BatchResult
+  = Done(Int)             # successful total
+  | Failed(String)        # reason for the failure
+
+# Processes the list. If it finds a zero divisor, returns
+# Failed. If it reaches the end, returns Done with the total.
+fn process(tasks: [(Int, Int)], acc: Int) : BatchResult {
+  match tasks {
+    []                 -> Done(acc)
+    [(a, 0), ..._]     -> Failed("division by zero at (#{a}, 0)")
+    [(a, b), ...rest]  -> process(rest, acc + (a / b))
+  }
+}
+
+# The worker computes the batch result and sends it to the
+# supervisor.
+fn worker(supervisor: Pid[BatchResult], tasks: [(Int, Int)])
+    : Unit / Actor[BatchResult] + Console {
+  let r = process(tasks, 0)
+  Stdout.print("worker: batch ended as #{r}")
+  Actor.send(supervisor, r)
+}
+
+# An attempt: spawns a worker, waits for its result, returns
+# it.
+fn attempt(me: Pid[BatchResult], batch: [(Int, Int)])
+    : BatchResult / Console + Spawn + Cancel + Actor[BatchResult] {
+  let _ = spawn_actor(() => worker(me, batch))
+  Actor.receive()
+}
+
+# The supervisor starts a worker with a batch. If it fails,
+# retries with an alternate batch. Up to two attempts.
+fn supervisor() : Unit / Console + Spawn + Cancel + Actor[BatchResult] {
+  with_mailbox {
+    let me = Actor.self()
+    let first_batch  = [(10, 2), (20, 4), (30, 0)]   # will fail
+    let second_batch = [(10, 2), (20, 4), (30, 5)]
+    match attempt(me, first_batch) {
+      Done(total)     -> Stdout.print("supervisor: success on first try, total=#{total}")
+      Failed(reason)  -> {
+        Stdout.print("supervisor: first try failed (#{reason}), retrying")
+        match attempt(me, second_batch) {
+          Done(total)     -> Stdout.print("supervisor: success on second try, total=#{total}")
+          Failed(reason)  -> Stdout.print("supervisor: second try failed too (#{reason}), giving up")
+        }
+      }
+    }
+  }
+}
+
+fn main() : Unit / Console + Spawn + Cancel {
+  supervisor()
+}

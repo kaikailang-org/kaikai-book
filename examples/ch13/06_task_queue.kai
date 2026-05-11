@@ -1,0 +1,54 @@
+# Miniature case study: a queue of tasks served by a pool of
+# "workers". Each worker takes the next pending task,
+# processes it, and goes back for another. When the queue is
+# empty, they all exit and the nursery returns.
+#
+# The queue is a `State[[String]]`: the state is the pending
+# tasks. `next()` pops the first one and returns it as
+# `Option`. When there are no more, it returns `None`.
+
+import spawn
+
+effect State[T] {
+  get() : T
+  set(v: T) : Unit
+}
+
+fn next() : Option[String] / State[[String]] {
+  match State.get() {
+    []           -> None
+    [h, ...rest] -> {
+      State.set(rest)
+      Some(h)
+    }
+  }
+}
+
+fn worker(id: Int) : Unit / Stdout + Spawn + State[[String]] {
+  match next() {
+    None       -> println("worker #{id}: queue empty, exiting")
+    Some(task) -> {
+      println("worker #{id}: processing '#{task}'")
+      fiber_yield()
+      worker(id)
+    }
+  }
+}
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  handle {
+    nursery { n ->
+      let a = n.spawn(() => worker(1))
+      let b = n.spawn(() => worker(2))
+      let c = n.spawn(() => worker(3))
+      n.await(a)
+      n.await(b)
+      n.await(c)
+    }
+  } with State[[String]](["alpha", "bravo", "charlie", "delta", "echo", "foxtrot"]) {
+    get(resume)    -> resume(state)
+    set(v, resume) -> resume((), v)
+    return(x)      -> x
+  }
+  println("(all tasks processed)")
+}

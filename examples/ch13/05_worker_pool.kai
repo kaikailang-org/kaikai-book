@@ -1,0 +1,25 @@
+# A pool of fibers processing items. Each worker takes a
+# value, processes it with a small simulated "delay" via
+# yields, and returns the result. The nursery waits for them
+# all.
+
+import spawn
+
+fn process(id: Int, x: Int) : Int / Stdout + Spawn {
+  println("worker #{id}: processing #{x}")
+  fiber_yield()
+  fiber_yield()
+  let r = x * x
+  println("worker #{id}: done #{x} -> #{r}")
+  r
+}
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  let results = nursery { n ->
+    let a = n.spawn(() => process(1, 3))
+    let b = n.spawn(() => process(2, 5))
+    let c = n.spawn(() => process(3, 7))
+    [n.await(a), n.await(b), n.await(c)]
+  }
+  println("results: #{results}")
+}

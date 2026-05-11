@@ -1,0 +1,218 @@
+# The ledger store. Actor that holds the list of accounts
+# and the list of registered transactions.
+#
+# The processing logic is pure (function `process`) and
+# tested without starting fibers. The actor loop only wires
+# it to `Actor.receive()`.
+#
+# The store never deletes or modifies a registered
+# transaction: transactions are immutable. They only
+# accumulate. That's what gives the ledger its audit value:
+# once a journal entry is written, it stays fixed.
+
+import actor
+import domain
+import balance
+
+pub type StoreMsg  = Ask(domain.Command, Pid[StoreResp])
+pub type StoreResp = Reply(domain.Response)
+
+# The store's state: known accounts, registered
+# transactions, next-ID counters.
+type State = {
+  accounts:         [domain.Account],
+  transactions:     [domain.Transaction],
+  next_account_id:  Int,
+  next_tx_id:       Int,
+}
+
+# Pure logic. Takes the command and current state, returns
+# the response and the new state. No effects.
+pub fn process(c: domain.Command, s: State) : (domain.Response, State) {
+  match c {
+    CreateAccount(name) -> {
+      let acc = domain.Account {
+        id:      s.next_account_id<AccountId>,
+        name:    name,
+        balance: 0.0<USD>,
+      }
+      let s2 = State {
+        ...s,
+        accounts:         [acc, ...s.accounts],
+        next_account_id:  s.next_account_id + 1,
+      }
+      (domain.AccountCreated(acc), s2)
+    }
+    Register(desc, movs) ->
+      if not balance.balances(movs) {
+        (domain.UnbalancedError(
+          "debits #{balance.total_debits(movs)}, credits #{balance.total_credits(movs)}"
+        ), s)
+      } else {
+        match verify_accounts(movs, s.accounts) {
+          Some(missing_id) -> (domain.UnknownAccount(missing_id), s)
+          None -> {
+            let tx = domain.Transaction {
+              id:          s.next_tx_id<TransactionId>,
+              description: desc,
+              movements:   movs,
+            }
+            let updated_accounts = apply_movs(s.accounts, movs)
+            let s2 = State {
+              accounts:         updated_accounts,
+              transactions:     [tx, ...s.transactions],
+              next_account_id:  s.next_account_id,
+              next_tx_id:       s.next_tx_id + 1,
+            }
+            (domain.TransactionRegistered(tx), s2)
+          }
+        }
+      }
+    QueryBalance(id) ->
+      match find_account(s.accounts, id) {
+        Some(c) -> (domain.CurrentBalance(c.balance), s)
+        None    -> (domain.UnknownAccount(id), s)
+      }
+    ListAccounts ->
+      (domain.Accounts(s.accounts), s)
+  }
+}
+
+# Verifies that every account mentioned in the movements
+# exists. If one is missing, return its id; otherwise None.
+fn verify_accounts(ms: [domain.Movement], accounts: [domain.Account])
+    : Option[Int<AccountId>] {
+  match ms {
+    []           -> None
+    [m, ...rest] -> {
+      let id = id_of(m)
+      match find_account(accounts, id) {
+        None    -> Some(id)
+        Some(_) -> verify_accounts(rest, accounts)
+      }
+    }
+  }
+}
+
+fn id_of(m: domain.Movement) : Int<AccountId> =
+  match m {
+    domain.Debit(id, _)  -> id
+    domain.Credit(id, _) -> id
+  }
+
+fn find_account(cs: [domain.Account], id: Int<AccountId>) : Option[domain.Account] {
+  match cs {
+    []           -> None
+    [c, ...rest] -> if c.id == id { Some(c) } else { find_account(rest, id) }
+  }
+}
+
+# Apply the movements to each account's balance. Debits add,
+# credits subtract. (Demo convention; in real accounting
+# this depends on account type - asset vs liability - but
+# the idea is the same.)
+fn apply_movs(cs: [domain.Account], ms: [domain.Movement]) : [domain.Account] {
+  match ms {
+    []           -> cs
+    [m, ...rest] -> apply_movs(apply_one(cs, m), rest)
+  }
+}
+
+fn apply_one(cs: [domain.Account], m: domain.Movement) : [domain.Account] {
+  let (id, delta) = delta_of(m)
+  list.map(cs, (c) =>
+    if c.id == id { domain.Account { ...c, balance: c.balance + delta } }
+    else          { c }
+  )
+}
+
+fn delta_of(m: domain.Movement) : (Int<AccountId>, Real<USD>) =
+  match m {
+    domain.Debit(id, n)  -> (id, n)
+    domain.Credit(id, n) -> (id, 0.0<USD> - n)
+  }
+
+# Actor loop.
+fn loop(s: State) : Unit / Actor[StoreMsg] + Actor[StoreResp] {
+  match Actor.receive() {
+    Ask(c, client) -> {
+      let (resp, s2) = process(c, s)
+      Actor.send(client, Reply(resp))
+      loop(s2)
+    }
+  }
+}
+
+pub fn start() : Pid[StoreMsg] / Spawn + Cancel + Actor[StoreMsg] + Actor[StoreResp] {
+  let initial = State {
+    accounts:         [],
+    transactions:     [],
+    next_account_id:  1,
+    next_tx_id:       1,
+  }
+  spawn_actor(() => loop(initial))
+}
+
+pub fn ask(store: Pid[StoreMsg], c: domain.Command)
+    : domain.Response / Actor[StoreMsg] + Actor[StoreResp] + Cancel {
+  Actor.send(store, Ask(c, Actor.self()))
+  match Actor.receive() {
+    Reply(r) -> r
+  }
+}
+
+# Tests against the pure logic, without actors.
+
+test "creating an account adds it to state" {
+  let s = State { accounts: [], transactions: [], next_account_id: 1, next_tx_id: 1 }
+  let (r, s2) = process(domain.CreateAccount("cash"), s)
+  let ok = match r {
+    domain.AccountCreated(c) -> c.name == "cash"
+    _                         -> false
+  }
+  assert ok
+  assert list.length(s2.accounts) == 1
+}
+
+test "registering a transaction rejects an imbalance" {
+  let s = State {
+    accounts:         [domain.Account { id: 1<AccountId>, name: "a", balance: 0.0<USD> }],
+    transactions:     [],
+    next_account_id:  2,
+    next_tx_id:       1,
+  }
+  let movs = [domain.Debit(1<AccountId>, 100.0<USD>)]   # only debit, doesn't balance
+  let (r, _) = process(domain.Register("test", movs), s)
+  let ok = match r {
+    domain.UnbalancedError(_) -> true
+    _                          -> false
+  }
+  assert ok
+}
+
+test "registering a balanced transaction updates balances" {
+  let s = State {
+    accounts: [
+      domain.Account { id: 1<AccountId>, name: "cash",  balance: 0.0<USD> },
+      domain.Account { id: 2<AccountId>, name: "sales", balance: 0.0<USD> },
+    ],
+    transactions:     [],
+    next_account_id:  3,
+    next_tx_id:       1,
+  }
+  let movs = [
+    domain.Debit(1<AccountId>, 50.0<USD>),     # +50 to cash
+    domain.Credit(2<AccountId>, 50.0<USD>),    # -50 to sales
+  ]
+  let (r, s2) = process(domain.Register("sale", movs), s)
+  let ok = match r {
+    domain.TransactionRegistered(_) -> true
+    _                                -> false
+  }
+  assert ok
+  let cash_balance = match list.head(s2.accounts |? (c) => c.id == 1<AccountId>) {
+    Some(c) -> c.balance
+    None    -> 0.0<USD>
+  }
+  assert cash_balance == 50.0<USD>
+}

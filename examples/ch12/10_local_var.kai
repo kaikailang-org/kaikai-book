@@ -1,0 +1,19 @@
+# `var` introduces a local cell. It's syntactic sugar over
+# `State[T]`: the compiler inserts a `handle ... with State[Int]`
+# right where the `var` appears, so the effect closes in the
+# same block and the function's signature stays effect-free.
+
+fn count_evens(xs: [Int]) : Int {
+  var n = 0
+  list.foreach(xs, (x) => {
+    if x % 2 == 0 {
+      n := @n + 1
+    }
+  })
+  @n
+}
+
+fn main() : Unit / Stdout {
+  println("evens in [1..10] = #{count_evens([1,2,3,4,5,6,7,8,9,10])}")
+  println("evens in [] = #{count_evens([])}")
+}

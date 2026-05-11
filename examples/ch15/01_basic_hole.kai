@@ -1,0 +1,12 @@
+# A hole is a gap in the code that compiles but aborts at
+# runtime if execution reaches it. It's there so you can
+# write the signature first and fill in the body later,
+# without the rest of the program failing to compile.
+
+fn circle_area(r: Real) : Real = ?formula
+
+fn main() : Unit / Console {
+  # This line will hit the hole. It aborts with
+  # `panic: unfilled hole: ?formula`.
+  println("area = #{circle_area(3.0)}")
+}

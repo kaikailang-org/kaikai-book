@@ -1,0 +1,35 @@
+# A handler that does NOT call `resume` cuts execution short.
+# That's how exceptions are built: the `Fail` effect
+# interrupts the flow, and the handler supplies a fallback
+# value in its place.
+#
+# The signature `fail(reason: String) : Nothing` says the
+# operation never returns. `Nothing` is kaikai's empty type
+# (no inhabitants), and tells the type system that `resume`
+# can't be called for that operation.
+
+effect Fail {
+  fail(reason: String) : Nothing
+}
+
+fn divide(a: Int, b: Int) : Int / Fail {
+  if b == 0 {
+    Fail.fail("division by zero")
+  } else {
+    a / b
+  }
+}
+
+fn main() : Unit / Stdout {
+  let r = handle {
+    let x = divide(10, 2)
+    let y = divide(20, 0)       # this is where `Fail.fail` fires
+    x + y                        # never evaluated
+  } with Fail {
+    fail(reason, resume) -> {
+      println("failed: " ++ reason)
+      0                          # replacement value
+    }
+  }
+  println("result: #{r}")
+}

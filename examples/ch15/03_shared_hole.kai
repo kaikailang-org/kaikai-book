@@ -1,0 +1,18 @@
+# A `?name` is identified by name within the same function.
+# If you use `?same` in two distinct branches, the compiler
+# unifies their types. So if later you decide to fill it in,
+# you know both positions must be the same type.
+
+fn classify(n: Int) : String {
+  if n < 0 {
+    ?word
+  } else {
+    ?word
+  }
+}
+
+fn main() : Unit / Console {
+  # Both branches are `?word`, so the compiler knows that
+  # any value you pick for one works for the other.
+  println(classify(0 - 5))
+}

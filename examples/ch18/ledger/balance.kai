@@ -1,0 +1,64 @@
+# Balance validation: the sum of debits must equal the sum
+# of credits in a transaction. It's the central invariant
+# of a double-entry ledger.
+#
+# The `balances` function is pure. We verify it with tests
+# and use it as a precondition for `register` in the store.
+
+import domain
+
+# Sum the debits of a movement list.
+pub fn total_debits(ms: [domain.Movement]) : Real<USD> {
+  match ms {
+    []                              -> 0.0<USD>
+    [domain.Debit(_, m), ...rest]   -> m + total_debits(rest)
+    [domain.Credit(_, _), ...rest]  -> total_debits(rest)
+  }
+}
+
+# Sum the credits.
+pub fn total_credits(ms: [domain.Movement]) : Real<USD> {
+  match ms {
+    []                              -> 0.0<USD>
+    [domain.Credit(_, m), ...rest]  -> m + total_credits(rest)
+    [domain.Debit(_, _), ...rest]   -> total_credits(rest)
+  }
+}
+
+# The invariant: both sums are equal.
+pub fn balances(ms: [domain.Movement]) : Bool =
+  total_debits(ms) == total_credits(ms)
+
+# And the contract version from chapter 11: if you call this
+# function, you guarantee that the movements balance. The
+# compiler inserts an assert if it can't verify it
+# statically.
+pub fn apply_if_balanced(ms: [domain.Movement]) : [domain.Movement]
+  requires balances(ms)
+  ensures  balances(result)
+= ms
+
+test "balances with one debit and one credit" {
+  let ms = [
+    domain.Debit(1<AccountId>, 100.0<USD>),
+    domain.Credit(2<AccountId>, 100.0<USD>),
+  ]
+  assert balances(ms)
+}
+
+test "doesn't balance when amounts differ" {
+  let ms = [
+    domain.Debit(1<AccountId>, 100.0<USD>),
+    domain.Credit(2<AccountId>, 90.0<USD>),
+  ]
+  assert not balances(ms)
+}
+
+test "balances with multiple lines" {
+  let ms = [
+    domain.Debit(1<AccountId>, 60.0<USD>),
+    domain.Debit(2<AccountId>, 40.0<USD>),
+    domain.Credit(3<AccountId>, 100.0<USD>),
+  ]
+  assert balances(ms)
+}

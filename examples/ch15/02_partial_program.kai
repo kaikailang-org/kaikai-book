@@ -1,0 +1,15 @@
+# A partial program: one function complete, another with a
+# hole. The file compiles in full. The part that's done runs
+# normally; the hole waits to be filled.
+
+fn double(x: Int) : Int = x * 2
+
+fn average(a: Int, b: Int) : Int = ?formula
+
+fn main() : Unit / Console {
+  # double works, we can test it:
+  println("double(5) = #{double(5)}")
+  # average doesn't yet, but the file still compiles.
+  # If you uncomment the next line, the program aborts:
+  # println("average(4, 8) = #{average(4, 8)}")
+}

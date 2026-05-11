@@ -1,0 +1,70 @@
+# Case study: a small configuration processor that mixes
+# three effects.
+#
+# - `Log`: records each step, without knowing where the logs
+#   go.
+# - `State[Int]`: counts how many entries were processed.
+# - `Fail`: aborts when an entry is invalid.
+#
+# `process` declares the three effects in its signature and
+# uses them freely. The handlers in `main` decide how to
+# materialise each one.
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+effect State[T] {
+  get() : T
+  set(v: T) : Unit
+}
+
+effect Fail {
+  fail(reason: String) : Nothing
+}
+
+type Entry = { key: String, value: String }
+
+# Parses "key=value". Fails if the format is wrong.
+fn parse(line: String) : Entry / Fail {
+  match string.split(line, "=") {
+    [k, v] -> Entry { key: k, value: v }
+    _      -> Fail.fail("invalid line: '#{line}'")
+  }
+}
+
+# Processes a list of lines: parses each one, logs it, counts
+# it. Aborts if any one fails to parse.
+fn process(lines: [String]) : Int / Log + State[Int] + Fail {
+  list.foreach(lines, (l) => {
+    let e = parse(l)
+    Log.log("#{e.key} = #{e.value}")
+    State.set(State.get() + 1)
+  })
+  State.get()
+}
+
+fn main() : Unit / Stdout {
+  let n = handle {
+    handle {
+      handle {
+        process(["name=ada", "age=42", "role=admin"])
+      } with State[Int](0) {
+        get(resume)    -> resume(state)
+        set(v, resume) -> resume((), v)
+        return(x)      -> x
+      }
+    } with Log {
+      log(msg, resume) -> {
+        println("[LOG] " ++ msg)
+        resume(())
+      }
+    }
+  } with Fail {
+    fail(reason, resume) -> {
+      println("error: " ++ reason)
+      0 - 1
+    }
+  }
+  println("entries processed: #{n}")
+}

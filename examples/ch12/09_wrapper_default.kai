@@ -1,0 +1,49 @@
+# Pattern: a default handler for your own effect, expressed
+# as a wrapper function.
+#
+# kaikai (v1) reserves automatic handlers for the runtime, for
+# stdlib effects (Stdout, Stdin, Env, File, Random, Time,
+# etc.). For an effect you declare yourself, the convention is
+# to write a function that wraps a body with the standard
+# handler. Whoever uses it gets the default behaviour; whoever
+# wants a different one writes their own `handle`.
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+fn greet(name: String) : Unit / Log {
+  Log.log("hello, " ++ name)
+}
+
+# The user's "default": a function that takes a body and runs
+# it under the standard handler for Log.
+fn with_default_log[A](body: () -> A / Log) : A {
+  handle {
+    body()
+  } with Log {
+    log(msg, resume) -> {
+      println("[LOG] " ++ msg)
+      resume(())
+    }
+  }
+}
+
+fn main() {
+  # Use 1: with the default. greet knows nothing about the
+  # handler.
+  with_default_log(() => {
+    greet("kaikai")
+    greet("ada")
+  })
+
+  # Use 2: the caller picks another handler. with_default_log
+  # is not involved.
+  handle {
+    greet("silent mode")
+  } with Log {
+    log(msg, resume) -> resume(())
+  }
+
+  println("(end)")
+}

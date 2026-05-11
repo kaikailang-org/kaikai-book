@@ -1,0 +1,42 @@
+# A function can use several effects at once. The signature
+# lists them with `+`. Each effect is handled by its own
+# `handle`, and the nesting order decides the semantics.
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+effect State[T] {
+  get() : T
+  set(v: T) : Unit
+}
+
+# `accumulate` uses two effects: it reads and writes state,
+# and it logs each step. The signature declares both with
+# `Log + State[Int]`.
+
+fn accumulate(xs: [Int]) : Int / Log + State[Int] {
+  list.foreach(xs, (x) => {
+    Log.log("adding #{x}")
+    State.set(State.get() + x)
+  })
+  State.get()
+}
+
+fn main() : Unit / Stdout {
+  let total = handle {
+    handle {
+      accumulate([10, 20, 30])
+    } with State[Int](0) {
+      get(resume)    -> resume(state)
+      set(v, resume) -> resume((), v)
+      return(x)      -> x
+    }
+  } with Log {
+    log(msg, resume) -> {
+      println("[LOG] " ++ msg)
+      resume(())
+    }
+  }
+  println("total = #{total}")
+}

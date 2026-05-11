@@ -1,0 +1,29 @@
+# The ledger's audit log. Each registered transaction gets
+# written to an append-only file. In real accounting this
+# isn't negotiable: transactions are never modified, only
+# corrections are added. The file is evidence.
+#
+# As in chapter 17, isolating the writes in an actor lets
+# the store keep responding while the disk is busy.
+
+import actor
+import fs.file
+
+pub type Event = Line(String)
+
+fn loop(path: String) : Unit / Actor[Event] + File {
+  match Actor.receive() {
+    Line(s) -> {
+      file.file_append(path, s ++ "\n")
+      loop(path)
+    }
+  }
+}
+
+pub fn start(path: String) : Pid[Event] / Spawn + Cancel + Actor[Event] + File {
+  # Append-only: if the file exists, we'd open it in append
+  # mode without truncating. For a simple demo we create it
+  # empty.
+  file.file_write_file(path, "")
+  spawn_actor(() => loop(path))
+}

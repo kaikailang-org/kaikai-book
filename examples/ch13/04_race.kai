@@ -1,0 +1,33 @@
+# `select` waits for any fiber to finish and cancels the
+# others. It's the "race" primitive: the first answer wins.
+#
+# We use two "workers" that return an Int after different
+# yield counts to simulate them taking different amounts of
+# time.
+
+import spawn
+
+fn fast() : Int / Stdout + Spawn {
+  println("fast: start")
+  fiber_yield()
+  println("fast: done")
+  1
+}
+
+fn slow() : Int / Stdout + Spawn {
+  println("slow: start")
+  fiber_yield()
+  fiber_yield()
+  fiber_yield()
+  println("slow: done")
+  2
+}
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  let winner = nursery { n ->
+    let a = n.spawn(() => fast())
+    let b = n.spawn(() => slow())
+    n.select([a, b])
+  }
+  println("winner: #{winner}")
+}

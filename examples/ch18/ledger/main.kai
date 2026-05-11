@@ -1,0 +1,73 @@
+# Program that wires it all and runs a series of example
+# operations. It's a CLI, not an HTTP server: the emphasis
+# of chapter 18 is on accounting invariants, not
+# concurrency.
+#
+# For a more complete demo (interactive CLI, or HTTP-fronted
+# using chapter 17's pattern), the pieces are ready.
+
+import actor
+import spawn
+import fs.file
+import domain
+import store
+import balance
+import persistence
+
+const LOG_PATH : String = "ledger.audit.log"
+
+fn show(r: domain.Response) : Unit / Console {
+  println("  -> #{r}")
+}
+
+fn record_event(log_pid: Pid[persistence.Event], r: domain.Response)
+    : Unit / Actor[persistence.Event] {
+  match r {
+    domain.AccountCreated(c)          -> Actor.send(log_pid, persistence.Line("ACCOUNT #{c.id} #{c.name}"))
+    domain.TransactionRegistered(t)   -> Actor.send(log_pid, persistence.Line("TX #{t.id} #{t.description}"))
+    _                                  -> ()
+  }
+}
+
+fn step(
+  store_pid: Pid[store.StoreMsg],
+  log_pid: Pid[persistence.Event],
+  c: domain.Command,
+) : Unit / Console + Spawn + Cancel + Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] {
+  let r = store.ask(store_pid, c)
+  show(r)
+  record_event(log_pid, r)
+}
+
+fn main() : Unit / Console + File + Spawn + Cancel + Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] {
+  let store_pid = store.start()
+  let log_pid   = persistence.start(LOG_PATH)
+
+  println("== creating accounts ==")
+  step(store_pid, log_pid, domain.CreateAccount("cash"))
+  step(store_pid, log_pid, domain.CreateAccount("sales"))
+  step(store_pid, log_pid, domain.CreateAccount("expenses"))
+
+  println("== recording a sale ==")
+  step(store_pid, log_pid, domain.Register("card sale", [
+    domain.Debit(1<AccountId>, 50.0<USD>),
+    domain.Credit(2<AccountId>, 50.0<USD>),
+  ]))
+
+  println("== paying an expense ==")
+  step(store_pid, log_pid, domain.Register("team coffee", [
+    domain.Debit(3<AccountId>, 8.0<USD>),
+    domain.Credit(1<AccountId>, 8.0<USD>),
+  ]))
+
+  println("== unbalanced attempt (should fail) ==")
+  step(store_pid, log_pid, domain.Register("error", [
+    domain.Debit(1<AccountId>, 100.0<USD>),
+    domain.Credit(2<AccountId>, 50.0<USD>),
+  ]))
+
+  println("== final balances ==")
+  step(store_pid, log_pid, domain.QueryBalance(1<AccountId>))
+  step(store_pid, log_pid, domain.QueryBalance(2<AccountId>))
+  step(store_pid, log_pid, domain.QueryBalance(3<AccountId>))
+}

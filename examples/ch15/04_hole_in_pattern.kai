@@ -1,0 +1,22 @@
+# A hole can go in pattern position too. The compiler tells
+# you which inhabitants of the type are left to cover.
+# Useful when you're writing a match and you know which case
+# is missing but haven't yet decided how to handle it.
+
+type Shape
+  = Circle(Real)
+  | Square(Real)
+  | Triangle(Real, Real)
+
+fn area(s: Shape) : Real {
+  match s {
+    Circle(r)        -> 3.14 * r * r
+    Square(l)        -> l * l
+    Triangle(b, h)   -> ?triangle_formula
+  }
+}
+
+fn main() : Unit / Console {
+  println("circle 3 -> #{area(Circle(3.0))}")
+  println("square 4 -> #{area(Square(4.0))}")
+}

@@ -1,0 +1,28 @@
+# Same idea with a `nursery`: a structured syntax saying
+# "these fibers live inside this block, and the block waits
+# for them to finish before exiting".
+#
+# `nursery { n -> ... }` opens the scope. `n` is the capacity
+# for creating and awaiting fibers. Any fiber created with
+# `n.spawn` is a child of the nursery; on block exit, the
+# nursery waits for them all. If one fails, the others are
+# cancelled.
+
+import spawn
+
+fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
+  if n > 0 {
+    println(tag)
+    fiber_yield()
+    worker(tag, n - 1)
+  }
+}
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  nursery { n ->
+    let a = n.spawn(() => worker("A", 3))
+    let b = n.spawn(() => worker("B", 3))
+    n.await(a)
+    n.await(b)
+  }
+}

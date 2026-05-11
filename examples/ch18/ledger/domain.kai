@@ -1,0 +1,60 @@
+# Domain types of the ledger.
+#
+# A ledger is a double-entry book: each transaction has a
+# list of debits and a list of credits, and the sum of
+# debits must equal the sum of credits. That's the central
+# invariant.
+#
+# Accounts have an id (integer) and a name. Amounts carry a
+# unit of measure (USD here; chapter 10 covered how to
+# extend this to multiple currencies with explicit
+# conversions).
+
+unit USD
+
+# Branded identifiers so the compiler won't let you pass a
+# AccountId where a TransactionId is expected.
+pub unit AccountId
+pub unit TransactionId
+
+#derive(Show)
+pub type Account = {
+  id:      Int<AccountId>,
+  name:    String,
+  balance: Real<USD>,        # accumulated balance of the account
+}
+
+# A movement is one line of a transaction: an account and an
+# amount. We keep the two kinds (debit vs credit) as distinct
+# constructors of a sum type, so the type system won't let
+# us add "debit amount" with "credit amount".
+#derive(Show)
+pub type Movement
+  = Debit(Int<AccountId>, Real<USD>)     # charge to the account
+  | Credit(Int<AccountId>, Real<USD>)    # credit to the account
+
+#derive(Show)
+pub type Transaction = {
+  id:           Int<TransactionId>,
+  description:  String,
+  movements:    [Movement],
+}
+
+# Commands the ledger accepts. Create an account, register a
+# transaction, query an account balance, list accounts.
+pub type Command
+  = CreateAccount(String)                            # name of new account
+  | Register(String, [Movement])                     # description + movs
+  | QueryBalance(Int<AccountId>)
+  | ListAccounts
+
+# Domain-level responses.
+#derive(Show)
+pub type Response
+  = AccountCreated(Account)
+  | TransactionRegistered(Transaction)
+  | CurrentBalance(Real<USD>)
+  | Accounts([Account])
+  | UnbalancedError(String)              # movements don't balance
+  | UnknownAccount(Int<AccountId>)
+  | InvalidAmount(String)

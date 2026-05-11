@@ -1,0 +1,40 @@
+# When a combination of effects appears many times, give it a
+# name with `type`. The alias is just shorthand for the
+# right-hand side: it introduces no new effect, only writes
+# it shorter.
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+effect Audit {
+  audit(user: String, action: String) : Unit
+}
+
+# `Tracing` groups the two instrumentation effects.
+type Tracing = Log + Audit
+
+fn make_purchase(user: String, amount: Int) : Unit / Tracing {
+  Log.log("start: purchase by #{user} for #{amount}")
+  Audit.audit(user, "purchase($#{amount})")
+  Log.log("end: purchase by #{user}")
+}
+
+fn main() : Unit / Stdout {
+  handle {
+    handle {
+      make_purchase("ada", 100)
+      make_purchase("turing", 250)
+    } with Audit {
+      audit(user, action, resume) -> {
+        println("[AUDIT] #{user}: #{action}")
+        resume(())
+      }
+    }
+  } with Log {
+    log(msg, resume) -> {
+      println("[LOG] " ++ msg)
+      resume(())
+    }
+  }
+}

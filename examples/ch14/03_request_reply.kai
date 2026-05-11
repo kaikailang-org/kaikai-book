@@ -1,0 +1,41 @@
+# Request/reply pattern: the client sends the server a
+# message that includes its own Pid, so the server knows
+# where to reply.
+#
+# Each side has its own message type:
+# - The client sends `Request` and receives `Reply`.
+# - The server receives `Request` and sends `Reply`.
+#
+# Typed Pids guarantee that each mailbox receives only the
+# message type it expects.
+
+import actor
+
+type Request = Query(String, Pid[Reply])
+type Reply   = Answer(String)
+
+fn server() : Unit / Actor[Request] + Actor[Reply] + Console {
+  match Actor.receive() {
+    Query(q, client) -> {
+      Stdout.print("server: got '#{q}'")
+      Actor.send(client, Answer("reply to '#{q}'"))
+      server()
+    }
+  }
+}
+
+fn main() : Unit / Console + Spawn + Cancel + Actor[Reply] {
+  with_mailbox {
+    let s = spawn_actor(() => server())
+
+    Actor.send(s, Query("two+two", Actor.self()))
+    match Actor.receive() {
+      Answer(r) -> Stdout.print("client: " ++ r)
+    }
+
+    Actor.send(s, Query("the meaning of life", Actor.self()))
+    match Actor.receive() {
+      Answer(r) -> Stdout.print("client: " ++ r)
+    }
+  }
+}

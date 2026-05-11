@@ -1,0 +1,28 @@
+# An effect declares a capability. `Log` here says there will
+# be an operation `log`, but does NOT say how it is
+# implemented. The `handle` below decides.
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+# `greet` uses `Log.log` and so its row carries `/ Log`.
+# The function doesn't know whether messages go to the
+# console, to a file, or nowhere: it only knows the effect
+# is available.
+
+fn greet(name: String) : Unit / Log {
+  Log.log("hello, " ++ name)
+}
+
+fn main() {
+  handle {
+    greet("kaikai")
+    greet("Ada")
+  } with Log {
+    log(msg, resume) -> {
+      println("[INFO] " ++ msg)
+      resume(())
+    }
+  }
+}
