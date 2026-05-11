@@ -84,7 +84,7 @@ cuando no. Cap. 11.
 el runtime instala automáticamente alrededor de `main` para
 ciertos efectos (`Console`, `File`, `Spawn`, etc.). Los
 handlers del usuario instalados con `handle ... with X` se
-imponen sobre el default mientras están en scope.
+imponen sobre el handler por defecto mientras están en scope.
 
 **Doble entrada** *(double-entry, en contabilidad)*. Sistema
 contable donde cada transacción tiene débitos que igualan los

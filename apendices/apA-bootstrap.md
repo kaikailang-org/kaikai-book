@@ -89,7 +89,7 @@ lo fuera, este paso no terminaría.
 ## A.4 Stage 2: kaikai completo, self-hosted
 
 `stage2` es la versión definitiva. Está escrito en **kaikai
-completo** (no en el subset minimal), usando efectos, fibras,
+completo** (no en el subconjunto minimal), usando efectos, fibras,
 y todo lo que el lenguaje ofrece. Es código kaikai idiomático
 de extremo a extremo.
 
@@ -163,7 +163,7 @@ porque toda decisión de ingeniería los tiene:
 
 - **Hay que mantener stage 0 cada vez que cambia
   kaikai-minimal.** Si una característica nueva del lenguaje
-  cae dentro del subset minimal, stage 0 tiene que aprenderla.
+  cae dentro del subconjunto minimal, stage 0 tiene que aprenderla.
   Eso significa código C nuevo, escrito a mano.
 - **Cuesta agregar dependencias al compilador.** Stage 2 podría
   beneficiarse de una biblioteca externa (parser combinator,
