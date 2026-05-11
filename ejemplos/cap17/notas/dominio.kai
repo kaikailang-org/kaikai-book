@@ -1,0 +1,24 @@
+# Tipos de dominio del servidor de notas.
+#
+# Una nota tiene un id (entero) y un cuerpo (string).
+# Un comando es lo que el handler interpreta del HTTP request.
+# Una respuesta es lo que el handler devuelve para serializar.
+
+#derive(Show)
+pub type Nota = { id: Int, cuerpo: String }
+
+# Comandos que el servidor entiende.
+pub type Comando
+  = Listar
+  | Obtener(Int)
+  | Crear(String)
+  | Borrar(Int)
+
+# Respuestas del nivel de dominio. El traductor a HTTP las
+# convierte en status codes + cuerpos JSON.
+pub type Respuesta
+  = Ok(String)                      # 200, body = String
+  | Creado(Nota)                    # 201, body = nota serializada
+  | NoEncontrado                    # 404
+  | ErrorCliente(String)            # 400
+  | ErrorServidor(String)           # 500

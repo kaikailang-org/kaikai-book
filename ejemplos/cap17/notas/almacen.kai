@@ -1,0 +1,134 @@
+# El almacén de notas es un actor. Vive como una fibra con un
+# mailbox, mantiene la lista de notas como estado interno, y
+# responde a los comandos que le mandan los handlers HTTP.
+#
+# Como vive en un solo actor, no hay concurrencia entre
+# escrituras: cada comando se procesa en orden. Eso evita
+# races sin necesidad de locks.
+
+import actor
+import dominio
+
+# El protocolo del almacén: el comando de dominio más el Pid
+# del que pregunta para que el almacén pueda responder.
+pub type AlmacenMsg = Pregunta(dominio.Comando, Pid[AlmacenResp])
+pub type AlmacenResp = Respuesta(dominio.Respuesta)
+
+# El bucle del actor. Recibe pregunta, decide qué hacer según
+# el estado, responde, y se llama recursivamente con el estado
+# actualizado.
+fn bucle(notas: [dominio.Nota], proximo_id: Int)
+    : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] {
+  match Actor.receive() {
+    Pregunta(comando, cliente) -> {
+      let (resp, notas_nuevas, id_nuevo) =
+        procesar(comando, notas, proximo_id)
+      Actor.send(cliente, Respuesta(resp))
+      bucle(notas_nuevas, id_nuevo)
+    }
+  }
+}
+
+# La lógica pura: dado un comando y el estado, devuelve la
+# respuesta, las notas nuevas y el próximo id. Sin efectos.
+# Testeable sin arrancar fibras.
+pub fn procesar(c: dominio.Comando, notas: [dominio.Nota], next_id: Int)
+    : (dominio.Respuesta, [dominio.Nota], Int) {
+  match c {
+    Listar -> {
+      let cuerpos = list.map(notas, (n) => n.cuerpo)
+      (dominio.Ok(serializar_lista(cuerpos)), notas, next_id)
+    }
+    Obtener(id) ->
+      match buscar(notas, id) {
+        Some(n) -> (dominio.Ok(n.cuerpo), notas, next_id)
+        None    -> (dominio.NoEncontrado, notas, next_id)
+      }
+    Crear(cuerpo) -> {
+      let nueva = dominio.Nota { id: next_id, cuerpo: cuerpo }
+      (dominio.Creado(nueva), [nueva, ...notas], next_id + 1)
+    }
+    Borrar(id) ->
+      match buscar(notas, id) {
+        Some(_) -> {
+          let restantes = list.filter(notas, (n) => n.id != id)
+          (dominio.Ok("borrada"), restantes, next_id)
+        }
+        None -> (dominio.NoEncontrado, notas, next_id)
+      }
+  }
+}
+
+fn buscar(notas: [dominio.Nota], id: Int) : Option[dominio.Nota] {
+  match notas {
+    []           -> None
+    [h, ...rest] -> if h.id == id { Some(h) } else { buscar(rest, id) }
+  }
+}
+
+fn serializar_lista(cuerpos: [String]) : String {
+  match cuerpos {
+    []           -> "[]"
+    [h, ...rest] -> "[" ++ h ++ unir(rest) ++ "]"
+  }
+}
+
+fn unir(xs: [String]) : String {
+  match xs {
+    []           -> ""
+    [h, ...rest] -> ", " ++ h ++ unir(rest)
+  }
+}
+
+# Arranca el almacén como actor. Devuelve el Pid para que el
+# servidor le mande preguntas.
+pub fn arrancar() : Pid[AlmacenMsg] / Spawn + Cancel + Actor[AlmacenMsg] + Actor[AlmacenResp] {
+  spawn_actor(() => bucle([], 1))
+}
+
+# Helper para que un cliente del almacén haga una pregunta
+# sincrónica: envía, espera la respuesta, la devuelve.
+pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando)
+    : dominio.Respuesta / Actor[AlmacenMsg] + Actor[AlmacenResp] + Cancel {
+  Actor.send(almacen, Pregunta(c, Actor.self()))
+  match Actor.receive() {
+    Respuesta(r) -> r
+  }
+}
+
+test "crear y obtener" {
+  let (r1, n1, id1) = procesar(dominio.Crear("primera"), [], 1)
+  let creado_ok = match r1 {
+    dominio.Creado(_) -> true
+    _                  -> false
+  }
+  assert creado_ok
+  assert id1 == 2
+  let (r2, _, _) = procesar(dominio.Obtener(1), n1, id1)
+  let obtener_ok = match r2 {
+    dominio.Ok(c) -> c == "primera"
+    _              -> false
+  }
+  assert obtener_ok
+}
+
+test "obtener nota inexistente" {
+  let (r, _, _) = procesar(dominio.Obtener(99), [], 1)
+  let ok = match r {
+    dominio.NoEncontrado -> true
+    _                     -> false
+  }
+  assert ok
+}
+
+test "borrar reduce la lista" {
+  let (_, n1, id1) = procesar(dominio.Crear("a"), [], 1)
+  let (_, n2, id2) = procesar(dominio.Crear("b"), n1, id1)
+  let (r, n3, _)   = procesar(dominio.Borrar(1), n2, id2)
+  let ok = match r {
+    dominio.Ok(_) -> true
+    _              -> false
+  }
+  assert ok
+  assert list.length(n3) == 1
+}

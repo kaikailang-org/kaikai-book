@@ -1,0 +1,101 @@
+# Servidor HTTP de notas. Arma todas las piezas:
+# - El almacén corre como actor con la lista de notas en
+#   memoria.
+# - La persistencia corre como otro actor que escribe a un
+#   log.
+# - El bucle principal acepta conexiones TCP, parsea el HTTP,
+#   pregunta al almacén, escribe al log si corresponde, y
+#   responde.
+#
+# Cada conexión entrante se procesa en su propia fibra dentro
+# del nursery. El scheduler las intercala cooperativamente, y
+# el accept del puerto bloqueado yieldea hasta que llega una
+# conexión nueva.
+
+import actor
+import spawn
+import fs.file
+import dominio
+import almacen
+import persistencia
+import http as http_lib
+import net.tcp
+
+const PUERTO : Int = 8080
+const PATH_LOG : String = "notas.log"
+
+fn manejar_conexion(
+  conn: Conn,
+  almacen_pid: Pid[almacen.AlmacenMsg],
+  log_pid: Pid[persistencia.Evento],
+) : Unit / NetTcp + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] + Cancel {
+  let raw = leer_request(conn)
+  let resp = match http_lib.parsear_request(raw) {
+    Err(msg) -> dominio.ErrorCliente(msg)
+    Ok(req)  -> match http_lib.enrutar(req) {
+      Err(r)        -> r
+      Ok(comando)   -> {
+        registrar(log_pid, comando)
+        almacen.preguntar(almacen_pid, comando)
+      }
+    }
+  }
+  NetTcp.send(conn, string_to_bytes(http_lib.serializar_respuesta(resp)))
+  NetTcp.close(conn)
+}
+
+fn leer_request(conn: Conn) : String / NetTcp {
+  match NetTcp.recv(conn, 4096) {
+    Ok(bytes) -> bytes_to_string(bytes)
+    Err(_)    -> ""
+  }
+}
+
+fn registrar(log_pid: Pid[persistencia.Evento], c: dominio.Comando)
+    : Unit / Actor[persistencia.Evento] {
+  match c {
+    dominio.Crear(cuerpo)  -> Actor.send(log_pid, persistencia.Linea("CREAR " ++ cuerpo))
+    dominio.Borrar(id)     -> Actor.send(log_pid, persistencia.Linea("BORRAR #{id}"))
+    _                       -> ()           # lecturas no se registran
+  }
+}
+
+fn aceptar_loop(
+  listener: Listener,
+  almacen_pid: Pid[almacen.AlmacenMsg],
+  log_pid: Pid[persistencia.Evento],
+) : Unit / NetTcp + Spawn + Cancel + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
+  nursery { n ->
+    forever_accept(n, listener, almacen_pid, log_pid)
+  }
+}
+
+fn forever_accept(
+  n: Nursery,
+  listener: Listener,
+  almacen_pid: Pid[almacen.AlmacenMsg],
+  log_pid: Pid[persistencia.Evento],
+) : Unit / NetTcp + Spawn + Cancel + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
+  match NetTcp.accept(listener) {
+    Err(_) -> ()           # listener cerrado, salimos
+    Ok(conn) -> {
+      let _ = n.spawn(() => manejar_conexion(conn, almacen_pid, log_pid))
+      forever_accept(n, listener, almacen_pid, log_pid)
+    }
+  }
+}
+
+fn main() : Unit / Console + NetTcp + File + Spawn + Cancel + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
+  let almacen_pid = almacen.arrancar()
+  let log_pid     = persistencia.arrancar(PATH_LOG)
+
+  match NetTcp.listen("0.0.0.0", PUERTO) {
+    Err(msg) -> {
+      println("error al levantar el servidor: " ++ msg)
+    }
+    Ok(listener) -> {
+      println("servidor escuchando en puerto #{PUERTO}")
+      aceptar_loop(listener, almacen_pid, log_pid)
+    }
+  }
+}
