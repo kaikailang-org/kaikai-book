@@ -74,6 +74,24 @@ expresión te dice de inmediato de dónde sale. La alternativa,
 importar todos los nombres sueltos al namespace del
 consumidor, ahorra teclas pero pierde esa pista.
 
+El mismo prefijo se usa para los tipos que el módulo exporta y
+para construirlos:
+
+```kai
+import geometria
+
+fn main() {
+  let a : geometria.Punto = geometria.Punto { x: 0.0, y: 0.0 }
+  let b : geometria.Punto = geometria.Punto { x: 3.0, y: 4.0 }
+  println("distancia = #{geometria.distancia(a, b)}")
+}
+```
+
+Tres usos del prefijo, los tres consistentes: en la anotación
+de tipo (`: geometria.Punto`), en la construcción del record
+(`geometria.Punto { ... }`), y en la llamada a la función
+(`geometria.distancia(a, b)`). Un único patrón mental.
+
 Si el módulo está bajo un subdirectorio, el import usa el
 mismo nombre punteado que el módulo:
 
@@ -100,13 +118,16 @@ import math.vector as V                 # alias: V.dot(a, b)
 import math.vector.{dot, cross}         # nombres específicos en alcance
 ```
 
-La primera es la más común. La segunda es útil cuando el nombre
-del módulo es largo o aparece muchas veces y un alias corto te
-gana legibilidad. La tercera es la **importación selectiva**:
-una lista explícita de nombres que se traen al namespace local.
-Te conviene para tipos cuyos constructores usas muy seguido (un
-`Punto` de un módulo de geometría, por ejemplo), donde escribir
-`geometria.Punto` cada vez ensucia la lectura.
+La primera es la más común y la que debería ser tu default: el
+prefijo `vector.` deja claro de dónde sale cada nombre. La
+segunda es útil cuando el nombre del módulo es largo o aparece
+muchas veces y un alias corto te gana legibilidad sin perder
+la pista. La tercera es la **importación selectiva**: una lista
+explícita de nombres que se traen al namespace local. Te conviene
+solo cuando los nombres son los protagonistas del archivo y el
+prefijo se vuelve ruido (un `Punto` que aparece cuarenta veces,
+por ejemplo). El precio es que el lector ya no sabe de dónde
+salió `Punto` sin mirar arriba.
 
 **No hay wildcard import.** Es decir, no existe
 `import math.vector.*` o equivalente que traiga "todo lo que el

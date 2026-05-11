@@ -1,0 +1,11 @@
+# Variante con import selectivo: trae nombres específicos al
+# namespace local. Útil cuando esos nombres son protagonistas
+# del archivo y el prefijo se vuelve ruido.
+
+import geometria.{Punto, distancia}
+
+fn main() {
+  let a : Punto = Punto { x: 0.0, y: 0.0 }
+  let b : Punto = Punto { x: 3.0, y: 4.0 }
+  println("distancia = #{distancia(a, b)}")
+}

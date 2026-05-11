@@ -1,11 +1,16 @@
 # `import geometria` deja accesibles las cosas `pub` del módulo
-# bajo el prefijo `geometria.`. Para construir un record del
-# módulo importado usamos la forma con campos `{}` calificada.
+# bajo el prefijo `geometria.`. Eso vale tanto para funciones
+# (geometria.distancia) como para constructores de tipos
+# (geometria.Punto { ... }).
+#
+# NOTA: El constructor cualificado por módulo no compila en
+# kai 0.51.0 (issue #456). Ver ejemplos/cap08/02b_selectivo
+# para la forma que sí compila hoy.
 
-import geometria.{Punto, distancia}
+import geometria
 
 fn main() {
-  let a : Punto = Punto { x: 0.0, y: 0.0 }
-  let b : Punto = Punto { x: 3.0, y: 4.0 }
-  println("distancia = #{distancia(a, b)}")
+  let a : geometria.Punto = geometria.Punto { x: 0.0, y: 0.0 }
+  let b : geometria.Punto = geometria.Punto { x: 3.0, y: 4.0 }
+  println("distancia = #{geometria.distancia(a, b)}")
 }
