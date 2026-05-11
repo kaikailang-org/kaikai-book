@@ -103,33 +103,15 @@ recibe `kaic2`, no `kaic0` ni `kaic1`.
 
 Las tres etapas, de punta a punta:
 
-```
-                  +-----------+
-   cc (sistema)-->|  stage0   |--> kaic0          [en C]
-                  |  en C     |       |
-                  +-----------+       |
-                                      v
-                  +-----------+   +-------+
-                  |  stage1   |-->| kaic0 |--> kaic1   [en kai-minimal]
-                  |  en kai-  |   +-------+       |
-                  |  minimal  |                   |
-                  +-----------+                   v
-                  +-----------+               +-------+
-                  |  stage2   |-------------->| kaic1 |--> kaic2   [en kaikai completo]
-                  |  en kaikai|               +-------+       |
-                  |  completo |                               |
-                  +-----------+                               |
-                                                              |
-                  chequeo de punto fijo:                      v
-                  $ kaic2 stage2/main.kai -o kaic2-self  <----+
-                  $ diff kaic2 kaic2-self        # debe ser vacío
-```
+![Figura A.1](../figuras/figA1-bootstrap-es.png)
 
-Figura A.1 · *El bootstrap en tres etapas. Cada caja a la
-izquierda es el **código fuente** de un compilador; el óvalo
-del medio es el compilador que lo compila; la flecha de la
-derecha produce la etapa siguiente. Solo `cc` es externo;
-una vez existe `kaic0`, la cadena se autosustenta.*
+Figura A.1 · *El bootstrap en tres etapas. Las flechas
+continuas muestran qué compilador produce cada binario; las
+flechas punteadas van desde el código fuente de cada stage
+al binario que termina siendo. Solo `cc` es externo; una vez
+existe `kaic0`, la cadena se autosustenta. El chequeo de
+punto fijo de la fila inferior (`kaic2` compilándose a sí
+mismo) es lo que cubre §A.5.*
 
 ## A.5 El punto fijo: validación del bootstrap
 

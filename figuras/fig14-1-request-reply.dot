@@ -1,0 +1,36 @@
+digraph request_reply {
+  rankdir=LR;
+  bgcolor="white";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, margin="0.2,0.12"];
+  edge [fontname="Helvetica", fontsize=10];
+
+  subgraph cluster_client {
+    label="client";
+    style="rounded,filled";
+    fillcolor="#eef5ff";
+    fontname="Helvetica";
+    fontsize=12;
+
+    c_mbox [label="mailbox\nPid[Reply]", fillcolor="#cfe2ff"];
+    c_send [label="Actor.send(s,\n  Query(\"two+two\",\n        Actor.self()))", shape=note, fillcolor="#fff3b0"];
+    c_recv [label="Actor.receive()\n→ Answer(r)", shape=note, fillcolor="#fff3b0"];
+  }
+
+  subgraph cluster_server {
+    label="server";
+    style="rounded,filled";
+    fillcolor="#fff5e6";
+    fontname="Helvetica";
+    fontsize=12;
+
+    s_mbox [label="mailbox\nPid[Request]", fillcolor="#cfe2ff"];
+    s_recv [label="Actor.receive()\n→ Query(q, client)", shape=note, fillcolor="#fff3b0"];
+    s_send [label="Actor.send(client,\n  Answer(\"reply...\"))", shape=note, fillcolor="#fff3b0"];
+  }
+
+  c_send -> s_mbox [label="(1) Query carries\n     client's Pid", color="#06c", penwidth=2];
+  s_mbox -> s_recv [style=dashed, color="#666"];
+  s_recv -> s_send [style=dashed, color="#666"];
+  s_send -> c_mbox [label="(2) Reply to\n     client's Pid", color="#0a0", penwidth=2];
+  c_mbox -> c_recv [style=dashed, color="#666"];
+}

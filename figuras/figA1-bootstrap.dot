@@ -1,0 +1,37 @@
+digraph bootstrap {
+  rankdir=TB;
+  bgcolor="white";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, margin="0.2,0.12"];
+  edge [fontname="Helvetica", fontsize=10];
+
+  cc       [label="cc\n(system C compiler)", fillcolor="#fff3b0", shape=ellipse];
+  s0_src   [label="stage0 source\n(in C)", fillcolor="#e6f3ff"];
+  kaic0    [label="kaic0", fillcolor="#cfe2ff"];
+  s1_src   [label="stage1 source\n(in kai-minimal)", fillcolor="#e6f3ff"];
+  kaic1    [label="kaic1", fillcolor="#cfe2ff"];
+  s2_src   [label="stage2 source\n(in full kaikai)", fillcolor="#e6f3ff"];
+  kaic2    [label="kaic2", fillcolor="#cfe2ff", penwidth=2];
+  kaic2s   [label="kaic2-self", fillcolor="#cfe2ff", style="rounded,filled,dashed"];
+
+  fp       [label="diff kaic2 kaic2-self\n=> must be empty\n(fixed-point check)", fillcolor="#d4edda", shape=note];
+
+  cc     -> kaic0  [label="compiles", color="#666"];
+  s0_src -> kaic0  [color="#666", style=dashed, arrowhead=empty];
+
+  kaic0  -> kaic1  [label="compiles", color="#666"];
+  s1_src -> kaic1  [color="#666", style=dashed, arrowhead=empty];
+
+  kaic1  -> kaic2  [label="compiles", color="#666"];
+  s2_src -> kaic2  [color="#666", style=dashed, arrowhead=empty];
+
+  kaic2  -> kaic2s [label="compiles", color="#aa3", style=bold];
+  s2_src -> kaic2s [color="#aa3", style=dashed, arrowhead=empty];
+
+  kaic2  -> fp    [style=invis];
+  kaic2s -> fp    [style=invis];
+
+  {rank=same; cc; }
+  {rank=same; s0_src; kaic0; }
+  {rank=same; s1_src; kaic1; }
+  {rank=same; s2_src; kaic2; kaic2s; }
+}

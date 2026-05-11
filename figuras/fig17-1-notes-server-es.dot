@@ -1,0 +1,44 @@
+digraph notes_server {
+  rankdir=TB;
+  bgcolor="white";
+  compound=true;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, margin="0.2,0.12"];
+  edge [fontname="Helvetica", fontsize=10];
+
+  tcp     [label="socket TCP\n:8080", shape=ellipse, fillcolor="#fff3b0"];
+  main    [label="main.kai\n(loop accept\n+ nursery)", fillcolor="#cfe2ff", penwidth=2];
+  conn    [label="manejar_conexion\n(una fibra por\nconexión)", fillcolor="#cfe2ff"];
+
+  subgraph cluster_pure {
+    label="puros (sin efectos)";
+    style="rounded,filled";
+    fillcolor="#eafbe7";
+    fontname="Helvetica";
+    fontsize=12;
+
+    domain [label="dominio.kai\n(tipos:\nNota, Comando,\nRespuesta)", fillcolor="#d4edda"];
+    http   [label="http.kai\n(parser,\nserializador,\nrouter)", fillcolor="#d4edda"];
+  }
+
+  subgraph cluster_actors {
+    label="actores (estado encapsulado)";
+    style="rounded,filled";
+    fillcolor="#fdecea";
+    fontname="Helvetica";
+    fontsize=12;
+
+    store  [label="almacen.kai\nactor:\nnotas, next_id", fillcolor="#f8d7da"];
+    persist[label="persistencia.kai\nactor:\nappende al log", fillcolor="#f8d7da"];
+  }
+
+  log     [label="archivo\nde log\nen disco", shape=cylinder, fillcolor="#fff3b0"];
+
+  tcp     -> main  [label="accept"];
+  main    -> conn  [label="n.spawn"];
+  conn    -> http  [label="parse + route"];
+  conn    -> store [label="consulta"];
+  conn    -> persist [label="registra evento"];
+  store   -> domain [style=dashed, color="#666", label="usa"];
+  http    -> domain [style=dashed, color="#666", label="produce Comando"];
+  persist -> log    [label="append"];
+}

@@ -1,0 +1,35 @@
+digraph nursery {
+  rankdir=TB;
+  bgcolor="white";
+  compound=true;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, margin="0.2,0.12"];
+  edge [fontname="Helvetica", fontsize=10];
+
+  outside [label="fuera del nursery", shape=plaintext];
+
+  subgraph cluster_nursery {
+    label="nursery { n -> ... }";
+    style="rounded,filled";
+    fillcolor="#f4f1ea";
+    fontname="Helvetica";
+    fontsize=12;
+    margin=18;
+
+    spawn   [label="n.spawn(...)", shape=ellipse, fillcolor="#fff3b0"];
+    A       [label="fibra A", fillcolor="#cfe2ff"];
+    B       [label="fibra B", fillcolor="#cfe2ff"];
+    cascade [label="cascada de\ncancelación", fillcolor="#f8d7da"];
+    exit    [label="salida del bloque\n(solo cuando toda\nhija terminó)", fillcolor="#d4edda"];
+
+    spawn -> A [label="crea"];
+    spawn -> B [label="crea"];
+    A -> cascade [label="si B falla\n→ A se cancela", style=dashed, color="#a00"];
+    B -> cascade [label="falla", color="#a00"];
+    cascade -> exit [label="re-lanza la causa"];
+    A -> exit [style=dashed, color="#666"];
+    B -> exit [style=dashed, color="#666"];
+  }
+
+  outside -> spawn [lhead=cluster_nursery, label="entra al ámbito"];
+  exit    -> outside [ltail=cluster_nursery, label="sale con resultado\n(o falla re-lanzada)"];
+}

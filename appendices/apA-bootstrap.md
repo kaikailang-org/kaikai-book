@@ -101,33 +101,14 @@ gets `kaic2`, not `kaic0` or `kaic1`.
 
 The three stages, end to end:
 
-```
-                  +-----------+
-   cc (system) -->|  stage0   |--> kaic0          [in C]
-                  |  in C     |       |
-                  +-----------+       |
-                                      v
-                  +-----------+   +-------+
-                  |  stage1   |-->| kaic0 |--> kaic1   [in kai-minimal]
-                  |  in kai-  |   +-------+       |
-                  |  minimal  |                   |
-                  +-----------+                   v
-                  +-----------+               +-------+
-                  |  stage2   |-------------->| kaic1 |--> kaic2   [in full kaikai]
-                  |  in full  |               +-------+       |
-                  |  kaikai   |                               |
-                  +-----------+                               |
-                                                              |
-                  fixed-point check:                          v
-                  $ kaic2 stage2/main.kai -o kaic2-self  <----+
-                  $ diff kaic2 kaic2-self        # must be empty
-```
+![Figure A.1](../figuras/figA1-bootstrap.png)
 
-Figure A.1 · *The three-stage bootstrap. Each box on the left
-is a compiler **source**; each oval in the middle is the
-compiler that compiles it; the arrow on the right produces the
-next stage. Only `cc` is external; once `kaic0` exists, the
-chain is self-contained.*
+Figure A.1 · *The three-stage bootstrap. Solid arrows show
+which compiler produces which binary; the dashed arrows
+point from each stage's source to the binary it becomes.
+Only `cc` is external; once `kaic0` exists, the chain is
+self-contained. The bottom row's fixed-point check
+(`kaic2` compiling itself) is what §A.5 covers.*
 
 ## A.5 The fixed point: bootstrap validation
 

@@ -250,31 +250,7 @@ What the nursery guarantees:
 - **If the nursery is canceled from outside, the
   cancellation propagates to all children.**
 
-```
-        outside the nursery
-              |
-              v
-        +-----+-------------------------------------+
-        |   nursery { n ->                          |
-        |                                           |
-        |     n.spawn(...)    n.spawn(...)          |
-        |          |               |                |
-        |          v               v                |
-        |     +---------+     +---------+           |
-        |     | fiber A |     | fiber B |           |
-        |     +---------+     +---------+           |
-        |          \\               /                |
-        |           \\  if B fails  /                 |
-        |            v             v                |
-        |     +-------------------------+           |
-        |     |   cancellation cascade  |           |
-        |     +-------------------------+           |
-        |   }   <-- block exits only when           |
-        +-------     every child is done -----------+
-              ^
-              |
-        re-raises the cause if any child failed
-```
+![Figure 13.1](../figuras/fig13-1-nursery.png)
 
 Figure 13.1 · *Structured concurrency in one picture. The
 nursery is a lexical scope; child fibers live inside; nothing

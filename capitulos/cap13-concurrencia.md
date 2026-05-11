@@ -248,31 +248,7 @@ Lo que el nursery garantiza:
 - **Si el nursery se cancela desde afuera, propaga la
   cancelación a todas sus hijas.**
 
-```
-        fuera del nursery
-              |
-              v
-        +-----+-------------------------------------+
-        |   nursery { n ->                          |
-        |                                           |
-        |     n.spawn(...)    n.spawn(...)          |
-        |          |               |                |
-        |          v               v                |
-        |     +---------+     +---------+           |
-        |     | fibra A |     | fibra B |           |
-        |     +---------+     +---------+           |
-        |          \\               /                |
-        |           \\  si B falla  /                 |
-        |            v             v                |
-        |     +-------------------------+           |
-        |     |  cascada de cancelación |           |
-        |     +-------------------------+           |
-        |   }   <-- el bloque solo sale cuando      |
-        +-------     toda hija terminó --------------+
-              ^
-              |
-        re-lanza la causa si alguna hija falló
-```
+![Figura 13.1](../figuras/fig13-1-nursery-es.png)
 
 Figura 13.1 · *Concurrencia estructurada en una imagen. El
 nursery es un ámbito léxico; las fibras hijas viven adentro;
