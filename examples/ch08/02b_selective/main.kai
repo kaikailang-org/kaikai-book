@@ -1,0 +1,11 @@
+# Selective-import variant: brings specific names into the local
+# namespace. Useful when those names are the protagonists of the
+# file and the module prefix becomes noise.
+
+import geometry.{Point, distance}
+
+fn main() {
+  let a : Point = Point { x: 0.0, y: 0.0 }
+  let b : Point = Point { x: 3.0, y: 4.0 }
+  println("distance = #{distance(a, b)}")
+}

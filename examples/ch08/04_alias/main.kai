@@ -1,0 +1,9 @@
+# `import X as Y` gives a short alias to the module. Useful when
+# the module name is long or used many times.
+
+import geometry as G
+
+fn main() {
+  let d = G.distance_from_origin(3.0, 4.0)
+  println("distance from origin = #{d}")
+}

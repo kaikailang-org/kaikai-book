@@ -1,0 +1,7 @@
+pub type Point = { x: Real, y: Real }
+
+pub fn distance(a: Point, b: Point) : Real {
+  let dx = a.x - b.x
+  let dy = a.y - b.y
+  real_sqrt(dx * dx + dy * dy)
+}

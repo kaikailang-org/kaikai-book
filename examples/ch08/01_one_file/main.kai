@@ -1,0 +1,13 @@
+# One file, one module. There is no `module Foo` declaration.
+# Functions without `pub` are private to the file;
+# `pub` makes them visible to other modules that import this one.
+
+pub fn double(x: Int) : Int = x * 2
+
+fn helper(x: Int) : Int = x + 1
+
+pub fn double_plus_one(x: Int) : Int = helper(double(x))
+
+fn main() {
+  println("double_plus_one(5) = #{double_plus_one(5)}")
+}

@@ -1,0 +1,9 @@
+# With a plain `import`, functions are accessed with the module
+# prefix.
+
+import geometry
+
+fn main() {
+  let d = geometry.distance_from_origin(3.0, 4.0)
+  println("distance from origin = #{d}")
+}

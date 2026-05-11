@@ -1,0 +1,2 @@
+pub fn distance_from_origin(x: Real, y: Real) : Real =
+  real_sqrt(x * x + y * y)

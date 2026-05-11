@@ -1,0 +1,16 @@
+# `import geometry` makes the module's `pub` items accessible
+# under the prefix `geometry.`. The same prefix works for
+# functions (geometry.distance) and for type constructors
+# (geometry.Point { ... }).
+#
+# NOTE: qualified record construction does not parse in kai 0.51.0
+# (issue #456). See examples/ch08/02b_selective for the form that
+# compiles today.
+
+import geometry
+
+fn main() {
+  let a : geometry.Point = geometry.Point { x: 0.0, y: 0.0 }
+  let b : geometry.Point = geometry.Point { x: 3.0, y: 4.0 }
+  println("distance = #{geometry.distance(a, b)}")
+}

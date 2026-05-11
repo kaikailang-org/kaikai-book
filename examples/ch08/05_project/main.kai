@@ -1,0 +1,5 @@
+import util.math
+
+fn main() {
+  println("3^4 = #{math.pow(3, 4)}")
+}
