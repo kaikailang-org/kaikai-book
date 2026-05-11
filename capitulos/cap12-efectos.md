@@ -514,7 +514,79 @@ escribir `type WithIo[e] = Io + e` (con variable de fila). Esa
 restricción evita complicaciones en la unificación que el
 compilador no necesita pagar.
 
-## 12.9 Handlers por defecto
+## 12.9 Tu propio handler por defecto: el patrón envoltorio
+
+¿Y si quieres que **tu** efecto venga con un handler "preinstalado",
+como `println` viene con `Stdout`? La respuesta corta es que en
+v1 no se puede: el runtime instala handlers por defecto solo para
+los efectos del stdlib (`Stdout`, `Stdin`, `Env`, `File`,
+`Random`, `Time`, etc.), y la capacidad de registrar handlers
+automáticos para efectos propios está fuera del alcance.
+
+El patrón idiomático para acercarse es escribir una **función
+envoltorio** que aplica el handler estándar:
+
+```kai
+effect Log {
+  log(msg: String) : Unit
+}
+
+fn with_default_log[A](body: () -> A / Log) : A {
+  handle {
+    body()
+  } with Log {
+    log(msg, resume) -> {
+      println("[LOG] " ++ msg)
+      resume(())
+    }
+  }
+}
+```
+
+`with_default_log` toma un body que necesita `Log` y devuelve
+**el mismo tipo del body**, ya manejado. Quien lo use, recibe el
+handler estándar sin escribirlo:
+
+```kai
+fn main() {
+  with_default_log(() => {
+    greet("kaikai")
+    greet("ada")
+  })
+}
+```
+
+Quien quiera otro comportamiento, simplemente no llama a
+`with_default_log` y escribe su propio `handle`. La diferencia
+con un handler "automático" es la línea extra que envuelve al
+body, pero a cambio el comportamiento por defecto es **explícito
+y opcional**, no oculto en el runtime. Es lo que el stdlib mismo
+hace para construcciones como `try { body }` o `with_state(0)
+{ body }`: la sintaxis de trailing lambda lo deja casi tan
+limpio como un handler implícito:
+
+```kai
+fn main() {
+  with_default_log { ->
+    greet("kaikai")
+    greet("ada")
+  }
+}
+```
+
+Hay un valor pedagógico además del práctico: cuando el handler
+por defecto vive en una función nombrada del módulo del efecto,
+el lector que se topa con `with_default_log` puede ir a leerla y
+ver exactamente qué hace. El runtime no tiene esa transparencia
+para sus propios defaults.
+
+Si tu efecto tiene un default razonable para producción y otro
+distinto para tests, expón los dos como `with_default_log` y
+`with_test_log`, ambas con la misma firma. Quien escribe tests
+elige el segundo; quien escribe `main`, el primero. El módulo
+del efecto se vuelve el catálogo de "configuraciones canónicas".
+
+## 12.10 Handlers por defecto del runtime
 
 Hay efectos que un programa usa tanto que `kai` los maneja sin que
 los declares. El caso más claro es `println`: imprime a la salida
@@ -547,7 +619,7 @@ Otros efectos con handlers por defecto en `main`: `Stdin`,
 "hola-mundo" sin firmas pesadas. La doc del cap. 12 del manual
 del lenguaje detalla cuáles son.
 
-## 12.10 Caso de estudio: procesador de configuración
+## 12.11 Caso de estudio: procesador de configuración
 
 Cerramos con un ejemplo que mezcla los tres patrones que vimos:
 logueo, estado, fallo. El programa procesa una lista de líneas
@@ -643,7 +715,7 @@ test, los tres handlers tienen otras implementaciones: el `Log`
 acumula en una lista en vez de imprimir, el `Fail` propaga en un
 `Result`, el `State` parte del valor que el test quiera.
 
-## 12.11 Filosofía: tres ideas que cargan el sistema
+## 12.12 Filosofía: tres ideas que cargan el sistema
 
 Si esto te parece muchas piezas, vale fijar las tres ideas que
 todo lo demás sostiene:
@@ -692,7 +764,7 @@ segundo?
 total como la cantidad de elementos sumados, sin agregar
 parámetros. Pista: cambia `return(x) -> x`.
 
-**12.3.** El caso de estudio §12.10 imprime con `[LOG]` cada
+**12.3.** El caso de estudio §12.11 imprime con `[LOG]` cada
 entrada. Cambia el handler de `Log` para que en vez de imprimir,
 acumule los mensajes en una lista y los devuelva como parte del
 resultado final, junto con `n`. Pista: necesitas otro `State`.
@@ -716,7 +788,13 @@ original sobrevive sin cambios?
 que el caso common sea cheap y obliga a marcar explícitamente el
 caso caro?
 
-**12.7.** El capítulo 13 cubre fibras: tareas concurrentes
+**12.7.** Toma `Log` de §12.9 y agrega un segundo "default":
+`with_silent_log`, que descarta los mensajes. Después escribe una
+función que use `Log` y pruébala con los dos handlers sin
+modificar la función. Compara con cómo harías lo mismo en un
+lenguaje con inyección de dependencias clásica.
+
+**12.8.** El capítulo 13 cubre fibras: tareas concurrentes
 manejadas como efectos. Anota antes de leerlo: ¿qué operaciones
 tendría que tener un efecto `Spawn`? ¿Qué decisión tomarías como
 handler cuando una fibra hija aborta?

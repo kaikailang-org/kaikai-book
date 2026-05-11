@@ -1,0 +1,48 @@
+# Patrón: handler por defecto para un efecto propio, expresado
+# como función envoltorio.
+#
+# kaikai (v1) reserva los handlers automáticos al runtime, para
+# los efectos del stdlib (Stdout, Stdin, Env, File, Random, Time,
+# etc.). Para un efecto que tú declaras, la convención es escribir
+# una función que envuelve un body con el handler estándar. Quien
+# la usa, recibe el comportamiento default; quien quiere otro,
+# escribe su propio `handle`.
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+fn greet(name: String) : Unit / Log {
+  Log.log("hola, " ++ name)
+}
+
+# El "default" del usuario: una función que toma un body y lo
+# corre con el handler estándar para Log.
+fn with_default_log[A](body: () -> A / Log) : A {
+  handle {
+    body()
+  } with Log {
+    log(msg, resume) -> {
+      println("[LOG] " ++ msg)
+      resume(())
+    }
+  }
+}
+
+fn main() {
+  # Uso 1: con el default. greet no sabe nada del handler.
+  with_default_log(() => {
+    greet("kaikai")
+    greet("ada")
+  })
+
+  # Uso 2: el caller decide otro handler. with_default_log no
+  # participa.
+  handle {
+    greet("modo silencioso")
+  } with Log {
+    log(msg, resume) -> resume(())
+  }
+
+  println("(fin)")
+}
