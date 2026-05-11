@@ -1,0 +1,69 @@
+# Caso de estudio: un mini procesador de configuración que
+# combina tres efectos.
+#
+# - `Log`: registra cada paso, sin saber a dónde van los logs.
+# - `State[Int]`: lleva cuenta de cuántas entradas se procesaron.
+# - `Fail`: aborta cuando una entrada es inválida.
+#
+# La función `procesar` declara los tres efectos en su firma y
+# los usa libremente. Los handlers de `main` deciden cómo
+# materializar cada uno.
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+effect State[T] {
+  get() : T
+  set(v: T) : Unit
+}
+
+effect Fail {
+  fail(motivo: String) : Nothing
+}
+
+type Entrada = { clave: String, valor: String }
+
+# Parsea "clave=valor". Aborta si el formato es inválido.
+fn parsear(linea: String) : Entrada / Fail {
+  match string.split(linea, "=") {
+    [c, v] -> Entrada { clave: c, valor: v }
+    _      -> Fail.fail("línea inválida: '#{linea}'")
+  }
+}
+
+# Procesa una lista de líneas: parsea, registra cada una, y
+# lleva la cuenta vía State. Falla si alguna no parsea.
+fn procesar(lineas: [String]) : Int / Log + State[Int] + Fail {
+  list.foreach(lineas, (l) => {
+    let e = parsear(l)
+    Log.log("#{e.clave} = #{e.valor}")
+    State.set(State.get() + 1)
+  })
+  State.get()
+}
+
+fn main() : Unit / Stdout {
+  let n = handle {
+    handle {
+      handle {
+        procesar(["nombre=ada", "edad=42", "rol=admin"])
+      } with State[Int](0) {
+        get(resume)    -> resume(state)
+        set(v, resume) -> resume((), v)
+        return(x)      -> x
+      }
+    } with Log {
+      log(msg, resume) -> {
+        println("[LOG] " ++ msg)
+        resume(())
+      }
+    }
+  } with Fail {
+    fail(motivo, resume) -> {
+      println("error: " ++ motivo)
+      0 - 1
+    }
+  }
+  println("entradas procesadas: #{n}")
+}

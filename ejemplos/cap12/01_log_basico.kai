@@ -1,0 +1,27 @@
+# Un efecto declara una capacidad. `Log` aquí dice que va a haber
+# una operación `log`, pero NO dice cómo se implementa.
+# Quien decide cómo es el `handle` más abajo.
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+# `greet` usa `Log.log` y por eso su firma lleva `/ Log`.
+# La función no sabe si los mensajes van a la consola, a un
+# archivo o a la nada: solo sabe que el efecto está disponible.
+
+fn greet(name: String) : Unit / Log {
+  Log.log("hola, " ++ name)
+}
+
+fn main() {
+  handle {
+    greet("kaikai")
+    greet("Eduardo")
+  } with Log {
+    log(msg, resume) -> {
+      println("[INFO] " ++ msg)
+      resume(())
+    }
+  }
+}

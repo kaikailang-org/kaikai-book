@@ -1,0 +1,29 @@
+# Un handler puede tener su propio estado. `State[T]` es el
+# patrón canónico: una operación `get` lee el estado actual,
+# `set` lo actualiza, y por debajo lo que parece mutación queda
+# encerrado en el handler. Para el cuerpo de `handle`, el estado
+# no existe; solo lo ve el handler.
+
+effect State[T] {
+  get() : T
+  set(v: T) : Unit
+}
+
+# Suma los elementos de una lista usando un acumulador "mutable"
+# encapsulado en el handler.
+
+fn suma(xs: [Int]) : Int {
+  handle {
+    list.foreach(xs, (x) => State.set(State.get() + x))
+    State.get()
+  } with State[Int](0) {
+    get(resume)    -> resume(state)         # devuelve el estado, sin cambios
+    set(v, resume) -> resume((), v)         # devuelve (), estado nuevo = v
+    return(x)      -> x                      # descarta el estado final
+  }
+}
+
+fn main() : Unit / Stdout {
+  println("suma([1,2,3,4,5]) = #{suma([1,2,3,4,5])}")
+  println("suma([]) = #{suma([])}")
+}

@@ -1,0 +1,41 @@
+# Una función puede usar varios efectos a la vez. La firma los
+# enumera con `+`. Cada efecto se maneja con su propio `handle`,
+# y el orden en que se anidan determina la semántica.
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+effect State[T] {
+  get() : T
+  set(v: T) : Unit
+}
+
+# `acumular` usa dos efectos: lee y escribe estado, y registra
+# cada paso. La firma lo declara con `Log + State[Int]`.
+
+fn acumular(xs: [Int]) : Int / Log + State[Int] {
+  list.foreach(xs, (x) => {
+    Log.log("sumando #{x}")
+    State.set(State.get() + x)
+  })
+  State.get()
+}
+
+fn main() : Unit / Stdout {
+  let total = handle {
+    handle {
+      acumular([10, 20, 30])
+    } with State[Int](0) {
+      get(resume)    -> resume(state)
+      set(v, resume) -> resume((), v)
+      return(x)      -> x
+    }
+  } with Log {
+    log(msg, resume) -> {
+      println("[LOG] " ++ msg)
+      resume(())
+    }
+  }
+  println("total = #{total}")
+}

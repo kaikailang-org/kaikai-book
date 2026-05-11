@@ -1,0 +1,20 @@
+# Un efecto puede *entregar* un valor a la operación, no solo
+# recibirlo. `Ask.name()` suspende la ejecución; el handler
+# decide qué `String` darle a quien llamó, y reanuda con `resume`.
+
+effect Ask {
+  name() : String
+}
+
+fn saludar() : String / Ask {
+  "hola, " ++ Ask.name()
+}
+
+fn main() : Unit / Stdout {
+  let mensaje = handle {
+    saludar()
+  } with Ask {
+    name(resume) -> resume("mundo")
+  }
+  println(mensaje)
+}

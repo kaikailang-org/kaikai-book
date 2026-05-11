@@ -1,0 +1,35 @@
+# El mismo `greet` se puede correr con handlers distintos sin
+# tocarlo. Acá lo corremos primero con un handler verboso y
+# después con uno silencioso. `greet` no se entera de la
+# diferencia: el handler decide.
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+fn greet(name: String) : Unit / Log {
+  Log.log("hola, " ++ name)
+}
+
+fn main() {
+  # Handler 1: imprime con prefijo.
+  handle {
+    greet("modo verboso")
+  } with Log {
+    log(msg, resume) -> {
+      println("[INFO] " ++ msg)
+      resume(())
+    }
+  }
+
+  # Handler 2: descarta los mensajes.
+  handle {
+    greet("modo silencioso")
+  } with Log {
+    log(msg, resume) -> {
+      resume(())
+    }
+  }
+
+  println("(fin)")
+}
