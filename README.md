@@ -67,7 +67,7 @@ language-neutral.
 
 ```
 CLAUDE.md             — instructions for the agent assisting the writing
-estructura.md         — full table of contents (14 chapters + 5 appendices)
+estructura.md         — full table of contents (17 chapters + 6 appendices)
 capitulos/            — Spanish chapters, capNN-*.md
 chapters/             — English chapters, chNN-*.md
 ejemplos/capNN/       — sources cited by the Spanish edition

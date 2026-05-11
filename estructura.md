@@ -392,18 +392,23 @@ sintaxis y estilo de ejemplos.
 - **A. Bootstrap de tres etapas.** Cómo se construye el compilador
   desde una `cc` y nada más. Stage 0 → Stage 1 → Stage 2. Por qué
   esa decisión y qué sostiene.
-- **B. Tabla de operadores y precedencia.**
-- **C. Catálogo de efectos del stdlib.**
-- **D. Glosario.** Términos del libro con su correspondencia
+- **B. Perceus a fondo.** El §13.2 cubre la idea en una página
+  para que el modelo de memoria cuadre con las fibras. Este
+  apéndice se mete en los detalles: análisis paso a paso de
+  drops, reuse in place, comparación con `Rc<RefCell>`, qué pasa
+  con ciclos, y por qué la separación por fibra simplifica el RC.
+- **C. Tabla de operadores y precedencia.**
+- **D. Catálogo de efectos del stdlib.**
+- **E. Glosario.** Términos del libro con su correspondencia
   inglés/español, especialmente los que dejamos en inglés en el
   texto en español (handler, fiber, effect row).
-- **E. Para seguir.** Lecturas recomendadas: Effekt, Koka,
+- **F. Para seguir.** Lecturas recomendadas: Effekt, Koka,
   Erlang/Elixir, Perceus paper, *No Silver Bullet*, *Simple Made
   Easy*.
 
 ## Cuenta gruesa
 
-- 17 capítulos + 5 apéndices.
+- 17 capítulos + 6 apéndices.
 - ≈ 400 páginas en la edición impresa estimada (asumiendo 18–22
   páginas promedio por capítulo principal; el cap. 15 es algo
   más largo que la versión "solo holes").

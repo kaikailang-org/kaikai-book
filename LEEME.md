@@ -70,7 +70,7 @@ original (inglés). Las figuras viven una sola vez bajo
 
 ```
 CLAUDE.md             instrucciones para el agente que asiste la escritura
-estructura.md         tabla de contenidos completa (14 capítulos + 5 apéndices)
+estructura.md         tabla de contenidos completa (17 capítulos + 6 apéndices)
 capitulos/            capítulos en español, capNN-*.md
 chapters/             capítulos en inglés, chNN-*.md
 ejemplos/capNN/       fuentes citadas por la edición en español
