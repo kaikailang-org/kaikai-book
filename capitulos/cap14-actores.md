@@ -238,36 +238,35 @@ mailbox, no una negociación por mensaje.
 ## 14.5 Patrón request/reply
 
 El patrón más común entre actores es pedirle algo a uno y
-esperar respuesta. La forma idiomática: el cliente le manda al
-servidor un mensaje que incluye su propio `Pid`, y el servidor
-responde a ese `Pid`.
+esperar respuesta. Cada lado del diálogo tiene su propio tipo
+de mensaje: el cliente manda un `Request` y recibe un `Reply`;
+el servidor recibe `Request` y manda `Reply`. El `Request`
+incluye el `Pid[Reply]` del cliente para que el servidor sepa
+dónde responder.
 
 ```kai
 import actor
 
-type Msg
-  = Query(String, Pid[Msg])
-  | Answer(String)
+type Request = Query(String, Pid[Reply])
+type Reply   = Answer(String)
 
-fn servidor() : Unit / Actor[Msg] + Console {
+fn servidor() : Unit / Actor[Request] + Actor[Reply] + Console {
   match Actor.receive() {
     Query(p, cliente) -> {
       Stdout.print("servidor: recibí '#{p}'")
       Actor.send(cliente, Answer("respuesta a '#{p}'"))
       servidor()
     }
-    Answer(_) -> servidor()
   }
 }
 
-fn main() : Unit / Console + Spawn + Cancel + Actor[Msg] {
+fn main() : Unit / Console + Spawn + Cancel + Actor[Reply] {
   with_mailbox {
     let server = spawn_actor(() => servidor())
 
     Actor.send(server, Query("dos+dos", Actor.self()))
     match Actor.receive() {
-      Answer(r)   -> Stdout.print("cliente: " ++ r)
-      Query(_, _) -> ()
+      Answer(r) -> Stdout.print("cliente: " ++ r)
     }
   }
 }
@@ -275,16 +274,17 @@ fn main() : Unit / Console + Spawn + Cancel + Actor[Msg] {
 
 Lo importante de la estructura:
 
-- **Un solo tipo de mensaje, `Msg`**, con dos constructores.
-  Conceptualmente sería más limpio tener un `type Request` y
-  un `type Reply` separados, con cliente y servidor cada uno
-  manejando el suyo, pero en 0.51 una función que declara dos
-  efectos `Actor[T]` distintos en su fila se topa con un bug
-  de resolución. Mientras tanto, el patrón práctico es
-  unificar los dos roles en un solo sum type y dejar que cada
-  parte ignore con un `_` los constructores que no le tocan.
-- **`Query` incluye el `Pid` de retorno.** Sin eso, el
-  servidor no sabe a quién contestarle.
+- **Dos tipos distintos, `Request` y `Reply`**, cada uno con
+  su propio mailbox. El servidor declara `Actor[Request] +
+  Actor[Reply]` en su fila: recibe `Request` desde su propio
+  mailbox y envía `Reply` al mailbox del cliente. El cliente
+  declara solo `Actor[Reply]`: él tiene mailbox de `Reply`, no
+  de `Request`. Los tipos te dicen exactamente qué mailbox es
+  qué.
+- **`Query` incluye el `Pid[Reply]` de retorno.** Sin eso, el
+  servidor no sabe a quién contestarle. El tipo del `Pid`
+  garantiza que solo se le pueden enviar mensajes de tipo
+  `Reply`.
 - **El servidor recursa** después de procesar el mensaje. Sin
   esa recursión, el servidor procesaría un solo mensaje y
   terminaría. La recursión por cola se compila a un loop (cap.
@@ -298,33 +298,89 @@ atendiendo a varios clientes a la vez, su estado interno está
 encapsulado, y el modelo de tipos te garantiza que ningún
 cliente se queda esperando una respuesta del tipo equivocado.
 
-## 14.6 Supervisión: notificación explícita
+## 14.6 Supervisión: links y monitores
 
 En BEAM, los actores se supervisan con **links** (bidireccional)
 y **monitores** (unidireccional). Cuando un actor cae, los
-linkeados se enteran y deciden qué hacer.
+actores que lo observan se enteran y deciden qué hacer.
 
-kaikai documenta efectos `Link` y `Monitor` para cubrir ese
-caso, pero en 0.51 todavía no están implementados como API.
-El único primitivo de bajo nivel disponible es
-`fiber_set_trap_exit`, que opta por recibir notificaciones de
-muerte de fibras hermanas. Para uso normal, mientras tanto, el
-patrón recomendado es **notificación explícita**: el
-trabajador, antes de terminar, manda un mensaje a su
-supervisor diciendo cómo le fue. El supervisor recibe ese
-mensaje como cualquier otro y decide.
+kaikai trae el mismo modelo, expresado como dos efectos del
+stdlib:
 
-Hay una ventaja conceptual además de la práctica: la
-notificación explícita deja el protocolo de supervisión **en
-el tipo de mensajes**, visible para quien lee el código. Lo
-que con `Link` y `Monitor` pasa por una capa runtime opaca,
-con notificación explícita pasa por un sum type. Cuando los
-efectos `Link` y `Monitor` aterricen, probablemente sigan
-siendo la herramienta de los casos especiales (supervisión
-sobre fibras que no controlas, propagación a través de capas
-de biblioteca); el patrón "incluir un canal de status en el
-sum del actor" va a seguir siendo la forma idiomática para la
-mayoría del código de aplicación.
+```kai
+effect Link {
+  link(pid: Pid[_]) : Unit
+}
+
+effect Monitor {
+  monitor(pid: Pid[_]) : MonitorRef
+  demonitor(ref: MonitorRef) : Unit
+}
+```
+
+`Pid[_]` es un PID "existencial": cualquier tipo de mensaje
+sirve. Eso porque `link` y `monitor` no envían ni reciben
+mensajes; solo registran observación sobre la vida del actor.
+
+### Links: bidireccionales
+
+`Link.link(pid)` declara que el actor actual y `pid` están
+ligados: si cualquiera de los dos termina con un fallo, el
+otro recibe `Cancel.raise()`. Es el patrón para dos actores
+que dependen simétricamente uno del otro (un worker y su
+cola, los dos lados de un handshake). No es lo que quieres
+para "supervisor observa worker": ese es el caso de monitores.
+
+### Monitores: unidireccionales
+
+`Monitor.monitor(pid)` declara que el actor actual quiere
+saber cuándo `pid` termina, sin acoplar la vida del
+observador a la del observado. Cuando `pid` termina (normal,
+crash o cancelación), el observador recibe un mensaje
+`MonitorDown` en su mailbox:
+
+```kai
+type MonitorDown = MonitorDown(MonitorRef, TerminationCause)
+
+type TerminationCause
+  = Normal
+  | Crashed(String)
+  | Cancelled
+```
+
+Para que un actor pueda recibir `MonitorDown`, su tipo de
+mensaje debe incluirlo como variante:
+
+```kai
+type SupervisorMsg
+  = Tick
+  | Stop
+  | Down(MonitorDown)
+```
+
+El supervisor hace `Monitor.monitor(worker)` después de
+crearlo, y cualquier terminación del worker llega como
+`Down(ev)` al `match` principal del supervisor. El supervisor
+decide qué hacer (reiniciar, escalar, ignorar) sin que su vida
+quede atada a la del worker.
+
+### Cuándo elegir cada uno
+
+- **Sin `Link` ni `Monitor`**, cuando el flujo natural es que
+  el actor mismo reporte cómo le fue antes de terminar.
+  Manda un mensaje `Done(...)` o `Failed(...)` a su supervisor
+  y termina limpio. El supervisor lo ve como cualquier otro
+  mensaje. Es el patrón del caso de estudio en §14.7.
+- **`Monitor`**, cuando el supervisor necesita reaccionar a
+  terminaciones que el actor no controla: crashes, cancelación
+  desde afuera, panics. El supervisor sigue vivo y decide.
+- **`Link`**, cuando dos actores forman una unidad y no tiene
+  sentido que uno sobreviva sin el otro.
+
+El patrón de §14.7 que sigue usa notificación explícita por
+ser lo más simple. Las versiones que mencionan `Monitor` o
+`Link` son refinamientos que conviene introducir solo cuando
+el protocolo de mensajes se vuelve insuficiente.
 
 ## 14.7 Caso de estudio: supervisor con reintentos
 
@@ -419,14 +475,13 @@ cosas:
   `with_timeout` (ejercicio del cap. 13) alrededor del
   `intento`.
 - **Cancelación del trabajador si el supervisor decide
-  rendirse.** Hoy si decimos "me rindo", el trabajador
-  podría seguir corriendo si no fue él quien terminó.
-  `spawn_actor` devuelve solo el `Pid`, no el `Fiber`, así que
-  para cancelar hace falta definir un mensaje en el protocolo
-  (`Stop`, por ejemplo) y mandárselo. Cuando los efectos
-  `Link` y `Monitor` aterricen, esa terminación va a poder
-  propagarse desde el supervisor sin que el trabajador la
-  observe explícitamente.
+  rendirse.** Si decimos "me rindo" mientras el trabajador
+  sigue procesando, queremos que el trabajador termine
+  también. Con `Link.link(worker)` después del spawn, la
+  decisión del supervisor de retornar cancela el worker
+  automáticamente. La alternativa explícita es agregar un
+  `Stop` al protocolo del trabajador y mandárselo antes de
+  rendirse.
 - **Logging persistente.** En vez de `Stdout.print`, mandar a
   un actor logger con su propio mailbox bounded
   (`Bounded(1024, DropOldest)`).
