@@ -469,7 +469,7 @@ re-exports automáticos, alias dinámicos, módulos parametrizados
 por valores. kaikai elige una variante austera y se queda ahí.
 
 La razón es la misma que en el resto del lenguaje: lo que
-elimina pegado de cabeza vale más que lo que agrega potencia.
+ahorra dolores de cabeza vale más que lo que agrega potencia.
 Un sistema de módulos donde nada se importa sin que aparezca
 en una lista visible, donde el nombre de un módulo se deriva
 de su ruta, y donde las dependencias se pinean a un SHA exacto
