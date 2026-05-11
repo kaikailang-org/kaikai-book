@@ -863,7 +863,7 @@ test, los tres handlers tienen otras implementaciones: el `Log`
 acumula en una lista en vez de imprimir, el `Fail` propaga en un
 `Result`, el `State` parte del valor que el test quiera.
 
-## 12.13 Filosofía: tres ideas que cargan el sistema
+## 12.13 Filosofía: tres ideas que vale recordar
 
 Si esto te parece muchas piezas, vale fijar las tres ideas que
 todo lo demás sostiene:

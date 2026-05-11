@@ -516,7 +516,7 @@ código que escribas hoy con fibras y actores va a seguir
 funcionando cuando el multi-threading llegue, solo más
 rápido en máquinas con varios núcleos.
 
-## 13.9 Filosofía: dos invariantes que cargan el modelo
+## 13.9 Filosofía: dos invariantes que vale recordar
 
 Si quieres recordar dos cosas del capítulo, que sean estas:
 

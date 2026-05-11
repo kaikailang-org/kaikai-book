@@ -452,7 +452,7 @@ ajustar. Pero el costo de cada iteración es bajo (segundos), y
 el costo de equivocarse es transparente (el compilador o el
 test reporta exactamente qué está mal).
 
-## 15.12 Filosofía: tres ideas que cargan el capítulo
+## 15.12 Filosofía: tres ideas que vale recordar
 
 1. **Holes son una primitiva de diálogo.** No son `null` ni
    `unimplemented()`: son una forma legal de expresión que
