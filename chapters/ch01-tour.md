@@ -130,7 +130,7 @@ single move.
 `loop` is recursive. There is no `while`, no `for`. Well —
 there are conveniences for iteration in chapter 6, but the base
 is recursion. So that base does not cost your program anything,
-the language guarantees **mandatory tail-call optimisation**: a
+the language guarantees **mandatory tail-call optimization**: a
 recursive call in tail position does not consume stack.
 `loop(1, 1_000_000)` works without blowing up.
 
@@ -361,7 +361,7 @@ Point { x: 3, y: 4 }
 `Show` is one of the stdlib protocols (`Eq`, `Ord`, `Hash`,
 `Show`, `Serialize`). Its contract is a single op: given a
 value, return a `String`. The line `#derive(Show)` above the
-record tells the compiler to **synthesise** a `Show`
+record tells the compiler to **synthesize** a `Show`
 implementation for `Point`, walking the fields and delegating
 to each one's `Show`. Since `Int` already implements `Show` in
 the stdlib, the whole record is covered without writing
@@ -429,7 +429,7 @@ seconds were expected.
     root cause: one software module computed thrust in
     pound-force per second (imperial units) while another
     read the same value as newtons per second (metric units).
-    Nobody had labelled the units at the interface. The
+    Nobody had labeled the units at the interface. The
     mission cost USD 327 million.
 
 The best part of the scheme is that **units are erased at

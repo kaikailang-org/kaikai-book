@@ -83,7 +83,7 @@ checker, there's a third approach: **strict reference
 counting driven by Perceus** (Lorenz, Leijen, Reinking,
 2021).
 
-The idea is that the compiler analyses each function to find
+The idea is that the compiler analyzes each function to find
 the exact point where each value is last used. At that
 point, it inserts an instruction that decrements the value's
 reference count: if it hits zero, the value is freed; if
@@ -115,7 +115,7 @@ Compared to a borrow checker:
 
 The cost? When a value is used many times, counters move.
 For heavily shared values that adds overhead, and Perceus
-includes aggressive optimisations to minimise it (reuse in
+includes aggressive optimizations to minimize it (reuse in
 place: if a value is about to be freed and a value of the
 same shape is needed immediately after, the same memory is
 reused without touching the counter). In practice the cost
@@ -123,11 +123,11 @@ is low and predictable.
 
 Why this matters for concurrency: Perceus works per fiber.
 Each fiber has its own counters, its own frees. There's no
-synchronisation between fibers for any counter: no two
+synchronization between fibers for any counter: no two
 fibers ever share pointers to a value with a shared count.
-That's why the "isolated fibers" model closes once you add
-Perceus: the same invariant that protects against data
-races also simplifies the RC.
+That's why the "isolated fibers" model fits so cleanly with
+Perceus: the same invariant that rules out data races also
+keeps the reference counting lock-free.
 
 ## 13.3 Creating and awaiting fibers: the basic operations
 
@@ -170,8 +170,8 @@ Reading literally:
 - `fiber_spawn(() => worker("B", 3))` creates a new fiber
   that will run the lambda when the scheduler picks it.
 - `worker("A", 3)` runs in the current fiber (`main`'s).
-- `fiber_yield()` inside `worker` hands over control. Each
-  pass, the other fiber takes its turn.
+- `fiber_yield()` inside `worker` hands control back. On
+  each yield, the other fiber gets its turn.
 - `fiber_await(f)` waits for `f` to finish before `main`
   returns.
 
@@ -245,9 +245,9 @@ What the nursery guarantees:
 - **By block exit, all children have finished.** No leaks: a
   fiber doesn't outlive the `nursery` that created it.
 - **If a child fails with an unhandled effect, the others
-  are cancelled.** The nursery collects the cause and
+  are canceled.** The nursery collects the cause and
   re-raises it.
-- **If the nursery is cancelled from outside, the
+- **If the nursery is canceled from outside, the
   cancellation propagates to all children.**
 
 This is called **structured concurrency**. The idea is
@@ -319,7 +319,7 @@ fn long_worker(tag: String) : Unit / Stdout + Spawn + Cancel {
     count(tag, 0)
   } with Cancel {
     raise(resume) -> {
-      println("#{tag}: cancelled, doing cleanup")
+      println("#{tag}: canceled, doing cleanup")
       # not calling resume: the fiber unwinds
     }
   }
@@ -487,7 +487,7 @@ Each one accesses the "shared queue" via the `State`
 effect, but underneath there's no shared memory: the
 `State` handler lives in `main`, and the fibers'
 operations are messages to that handler. The queue is
-serialised by construction.
+serialized by construction.
 
 ### Concurrency, not parallelism
 
@@ -533,16 +533,16 @@ these:
    can't escape the `nursery` that created it; the type
    system rejects any attempt. If the parent ends, every
    child has ended. If a child fails, the siblings are
-   cancelled.
+   canceled.
 
 These two invariants support each other. Memory isolation
-is what lets Perceus run per fiber without synchronisation.
+is what lets Perceus run per fiber without synchronization.
 Lexical structure is what lets memory be freed predictably
 at scope exit. Any model that breaks one of the two breaks
 the other.
 
-In exchange, whole classes of bugs you don't have to think
-about:
+In return, you get whole classes of bugs you no longer
+have to think about:
 
 - No `volatile`, no `Atomic`, no memory ordering.
 - No `lock`, no `mutex`, no `RwLock`.
@@ -551,9 +551,9 @@ about:
 - No `async fn`, no `Future`, no function colors.
 - No GC pause-the-world.
 
-It's a trade-off: you lose the freedom to have arbitrary
-pointers between fibers. But the gain (in safety, in
-predictability, in mental simplicity) is what justifies the
+It's a trade-off: you give up the freedom to have arbitrary
+pointers between fibers. But the gain — in safety, in
+predictability, in mental simplicity — is what justifies the
 model.
 
 ## Exercises

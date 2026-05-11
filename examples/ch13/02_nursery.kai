@@ -6,7 +6,7 @@
 # for creating and awaiting fibers. Any fiber created with
 # `n.spawn` is a child of the nursery; on block exit, the
 # nursery waits for them all. If one fails, the others are
-# cancelled.
+# canceled.
 
 import spawn
 

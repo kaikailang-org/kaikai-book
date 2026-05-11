@@ -37,7 +37,7 @@ pub fn process(c: domain.Command, notes: [domain.Note], next_id: Int)
   match c {
     List -> {
       let bodies = list.map(notes, (n) => n.body)
-      (domain.Ok(serialise_list(bodies)), notes, next_id)
+      (domain.Ok(serialize_list(bodies)), notes, next_id)
     }
     Get(id) ->
       match find(notes, id) {
@@ -66,7 +66,7 @@ fn find(notes: [domain.Note], id: Int) : Option[domain.Note] {
   }
 }
 
-fn serialise_list(bodies: [String]) : String {
+fn serialize_list(bodies: [String]) : String {
   match bodies {
     []           -> "[]"
     [h, ...rest] -> "[" ++ h ++ join(rest) ++ "]"

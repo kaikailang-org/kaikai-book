@@ -39,7 +39,7 @@ is the natural signature for an operation that doesn't
 resume.
 
 **Bounded.** A mailbox policy with fixed capacity. When
-full, behaviour depends on the overflow rule: `DropOldest`,
+full, behavior depends on the overflow rule: `DropOldest`,
 `DropNewest`, or `BlockSender`.
 
 **Branded type.** A numeric or string type marked with a
@@ -217,7 +217,7 @@ single-dispatch (resolves on a single type). Chapter 9.
 
 **Pure.** A function is pure if it produces no effects (its
 row is empty). Pure functions are easy to test,
-parallelise, and reason about.
+parallelize, and reason about.
 
 ## R
 
@@ -230,7 +230,7 @@ via `Mutable.ref_make` / `Mutable.ref_get` /
 
 **Resume.** See *Continuation*.
 
-**Reuse in place.** Perceus optimisation: when a unique
+**Reuse in place.** Perceus optimization: when a unique
 value is about to be freed and another of the same shape
 is about to be created, the same memory is reused without
 touching counters. Appendix B.

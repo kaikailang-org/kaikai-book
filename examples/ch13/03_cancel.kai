@@ -12,7 +12,7 @@ fn long_worker(tag: String) : Unit / Stdout + Spawn + Cancel {
     count(tag, 0)
   } with Cancel {
     raise(resume) -> {
-      println("#{tag}: cancelled, doing cleanup")
+      println("#{tag}: canceled, doing cleanup")
       # not calling resume: the fiber unwinds
     }
   }

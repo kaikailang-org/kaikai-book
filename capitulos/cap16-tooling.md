@@ -55,10 +55,10 @@ pasar por LLVM. Para programas grandes hay un cache (cap. 8
 §8.8 cubre el cache de paquetes; el cache de compilación
 del propio archivo `.kai` es otra historia).
 
-Si quieres un sentido del tiempo: un compilador de Rust de
-tamaño comparable puede tardar 30 segundos. Un compilador de
-kaikai del mismo tamaño tarda menos de un segundo. La
-diferencia se nota.
+Si quieres un sentido del tiempo: un programa de Rust de
+tamaño comparable puede tardar 30 segundos en compilar. Un
+programa de kaikai del mismo tamaño tarda menos de un
+segundo. La diferencia se nota.
 
 ## 16.2 Tests, propiedades y benchmarks
 
@@ -198,8 +198,8 @@ terminal para descubrir un error.
 
 ## 16.7 Variables de entorno
 
-Tres variables de entorno controlan el comportamiento del
-binario `kai` para casos especiales:
+Unas cuantas variables de entorno controlan el comportamiento
+del binario `kai` para casos especiales:
 
 - **`CC`** (valor por defecto: `cc`): el compilador de C que
   `kai` invoca para producir el ejecutable final. Si tienes

@@ -19,7 +19,7 @@ pub type Command
 # into status codes + JSON bodies.
 pub type Response
   = Ok(String)                      # 200, body = String
-  | Created(Note)                   # 201, body = serialised note
+  | Created(Note)                   # 201, body = serialized note
   | NotFound                        # 404
   | ClientError(String)             # 400
   | ServerError(String)             # 500

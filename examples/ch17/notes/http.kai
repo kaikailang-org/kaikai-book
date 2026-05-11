@@ -1,4 +1,4 @@
-# Minimal HTTP parser and serialiser. We cover just enough
+# Minimal HTTP parser and serializer. We cover just enough
 # to serve simple requests. For real production you'd use the
 # parser in stdlib/net/http.kai; here we write it by hand so
 # the whole chain fits in the reader's head.
@@ -63,7 +63,7 @@ fn route_id(path: String, f: (Int) -> domain.Command) : Result[domain.Response, 
 }
 
 # Serialise a domain Response into HTTP bytes.
-pub fn serialise_response(r: domain.Response) : String {
+pub fn serialize_response(r: domain.Response) : String {
   match r {
     domain.Ok(body)             -> response(200, "OK", body)
     domain.Created(note)        -> response(201, "Created", "#{note}")

@@ -56,9 +56,10 @@ going through LLVM. For larger programs there's a cache
 (chapter 8 §8.8 covers the package cache; the per-file
 compilation cache is another story).
 
-To put it in perspective: a Rust compiler of comparable
-size can take 30 seconds. A kaikai compiler of the same
-size takes less than a second. The difference shows.
+To put it in perspective: a Rust program of comparable
+size can take 30 seconds to compile. A kaikai program of
+the same size takes less than a second. The difference
+shows.
 
 ## 16.2 Tests, properties and benchmarks
 
@@ -197,8 +198,8 @@ discover an error.
 
 ## 16.7 Environment variables
 
-Three environment variables control the `kai` binary's
-behaviour for special cases:
+A handful of environment variables control the `kai` binary's
+behavior for special cases:
 
 - **`CC`** (default: `cc`): the C compiler `kai` invokes to
   produce the final executable. If you have multiple C
@@ -206,7 +207,7 @@ behaviour for special cases:
   specifically, you set it here: `CC=clang kai run
   file.kai`.
 - **`CFLAGS`** (default: empty): extra flags for the C
-  compiler. Useful for optimisation (`CFLAGS=-O3`) or
+  compiler. Useful for optimization (`CFLAGS=-O3`) or
   warnings (`CFLAGS=-Wall`).
 - **`KAI_NO_STDLIB=1`**: skips automatic stdlib loading.
   For advanced cases: compiler bootstrap, embedded targets
@@ -274,7 +275,7 @@ ideas:
 2. **One right way for each thing.** A canonical formatter
    with no options. A package manager with MVS and no
    complex resolution. A test system integrated into the
-   language. The philosophy is the same as Go's: minimise
+   language. The philosophy is the same as Go's: minimize
    the decisions the programmer has to make about how to
    use the tools, to free time for deciding what to build.
 

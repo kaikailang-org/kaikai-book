@@ -1,6 +1,6 @@
 # Appendix B · Perceus in depth
 
-§13.2 covers Perceus in one page: the compiler analyses the
+§13.2 covers Perceus in one page: the compiler analyzes the
 program, knows the exact point where each value stops being
 used, and inserts a `drop` there that decrements the
 reference counter and frees the memory if it reaches zero.
@@ -60,7 +60,7 @@ function (it was created inside, or was moved in as an
 argument), it has to be freed. If it's shared with others,
 not.
 
-Perceus analyses the body and finds:
+Perceus analyzes the body and finds:
 
 - `xs` is used in line 2 (`list.length`).
 - `xs` is used again in line 3 (`list.sum`).
@@ -139,7 +139,7 @@ and two references to the cons appear, reuse silently turns
 off and falls back to "free + allocate". The programmer
 doesn't notice.
 
-This optimisation is what makes algorithms like `map`,
+This optimization is what makes algorithms like `map`,
 `filter`, AVL trees, list parsing, **as fast as the mutable
 versions in imperative languages**. It's why Koka and Lean
 4 (which also use Perceus) can compile competitively with C.
@@ -212,16 +212,16 @@ lock-free**.
 If two fibers shared pointers to the same value, the
 counter's increments and decrements would have to be
 **atomic**. Atomic means the CPU emits a memory barrier,
-synchronises with other cores, pays overhead. In programs
+synchronizes with other cores, pays overhead. In programs
 with many fibers, that overhead is enormous.
 
 When each fiber has its own heap, counters are local.
-**No synchronisation**. A `dup` is a `++` on an integer,
+**No synchronization**. A `dup` is a `++` on an integer,
 without barriers. A `drop` is a `--`, ditto.
 
 This is why kaikai's fiber model and Perceus are designed
 together: each enables the other. Isolated fibers allow RC
-without synchronisation; efficient RC allows millions of
+without synchronization; efficient RC allows millions of
 fibers without paying GC.
 
 When two fibers need to share a value, they do so via an
@@ -241,7 +241,7 @@ Perceus has costs. Worth listing:
   If you have many heavy shared structures, the `dup`/`drop`
   costs.
 - **Reuse in place depends on static uniqueness.** If the
-  analysis can't prove uniqueness, the optimisation doesn't
+  analysis can't prove uniqueness, the optimization doesn't
   apply and you fall back to the safe version.
 
 What you get:

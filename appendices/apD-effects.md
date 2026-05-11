@@ -229,7 +229,7 @@ effect Cancel {
 ```
 
 Cooperative cancellation. The scheduler injects
-`Cancel.raise()` into a cancelled fiber at the next yield
+`Cancel.raise()` into a canceled fiber at the next yield
 point. The fiber can install a `Cancel` handler for cleanup
 (chapter 13).
 

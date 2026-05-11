@@ -30,7 +30,7 @@ suddenly feels obvious.
 ## 12.1 The friction effects resolve
 
 Before showing the syntax, let's look at the concrete
-problems effects solve. If you recognise the pattern from
+problems effects solve. If you recognize the pattern from
 your work, you'll know why a new tool is worth learning.
 
 ### Invisible exceptions
@@ -247,11 +247,11 @@ invokes `Log.log`, do this". The handler intercepts each
 call to `log`, decides what happens, and resumes with
 `resume(...)`.
 
-Three details worth fixing:
+Three details worth pinning down:
 
 - **`handle { body } with Effect { clauses }`** is a control
-  construct, in the same family as `if` and `match`. It's not
-  a function call. `handle` and `with` are reserved keywords.
+  construct, in the same family as `if` and `match` — not a
+  function call. `handle` and `with` are reserved keywords.
 - **`body` is where `Effect` is handled.** Inside, calling
   `Log.log(...)` is legal even if the surrounding function
   doesn't have `Log` in its row, because the handler provides
@@ -518,7 +518,7 @@ It's not magic masking: the `handle` is literally next to the
 declared.
 
 And it isn't slow: the compiler detects the pattern "local
-cell with one-shot resume" and specialises it down to a stack
+cell with one-shot resume" and specializes it down to a stack
 frame slot, equivalent to a C mutable variable. Zero cost
 compared to the imperative code you'd otherwise write.
 
@@ -725,7 +725,7 @@ fn main() {
 Whoever wants different behavior just doesn't call
 `with_default_log` and writes their own `handle`. The
 difference from an "automatic" handler is the extra line
-wrapping the body, but in exchange the default behaviour is
+wrapping the body, but in exchange the default behavior is
 **explicit and opt-in**, not hidden in the runtime. This is
 what the stdlib itself does for constructs like `try { body }`
 or `with_state(0) { body }`: trailing-lambda syntax keeps it
@@ -893,7 +893,7 @@ everything else:
 
 2. **The handler decides what happens.** A function's body
    declares it needs a capability. The handler in context
-   decides how to materialise it. That decoupling replaces
+   decides how to materialize it. That decoupling replaces
    dependency injection, mocking, global configuration.
 
 3. **Zero cost when unused.** The compiler resolves handlers
@@ -968,6 +968,6 @@ without modifying the function. Compare with how you'd do the
 same thing in a language with classical dependency injection.
 
 **12.9.** Chapter 13 covers fibers: concurrent tasks
-modelled as effects. Note before reading it: what operations
+modeled as effects. Note before reading it: what operations
 would an effect `Spawn` need? What decision would you make as
 a handler when a child fiber aborts?

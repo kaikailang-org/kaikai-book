@@ -36,9 +36,9 @@ let errors = fiber_await(f)   # one value, and you're done
 ```
 
 Task B is a **live process**: it has no single return value,
-it has an endless sequence of interactions. For this kaikai
-brings the **actor** model, inherited in spirit from Erlang
-and BEAM.
+just an endless sequence of interactions. For that, kaikai
+borrows the **actor** model, drawn in spirit from Erlang and
+BEAM.
 
 ```kai
 let cache = spawn_actor(() => cache_loop())
@@ -87,7 +87,7 @@ something takes, a concurrent map over a list of IO.
 
 ## Actors are not language primitives
 
-Another thing worth fixing before the syntax: in kaikai,
+One more thing to pin down before the syntax: in kaikai,
 actors aren't a core construct. They're a **layer built with
 algebraic effects**: the `Actor[Msg]` effect declares the
 operations (`self`, `send`, `receive`); the stdlib provides
@@ -119,7 +119,7 @@ pub effect Actor[Msg] {
 - **`self()`** returns the `Pid` of the current actor. The
   `Pid` is the handle others use to send it messages.
 - **`send(pid, msg)`** enqueues `msg` in `pid`'s mailbox. If
-  the mailbox is full, the behaviour depends on the policy
+  the mailbox is full, the behavior depends on the policy
   (§14.4).
 - **`receive()`** takes the next message from the current
   actor's mailbox. If there's nothing, the fiber suspends
@@ -145,8 +145,8 @@ guarantees you cover every case.
 
 A `Pid[Msg]` is a mailbox identifier. It has a type, so the
 compiler doesn't let you send a `Notification` message to a
-`Pid[Task]`. This is the strongest difference with Erlang:
-in Erlang PIDs are untyped; in kaikai they're specific to
+`Pid[Task]`. This is the strongest difference from Erlang:
+in Erlang, PIDs are untyped; in kaikai, they're specific to
 the message type.
 
 Like `Fiber[T]` from chapter 13, `Pid[Msg]` is **tied to the
@@ -344,7 +344,7 @@ fn main() : Unit / Console + Spawn + Cancel + Actor[Reply] {
 }
 ```
 
-What's worth fixing about the structure:
+A few things worth noting about the structure:
 
 - **Two distinct types, `Request` and `Reply`**, each with
   its own mailbox. The server declares `Actor[Request] +
@@ -354,7 +354,7 @@ What's worth fixing about the structure:
   mailbox, not a `Request` one. The types tell you exactly
   which mailbox is which.
 - **`Query` includes the return `Pid[Reply]`.** Without it,
-  the server doesn't know whom to reply. The `Pid`'s type
+  the server doesn't know whom to reply to. The `Pid`'s type
   guarantees that only `Reply` messages can be sent to it.
 - **The server recurses** after processing the message.
   Without that recursion, the server would process a single
@@ -445,8 +445,8 @@ own life being tied to the worker's.
   for the actor itself to report how it went before exiting.
   It sends a `Done(...)` or `Failed(...)` message to its
   supervisor and exits cleanly. The supervisor sees it like
-  any other message. It's the pattern of the case study in
-  §14.7.
+  any other message. That's the pattern the case study in
+  §14.7 uses.
 - **`Monitor`**, when the supervisor needs to react to
   terminations the actor doesn't control: crashes,
   cancellation from outside, panics. The supervisor stays
@@ -545,7 +545,7 @@ Three pieces worth commenting on:
   exponential backoff" touches one function. That separation
   is the real benefit of the model.
 
-What does this program lack to be production-ready? Several
+What's missing for this to be production-ready? A few
 things:
 
 - **Per-attempt timeout.** Today if the worker hangs, the
@@ -562,7 +562,7 @@ things:
   a logger actor with its own bounded mailbox
   (`Bounded(1024, DropOldest)`).
 
-Each one is an afternoon's session. But the base is there:
+Each is an afternoon's work. But the foundation is there:
 three actors, two message types, a type system that
 guarantees mailboxes are respected.
 
@@ -588,9 +588,9 @@ these:
 The most important consequence of the first idea: when you
 want a supervision pattern the stdlib doesn't provide, you
 can write it. The syntax hides nothing: `handle`, `receive`,
-`send`. It's hard for any actor pattern you've seen in
-Erlang, Akka, or any actor framework not to be expressible
-as an ordinary function in kaikai with these pieces.
+`send`. Any actor pattern you've seen in Erlang, Akka, or
+any other actor framework should be expressible as an
+ordinary function in kaikai with these pieces.
 
 ## Exercises
 

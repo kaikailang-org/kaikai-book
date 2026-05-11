@@ -36,12 +36,12 @@ notes/
 ├── domain.kai           # types: Note, Command, Response
 ├── store.kai            # actor that holds the notes
 ├── persistence.kai      # actor that writes the log
-└── http.kai             # minimal HTTP parser and serialiser
+└── http.kai             # minimal HTTP parser and serializer
 ```
 
 Five files, five distinct concerns:
 
-- **`domain.kai`** is the centre. Pure types, no effects, no
+- **`domain.kai`** is the center. Pure types, no effects, no
   IO. What the domain "is": what a note is, what commands
   can be issued, what responses can be produced.
 - **`store.kai`** is an actor. Receives commands, holds the
@@ -69,7 +69,7 @@ pieces.
 
 ## 17.2 The domain: pure types
 
-We start in the centre. `domain.kai`:
+We start in the center. `domain.kai`:
 
 ```kai
 #derive(Show)
@@ -133,7 +133,7 @@ pub fn process(c: domain.Command, notes: [domain.Note], next_id: Int)
   match c {
     List -> {
       let bodies = list.map(notes, (n) => n.body)
-      (domain.Ok(serialise_list(bodies)), notes, next_id)
+      (domain.Ok(serialize_list(bodies)), notes, next_id)
     }
     Get(id) ->
       match find(notes, id) {
@@ -187,7 +187,7 @@ test "create and get" {
 ```
 
 No fibers, no IO, no sockets. Just logic. If tomorrow we
-want to parallelise note creation, add indexes, change the
+want to parallelize note creation, add indexes, change the
 search algorithm, all those changes go through this pure
 function and get tested here.
 
@@ -320,7 +320,7 @@ signature compact: either the request translates to a valid
 command, or we have the response directly.
 
 There's also a parser for the first HTTP line (`GET /path
-HTTP/1.1`) and a serialiser that produces the response
+HTTP/1.1`) and a serializer that produces the response
 bytes. Pure functions with no effects, testable with input
 strings and output comparison.
 
@@ -409,20 +409,20 @@ fn handle_connection(conn, store_pid, log_pid) {
       }
     }
   }
-  NetTcp.send(conn, string_to_bytes(http_lib.serialise_response(resp)))
+  NetTcp.send(conn, string_to_bytes(http_lib.serialize_response(resp)))
   NetTcp.close(conn)
 }
 ```
 
 Read bytes, parse HTTP, route to a command, log it, ask
-the store, serialise the response, write to the socket,
+the store, serialize the response, write to the socket,
 close. Each step is a pure function or a message to an
 actor. No shared memory, no locks.
 
-## 17.7 What's happening, in terms of the book
+## 17.7 How this maps to the book
 
-It's worth listing which pieces of the book are used, one
-by one:
+It's worth pointing out which pieces of the book are in play,
+one by one:
 
 - **Ch. 2** (thinking in kaikai): functions are
   expressions; `process` returns a tuple in one expression.
@@ -487,7 +487,7 @@ Several directions to take this program further:
   response, verifies it's what's expected. Puts the server
   in a nursery, runs the client, closes.
 
-Each is an afternoon's session. None requires changing the
+Each is an afternoon's work. None requires changing the
 basic structure: a pure domain, actors with state, fibers
 for concurrency, modules for separation.
 
@@ -502,9 +502,9 @@ There's a clear pattern in what we've just put together:
   the note list; the persister holds the log file. Mutation
   stays locked inside each actor, invisible to the rest of
   the program.
-- **Fibers parallelise concurrent work (cooperatively).**
-  One fiber per connection. The nursery guarantees that
-  none survives the server.
+- **Fibers handle concurrent work cooperatively.** One
+  fiber per connection. The nursery guarantees that none
+  survives the server.
 - **Modules separate responsibilities.** Five files, five
   topics. Each one can be swapped without touching the
   other three.

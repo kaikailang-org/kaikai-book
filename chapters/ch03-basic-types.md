@@ -258,7 +258,7 @@ branch. The whole function is a single expression, bound to the
 signature with `=`. There's no `return`.
 
 A variant worth pinning down: **an `if` without `else` always
-has type `Unit`**. The compiler does not synthesise a value for
+has type `Unit`**. The compiler does not synthesize a value for
 the missing branch; it makes the simplest possible call and
 says "the type of the `if` is `Unit`, and if the condition is
 false, the value is `()`".

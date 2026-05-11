@@ -8,7 +8,7 @@
 #
 # `process` declares the three effects in its signature and
 # uses them freely. The handlers in `main` decide how to
-# materialise each one.
+# materialize each one.
 
 effect Log {
   log(msg: String) : Unit

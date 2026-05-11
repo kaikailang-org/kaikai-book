@@ -5,7 +5,7 @@
 # stdlib effects (Stdout, Stdin, Env, File, Random, Time,
 # etc.). For an effect you declare yourself, the convention is
 # to write a function that wraps a body with the standard
-# handler. Whoever uses it gets the default behaviour; whoever
+# handler. Whoever uses it gets the default behavior; whoever
 # wants a different one writes their own `handle`.
 
 effect Log {

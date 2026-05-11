@@ -7,9 +7,9 @@ to be exhaustive — meant to be useful.
 
 ## F.1 Algebraic effects
 
-The language piece that most deserves outside reading is
-algebraic effects. The literature is accessible and worth
-going to the original.
+The piece of the language that most rewards outside reading
+is algebraic effects. The literature is accessible and the
+originals are worth going to directly.
 
 - **Plotkin, Pretnar, *"Handlers of Algebraic Effects"***
   (ESOP 2009). The paper that introduced handlers as we
@@ -132,8 +132,8 @@ want the cultural context:
 ## F.9 Community and code
 
 - **Official repository**: `github.com/lnds/kaikai`. The
-  compiler, the stdlib, the design documents. Open issues
-  for reports and proposals.
+  compiler, the stdlib, the design documents. Bug reports
+  and proposals are welcome as issues.
 - **This book**: `github.com/lnds/kaikai-book`. PRs with
   fixes are welcome. The book is in Spanish and English;
   both editions are maintained in parallel.

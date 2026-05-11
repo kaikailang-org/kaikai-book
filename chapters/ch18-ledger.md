@@ -64,7 +64,7 @@ is the emphasis:
 
 ## 18.2 The domain: units, branding, algebraic types
 
-The centre of the program is the types:
+The center of the program is the types:
 
 ```kai
 unit USD
@@ -413,20 +413,21 @@ Orthogonality pays off.
 ## 18.9 Why fintech is a good testbed
 
 Fintech is one of the few domains where the industry
-willingly accepts that tooling weighs in on the development
-process. If a function pays out, the company prefers the
-compiler reject it before pushing it to production. If the
-system guarantees that debits balance credits, the regulator
-sleeps better. If types distinguish currencies, next
-quarter's exchange shift won't introduce a subtle bug.
+welcomes tooling that weighs in on the development process.
+If a function disburses the wrong amount, the company would
+rather the compiler catch it than discover it in production.
+If the system guarantees that debits match credits, the
+regulator sleeps better. If types distinguish currencies,
+next quarter's exchange-rate change won't introduce a subtle
+bug.
 
 Languages that offer those guarantees — Haskell, OCaml, F#
-— have had a good reception in historical fintech. kaikai
-tries to bring the same level of guarantees with less
-ceremony: units without external packages, contracts in
-the signature, branding without macros. The promise is
-that the code can be written as directly as in Python or
-Go, with the guarantees the type system gives.
+— have had a good reception in fintech historically. kaikai
+aims for the same level of guarantees with less ceremony:
+units without external packages, contracts in the signature,
+branding without macros. The promise is that you can write
+code as directly as in Python or Go, with the guarantees a
+strong type system gives you.
 
 Does the promise hold? That's for the person writing the
 code to decide. This chapter tried to show a slice of a
@@ -441,10 +442,10 @@ Worth naming at the end.
 **A real program is made of small, orthogonal pieces.**
 Pure types describing the domain. Pure functions
 transforming the domain. Actors wrapping the mutable state
-that needs to persist between calls. Fibers parallelising
-concurrent work. Modules separating responsibilities.
-Contracts placing domain invariants in the signatures of
-functions that preserve them.
+that needs to persist between calls. Fibers running
+concurrent work cooperatively. Modules separating
+responsibilities. Contracts placing domain invariants in
+the signatures of functions that preserve them.
 
 Each piece is tested in isolation. Each piece declares in
 its signature everything it does. Each piece can be

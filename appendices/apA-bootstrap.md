@@ -124,7 +124,7 @@ Why does this matter? Two reasons:
   published in 1984 a famous essay ("Reflections on
   Trusting Trust") showing that a malicious compiler can
   insert invisible backdoors that survive recompilation.
-  The classical defence is **diverse double-compiling**:
+  The classical defense is **diverse double-compiling**:
   compile with two distinct chains and compare. The fixed
   point is the modern version of that idea: if the whole
   chain converges to one binary, and that binary is

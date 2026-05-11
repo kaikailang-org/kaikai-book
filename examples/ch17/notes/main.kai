@@ -39,7 +39,7 @@ fn handle_connection(
       }
     }
   }
-  NetTcp.send(conn, string_to_bytes(http_lib.serialise_response(resp)))
+  NetTcp.send(conn, string_to_bytes(http_lib.serialize_response(resp)))
   NetTcp.close(conn)
 }
 

@@ -16,7 +16,7 @@ pages.
 
 We are not going to open up the theory of each idea — that's
 the job of the chapters that follow. What we want is to name
-the habit change, show it, and give you the words to recognise
+the habit change, show it, and give you the words to recognize
 it when it shows up.
 
 ## 2.1 Expressions, not statements
@@ -147,7 +147,7 @@ a real need. When you program with values that don't change:
   12, it is still `5` on line 30. Period. No need to hunt for
   who modified it in between.
 - **Concurrency becomes simpler.** Two fibers can read the same
-  value without synchronisation; nobody is going to overwrite
+  value without synchronization; nobody is going to overwrite
   it.
 - **Bugs go away.** A whole category of errors ("I expected X,
   but at the end of the method it was Y") just doesn't exist.
@@ -365,7 +365,7 @@ from disk. It does not send messages. It does not look at a
 clock. It does not roll a die.
 
 Pure functions are easy to test, easy to reason about, easy to
-parallelise, easy to cache. The catch is that a program made
+parallelize, easy to cache. The catch is that a program made
 only of pure functions does nothing useful: it never talks to
 the world.
 
@@ -427,7 +427,7 @@ understand why things look the way they do.
   kaikai follows Effekt closely on how handlers are
   expressed, and Koka on some internal decisions.
 - **From Koka** also comes **Perceus**, the
-  compile-time-optimised reference counting scheme kaikai uses
+  compile-time-optimized reference counting scheme kaikai uses
   to manage memory without a garbage collector or a borrow
   checker.
 - **From Go** kaikai takes the decision to ship a single
@@ -438,7 +438,7 @@ understand why things look the way they do.
   pattern matching are lessons Rust teaches well. The borrow
   checker, on the other hand, kaikai prefers to avoid —
   Perceus plus isolated fibers solve the problem without
-  asking the programmer to internalise lifetimes.
+  asking the programmer to internalize lifetimes.
 
 None of these decisions is new. What kaikai attempts is a
 coherent combination: algebraic types + algebraic effects +

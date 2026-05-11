@@ -102,7 +102,7 @@ Four pieces of information:
   point, with its type. Here only `r : Real` (the
   parameter).
 - **`candidates that fit`**: expressions the compiler can
-  synthesise that have the expected type. For `Real` with
+  synthesize that have the expected type. For `Real` with
   `r` in scope: `r` itself, `real_mul(r, r)` which is also
   `Real`. Synthesis is **bounded**: at most one function
   application. It doesn't give you the full body; it gives
@@ -140,7 +140,7 @@ fn compute(s: String) : Int = evaluate(parse(tokenize(s)))
 ```
 
 Three signatures, one complete function (`evaluate`). The
-file compiles. You can run tests over `evaluate` with
+file compiles. You can run tests against `evaluate` with
 hand-built ASTs, before implementing `parse` or `tokenize`:
 
 ```kai
@@ -340,7 +340,7 @@ reasonable flow is this:
 4. **The agent iterates.** Reads the counterexample,
    adjusts, proposes another implementation.
 
-Three things worth fixing about this flow:
+Three things worth noting about this flow:
 
 - **The human decides the what.** Signature, tests,
   properties are what say what the program should do.
@@ -381,7 +381,7 @@ tools don't replace judgment, they amplify it when they're
 well designed. The compiler with holes and agents reads a
 mechanical part of the work (the details that satisfy the
 type constraints). The other part (what to build, what to
-abstract, what to prioritise) remains the programmer's.
+abstract, what to prioritize) remains the programmer's.
 
 This is what kaikai, in the Mapudungun word, calls its
 **kimun**: the wisdom the system accumulates to serve,
@@ -438,12 +438,11 @@ fn passed(grades: [(String, Int)]) : [String] =
     |> list.sort
 ```
 
-The agent runs `kai check`. The first test passes. The
-second fails: the order is `["Berta", "Carmen"]` and it
-returns that, but it also needs to test filtering. In
-reverse: the test assumes ascending lexicographic order;
-`list.sort` over `[String]` should do that. If it passes,
-the agent is done.
+The agent runs `kai check`. Both tests pass: the filter
+keeps Carmen and Berta (grades 5 and 6) and drops Ana
+(grade 3), then `list.sort` over `[String]` puts them in
+ascending lexicographic order. If both pass, the agent is
+done.
 
 The human never touched the body. The compiler validated
 types and tests. The agent iterated if needed. Each one did
