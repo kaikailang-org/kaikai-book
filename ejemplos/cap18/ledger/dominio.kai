@@ -1,0 +1,62 @@
+# Tipos de dominio del ledger.
+#
+# Un ledger es un libro mayor de doble entrada: cada
+# transacción tiene una lista de débitos (cargos) y una lista
+# de créditos (abonos), y la suma de los débitos debe igualar
+# la suma de los créditos. Esa es la invariante central.
+#
+# Las cuentas tienen un id (entero) y un nombre. Los montos
+# llevan unidad de medida (USD por ahora; el cap. 10 cubrió
+# cómo extenderlo a múltiples monedas con conversiones
+# explícitas).
+
+unit USD
+
+# Identificadores branded para que el compilador no nos deje
+# pasar una CuentaId donde se espera una TransaccionId.
+pub unit CuentaId
+pub unit TransaccionId
+
+#derive(Show)
+pub type Cuenta = {
+  id:     Int<CuentaId>,
+  nombre: String,
+  saldo:  Real<USD>,        # balance acumulado de la cuenta
+}
+
+# Un movimiento es una línea de una transacción: una cuenta y
+# un monto. Si el monto es positivo, es un débito; si es
+# negativo, un crédito. Por convención mantenemos los dos
+# tipos separados con un sum, para que el sistema de tipos no
+# nos deje sumar "monto de débito" con "monto de crédito".
+#derive(Show)
+pub type Movimiento
+  = Debito(Int<CuentaId>, Real<USD>)     # cargar a la cuenta
+  | Credito(Int<CuentaId>, Real<USD>)    # abonar a la cuenta
+
+#derive(Show)
+pub type Transaccion = {
+  id:           Int<TransaccionId>,
+  descripcion:  String,
+  movimientos:  [Movimiento],
+}
+
+# Comandos que el ledger acepta. Crear cuenta, registrar
+# transacción, consultar saldo de una cuenta, exportar todas
+# las transacciones del día.
+pub type Comando
+  = CrearCuenta(String)                          # nombre de cuenta nueva
+  | Registrar(String, [Movimiento])              # descripción + movs
+  | ConsultarSaldo(Int<CuentaId>)
+  | Listar
+
+# Respuestas del nivel de dominio.
+#derive(Show)
+pub type Respuesta
+  = CuentaCreada(Cuenta)
+  | TransaccionRegistrada(Transaccion)
+  | SaldoActual(Real<USD>)
+  | ListaCuentas([Cuenta])
+  | ErrorDescuadre(String)             # los movs no cuadran
+  | ErrorCuentaInexistente(Int<CuentaId>)
+  | ErrorMontoInvalido(String)

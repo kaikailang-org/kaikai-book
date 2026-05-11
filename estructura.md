@@ -378,16 +378,38 @@ un experimento en esa dirección.
 - 16.6 Estructura típica de un proyecto kaikai
 - *Sin ejercicios*: capítulo de referencia.
 
-#### Capítulo 17 · Caso de estudio integrador
+#### Capítulo 17 · Caso de estudio: servidor HTTP
 
-Un programa real, completo, comentado paso a paso. Candidato
-inicial: un mini servidor HTTP de notas con persistencia en
-archivo, usando efectos para IO, fibras para conexiones, y
-actores para la cola de escritura. Tamaño objetivo: 300–500
-líneas, repartidas en 4–6 módulos.
+Un programa real, completo, comentado paso a paso. Mini
+servidor HTTP de notas con persistencia en archivo, usando
+efectos para IO, fibras para conexiones, y actores para la
+cola de escritura. Tamaño objetivo: 300–500 líneas, repartidas
+en 4–6 módulos.
 
-Se redacta al final, cuando los capítulos previos estabilicen
-sintaxis y estilo de ejemplos.
+El énfasis es **concurrencia y modularidad**: sum types,
+match, actores, fibras, módulos. Cubre la mayor parte del
+libro pero deja afuera UoM y contratos.
+
+#### Capítulo 18 · Caso de estudio: ledger contable
+
+Segundo programa integrador, esta vez orientado al dominio
+financiero. Implementa un libro mayor de doble entrada
+(double-entry ledger) con balances por cuenta, transacciones
+atómicas, validación de cuadre (la suma de débitos iguala la
+suma de créditos), y persistencia inmutable como log de
+eventos.
+
+El énfasis está donde el cap. 17 no llega: **UoM con monedas**
+(`Real<USD>`, `Real<EUR>`, conversiones explícitas),
+**contratos** (`requires` que el monto sea positivo,
+`ensures` que la transacción cuadra), **inmutabilidad por
+construcción** (el ledger nunca se modifica, solo se le
+agregan eventos), y **branding de identificadores** (`Int<
+CuentaId>` vs `Int<TransaccionId>`).
+
+Tamaño objetivo: similar al cap. 17. Mismo patrón general
+(dominio puro, actores con estado, persistencia) aplicado a
+fintech.
 
 ### Apéndices
 
@@ -410,7 +432,7 @@ sintaxis y estilo de ejemplos.
 
 ## Cuenta gruesa
 
-- 17 capítulos + 6 apéndices.
+- 18 capítulos + 6 apéndices.
 - ≈ 400 páginas en la edición impresa estimada (asumiendo 18–22
   páginas promedio por capítulo principal; el cap. 15 es algo
   más largo que la versión "solo holes").

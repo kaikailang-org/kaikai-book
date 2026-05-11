@@ -1,0 +1,64 @@
+# Validación de cuadre: la suma de débitos debe igualar la
+# suma de créditos en una transacción. Es la invariante
+# central de un ledger de doble entrada.
+#
+# La función `cuadra` es pura. La verificamos con tests y la
+# usamos como precondición de `registrar` en el almacén.
+
+import dominio
+
+# Suma los débitos de una lista de movimientos.
+pub fn total_debitos(ms: [dominio.Movimiento]) : Real<USD> {
+  match ms {
+    []                         -> 0.0<USD>
+    [dominio.Debito(_, m), ...rest]  -> m + total_debitos(rest)
+    [dominio.Credito(_, _), ...rest] -> total_debitos(rest)
+  }
+}
+
+# Suma los créditos.
+pub fn total_creditos(ms: [dominio.Movimiento]) : Real<USD> {
+  match ms {
+    []                         -> 0.0<USD>
+    [dominio.Credito(_, m), ...rest] -> m + total_creditos(rest)
+    [dominio.Debito(_, _), ...rest]  -> total_creditos(rest)
+  }
+}
+
+# La invariante: ambas sumas son iguales.
+pub fn cuadra(ms: [dominio.Movimiento]) : Bool =
+  total_debitos(ms) == total_creditos(ms)
+
+# Y la versión con contrato del cap. 11: si llamas a esta
+# función, garantizas que los movimientos cuadran. El
+# compilador inserta un assert si no lo puede verificar
+# estáticamente.
+pub fn aplicar_si_cuadra(ms: [dominio.Movimiento]) : [dominio.Movimiento]
+  requires cuadra(ms)
+  ensures  cuadra(result)
+= ms
+
+test "cuadra con una entrada y una salida" {
+  let ms = [
+    dominio.Debito(1<CuentaId>, 100.0<USD>),
+    dominio.Credito(2<CuentaId>, 100.0<USD>),
+  ]
+  assert cuadra(ms)
+}
+
+test "no cuadra cuando los montos difieren" {
+  let ms = [
+    dominio.Debito(1<CuentaId>, 100.0<USD>),
+    dominio.Credito(2<CuentaId>, 90.0<USD>),
+  ]
+  assert not cuadra(ms)
+}
+
+test "cuadra con múltiples líneas" {
+  let ms = [
+    dominio.Debito(1<CuentaId>, 60.0<USD>),
+    dominio.Debito(2<CuentaId>, 40.0<USD>),
+    dominio.Credito(3<CuentaId>, 100.0<USD>),
+  ]
+  assert cuadra(ms)
+}

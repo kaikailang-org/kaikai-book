@@ -1,0 +1,29 @@
+# El audit log del ledger. Cada transacción registrada se
+# escribe a un archivo append-only. En contabilidad real esto
+# es no negociable: las transacciones nunca se modifican, solo
+# se agregan correcciones. El archivo es la evidencia.
+#
+# El actor recibe eventos del almacén y los persiste. Como en
+# el cap. 17, aislar la escritura en un actor permite que el
+# almacén siga respondiendo mientras el disco está ocupado.
+
+import actor
+import fs.file
+
+pub type Evento = Linea(String)
+
+fn bucle(path: String) : Unit / Actor[Evento] + File {
+  match Actor.receive() {
+    Linea(s) -> {
+      file.file_append(path, s ++ "\n")
+      bucle(path)
+    }
+  }
+}
+
+pub fn arrancar(path: String) : Pid[Evento] / Spawn + Cancel + Actor[Evento] + File {
+  # Append-only: si el archivo existe, lo abrimos en modo
+  # agregar sin truncar. Para un demo simple lo creamos vacío.
+  file.file_write_file(path, "")
+  spawn_actor(() => bucle(path))
+}

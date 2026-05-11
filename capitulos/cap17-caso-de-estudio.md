@@ -1,9 +1,18 @@
-# Capítulo 17 · Caso de estudio integrador
+# Capítulo 17 · Caso de estudio: servidor HTTP
 
-Cerramos el libro con un programa completo, comentado paso a
-paso. La idea es ver, en un solo lugar, cómo las piezas de los
-capítulos anteriores encajan en algo que se parece a software
-real.
+Llegamos al primero de dos casos de estudio que cierran el
+libro. La idea es ver, en un solo lugar, cómo las piezas de
+los capítulos anteriores encajan en algo que se parece a
+software real.
+
+Este capítulo cubre **un servidor HTTP**: la familia de
+problemas donde lo que pesa es la concurrencia, la
+modularidad y la separación entre lógica de dominio e IO. El
+capítulo 18 cubrirá el otro extremo del espectro de la
+industria: **un libro mayor contable**, donde lo que pesa son
+los tipos precisos (monedas con unidades), las invariantes de
+negocio (contratos `requires`/`ensures`), y la inmutabilidad
+estricta. Dos casos, mismo lenguaje, distintos énfasis.
 
 El programa es un **servidor HTTP de notas**. Tiene una
 interfaz HTTP simple (`GET /notas`, `POST /notas`,
@@ -484,45 +493,25 @@ Cada una es una sesión de tarde. Ninguna requiere cambiar la
 estructura básica: un dominio puro, actores con estado,
 fibras para concurrencia, módulos para separación.
 
-## 17.9 Filosofía: el cierre del libro
+## 17.9 Lo que muestra este caso
 
-Hay un patrón que el libro ha venido proponiendo, capítulo a
-capítulo, sin nombrarlo explícitamente hasta ahora. Vale
-nombrarlo al final.
+Hay un patrón claro en lo que acabamos de armar:
 
-**El programa real está hecho de pequeñas piezas
-ortogonales.** Tipos puros que describen el dominio. Funciones
-puras que transforman el dominio. Actores que envuelven el
-estado mutable que necesita persistir entre llamadas. Fibras
-que paralelizan trabajo independiente. Módulos que separan
-responsabilidades.
+- **El dominio es puro.** `Comando`, `Respuesta`, `procesar`:
+  tipos y funciones sin efectos. Se testean con entradas y
+  salidas, sin arrancar nada.
+- **Los actores envuelven el estado mutable.** El almacén
+  mantiene la lista de notas; el persistor mantiene el archivo
+  de log. La mutación queda encerrada dentro de cada actor,
+  invisible para el resto del programa.
+- **Las fibras paralelizan el trabajo concurrente
+  (cooperativamente).** Una fibra por conexión. El nursery
+  garantiza que ninguna sobreviva al servidor.
+- **Los módulos separan responsabilidades.** Cinco archivos,
+  cinco temas. Cada uno se puede reemplazar sin tocar los
+  otros tres.
 
-Cada pieza se prueba en aislamiento. Cada pieza tiene una
-firma honesta. Cada pieza puede reemplazarse sin tocar el
-resto.
-
-Esto no es exclusivo de kaikai. Lo describen, con palabras
-distintas, *No Silver Bullet* de Brooks, *Simple Made Easy*
-de Hickey, *Out of the Tar Pit* de Marlow y Goldsmith. Lo que
-kaikai hace es ofrecer una sintaxis y un sistema de tipos
-que **vuelven natural** este estilo. Las firmas honestas son
-gratis porque los efectos están en el tipo. Las funciones
-puras son baratas porque la inmutabilidad es por defecto.
-Los actores son una biblioteca porque los efectos
-algebraicos lo permiten.
-
-Si después de leer el libro te quedas con una sola idea, que
-sea esta: **el lenguaje no es lo que importa; lo que importa
-es qué te permite construir, y qué te ayuda a evitar
-construir mal**. kaikai apuesta a que con efectos, fibras,
-contratos y holes en su lugar, el programador escribe menos
-código equivocado y más código que merece estar en
-producción. Si la apuesta funciona para ti, este libro
-cumplió su propósito.
-
-Gracias por leer hasta acá. El compilador, el stdlib, los
-documentos de diseño y los ejemplos viven en
-`github.com/lnds/kaikai`. Hay una comunidad emergente, hay
-issues que cerrar, hay piezas del lenguaje que están todavía
-tomando forma. Si encuentras este experimento interesante,
-hay lugar para que ayudes a hacerlo mejor.
+El cap. 18 va a aplicar exactamente el mismo patrón a un
+dominio muy distinto (contabilidad financiera) y vas a ver
+cómo la estructura se mantiene aunque el problema cambie. El
+cierre del libro viene allá.

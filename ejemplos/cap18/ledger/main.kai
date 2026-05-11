@@ -1,0 +1,73 @@
+# Programa que arma todo y ejecuta una serie de operaciones
+# de ejemplo. Es CLI, no servidor HTTP: el énfasis del cap. 18
+# está en las invariantes contables, no en la concurrencia.
+#
+# Para un demo más completo (CLI con comandos interactivos, o
+# expuesto vía HTTP usando el patrón del cap. 17), las piezas
+# están listas.
+
+import actor
+import spawn
+import fs.file
+import dominio
+import almacen
+import cuadre
+import persistencia
+
+const PATH_LOG : String = "ledger.audit.log"
+
+fn imprimir(r: dominio.Respuesta) : Unit / Console {
+  println("  -> #{r}")
+}
+
+fn registrar_evento(log_pid: Pid[persistencia.Evento], r: dominio.Respuesta)
+    : Unit / Actor[persistencia.Evento] {
+  match r {
+    dominio.CuentaCreada(c)        -> Actor.send(log_pid, persistencia.Linea("CUENTA #{c.id} #{c.nombre}"))
+    dominio.TransaccionRegistrada(t) -> Actor.send(log_pid, persistencia.Linea("TX #{t.id} #{t.descripcion}"))
+    _                                -> ()
+  }
+}
+
+fn paso(
+  almacen_pid: Pid[almacen.AlmacenMsg],
+  log_pid: Pid[persistencia.Evento],
+  c: dominio.Comando,
+) : Unit / Console + Spawn + Cancel + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
+  let r = almacen.preguntar(almacen_pid, c)
+  imprimir(r)
+  registrar_evento(log_pid, r)
+}
+
+fn main() : Unit / Console + File + Spawn + Cancel + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
+  let almacen_pid = almacen.arrancar()
+  let log_pid     = persistencia.arrancar(PATH_LOG)
+
+  println("== creando cuentas ==")
+  paso(almacen_pid, log_pid, dominio.CrearCuenta("caja"))
+  paso(almacen_pid, log_pid, dominio.CrearCuenta("ventas"))
+  paso(almacen_pid, log_pid, dominio.CrearCuenta("gastos"))
+
+  println("== registrando una venta ==")
+  paso(almacen_pid, log_pid, dominio.Registrar("venta de tarjeta", [
+    dominio.Debito(1<CuentaId>, 50.0<USD>),
+    dominio.Credito(2<CuentaId>, 50.0<USD>),
+  ]))
+
+  println("== pagando un gasto ==")
+  paso(almacen_pid, log_pid, dominio.Registrar("café del equipo", [
+    dominio.Debito(3<CuentaId>, 8.0<USD>),
+    dominio.Credito(1<CuentaId>, 8.0<USD>),
+  ]))
+
+  println("== intento descuadrado (debe fallar) ==")
+  paso(almacen_pid, log_pid, dominio.Registrar("error", [
+    dominio.Debito(1<CuentaId>, 100.0<USD>),
+    dominio.Credito(2<CuentaId>, 50.0<USD>),
+  ]))
+
+  println("== saldos finales ==")
+  paso(almacen_pid, log_pid, dominio.ConsultarSaldo(1<CuentaId>))
+  paso(almacen_pid, log_pid, dominio.ConsultarSaldo(2<CuentaId>))
+  paso(almacen_pid, log_pid, dominio.ConsultarSaldo(3<CuentaId>))
+}
