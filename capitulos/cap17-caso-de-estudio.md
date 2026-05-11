@@ -49,7 +49,7 @@ Cinco archivos, cinco preocupaciones distintas:
   estructura `ReqHttp`, traducir requests en comandos de
   dominio, serializar respuestas a bytes. Sin actores, sin IO.
 - **`main.kai`** arma todo: arranca los actores, levanta el
-  socket TCP, abre un nursery, y por cada conexión nueva spawnea
+  socket TCP, abre un nursery, y por cada conexión nueva lanza
   una fibra que la maneja.
 
 Esta separación es la forma natural en kaikai. Cada módulo es
@@ -236,7 +236,7 @@ función simple, no como un protocolo abierto.
 ## 17.4 Persistencia: actor de escritura
 
 `persistencia.kai` es más simple. Un actor que recibe líneas
-de log y las append a un archivo:
+de log y las agrega a un archivo:
 
 ```kai
 import actor
@@ -273,7 +273,7 @@ beneficios:
 
 En un sistema real, este actor tendría un mailbox `Bounded(N,
 DropOldest)` para protegerse de inundación. Acá usamos el
-default (Unbounded) por simplicidad del demo. La decisión es
+mailbox predeterminado (Unbounded) por simplicidad del demo. La decisión es
 explícita y vive en una sola línea, fácil de cambiar.
 
 ## 17.5 Parser HTTP
@@ -317,7 +317,7 @@ strings de entrada y comparación de salida.
 
 ## 17.6 El main: armar todas las piezas
 
-`main.kai` es el `glue`:
+`main.kai` es el pegamento que arma las piezas:
 
 ```kai
 import actor
@@ -360,7 +360,7 @@ de los tres canales de mensajes. Es honesto: si el `main`
 hiciera más cosas, su fila crecería en consecuencia.
 
 El bucle de aceptación abre un nursery y por cada conexión
-nueva spawnea una fibra:
+nueva lanza una fibra:
 
 ```kai
 fn aceptar_loop(
