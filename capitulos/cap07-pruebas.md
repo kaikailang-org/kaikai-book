@@ -70,7 +70,7 @@ $ kai test ejemplos/cap07/01_test_basico.kai
 3/3 tests passed
 ```
 
-Si un test falla, el output cambia para mostrarlo:
+Si un test falla, la salida cambia para mostrarlo:
 
 ```
 $ kai test ejemplos/cap07/02_assert_falla.kai
@@ -473,7 +473,7 @@ respuesta posible: al lado de la función.
 **7.1.** Toma una función simple que ya hayas escrito
 (puede ser de los capítulos anteriores o algo nuevo) y
 escribe tres tests para ella: uno con un caso típico, uno
-con un caso de borde, y uno con un input inválido (si el
+con un caso de borde, y uno con una entrada inválida (si el
 tipo lo admite). Corre `kai test` y verifica que pasen los
 tres.
 

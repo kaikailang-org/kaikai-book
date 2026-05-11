@@ -297,7 +297,7 @@ que la doc del lenguaje lista como próximo hito.
 
 ### Costo cero en runtime
 
-Las unidades se borran después del chequeo de tipos. El
+Las unidades se borran después de la verificación de tipos. El
 binario que produce `kai build` opera con `Int` plano,
 `Real` plano, `String` plano. La unidad **no existe** en
 runtime: no hay tag, no hay verificación dinámica, no hay

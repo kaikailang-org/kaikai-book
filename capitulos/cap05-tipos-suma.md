@@ -250,7 +250,7 @@ con todo lo restante: los enteros que no son cero ni
 positivos.
 
 Las guardas son convenientes pero no participan en el
-chequeo de exhaustividad: el compilador no puede saber que
+verificación de exhaustividad: el compilador no puede saber que
 `k > 0` y `k < 0` se complementan, así que necesita un patrón
 final sin guarda que cubra el caso "todo lo demás". Si lo
 omites, no compila.
@@ -693,7 +693,7 @@ default si es `Nothing`. Nota: el nombre `Nothing` también es
 un tipo primitivo de kaikai (el bottom type del cap. 3); usa
 `Vacio` u otro nombre si te molesta el shadowing.
 
-**5.2.** Extiende el evaluador del §5.7 para que soporte
+**5.2.** Extiende el evaluador del §5.7 para que admita
 restas: agrega `Resta(Expr, Expr)` al AST, agrégalo al `match`
 de `eval`, y verifica que `2 - 3` evalúe a `-1`. ¿Cuántas
 líneas tuviste que cambiar? ¿Cuántos lugares tocó el

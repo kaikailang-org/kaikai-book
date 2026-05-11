@@ -103,7 +103,7 @@ fn main() {
 }
 ```
 
-Notar dos detalles: el archivo está en `util/matematica.kai`,
+Fíjate en dos detalles: el archivo está en `util/matematica.kai`,
 el módulo se llama `util.matematica`, pero al usarlo, el
 prefijo es solo `matematica` (el último segmento). Eso evita
 prefijos largos sin perder el origen estructural.

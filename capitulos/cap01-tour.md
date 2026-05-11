@@ -45,7 +45,7 @@ Cuatro cosas que mirar antes de seguir:
   es el valor del bloque. Acá no nos interesa, pero lo vas a usar.
 - `println` no requiere `import`. Está disponible en todos los
   programas porque escribe a la salida estándar mediante un
-  efecto que kaikai instala por defecto. En el capítulo 12 vamos a
+  efecto que kaikai trae por defecto. En el capítulo 12 vamos a
   abrir esa caja; por ahora basta con que funciona.
 
 No hay punto y coma al final de la línea. No hay `return` para
@@ -198,7 +198,7 @@ hábito: **inmutabilidad por defecto**.
 ## 1.4 Un efecto propio con su handler
 
 Hasta ahora todo el "efecto" que vimos fue `println`, que
-funciona porque kaikai instala un handler por defecto. Veamos
+funciona porque kaikai trae un handler por defecto. Veamos
 qué pasa cuando declaramos un efecto nuevo.
 
 ```kai
@@ -303,8 +303,8 @@ punto donde la fibra actual dice "puedo esperar, dale paso a
 otra".
 
 Sin los `fiber_yield`, el `worker` "A" correría sus tres
-iteraciones antes de soltarle el turno a "B". Con ellos, el
-output queda alternado.
+iteraciones antes de soltarle el turno a "B". Con ellos, la
+salida queda alternada.
 
 La firma de `worker` es `: Unit / Stdout + Spawn`. Dos
 efectos: el que ya conocíamos para imprimir, y `Spawn` para
@@ -487,7 +487,7 @@ programa aborta si la precondición falla.
 garantiza que la identidad fundamental de la división entera
 se cumple al salir". `result` es un nombre reservado dentro
 del `ensures` que se refiere al valor de retorno. Esta
-postcondición se chequea **al salir** del cuerpo: si por
+postcondición se verifica **al salir** del cuerpo: si por
 algún bug interno la función devolviera algo que no cumple,
 el programa también aborta.
 

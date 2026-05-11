@@ -137,7 +137,7 @@ fn ordenar(xs: [Int]) : [Int]
 La primera dice "la salida es el doble de la entrada". La
 segunda dice "la lista resultante tiene el mismo largo que
 la entrada": un invariante razonable de cualquier
-ordenamiento. Notar que **no** estamos diciendo que `result`
+ordenamiento. Fíjate que **no** estamos diciendo que `result`
 está ordenado, solo que conserva el largo. Las
 postcondiciones documentan lo que vale la pena documentar; no
 tienen que ser exhaustivas.
@@ -179,11 +179,11 @@ let y : NoNeg = 0 - 5     # ERROR: -5 no satisface self >= 0
 ```
 
 Si lo cumples con un valor dinámico, el compilador inserta un
-chequeo en runtime: igual que con un `requires` cuyo argumento
+verificación en runtime: igual que con un `requires` cuyo argumento
 no se puede deducir estáticamente.
 
 Las funciones que aceptan tipos refinados **se benefician de
-la garantía sin chequearla**. Si tu firma dice `n: NoNeg`,
+la garantía sin verificarla**. Si tu firma dice `n: NoNeg`,
 adentro puedes asumir `n >= 0` sin escribir un `if`. Eso es
 exactamente lo que un contrato `requires n >= 0` hace, pero
 codificado en el tipo en vez de en la firma.
@@ -231,7 +231,7 @@ funciones que el compilador no puede inspeccionar, se difiere.
 
 **Runtime.** Cuando lo anterior no es decidible, el compilador
 emite un assert en el código generado. El programa compila;
-el chequeo se hace al ejecutar la función. Si falla, aborta
+la verificación se hace al ejecutar la función. Si falla, aborta
 con `panic: requires violated`.
 
 Lo que kaikai **no hace**, deliberadamente, es **invocar un
@@ -278,7 +278,7 @@ densa que cualquiera por separado. Y los cuatro tienen costo
 cero en runtime cuando no fallan: un `test` que pasa no se
 ejecuta en producción; un contrato que se puede probar
 estáticamente no genera assert; un refinement legal no genera
-chequeo dinámico.
+verificación dinámica.
 
 ## 11.7 La familia Design by Contract
 
@@ -339,32 +339,32 @@ otras versiones más livianas de la misma idea.
 Lo que **distingue** a kaikai en esta familia:
 
 1. **Sin SMT**. La línea de SPARK queda fuera. La consecuencia
-   es que los contratos complejos se chequean en runtime; el
+   es que los contratos complejos se verifican en runtime; el
    beneficio es compilación rápida y sin dependencias
    externas.
 
 2. **Pureza por defecto**. Eiffel y Ada manejan mutabilidad
    rampante; los contratos tienen que lidiar con `old` y
    aliasing. kaikai parte de inmutabilidad: la postcondición
-   habla del input y del output como dos valores que coexisten,
+   habla de la entrada y de la salida como dos valores que coexisten,
    sin máquina extra.
 
 3. **Continuidad con el resto del sistema de tipos**.
    Contratos y refinements son la **tercera pata** de
    "información en el tipo, costo cero en runtime", junto a
    efectos algebraicos y unidades de medida. Las tres usan el
-   mismo patrón: declarar en la firma o en el tipo, chequear
+   mismo patrón: declarar en la firma o en el tipo, verificar
    estáticamente cuando se puede, runtime cuando hace falta.
    Eiffel y Ada no tienen efectos algebraicos ni UoM, así que
    sus contratos viven más solos.
 
 ## 11.8 Lo que kaikai no hace, y por qué
 
-Vale enumerar lo que kaikai **deliberadamente** no soporta:
+Vale enumerar lo que kaikai **deliberadamente** no implementa:
 
 - **No SMT solving**. Si tu contrato es `ensures result.entries
   == sort(c.entries)`, kaikai no va a probar estáticamente
-  que tu cuerpo en efecto ordena la lista. Lo va a chequear
+  que tu cuerpo en efecto ordena la lista. Lo va a verificar
   en runtime.
 - **No refinements arbitrarios sobre estructuras complejas**.
   `Real where 0.0 <= self <= 1.0` es legal. `[Int] where
@@ -491,4 +491,4 @@ de kaikai. Identifica una restricción que la doc menciona
 como "post-MVP". Discute con un colega o con un agente IA
 qué consecuencias tendría implementarla: qué clase de
 errores nuevos atraparía, qué clase de programas se
-volverían más cargados de chequeos.
+volverían más cargados de verificaciones.

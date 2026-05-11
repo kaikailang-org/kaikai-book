@@ -217,7 +217,7 @@ las funciones encadenadas tocan tres tipos distintos en
 general.
 
 Las funciones de orden superior son la herramienta principal
-para abstraer **sobre el qué hacer**. En vez de escribir
+para abstraer **lo que hay que hacer**. En vez de escribir
 `para cada elemento, hacer X` y `para cada elemento, hacer
 Y`, escribes `para cada elemento, hacer F`, donde `F` es un
 parámetro. Así nacen `list.map`, `list.filter`,
