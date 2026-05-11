@@ -32,7 +32,7 @@ Una vez devuelto el resultado, la fibra deja de existir.
 
 ```kai
 let f = fiber_spawn(() => parsear_archivo("entrada.txt"))
-# ... otro trabajo en paralelo ...
+# ... otro trabajo concurrente ...
 let errores = fiber_await(f)   # un solo valor, y se acabó
 ```
 
@@ -65,7 +65,7 @@ Comparación lado a lado:
 | Ciclo de vida | Arranca, calcula, devuelve, muere | Arranca, queda en bucle procesando, muere cuando decide |
 | Cómo se crea | `fiber_spawn` o `n.spawn` | `spawn_actor` |
 | Cómo le hablas | `await` para obtener su `T` | `send` cualquier cantidad de veces |
-| Cuándo elegirlo | Cálculo discreto en paralelo | Servicio de larga vida, estado interno, consultas |
+| Cuándo elegirlo | Cálculo discreto concurrente | Servicio de larga vida, estado interno, consultas |
 
 La regla mental:
 
@@ -73,12 +73,19 @@ La regla mental:
 - **¿La tarea vive y responde mensajes a varios clientes?**
   Actor.
 
+Ambos modelos son **concurrentes pero no paralelos** en v1: el
+runtime corre un solo hilo del sistema, y fibras y actores se
+intercalan cooperativamente en él (cap. 13 §13.8 *Concurrencia,
+no paralelismo*). La ganancia es estructural y para cargas
+limitadas por IO, no aceleración multinúcleo.
+
 Casos donde el actor es lo natural: un servidor de cache, un
 controlador de conexiones, un supervisor de procesos, un router
 de notificaciones, una cola de tareas, un actor logger. Casos
-donde la fibra basta: un cómputo costoso que el padre quiere
-hacer en paralelo, un `with_timeout` que mide cuánto tarda algo,
-un map paralelo sobre una lista.
+donde la fibra basta: un cómputo que el padre quiere hacer en
+paralelo conceptual mientras hace otra cosa, un `with_timeout`
+que mide cuánto tarda algo, un map concurrente sobre una lista
+de IO.
 
 ## Los actores no son primitivos del lenguaje
 
@@ -601,8 +608,11 @@ llega cada `send`.
 **14.3.** En el patrón request/reply de §14.5, el cliente
 manda una sola pregunta y se va. Si quisieras un cliente que
 hace cinco preguntas en serie, ¿qué cambiarías? ¿Y si las
-quisieras hacer en paralelo? Pista: paralelo requiere abrir
-varios mailboxes o agrupar respuestas con un correlation id.
+quisieras lanzar todas a la vez y recibir las respuestas
+conforme lleguen (concurrentemente, no en paralelo: el
+scheduler las intercala en el mismo hilo)? Pista: necesitas
+abrir varias fibras dentro de un nursery o agrupar respuestas
+con un correlation id.
 
 **14.4.** En el caso de estudio §14.7, el supervisor reintenta
 dos veces. Generaliza: escribe una función `con_reintentos[T,

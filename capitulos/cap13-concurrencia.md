@@ -479,20 +479,42 @@ worker 3: cola vacía, salgo
 (todas las tareas procesadas)
 ```
 
-Tres fibras se reparten seis tareas en paralelo cooperativo.
-Cada una accede a la "cola compartida" vía el efecto `State`,
-pero por dentro no hay shared memory: el handler de `State`
-vive en el `main`, y las operaciones de las fibras son
-mensajes a ese handler. La cola es serializada por
-construcción.
+Tres fibras se reparten seis tareas concurrentemente. Cada
+una accede a la "cola compartida" vía el efecto `State`, pero
+por dentro no hay shared memory: el handler de `State` vive en
+el `main`, y las operaciones de las fibras son mensajes a ese
+handler. La cola es serializada por construcción.
 
-¿Y si quisieras paralelismo real? El modelo de fibras de
-kaikai es cooperativo dentro de un proceso. Para usar varios
-núcleos físicos, kaikai apunta a un modelo de **actores
-independientes en threads separados** (cap. 14), donde cada
-actor corre fibras cooperativas en su propio hilo, y los
-actores se comunican por mailbox. Lo mejor de los dos mundos:
-cooperación rápida adentro, paralelismo real afuera.
+### Concurrencia, no paralelismo
+
+Vale ser preciso con una palabra. kaikai en v1 corre **un solo
+hilo del sistema operativo**: un único scheduler, una sola
+cola de fibras listas. Las fibras se intercalan
+cooperativamente, pero nunca dos fibras están ejecutando
+instrucciones al mismo tiempo. Eso es **concurrencia**, no
+**paralelismo**.
+
+¿Por qué importa? Porque si tu programa está limitado por
+CPU (cálculo numérico, compresión, renderizado), correrlo
+con cien fibras no lo va a hacer más rápido: van a turnarse
+en el mismo núcleo. Para problemas como esos, las fibras te
+dan estructura (forma natural de expresar trabajo concurrente,
+cancelación, timeouts) pero no aceleración.
+
+Donde las fibras sí pagan en velocidad es cuando el cuello de
+botella es **IO**: leer archivos, esperar red, esperar mensajes.
+Mientras una fibra está bloqueada esperando bytes, otras
+fibras corren. El mismo núcleo aprovecha el tiempo que de
+otra manera estaría ocioso.
+
+El paralelismo real (varios núcleos físicos trabajando a la
+vez) requiere multi-threading, que está fuera del alcance de
+v1. Cuando aterrice, será sobre el mismo modelo de actores y
+fibras: un scheduler por hilo, fibras cooperativas adentro,
+mensajes entre hilos. Por ahora, la garantía es que cualquier
+código que escribas hoy con fibras y actores va a seguir
+funcionando cuando el multi-threading llegue, solo más
+rápido en máquinas con varios núcleos.
 
 ## 13.9 Filosofía: dos invariantes que cargan el modelo
 
@@ -538,8 +560,8 @@ para que `worker("A")` haga 5 iteraciones y `worker("B")` haga
 **13.2.** Una fibra crea un `Array[Int]` localmente y lo
 modifica con `a[i] := v`. Después termina sin pasarlo a nadie.
 ¿Por qué este programa no introduce data races aunque otra fibra
-esté corriendo en paralelo? Da el argumento en dos líneas, en
-términos del modelo de memoria por fibra de §13.1.
+esté corriendo concurrentemente? Da el argumento en dos líneas,
+en términos del modelo de memoria por fibra de §13.1.
 
 **13.3.** Implementa una función `with_timeout[T](ms: Int, f: ()
 -> T / Spawn) : Option[T] / Spawn + Cancel + Time`. Usa
