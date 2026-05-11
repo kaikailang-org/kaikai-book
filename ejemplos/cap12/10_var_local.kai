@@ -1,7 +1,7 @@
-# `var` introduce una celda local. Por debajo, esa celda usa el
-# efecto `Mutable`. Pero si la celda no escapa del bloque, el
-# compilador la "enmascara" y el efecto desaparece de la firma.
-# La función afuera se ve pura.
+# `var` introduce una celda local. Es azúcar sintáctico sobre
+# `State[T]`: el compilador inserta un `handle ... with State[Int]`
+# justo donde aparece el `var`, así que el efecto se cierra en el
+# mismo bloque y la firma de la función queda sin efectos.
 
 fn contar_pares(xs: [Int]) : Int {
   var n = 0

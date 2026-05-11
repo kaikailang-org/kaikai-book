@@ -276,20 +276,22 @@ deuda con LYAH: tono cálido, repetir cuando hace falta, un
 concepto a la vez. Pero sin diluir.
 
 - 12.1 La fricción que los efectos resuelven (excepciones,
-       async/await, dependency injection vista junta)
+       async/await infeccioso, inyección de dependencias)
 - 12.2 Declarar un `effect`
 - 12.3 Llamar a una operación: la firma cambia
-- 12.4 Instalar un handler con `handle ... with`
-- 12.5 `resume`: por qué un handler decide qué pasa después
-- 12.6 Efectos del stdlib: `Stdout`, `Stdin`, `Env`, `File`,
-       `Random`, `Fail`
-- 12.7 Handlers por defecto (los efectos "implícitos" de programas
-       simples)
-- 12.8 Componer efectos: filas, polimorfismo de filas
-- 12.9 Aliases de efectos
-- 12.10 Caso de estudio: parser de configuración con `Reader`,
-        `Writer`, `Fail`
-- *7 ejercicios*
+- 12.4 Manejar un efecto con `handle ... with`
+- 12.5 `resume`: el handler decide qué pasa después
+- 12.6 Handlers con estado: el patrón `State[T]`
+- 12.7 `var`, `Ref[T]` y `Array[T]`: azúcar sobre `State`, y el
+       efecto `Mutable` para mutación observable
+- 12.8 Componer efectos: handlers anidados
+- 12.9 Alias de filas de efectos
+- 12.10 Tu propio handler por defecto: el patrón envoltorio
+- 12.11 Handlers por defecto del runtime
+- 12.12 Caso de estudio: procesador de configuración con
+        `Log + State + Fail`
+- 12.13 Filosofía: tres ideas que cargan el sistema
+- *9 ejercicios*
 
 #### Capítulo 13 · Concurrencia y memoria
 
@@ -302,8 +304,8 @@ memoria es por-fibra.
 - 13.3 `fiber_spawn`, `fiber_yield`, `fiber_await`
 - 13.4 Cancelación cooperativa con el efecto `Cancel`
 - 13.5 Nurseries y concurrencia estructurada
-- 13.6 El efecto `Mutable` y arrays: cuándo se ve, cuándo se
-       enmascara
+- 13.6 Memoria mutable por fibra (`var`, `Ref[T]`, `Array[T]`
+       interactúan con la aislación)
 - 13.7 Por qué las fibras no pueden escapar de su nursery
 - 13.8 Caso de estudio: servidor concurrente de eco
 - *6 ejercicios*

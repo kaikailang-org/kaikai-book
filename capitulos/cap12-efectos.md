@@ -440,7 +440,155 @@ Este patrón es genérico: con la misma forma se construyen
 contadores, caches, sesiones. Todos sin tocar variables globales y
 sin propagar parámetros.
 
-## 12.7 Componer efectos: handlers anidados
+## 12.7 `var`, `Ref[T]` y `Array[T]`: dos mecanismos distintos
+
+`State[T]` es la herramienta general para llevar un valor que
+cambia, pero escribir un `handle ... with State[Int](0)` cada
+vez que quieres un contador local sería tedioso. Por eso kaikai
+trae azúcar sintáctica y, separadamente, un efecto del stdlib
+para casos donde la memoria sobrevive al bloque. Son dos
+construcciones distintas que vale la pena no confundir.
+
+### `var`: azúcar sobre `State[T]`
+
+La forma corta de una celda local:
+
+```kai
+fn contar_pares(xs: [Int]) : Int {
+  var n = 0
+  list.foreach(xs, (x) => {
+    if x % 2 == 0 {
+      n := @n + 1
+    }
+  })
+  @n
+}
+```
+
+Tres formas nuevas:
+
+- **`var n = 0`** declara la celda con su valor inicial.
+- **`@n`** lee el valor actual.
+- **`n := v`** escribe `v`.
+
+¿Cómo funciona por dentro? **`var` es azúcar sintáctico sobre
+`State[T]`.** El compilador reescribe
+
+```kai
+var n = 0
+... resto del bloque ...
+```
+
+a
+
+```kai
+handle {
+  ... resto del bloque ...
+} with State[Int](0) as n {
+  get(resume)    -> resume(state)
+  set(v, resume) -> resume((), v)
+  return(x)      -> x
+}
+```
+
+Como el `handle` que se inserta queda **dentro del mismo
+bloque** donde el `var` aparece, el efecto `State[Int]` se
+cierra ahí mismo y no escapa a la firma de la función. Para
+quien la llama, `contar_pares` es `: Int`. Sin efectos.
+
+No es magia de enmascaramiento: es que el `handle` está
+literalmente al lado del `var`. La fila se cierra en el lugar
+exacto donde la celda se declara.
+
+Y no es caro: el compilador detecta el patrón "celda local con
+`resume` de un disparo" y lo especializa a una posición de
+stack frame, equivalente a una variable mutable de C. Costo
+cero comparado con el código imperativo equivalente.
+
+### `Mutable`: el efecto detrás de `Ref[T]` y `Array[T]`
+
+`var` cubre celdas locales. Pero hay casos donde la memoria
+tiene que **sobrevivir al bloque**: un array que vas a
+devolver, una celda que pasas entre funciones, una estructura
+que comparten varias rutinas. Para esos casos kaikai trae dos
+tipos del stdlib, `Ref[T]` y `Array[T]`, y ambos viven bajo el
+efecto **`Mutable`**.
+
+```kai
+fn rellenar(n: Int) : Array[Int] {
+  let a = Mutable.array_make(n, 0)
+  var i = 0
+  list.foreach([0..n], (_) => {
+    a[i] := @i * 2
+    i := @i + 1
+  })
+  a
+}
+```
+
+- **`Mutable.array_make(n, init)`** crea un array de tamaño
+  `n` con valor inicial `init`.
+- **`a[i]`** lee la posición `i`. Azúcar para
+  `Mutable.array_get(a, i)`.
+- **`a[i] := v`** escribe la posición `i`. Azúcar para
+  `Mutable.array_set(a, i, v)`.
+
+`Ref[T]` es la versión de una sola celda: `Mutable.ref_make(v)`,
+`Mutable.ref_get(r)`, `Mutable.ref_set(r, v)`. No tiene azúcar
+de indexación, pero el resto es paralelo a `Array[T]`.
+
+Mira la firma de `rellenar`: dice `: Array[Int]`, **sin
+`Mutable`**. ¿Por qué, si la función claramente muta?
+
+Porque `Mutable` sigue la disciplina de **efectos observables**:
+el efecto aparece en la firma solo cuando la mutación es
+**visible para quien llama**. Y aquí no lo es. El array se
+crea adentro, se llena adentro, y se devuelve cuando ya está
+listo. Quien recibe el array obtiene un valor ya armado,
+no observa ninguna mutación.
+
+### Cuándo `Mutable` se vuelve visible
+
+Si la mutación es **observable**, el efecto aparece en la
+firma:
+
+```kai
+fn rellenar_en_sitio(a: Array[Int]) : Unit / Mutable {
+  let n = Mutable.array_length(a)
+  var i = 0
+  list.foreach([0..n], (_) => {
+    a[i] := @i * 2
+    i := @i + 1
+  })
+}
+```
+
+Aquí `a` llega de afuera. Quien llama tiene una referencia al
+mismo array que estamos modificando. La mutación es visible
+para el caller, y la firma debe declararlo.
+
+La regla del cap. 12 §12.3 se aplica igual que con cualquier
+otro efecto: el sistema de tipos garantiza que toda función
+que produce un efecto observable lo declara. Las "asignaciones
+secretas" no existen.
+
+### `Mutable` versus `State[T]`
+
+Ambos representan estado mutable. ¿Cuándo conviene cada uno?
+
+- **`var` (que es `State[T]`)**: la celda vive dentro del
+  bloque. No tiene que sobrevivir a la función, no se pasa a
+  otras rutinas, solo es un acumulador o contador local. La
+  firma queda limpia.
+- **`Mutable` con `Ref[T]` o `Array[T]`**: la memoria sobrevive
+  al bloque o se comparte entre funciones. Aparece en la
+  firma cuando la mutación es observable para quien llama.
+
+Si pasas un `Ref[T]` o un `Array[T]` como argumento, o lo
+devuelves después de mutarlo, estás en territorio de
+`Mutable`. Si solo necesitas un contador local, es `var`.
+
+## 12.8 Componer efectos: handlers anidados
 
 Las funciones reales usan más de un efecto. Una que logguea y
 acumula puede declarar `/ Log + State[Int]`, y en `main` la
@@ -485,7 +633,7 @@ Esa es una diferencia profunda con `try/catch + variables
 globales`: ahí el orden es implícito y depende del runtime. Acá es
 explícito y lo decides en la firma de los `handle`.
 
-## 12.8 Alias de filas de efectos
+## 12.9 Alias de filas de efectos
 
 Cuando una combinación aparece muchas veces, le das un nombre con
 `type`:
@@ -514,7 +662,7 @@ escribir `type WithIo[e] = Io + e` (con variable de fila). Esa
 restricción evita complicaciones en la unificación que el
 compilador no necesita pagar.
 
-## 12.9 Tu propio handler por defecto: el patrón envoltorio
+## 12.10 Tu propio handler por defecto: el patrón envoltorio
 
 ¿Y si quieres que **tu** efecto venga con un handler "preinstalado",
 como `println` viene con `Stdout`? La respuesta corta es que en
@@ -586,7 +734,7 @@ distinto para tests, expón los dos como `with_default_log` y
 elige el segundo; quien escribe `main`, el primero. El módulo
 del efecto se vuelve el catálogo de "configuraciones canónicas".
 
-## 12.10 Handlers por defecto del runtime
+## 12.11 Handlers por defecto del runtime
 
 Hay efectos que un programa usa tanto que `kai` los maneja sin que
 los declares. El caso más claro es `println`: imprime a la salida
@@ -619,7 +767,7 @@ Otros efectos con handlers por defecto en `main`: `Stdin`,
 "hola-mundo" sin firmas pesadas. La doc del cap. 12 del manual
 del lenguaje detalla cuáles son.
 
-## 12.11 Caso de estudio: procesador de configuración
+## 12.12 Caso de estudio: procesador de configuración
 
 Cerramos con un ejemplo que mezcla los tres patrones que vimos:
 logueo, estado, fallo. El programa procesa una lista de líneas
@@ -715,7 +863,7 @@ test, los tres handlers tienen otras implementaciones: el `Log`
 acumula en una lista en vez de imprimir, el `Fail` propaga en un
 `Result`, el `State` parte del valor que el test quiera.
 
-## 12.12 Filosofía: tres ideas que cargan el sistema
+## 12.13 Filosofía: tres ideas que cargan el sistema
 
 Si esto te parece muchas piezas, vale fijar las tres ideas que
 todo lo demás sostiene:
@@ -764,12 +912,17 @@ segundo?
 total como la cantidad de elementos sumados, sin agregar
 parámetros. Pista: cambia `return(x) -> x`.
 
-**12.3.** El caso de estudio §12.11 imprime con `[LOG]` cada
+**12.3.** El caso de estudio §12.12 imprime con `[LOG]` cada
 entrada. Cambia el handler de `Log` para que en vez de imprimir,
 acumule los mensajes en una lista y los devuelva como parte del
 resultado final, junto con `n`. Pista: necesitas otro `State`.
 
-**12.4.** Construye un efecto `Choice` con una operación
+**12.4.** Escribe `fn contar_pares(xs: [Int]) : Int` de dos formas:
+una con `var` y `list.foreach`, otra sin `var`, usando `list.filter`
+y `list.length`. ¿Cuál te parece más clara? ¿Por qué la versión con
+`var` no agrega efectos a la firma?
+
+**12.5.** Construye un efecto `Choice` con una operación
 `choose(opciones: [Int]) : Int` que entrega "alguna" de las
 opciones. Escribe un handler que siempre elija la primera y otro
 que elija la última. ¿Cómo cambiaría la implementación si quisieras
@@ -777,24 +930,24 @@ un handler que explore **todas** las opciones (backtracking)?
 Pista: necesitarías llamar a `resume` más de una vez. Eso es
 *multi-shot* y vive bajo `resume_multishot`.
 
-**12.5.** Toma un programa que tengas en otro lenguaje donde uses
+**12.6.** Toma un programa que tengas en otro lenguaje donde uses
 inyección de dependencias para mockear servicios en tests. Anota
 en pseudocódigo qué efectos declararías y cómo serían los
 handlers de tests vs producción. ¿Cuánto código del programa
 original sobrevive sin cambios?
 
-**12.6.** Investiga la diferencia entre `resume` (one-shot) y
+**12.7.** Investiga la diferencia entre `resume` (one-shot) y
 `resume_multishot` en la doc del lenguaje. ¿Por qué kaikai hace
 que el caso common sea cheap y obliga a marcar explícitamente el
 caso caro?
 
-**12.7.** Toma `Log` de §12.9 y agrega un segundo "default":
+**12.8.** Toma `Log` de §12.10 y agrega un segundo "default":
 `with_silent_log`, que descarta los mensajes. Después escribe una
 función que use `Log` y pruébala con los dos handlers sin
 modificar la función. Compara con cómo harías lo mismo en un
 lenguaje con inyección de dependencias clásica.
 
-**12.8.** El capítulo 13 cubre fibras: tareas concurrentes
+**12.9.** El capítulo 13 cubre fibras: tareas concurrentes
 manejadas como efectos. Anota antes de leerlo: ¿qué operaciones
 tendría que tener un efecto `Spawn`? ¿Qué decisión tomarías como
 handler cuando una fibra hija aborta?

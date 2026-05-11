@@ -307,67 +307,30 @@ La clave conceptual: `Cancel.raise()` es la **operación**, y
 del cap. 12. La cancelación no es magia: es un efecto más, con
 un handler escrito por el usuario o instalado por el runtime.
 
-## 13.6 El efecto `Mutable`: estado local controlado
+## 13.6 Memoria mutable por fibra
 
-Hasta aquí dijimos que no hay mutación. Eso es exacto desde el
-punto de vista del programador casi siempre: las funciones se
-ven puras. Pero el lenguaje tiene un mecanismo para mutación
-**localizada**, y vale la pena entenderlo porque permite
-escribir cierto tipo de algoritmos sin pena.
+El cap. 12 §12.7 cubrió `var` (celdas locales, azúcar sobre
+`State[T]`) y el efecto `Mutable` (que rige a `Ref[T]` y
+`Array[T]` cuando la mutación es observable). Toda esa
+maquinaria funciona igual que en código secuencial, con una
+sola adición que viene del modelo de fibras: **la memoria
+mutable vive en el heap de la fibra que la creó**.
 
-```kai
-fn contar_pares(xs: [Int]) : Int {
-  var n = 0
-  list.foreach(xs, (x) => {
-    if x % 2 == 0 {
-      n := @n + 1
-    }
-  })
-  @n
-}
-```
+Cuando una fibra crea un `Array[T]` o un `Ref[T]`, el espacio
+sale de su propio heap. Otra fibra no tiene cómo acceder a esa
+memoria: no hay punteros compartidos, no hay paso por
+referencia entre fibras. Si una fibra quiere darle un valor
+mutable a otra, lo manda por mailbox (cap. 14) y el runtime
+mueve el contenido al heap del receptor.
 
-Tres construcciones nuevas:
-
-- **`var n = 0`** declara una celda mutable local.
-- **`@n`** lee el valor actual de la celda.
-- **`n := v`** escribe `v` en la celda.
-
-¿No habíamos dicho que no había mutación? Sí, pero solo
-visible. Por dentro, `var` usa el efecto `Mutable`, y cada
-lectura/escritura es una operación. La firma de `contar_pares`
-debería decir `Int / Mutable`.
-
-Y sin embargo, no lo dice. Mira: la firma es solo `Int`. ¿Por
-qué?
-
-Porque el compilador hace **enmascaramiento por scope**: si la
-celda mutable no escapa del bloque donde se declara (no se
-pasa como argumento, no se devuelve, no se guarda en una
-estructura externa), el efecto `Mutable` se elimina de la
-firma. Para quien la llama, la función es pura. La mutación es un
-detalle de implementación.
-
-Es la misma idea de `State[T]` del cap. 12, pero más eficiente:
-en vez de un handler que intercepta cada operación, el
-compilador inserta lectura/escritura directa al stack frame.
-Costo cero, pero solo para el patrón local.
-
-### Cuándo `Mutable` se vuelve visible
-
-Si la celda escapa, el enmascaramiento no aplica:
-
-```kai
-fn problema(xs: Array[Int]) : Unit / Mutable {
-  xs[0] := 999      # modifica memoria que vive afuera
-}
-```
-
-Aquí `xs` es un argumento, no se creó adentro. El efecto
-`Mutable` aparece en la firma porque la mutación es visible
-para quien llama. Esto es deliberado: si una función modifica
-algo de afuera, quien llama lo sabe por el tipo. Las
-"asignaciones secretas" no existen.
+Esta es la pieza que hace que la mutación no introduzca data
+races en kaikai. En un lenguaje con threads y memoria
+compartida, un `Array[T]` mutable necesita locks o atomics
+para ser tocado desde varios hilos. En kaikai, el sistema de
+tipos garantiza que ningún `Array[T]` está siendo modificado
+por dos fibras al mismo tiempo, porque ningún `Array[T]` es
+accesible desde dos fibras al mismo tiempo. La aislación de
+memoria del §13.1 cubre también las celdas mutables.
 
 ## 13.7 Por qué las fibras no pueden escapar de su nursery
 
@@ -472,7 +435,7 @@ fn main() : Unit / Stdout + Spawn + Cancel {
 Salida:
 
 ```
-$ kai run ejemplos/cap13/07_eco_concurrente.kai
+$ kai run ejemplos/cap13/06_eco_concurrente.kai
 worker 1: procesando 'alpha'
 worker 2: procesando 'bravo'
 worker 3: procesando 'charlie'
@@ -541,9 +504,11 @@ para que `worker("A")` haga 5 iteraciones y `worker("B")` haga
 2. ¿Cómo cambia la salida? ¿Qué pasa si quitas los
 `fiber_yield()` de uno solo de los dos workers?
 
-**13.2.** Toma `contar_pares` de §13.6 y reescríbelo sin `var`,
-usando `list.filter` y `list.length`. ¿Cuál versión te parece
-más clara? ¿Cuál crees que es más eficiente y por qué?
+**13.2.** Una fibra crea un `Array[Int]` localmente y lo
+modifica con `a[i] := v`. Después termina sin pasarlo a nadie.
+¿Por qué este programa no introduce data races aunque otra fibra
+esté corriendo en paralelo? Da el argumento en dos líneas, en
+términos del modelo de memoria por fibra de §13.1.
 
 **13.3.** Implementa una función `with_timeout[T](ms: Int, f: ()
 -> T / Spawn) : Option[T] / Spawn + Cancel + Time`. Usa
