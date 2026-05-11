@@ -17,7 +17,7 @@ fn trabajador() : Unit / Actor[String] + Console {
 }
 
 fn main() : Unit / Console + Spawn + Cancel + Actor[String] {
-  with_mailbox { ->
+  with_mailbox {
     let pid = spawn_actor(() => trabajador())
     Actor.send(pid, "tarea-1")
     Actor.send(pid, "tarea-2")

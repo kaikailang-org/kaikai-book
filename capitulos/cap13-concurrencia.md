@@ -265,6 +265,37 @@ de yield, y todo punto de yield puede recibir una
 nursery desde afuera, o si una fibra hermana falla). Toda
 función que use `Spawn` carga implícitamente `Cancel`.
 
+### `nursery` es azúcar sobre un `handle`
+
+`nursery { n -> ... }` parece una palabra clave del lenguaje,
+pero no lo es. Las fibras son **un efecto** llamado `Spawn`,
+con esta declaración en el stdlib:
+
+```kai
+effect Spawn {
+  spawn[T, e](f: () -> T / e) : Fiber[T]
+  await[T](f: Fiber[T])       : T
+  select[T](fs: [Fiber[T]])   : T
+  yield()                     : Unit
+  cancel[T](f: Fiber[T])      : Unit
+}
+```
+
+Es un efecto ordinario, declarado igual que `Log` o `State[T]`
+del cap. 12. Y `nursery { n -> body }` se reescribe en tiempo
+de compilación a `handle { body } with Spawn as n { ... }`,
+con un handler interno que gestiona el árbol de fibras hijas,
+espera a las pendientes al salir y propaga fallos.
+
+Eso significa que el lenguaje core **no tiene primitivas de
+concurrencia**: tiene efectos. Las fibras, los nurseries, la
+cancelación son una biblioteca construida sobre dos efectos
+del stdlib (`Spawn` y `Cancel`). El cap. 14 va a hacer lo
+mismo para los actores (efecto `Actor[Msg]`), y el patrón se
+repite: lo distintivo de kaikai no es la lista de
+construcciones, sino que **todas son la misma construcción**
+(efectos algebraicos) con nombres distintos.
+
 ## 13.5 Cancelación cooperativa
 
 La cancelación en kaikai es **cooperativa**: el scheduler no

@@ -30,7 +30,7 @@ fn servidor() : Unit / Actor[Msg] + Console {
 }
 
 fn main() : Unit / Console + Spawn + Cancel + Actor[Msg] {
-  with_mailbox { ->
+  with_mailbox {
     let server = spawn_actor(() => servidor())
 
     Actor.send(server, Query("dos+dos", Actor.self()))

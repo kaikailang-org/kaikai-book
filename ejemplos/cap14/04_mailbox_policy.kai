@@ -16,7 +16,7 @@
 import actor
 
 fn main() : Unit / Console {
-  with_mailbox_policy(Bounded(2, DropOldest)) { ->
+  with_mailbox_policy(Bounded(2, DropOldest)) {
     Actor.send(Actor.self(), "a")
     Actor.send(Actor.self(), "b")
     Actor.send(Actor.self(), "c")

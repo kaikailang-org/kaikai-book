@@ -47,7 +47,7 @@ fn intento(me: Pid[ResultadoLote], lote: [(Int, Int)])
 # El supervisor arranca un trabajador con un lote. Si falla,
 # reintenta con un lote alternativo. Hasta dos intentos.
 fn supervisor() : Unit / Console + Spawn + Cancel + Actor[ResultadoLote] {
-  with_mailbox { ->
+  with_mailbox {
     let me = Actor.self()
     let primer_lote = [(10, 2), (20, 4), (30, 0)]   # va a fallar
     let segundo_lote = [(10, 2), (20, 4), (30, 5)]

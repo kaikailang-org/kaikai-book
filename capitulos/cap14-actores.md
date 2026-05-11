@@ -90,7 +90,7 @@ en la que ya estás. `with_mailbox` instala el handler de
 import actor
 
 fn main() : Unit / Console {
-  with_mailbox { ->
+  with_mailbox {
     Actor.send(Actor.self(), "hola")
     Actor.send(Actor.self(), "mundo")
     Stdout.print(Actor.receive())
@@ -107,11 +107,14 @@ hola
 mundo
 ```
 
-`with_mailbox { -> ... }` es la sintaxis de trailing lambda
-del cap. 12 (la flecha `->` sin parámetros). Adentro, `Actor`
-es la capacidad: `Actor.self()` devuelve el `Pid` del mailbox
-recién creado, `Actor.send(pid, msg)` encola, `Actor.receive()`
-saca el siguiente.
+`with_mailbox { ... }` es una llamada con sintaxis de trailing
+lambda: el bloque entre llaves es el cuerpo que se ejecuta con
+el mailbox instalado. Como `with_mailbox` no le pasa argumentos
+al body (es una lambda de cero parámetros), el bloque no lleva
+flecha ni binder. Adentro, `Actor` es la capacidad disponible:
+`Actor.self()` devuelve el `Pid` del mailbox recién creado,
+`Actor.send(pid, msg)` encola, `Actor.receive()` saca el
+siguiente.
 
 En este ejemplo el actor se manda a sí mismo. Es la versión
 "hola mundo" del modelo; el ejercicio real es comunicar dos
@@ -134,7 +137,7 @@ fn trabajador() : Unit / Actor[String] + Console {
 }
 
 fn main() : Unit / Console + Spawn + Cancel + Actor[String] {
-  with_mailbox { ->
+  with_mailbox {
     let pid = spawn_actor(() => trabajador())
     Actor.send(pid, "tarea-1")
     Actor.send(pid, "tarea-2")
@@ -203,7 +206,7 @@ ya no hay espacio:
 import actor
 
 fn main() : Unit / Console {
-  with_mailbox_policy(Bounded(2, DropOldest)) { ->
+  with_mailbox_policy(Bounded(2, DropOldest)) {
     Actor.send(Actor.self(), "a")
     Actor.send(Actor.self(), "b")
     Actor.send(Actor.self(), "c")
@@ -257,7 +260,7 @@ fn servidor() : Unit / Actor[Msg] + Console {
 }
 
 fn main() : Unit / Console + Spawn + Cancel + Actor[Msg] {
-  with_mailbox { ->
+  with_mailbox {
     let server = spawn_actor(() => servidor())
 
     Actor.send(server, Query("dos+dos", Actor.self()))
@@ -345,7 +348,7 @@ fn intento(me: Pid[ResultadoLote], lote: [(Int, Int)])
 }
 
 fn supervisor() : Unit / Console + Spawn + Cancel + Actor[ResultadoLote] {
-  with_mailbox { ->
+  with_mailbox {
     let me = Actor.self()
     let primer_lote = [(10, 2), (20, 4), (30, 0)]
     let segundo_lote = [(10, 2), (20, 4), (30, 5)]

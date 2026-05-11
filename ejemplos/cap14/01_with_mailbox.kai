@@ -10,7 +10,7 @@
 import actor
 
 fn main() : Unit / Console {
-  with_mailbox { ->
+  with_mailbox {
     Actor.send(Actor.self(), "hola")
     Actor.send(Actor.self(), "mundo")
     Stdout.print(Actor.receive())
