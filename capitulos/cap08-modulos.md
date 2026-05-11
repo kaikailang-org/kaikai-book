@@ -163,7 +163,7 @@ defecto acaban con módulos cuyo "API real" se mezcla con
 todo el resto. kaikai invierte eso: lo público es lo que
 nombraste explícitamente.
 
-## 8.4 El stdlib que viene gratis
+## 8.4 El stdlib que ya tienes
 
 Hay un módulo especial que **no necesitas importar**: el
 stdlib core. Funciones como `println`, `assert`, `string_concat`,

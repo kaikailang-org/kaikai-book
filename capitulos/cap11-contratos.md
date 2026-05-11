@@ -459,7 +459,7 @@ que llama con más monto que saldo termina con una cuenta de
 saldo negativo, y
 nadie se entera. Los bugs que en kaikai con contratos son
 abortos inmediatos, en kaikai sin contratos son saldos
-silenciosamente incorrectos en producción.
+incorrectos sin que nadie se entere en producción.
 
 ## Ejercicios
 

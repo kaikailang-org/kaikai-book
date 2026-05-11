@@ -323,7 +323,7 @@ fn convertir[origen: Measure, destino: Measure](monto: Real<origen>, tasa: Real<
 
 Tres declaraciones. `sumar` es genérica sobre la moneda y
 preserva la unidad de los argumentos: la misma técnica del
-§10.4. `convertir` toma un monto y una tasa, y devuelve el
+§10.4. `convertir` recibe un monto y una tasa, y devuelve el
 monto en la unidad destino, gracias a la cancelación de
 unidades.
 
