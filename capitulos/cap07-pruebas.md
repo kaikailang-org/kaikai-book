@@ -92,7 +92,7 @@ Tres detalles que vale recordar:
   `kai run` y `kai build` los descartan. Solo se compilan y se
   ejecutan bajo `kai test`.
 
-## 7.2 `kai test` y el ciclo de feedback corto
+## 7.2 `kai test` y el ciclo corto de retroalimentación
 
 El comando es directo:
 
@@ -118,7 +118,7 @@ las pocas semanas:
   separes en `tests/` o en archivos paralelos. Cuando tocas
   una función, los tests de esa función están al ojo.
 - **Un test por aspecto, no por línea.** Si tu función tiene
-  un caso base, casos pequeños y un caso de borde, escribe
+  un caso base, casos pequeños y un caso límite, escribe
   tres `test`. Si dentro de "casos pequeños" hay tres
   ejemplos, agrégalos como tres `assert` en el mismo bloque.
 - **Nombres descriptivos.** El nombre va a aparecer en la
@@ -171,7 +171,7 @@ $ kai check ejemplos/cap07/03_check_propiedades.kai
 4/4 checks passed
 ```
 
-Cien iteraciones por propiedad es el default; cada iteración
+Cien iteraciones por propiedad es lo predeterminado; cada iteración
 genera valores nuevos. Para `Int`, el rango por defecto es
 `[-50, 50]`. Para `[Int]`, listas pequeñas. Para records y
 sum types, el generador estructura recursivamente sus
@@ -311,7 +311,7 @@ suele ser:
 1. **Empieza con un `test`**: el caso concreto del feature
    que estás desarrollando. Es la prueba más fácil de
    escribir y la más fácil de mirar cuando algo falla.
-2. **Agrega `test`s** para casos de borde a medida que
+2. **Agrega `test`s** para casos límite a medida que
    aparecen.
 3. **Pasa a `check`s** cuando ves un patrón en los tests:
    "todos estos casos están comprobando la misma invariante,
@@ -473,7 +473,7 @@ respuesta posible: al lado de la función.
 **7.1.** Toma una función simple que ya hayas escrito
 (puede ser de los capítulos anteriores o algo nuevo) y
 escribe tres tests para ella: uno con un caso típico, uno
-con un caso de borde, y uno con una entrada inválida (si el
+con un caso límite, y uno con una entrada inválida (si el
 tipo lo admite). Corre `kai test` y verifica que pasen los
 tres.
 

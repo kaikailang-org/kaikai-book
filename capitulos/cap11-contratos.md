@@ -65,8 +65,8 @@ fn divide(a: Int, b: Int) : Int
 Tres componentes:
 
 - **`requires <expr>`**: una **precondición**. La expresión
-  tiene que ser `true` al **entrar** a la función. El caller
-  es responsable. Si se viola, el bug es del caller.
+  tiene que ser `true` al **entrar** a la función. Quien
+  llama es responsable. Si se viola, el bug es de quien llama.
 - **`ensures <expr>`**: una **postcondición**. La expresión
   tiene que ser `true` al **salir** de la función. Tu cuerpo
   es responsable. Si se viola, el bug es interno.
@@ -440,7 +440,7 @@ inconsistente: aborto inmediato y diagnóstico.
 `ensures result.saldo == c.saldo - monto` se viola al salir
 y aborta también. La postcondición es tu seguro contra bugs
 internos, así como el `requires` es tu seguro contra abusos
-del caller.
+de quien llama.
 
 Con cuatro líneas de contratos, esta cuenta bancaria mínima
 documenta sus reglas, las verifica al ejecutarse, y deja un
@@ -452,10 +452,11 @@ fn retirar(c: Cuenta, monto: Int) : Cuenta =
   Cuenta { ...c, saldo: c.saldo - monto }
 ```
 
-Funciona en el caso feliz. Pero un caller que pasa un negativo
-acaba con una cuenta cuyo saldo creció (porque `c.saldo - (-50)
-== c.saldo + 50`), y nadie se entera. Un caller que pasa más
-monto que saldo termina con una cuenta de saldo negativo, y
+Funciona en el caso feliz. Pero alguien que llama con un monto
+negativo acaba con una cuenta cuyo saldo creció (porque
+`c.saldo - (-50) == c.saldo + 50`), y nadie se entera. Alguien
+que llama con más monto que saldo termina con una cuenta de
+saldo negativo, y
 nadie se entera. Los bugs que en kaikai con contratos son
 abortos inmediatos, en kaikai sin contratos son saldos
 silenciosamente incorrectos en producción.

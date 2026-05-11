@@ -118,7 +118,7 @@ import math.vector as V                 # alias: V.dot(a, b)
 import math.vector.{dot, cross}         # nombres específicos en alcance
 ```
 
-La primera es la más común y la que debería ser tu default: el
+La primera es la más común y la que debería ser tu opción por defecto: el
 prefijo `vector.` deja claro de dónde sale cada nombre. La
 segunda es útil cuando el nombre del módulo es largo o aparece
 muchas veces y un alias corto te gana legibilidad sin perder
@@ -159,7 +159,7 @@ En la práctica, esto se traduce a:
   detalles de implementación, no.
 
 La mayoría de los lenguajes con visibilidad pública por
-default terminan con módulos cuyo "API real" se mezcla con
+defecto acaban con módulos cuyo "API real" se mezcla con
 todo el resto. kaikai invierte eso: lo público es lo que
 nombraste explícitamente.
 
@@ -343,15 +343,15 @@ La estructura del cache es:
 ```
 ~/Library/Caches/kai/pkg/
   github.com/lnds/manutara/
-    abc123def456.../              # contenido pinned a esa SHA
+    abc123def456.../              # contenido fijado a esa SHA
     789abc012def.../              # otra SHA del mismo repo
 ```
 
-Cada entrada se identifica por su SHA, no por la ref
-user-facing. Esto significa que tres proyectos distintos que
+Cada entrada se identifica por su SHA, no por la ref que el
+usuario ve. Esto significa que tres proyectos distintos que
 piden `manutara@v0.1.0` comparten el mismo árbol en disco. Y
 si en algún momento `v0.1.0` se actualiza upstream (movimiento
-de tag, que no debería pasar pero pasa), el cache pinned al
+de tag, que no debería pasar pero pasa), el cache fijado al
 SHA original sigue intacto.
 
 `kai install` se puede correr explícitamente, pero **`kai run`
@@ -453,7 +453,7 @@ Y en `miapp` cambias el path a git:
 config_lib = { source = "github.com/tuusuario/config-lib", ref = "v0.1.0" }
 ```
 
-`kai install` baja la versión pinned y el lockfile la fija. El
+`kai install` baja la versión fijada por el lockfile. El
 código de `main.kai` y `negocio.kai` no cambia: los imports
 siguen siendo los mismos.
 
@@ -472,7 +472,7 @@ La razón es la misma que en el resto del lenguaje: lo que
 ahorra dolores de cabeza vale más que lo que agrega potencia.
 Un sistema de módulos donde nada se importa sin que aparezca
 en una lista visible, donde el nombre de un módulo se deriva
-de su ruta, y donde las dependencias se pinean a un SHA exacto
+de su ruta, y donde las dependencias se fijan a un SHA exacto
 es un sistema que se entiende leyéndolo, sin tener que
 ejecutarlo mentalmente.
 

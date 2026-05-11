@@ -268,7 +268,7 @@ En kaikai, el operador postfix `!` aplica a un `Option` o un
 `Result` y propaga el caso negativo: si el valor es `Ok(v)` o
 `Some(v)`, la expresión vale `v` y el programa sigue; si es
 `Err(e)` o `None`, la función actual termina ahí mismo
-devolviendo ese `Err` o `None` al caller.
+devolviendo ese `Err` o `None` a quien llama.
 
 ```kai
 fn cargar() : Result[Error, Usuario] {
@@ -392,7 +392,7 @@ varias incomodidades viejas:
 - El **logging**, el **acceso a configuración**, el **reloj**,
   la **base de datos**: todo lo que tradicionalmente se cuela
   como dependencia escondida puede ser un efecto, declararse en
-  el tipo, y elegirse por el caller.
+  el tipo, y la elige quien llama.
 
 Si nunca has visto esto, suena demasiado ambicioso para ser
 cierto. Lo es y no lo es. El capítulo 12 le dedica todo el
