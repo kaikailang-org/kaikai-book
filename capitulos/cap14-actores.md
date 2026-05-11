@@ -6,26 +6,96 @@ unidades de trabajo dentro de un mismo programa, que se
 reparten el CPU cooperativamente.
 
 Para muchos casos esa estructura alcanza. Pero hay un patrón
-recurrente que las fibras puras no resuelven bien: un trabajo
-que **vive más allá de la llamada que lo creó**, que **recibe
-mensajes** de varias fuentes, y que **mantiene estado interno**
-entre mensajes. Un servidor de cache. Un controlador de
-conexiones. Un supervisor de procesos. Un router de
-notificaciones.
+que las fibras puras dejan incómodo, y vale la pena nombrarlo
+antes de la sintaxis.
 
-Para esto, kaikai trae el modelo de **actores**, heredado en
-espíritu de Erlang y BEAM: cada actor es una fibra con su
-propio **mailbox**, y la única forma de pedirle algo es
-enviarle un mensaje. El actor lee su mailbox, decide qué hacer,
-puede mantener estado interno entre mensajes, y puede mandar
-mensajes a otros actores.
+## Una fibra es un cómputo; un actor es un proceso vivo
 
-La pieza interesante: **en kaikai, los actores no son
-primitivos**. Son una capa construida con efectos algebraicos
-del capítulo 12, fibras del capítulo 13, y un mailbox del
-stdlib. Es el mismo principio que con `nursery`: el lenguaje
-core tiene solo efectos; los patrones de uso aparecen en
-bibliotecas que cualquier lector puede leer.
+Imagina dos tareas distintas:
+
+- **Tarea A:** parsea un archivo grande y devuelve la lista de
+  errores que encontró. Arranca, trabaja, termina, devuelve un
+  valor.
+- **Tarea B:** mantén una cache en memoria que responde
+  consultas (`get(key)` y `put(key, value)`). Arranca, queda
+  viva, responde mensajes mientras el programa exista, en
+  algún momento termina cuando alguien le pide que se detenga.
+
+Las dos son concurrentes en el sentido de que el programa
+principal puede seguir trabajando mientras pasan. Pero su
+forma es muy distinta.
+
+La tarea A es un **cómputo**: tiene una entrada, produce un
+valor de salida, termina. Eso es una **fibra**. La creas con
+`spawn`, esperas su resultado con `await`, recibes el valor.
+Una vez devuelto el resultado, la fibra deja de existir.
+
+```kai
+let f = fiber_spawn(() => parsear_archivo("entrada.txt"))
+# ... otro trabajo en paralelo ...
+let errores = fiber_await(f)   # un solo valor, y se acabó
+```
+
+La tarea B es un **proceso vivo**: no tiene un único valor de
+retorno, tiene una secuencia interminable de interacciones.
+Para esto kaikai trae el modelo de **actores**, heredado en
+espíritu de Erlang y BEAM.
+
+```kai
+let cache = spawn_actor(() => bucle_cache())
+Actor.send(cache, Put("usuario:42", "ada"))
+Actor.send(cache, Put("usuario:43", "turing"))
+match Actor.receive() {
+  Found(v) -> ...
+  Missing  -> ...
+}
+```
+
+Un actor es **una fibra con un mailbox tipado encima**. La
+fibra es el sustrato (un hilo cooperativo de ejecución); el
+mailbox es lo que la hace un actor (un canal donde se acumulan
+mensajes para que la fibra los procese en orden).
+
+Comparación lado a lado:
+
+| Aspecto | Fibra | Actor |
+|---|---|---|
+| ¿Qué es? | Unidad de ejecución | Fibra con mailbox tipado |
+| Comunicación | Un valor de retorno vía `await` | Mensajes vía `send`/`receive` |
+| Ciclo de vida | Arranca, calcula, devuelve, muere | Arranca, queda en bucle procesando, muere cuando decide |
+| Cómo se crea | `fiber_spawn` o `n.spawn` | `spawn_actor` |
+| Cómo le hablas | `await` para obtener su `T` | `send` cualquier cantidad de veces |
+| Cuándo elegirlo | Cálculo discreto en paralelo | Servicio de larga vida, estado interno, consultas |
+
+La regla mental:
+
+- **¿La tarea termina con un valor que el padre necesita?** Fibra.
+- **¿La tarea vive y responde mensajes a varios clientes?**
+  Actor.
+
+Casos donde el actor es lo natural: un servidor de cache, un
+controlador de conexiones, un supervisor de procesos, un router
+de notificaciones, una cola de tareas, un actor logger. Casos
+donde la fibra basta: un cómputo costoso que el padre quiere
+hacer en paralelo, un `with_timeout` que mide cuánto tarda algo,
+un map paralelo sobre una lista.
+
+## Los actores no son primitivos del lenguaje
+
+Otra cosa que vale fijar antes de la sintaxis: en kaikai, los
+actores no son una construcción del core. Son una **capa
+construida con efectos algebraicos**: el efecto `Actor[Msg]`
+declara las operaciones (`self`, `send`, `receive`); el
+stdlib provee funciones como `with_mailbox` y `spawn_actor`
+que instalan el handler de `Actor[Msg]` sobre una fibra
+ordinaria.
+
+Es el mismo principio que con `nursery` del cap. 13: el
+lenguaje core tiene solo efectos; los patrones de uso
+(fibras, actores, supervisión) aparecen en bibliotecas que
+cualquier lector puede leer. Si después de este capítulo te
+preguntas cómo funciona `spawn_actor` por dentro, la respuesta
+es un `fiber_spawn` más un `handle ... with Actor[Msg]`.
 
 ## 14.1 `Actor[Msg]`: el efecto
 
