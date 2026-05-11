@@ -250,10 +250,18 @@ it, it doesn't compile.
 The compiler verifies that **every possible inhabitant** of
 the scrutinee's type is covered. If your `Expr` has four
 constructors and your `match` covers three, it doesn't
-compile — with a message telling you which one is missing:
+compile, and the message doesn't stop at "something missing":
+it tells you what's missing, what's covered, and how to fix it:
 
 ```
-non-exhaustive match on Expr: missing Neg
+error: non-exhaustive match on Expr: missing Neg
+  --> eval.kai:12:3
+    |
+ 12 |   match e {
+    |   ^
+  = note: missing variant: `Neg`
+  = note: covered: Lit, Suma, Mul
+  = help: add an arm `Neg -> ...` or a wildcard `_ -> ...`
 ```
 
 The wildcard `_` covers everything not covered by the

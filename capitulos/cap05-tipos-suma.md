@@ -259,11 +259,19 @@ omites, no compila.
 
 El compilador verifica que **todos los habitantes posibles**
 del tipo del escrutinio estén cubiertos. Si tu `Expr` tiene
-cuatro constructores y tu `match` cubre tres, no compila,
-con un mensaje que te dice cuál falta:
+cuatro constructores y tu `match` cubre tres, no compila, y
+el mensaje no se queda en "falta algo": te dice qué falta,
+qué cubriste y cómo arreglarlo:
 
 ```
-non-exhaustive match on Expr: missing Neg
+error: non-exhaustive match on Expr: missing Neg
+  --> evaluador.kai:12:3
+    |
+ 12 |   match e {
+    |   ^
+  = note: missing variant: `Neg`
+  = note: covered: Lit, Suma, Mul
+  = help: add an arm `Neg -> ...` or a wildcard `_ -> ...`
 ```
 
 El wildcard `_` cubre todo lo que las ramas anteriores no
