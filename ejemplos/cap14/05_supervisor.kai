@@ -1,0 +1,69 @@
+# Caso de estudio: un supervisor que arranca un trabajador,
+# lo deja procesar tareas, y reintenta el lote si una tarea
+# falla.
+#
+# El patrón es el que la doc del lenguaje recomienda para v1:
+# en vez de Link/Monitor (que están experimental), el
+# trabajador notifica explícitamente a su supervisor con un
+# mensaje Done o Failed. El supervisor decide si reintentar.
+#
+# Cada tarea es una división: el trabajador divide el primer
+# número por el segundo. Si el divisor es cero, la tarea
+# falla y el supervisor reintenta con datos distintos.
+
+import actor
+
+#derive(Show)
+type ResultadoLote
+  = Done(Int)             # suma total exitosa
+  | Failed(String)        # razón de la falla
+
+# Procesa la lista. Si encuentra un divisor cero, devuelve Failed.
+# Si llega al final, devuelve Done con el total.
+fn procesar(tareas: [(Int, Int)], acc: Int) : ResultadoLote {
+  match tareas {
+    []                  -> Done(acc)
+    [(a, 0), ..._]      -> Failed("división por cero en (#{a}, 0)")
+    [(a, b), ...resto]  -> procesar(resto, acc + (a / b))
+  }
+}
+
+# El trabajador computa el resultado del lote y se lo manda al
+# supervisor.
+fn trabajador(supervisor: Pid[ResultadoLote], tareas: [(Int, Int)])
+    : Unit / Actor[ResultadoLote] + Console {
+  let r = procesar(tareas, 0)
+  Stdout.print("trabajador: lote terminó como #{r}")
+  Actor.send(supervisor, r)
+}
+
+# Un intento: spawnea un trabajador, espera su resultado, lo devuelve.
+fn intento(me: Pid[ResultadoLote], lote: [(Int, Int)])
+    : ResultadoLote / Console + Spawn + Cancel + Actor[ResultadoLote] {
+  let _ = spawn_actor(() => trabajador(me, lote))
+  Actor.receive()
+}
+
+# El supervisor arranca un trabajador con un lote. Si falla,
+# reintenta con un lote alternativo. Hasta dos intentos.
+fn supervisor() : Unit / Console + Spawn + Cancel + Actor[ResultadoLote] {
+  with_mailbox { ->
+    let me = Actor.self()
+    let primer_lote = [(10, 2), (20, 4), (30, 0)]   # va a fallar
+    let segundo_lote = [(10, 2), (20, 4), (30, 5)]
+    match intento(me, primer_lote) {
+      Done(total)    -> Stdout.print("supervisor: éxito al primer intento, total=#{total}")
+      Failed(motivo) -> {
+        Stdout.print("supervisor: primer intento falló (#{motivo}), reintento")
+        match intento(me, segundo_lote) {
+          Done(total)    -> Stdout.print("supervisor: éxito al segundo intento, total=#{total}")
+          Failed(motivo) -> Stdout.print("supervisor: segundo intento falló también (#{motivo}), me rindo")
+        }
+      }
+    }
+  }
+}
+
+fn main() : Unit / Console + Spawn + Cancel {
+  supervisor()
+}

@@ -1,0 +1,26 @@
+# Las policies de mailbox deciden qué pasa cuando un mailbox
+# se llena. Las tres opciones son:
+#
+# - `DropOldest`: el mensaje más viejo se descarta para hacer
+#   espacio al nuevo. Útil cuando solo importa el estado más
+#   reciente (telemetría, tick events).
+# - `DropNewest`: el mensaje nuevo se rechaza. Útil para
+#   protocolos donde gana el primero.
+# - `BlockSender`: el emisor se suspende hasta que haya espacio.
+#   Útil para backpressure real en pipelines.
+#
+# Acá usamos `Bounded(2, DropOldest)`: mailbox de capacidad 2.
+# Mandamos tres mensajes seguidos; "a" se evicciona para que
+# entre "c", y al recibir vemos solo "b" y "c".
+
+import actor
+
+fn main() : Unit / Console {
+  with_mailbox_policy(Bounded(2, DropOldest)) { ->
+    Actor.send(Actor.self(), "a")
+    Actor.send(Actor.self(), "b")
+    Actor.send(Actor.self(), "c")
+    Stdout.print(Actor.receive())
+    Stdout.print(Actor.receive())
+  }
+}

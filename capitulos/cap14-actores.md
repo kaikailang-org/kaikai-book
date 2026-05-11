@@ -1,0 +1,469 @@
+# Capítulo 14 · Actores
+
+El capítulo 13 mostró cómo arrancar fibras y coordinarlas vía
+un nursery. Eso resuelve la concurrencia interna: muchas
+unidades de trabajo dentro de un mismo programa, que se
+reparten el CPU cooperativamente.
+
+Para muchos casos esa estructura alcanza. Pero hay un patrón
+recurrente que las fibras puras no resuelven bien: un trabajo
+que **vive más allá de la llamada que lo creó**, que **recibe
+mensajes** de varias fuentes, y que **mantiene estado interno**
+entre mensajes. Un servidor de cache. Un controlador de
+conexiones. Un supervisor de procesos. Un router de
+notificaciones.
+
+Para esto, kaikai trae el modelo de **actores**, heredado en
+espíritu de Erlang y BEAM: cada actor es una fibra con su
+propio **mailbox**, y la única forma de pedirle algo es
+enviarle un mensaje. El actor lee su mailbox, decide qué hacer,
+puede mantener estado interno entre mensajes, y puede mandar
+mensajes a otros actores.
+
+La pieza interesante: **en kaikai, los actores no son
+primitivos**. Son una capa construida con efectos algebraicos
+del capítulo 12, fibras del capítulo 13, y un mailbox del
+stdlib. Es el mismo principio que con `nursery`: el lenguaje
+core tiene solo efectos; los patrones de uso aparecen en
+bibliotecas que cualquier lector puede leer.
+
+## 14.1 `Actor[Msg]`: el efecto
+
+Un actor es una fibra dentro de un `handle ... with
+Actor[Msg]` que le da acceso a tres operaciones:
+
+```kai
+effect Actor[Msg] {
+  self()                         : Pid[Msg]
+  send(pid: Pid[Msg], msg: Msg)  : Unit / Cancel
+  receive()                      : Msg / Cancel
+}
+```
+
+- **`self()`** devuelve el `Pid` del actor actual. El `Pid` es
+  el handle con el que otros le mandan mensajes.
+- **`send(pid, msg)`** encola `msg` en el mailbox de `pid`. Si
+  el mailbox está lleno, el comportamiento depende de la
+  policy (lo veremos en §14.4).
+- **`receive()`** saca el siguiente mensaje del mailbox del
+  actor actual. Si no hay nada, la fibra se suspende hasta que
+  llegue uno. Como suspende, es un punto de yield y carga
+  `Cancel`.
+
+`Msg` es el tipo concreto de los mensajes que ese actor recibe.
+**Un actor maneja un solo tipo de mensaje.** Si necesitas mezclar
+shapes, los unificas con un sum type:
+
+```kai
+type ServerMsg
+  = Ping(Pid[Pong])
+  | Stop
+  | Tick
+```
+
+El actor sabe que solo va a recibir uno de esos tres
+constructores, y el `match` exhaustivo en `receive()` te
+garantiza que cubres todos los casos.
+
+### `Pid[Msg]`: handle tipado
+
+Un `Pid[Msg]` es un identificador de mailbox. Tiene tipo, así
+que el compilador no te deja mandarle a un `Pid[Tarea]` un
+mensaje de tipo `Notificación`. Esta es la diferencia más
+fuerte con Erlang: en Erlang los PIDs son no tipados; en
+kaikai son específicos al tipo de mensaje.
+
+Como `Fiber[T]` del cap. 13, `Pid[Msg]` está **atado al scope
+que lo creó**. No puedes guardarlo en un record que sobreviva
+al nursery, devolverlo de una función fuera de la familia
+estándar, ni pasarlo entre estructuras de datos no aprobadas.
+El compilador lo rechaza. Esto cierra el modelo: cada PID
+tiene un padre conocido, y muere con él.
+
+## 14.2 `with_mailbox`: dar mailbox a la fibra actual
+
+La forma más simple de empezar es darle mailbox a la fibra
+en la que ya estás. `with_mailbox` instala el handler de
+`Actor[Msg]` y entrega el control a su body:
+
+```kai
+import actor
+
+fn main() : Unit / Console {
+  with_mailbox { ->
+    Actor.send(Actor.self(), "hola")
+    Actor.send(Actor.self(), "mundo")
+    Stdout.print(Actor.receive())
+    Stdout.print(Actor.receive())
+  }
+}
+```
+
+Salida:
+
+```
+$ kai run ejemplos/cap14/01_with_mailbox.kai
+hola
+mundo
+```
+
+`with_mailbox { -> ... }` es la sintaxis de trailing lambda
+del cap. 12 (la flecha `->` sin parámetros). Adentro, `Actor`
+es la capacidad: `Actor.self()` devuelve el `Pid` del mailbox
+recién creado, `Actor.send(pid, msg)` encola, `Actor.receive()`
+saca el siguiente.
+
+En este ejemplo el actor se manda a sí mismo. Es la versión
+"hola mundo" del modelo; el ejercicio real es comunicar dos
+actores distintos.
+
+## 14.3 `spawn_actor`: crear un actor nuevo
+
+Para arrancar un actor que corre en su propia fibra:
+
+```kai
+import actor
+
+fn trabajador() : Unit / Actor[String] + Console {
+  let t1 = Actor.receive()
+  Stdout.print("trabajando: " ++ t1)
+  let t2 = Actor.receive()
+  Stdout.print("trabajando: " ++ t2)
+  let t3 = Actor.receive()
+  Stdout.print("trabajando: " ++ t3)
+}
+
+fn main() : Unit / Console + Spawn + Cancel + Actor[String] {
+  with_mailbox { ->
+    let pid = spawn_actor(() => trabajador())
+    Actor.send(pid, "tarea-1")
+    Actor.send(pid, "tarea-2")
+    Actor.send(pid, "tarea-3")
+    fiber_yield()
+    fiber_yield()
+    fiber_yield()
+    fiber_yield()
+  }
+}
+```
+
+`spawn_actor` arranca una fibra nueva, le instala un mailbox,
+y devuelve el `Pid` para que el padre pueda mandarle mensajes.
+La firma del trabajador declara `Actor[String]`: necesita el
+efecto para llamar a `Actor.receive()`.
+
+Fíjate que `main` también tiene `Actor[String]` en su fila.
+¿Por qué? Porque `Actor.send(pid, "tarea-1")` requiere el
+efecto: el handler que `with_mailbox` instaló es el que
+intercepta el `send` y lo enruta al mailbox correcto. El tipo
+`String` casualmente coincide con el del trabajador; eso no es
+obligatorio, solo conveniente en este ejemplo simple.
+
+Los `fiber_yield()` al final son para darle al scheduler la
+chance de correr al trabajador. Sin ellos, `main` saldría antes
+de que el trabajador procesara nada.
+
+## 14.4 Policies de mailbox: qué pasa cuando se llena
+
+Por defecto, `with_mailbox` y `spawn_actor` crean un mailbox
+**unbounded**: nunca se llena, los mensajes se acumulan
+mientras no se lean. Es razonable para empezar, pero
+peligroso: si un productor manda más rápido de lo que un
+consumidor procesa, la memoria crece sin tope.
+
+Para casos reales, declara una policy:
+
+```kai
+type MailboxPolicy
+  = Unbounded
+  | Bounded(Int, Overflow)
+
+type Overflow
+  = DropOldest
+  | DropNewest
+  | BlockSender
+```
+
+`Bounded(capacity, on_full)` da un mailbox de tamaño fijo. El
+parámetro `on_full` decide qué hacer cuando llega un mensaje y
+ya no hay espacio:
+
+- **`DropOldest`**: el mensaje más viejo se evicciona, el nuevo
+  entra. Útil para snapshots: solo importa el estado más
+  reciente (telemetría, tick events, GPS).
+- **`DropNewest`**: el nuevo se rechaza, el mailbox queda como
+  estaba. Útil para "el primero gana" (elección de líder,
+  adquisición de lock).
+- **`BlockSender`**: el emisor se suspende hasta que se libere
+  espacio. Útil para **backpressure**: el productor frena
+  cuando el consumidor no da abasto. Es punto de yield, así
+  que un sender bloqueado puede recibir `Cancel.raise()`.
+
+```kai
+import actor
+
+fn main() : Unit / Console {
+  with_mailbox_policy(Bounded(2, DropOldest)) { ->
+    Actor.send(Actor.self(), "a")
+    Actor.send(Actor.self(), "b")
+    Actor.send(Actor.self(), "c")
+    Stdout.print(Actor.receive())
+    Stdout.print(Actor.receive())
+  }
+}
+```
+
+Salida:
+
+```
+$ kai run ejemplos/cap14/04_mailbox_policy.kai
+b
+c
+```
+
+El mailbox tiene capacidad 2. Mandamos `a`, `b`, `c` sin leer
+nada. Cuando llega `c`, no hay espacio, y `DropOldest`
+saca `a`. Las dos lecturas recuperan `b` y `c`.
+
+`DropOldest` y `DropNewest` **no notifican al emisor** que su
+mensaje se descartó. Si necesitas saberlo, usa `BlockSender` (o
+diseña el protocolo con un acuse de recibo). El silencio es
+deliberado: la policy expresa una preferencia global del
+mailbox, no una negociación por mensaje.
+
+## 14.5 Patrón request/reply
+
+El patrón más común entre actores es pedirle algo a uno y
+esperar respuesta. La forma idiomática: el cliente le manda al
+servidor un mensaje que incluye su propio `Pid`, y el servidor
+responde a ese `Pid`.
+
+```kai
+import actor
+
+type Msg
+  = Query(String, Pid[Msg])
+  | Answer(String)
+
+fn servidor() : Unit / Actor[Msg] + Console {
+  match Actor.receive() {
+    Query(p, cliente) -> {
+      Stdout.print("servidor: recibí '#{p}'")
+      Actor.send(cliente, Answer("respuesta a '#{p}'"))
+      servidor()
+    }
+    Answer(_) -> servidor()
+  }
+}
+
+fn main() : Unit / Console + Spawn + Cancel + Actor[Msg] {
+  with_mailbox { ->
+    let server = spawn_actor(() => servidor())
+
+    Actor.send(server, Query("dos+dos", Actor.self()))
+    match Actor.receive() {
+      Answer(r)   -> Stdout.print("cliente: " ++ r)
+      Query(_, _) -> ()
+    }
+  }
+}
+```
+
+Lo importante de la estructura:
+
+- **Un solo tipo de mensaje, `Msg`**, con dos constructores.
+  Tanto el cliente como el servidor manejan el mismo tipo,
+  así sus mailboxes son interoperables. La doc del lenguaje
+  recomienda esto cuando dos actores conversan
+  bidireccionalmente.
+- **`Query` incluye el `Pid` de retorno.** Sin eso, el
+  servidor no sabe a quién contestarle.
+- **El servidor recursa** después de procesar el mensaje. Sin
+  esa recursión, el servidor procesaría un solo mensaje y
+  terminaría. La recursión por cola se compila a un loop (cap.
+  6), así que el actor puede correr indefinidamente sin
+  reventar el stack.
+
+Esto reemplaza, en términos prácticos, las llamadas
+sincrónicas a una API: pides algo, esperas respuesta, sigues.
+La diferencia es que aquí el "servidor" puede estar
+atendiendo a varios clientes a la vez, su estado interno está
+encapsulado, y el modelo de tipos te garantiza que ningún
+cliente se queda esperando una respuesta del tipo equivocado.
+
+## 14.6 Supervisión: notificación explícita
+
+En BEAM, los actores se supervisan con **links** (bidireccional)
+y **monitores** (unidireccional). Cuando un actor cae, los
+linkeados se enteran y deciden qué hacer.
+
+kaikai trae links y monitores en su API, pero en v1 el patrón
+recomendado para uso normal es **notificación explícita**: el
+trabajador, antes de terminar, manda un mensaje a su
+supervisor diciendo cómo le fue. El supervisor recibe ese
+mensaje como cualquier otro y decide.
+
+¿Por qué? Porque los links/monitores son experimentales en la
+implementación actual (la doc los marca como Phase 5 Tier 2),
+y porque para la mayoría de los casos la notificación
+explícita es más clara: el protocolo de supervisión queda
+**en el tipo de mensajes**, visible para quien lee el código.
+
+## 14.7 Caso de estudio: supervisor con reintentos
+
+Cerramos con un programa completo: un supervisor que lanza un
+trabajador con un lote de tareas, observa si el lote fue
+exitoso, y reintenta con un lote alternativo si falló.
+
+```kai
+import actor
+
+#derive(Show)
+type ResultadoLote
+  = Done(Int)             # suma total exitosa
+  | Failed(String)        # razón de la falla
+
+fn procesar(tareas: [(Int, Int)], acc: Int) : ResultadoLote {
+  match tareas {
+    []                  -> Done(acc)
+    [(a, 0), ..._]      -> Failed("división por cero en (#{a}, 0)")
+    [(a, b), ...resto]  -> procesar(resto, acc + (a / b))
+  }
+}
+
+fn trabajador(supervisor: Pid[ResultadoLote], tareas: [(Int, Int)])
+    : Unit / Actor[ResultadoLote] + Console {
+  let r = procesar(tareas, 0)
+  Stdout.print("trabajador: lote terminó como #{r}")
+  Actor.send(supervisor, r)
+}
+
+fn intento(me: Pid[ResultadoLote], lote: [(Int, Int)])
+    : ResultadoLote / Console + Spawn + Cancel + Actor[ResultadoLote] {
+  let _ = spawn_actor(() => trabajador(me, lote))
+  Actor.receive()
+}
+
+fn supervisor() : Unit / Console + Spawn + Cancel + Actor[ResultadoLote] {
+  with_mailbox { ->
+    let me = Actor.self()
+    let primer_lote = [(10, 2), (20, 4), (30, 0)]
+    let segundo_lote = [(10, 2), (20, 4), (30, 5)]
+    match intento(me, primer_lote) {
+      Done(total)    -> Stdout.print("supervisor: éxito al primer intento, total=#{total}")
+      Failed(motivo) -> {
+        Stdout.print("supervisor: primer intento falló (#{motivo}), reintento")
+        match intento(me, segundo_lote) {
+          Done(total)    -> Stdout.print("supervisor: éxito al segundo intento, total=#{total}")
+          Failed(motivo) -> Stdout.print("supervisor: segundo intento falló también (#{motivo}), me rindo")
+        }
+      }
+    }
+  }
+}
+
+fn main() : Unit / Console + Spawn + Cancel {
+  supervisor()
+}
+```
+
+Salida:
+
+```
+$ kai run ejemplos/cap14/05_supervisor.kai
+trabajador: lote terminó como Failed(división por cero en (30, 0))
+supervisor: primer intento falló (división por cero en (30, 0)), reintento
+trabajador: lote terminó como Done(16)
+supervisor: éxito al segundo intento, total=16
+```
+
+Tres piezas vale comentar:
+
+- **`procesar` no toca el sistema de actores.** Es lógica pura
+  sobre listas: pattern match, recursión, devuelve un valor.
+  Eso significa que `procesar` es completamente testeable sin
+  arrancar fibras. La capa de actores queda solo en
+  `trabajador`, `intento` y `supervisor`.
+- **`intento` separa una preocupación.** Antes de extraerlo,
+  el código del segundo intento estaba inline dentro del
+  primer `match`. Llevar esa lógica a una función separada
+  hace explícito el patrón "spawn + receive".
+- **El supervisor decide la política.** El trabajador es ciego
+  a la decisión: solo reporta. Cambiar la política de "dos
+  intentos con datos distintos" a "tres intentos con backoff
+  exponencial" toca una sola función. Esa separación es la
+  ventaja real del modelo.
+
+¿Qué le falta a este programa para ser de producción? Algunas
+cosas:
+
+- **Tiempo máximo por intento.** Hoy si el trabajador se
+  cuelga, el supervisor se cuelga con él. La solución es un
+  `with_timeout` (ejercicio del cap. 13) alrededor del
+  `intento`.
+- **Cancelación del trabajador si el supervisor decide
+  rendirse.** Hoy si decimos "me rindo", el trabajador
+  podría seguir corriendo si no fue él quien terminó. Con
+  links explícitos esto se resuelve.
+- **Logging persistente.** En vez de `Stdout.print`, mandar a
+  un actor logger con su propio mailbox bounded
+  (`Bounded(1024, DropOldest)`).
+
+Cada uno es un capítulo aparte. Pero la base está: tres
+actores, dos tipos de mensaje, un sistema de tipos que
+garantiza que las mailboxes se respetan.
+
+## 14.8 Filosofía: actores son una biblioteca
+
+Si quieres recordar dos cosas del capítulo, que sean estas:
+
+1. **Los actores no son primitivos del lenguaje.** Son una
+   biblioteca construida sobre el efecto `Actor[Msg]`, que a
+   su vez es una declaración ordinaria de efecto. El stdlib
+   provee `with_mailbox`, `spawn_actor`, las policies. El
+   código de esa biblioteca está disponible para leer. Si
+   alguna vez te preguntas "qué hace `spawn_actor` por
+   dentro", la respuesta es un `handle` con un `fiber_spawn`.
+
+2. **Cada actor tiene un tipo de mensaje fijo.** El compilador
+   te garantiza que no mandas el mensaje equivocado al
+   mailbox equivocado. Los `Pid[Msg]` son tipados, no
+   strings. Y por eso un sistema de actores en kaikai es más
+   verificable estáticamente que su equivalente en Erlang.
+
+La consecuencia más importante de la primera idea: cuando
+quieras un patrón de supervisión que el stdlib no provee,
+puedes escribirlo. La sintaxis no oculta nada: `handle`,
+`receive`, `send`. Es difícil que un patrón de actores que
+hayas visto en Erlang, Akka, o cualquier framework de actores
+no sea expresable como una función ordinaria en kaikai con
+estas piezas.
+
+## Ejercicios
+
+**14.1.** Modifica el ejemplo §14.3 para que el trabajador
+procese cinco tareas en vez de tres. ¿Qué pasa si reduces los
+`fiber_yield()` del padre? ¿Cuál es el mínimo que hace que
+todas las tareas se procesen?
+
+**14.2.** Toma el `BoundedDropOldest` de §14.4 y cámbialo a
+`BoundedDropNewest`. ¿Cuál es la salida esperada? Justifica con
+un razonamiento sobre qué mensajes quedan en el mailbox cuando
+llega cada `send`.
+
+**14.3.** En el patrón request/reply de §14.5, el cliente
+manda una sola pregunta y se va. Si quisieras un cliente que
+hace cinco preguntas en serie, ¿qué cambiarías? ¿Y si las
+quisieras hacer en paralelo? Pista: paralelo requiere abrir
+varios mailboxes o agrupar respuestas con un correlation id.
+
+**14.4.** En el caso de estudio §14.7, el supervisor reintenta
+dos veces. Generaliza: escribe una función `con_reintentos[T,
+e](n: Int, intento: () -> ResultadoLote / e) : ResultadoLote /
+e` que reintente `n` veces antes de rendirse.
+
+**14.5.** Un actor "logger" recibe `Info(String)` y los
+imprime a stdout. Diseña su tipo de mensaje, su firma, y un
+`with_mailbox_policy` apropiado. Justifica la elección de
+policy considerando: ¿qué pasa si el productor manda más
+rápido de lo que se puede imprimir?

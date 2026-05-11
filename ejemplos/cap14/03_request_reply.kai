@@ -1,0 +1,48 @@
+# Patrón request/reply: el cliente le manda al servidor un
+# mensaje que incluye su propio Pid para que el servidor sepa
+# a quién responderle.
+#
+# En este ejemplo usamos un único tipo `Msg` con dos
+# constructores: `Query` lo envía el cliente al servidor;
+# `Answer` lo envía el servidor al cliente. Ambos viven bajo el
+# mismo `Actor[Msg]`. La doc recomienda este patrón cuando un
+# actor maneja conversaciones bidireccionales.
+
+import actor
+
+type Msg
+  = Query(String, Pid[Msg])
+  | Answer(String)
+
+# El servidor lee preguntas y responde. Como Query y Answer
+# son del mismo tipo Msg, el servidor sabe que puede recibir
+# Answer también (aunque no le interesa). En la práctica un
+# servidor real ignora o rechaza esos casos.
+fn servidor() : Unit / Actor[Msg] + Console {
+  match Actor.receive() {
+    Query(p, cliente) -> {
+      Stdout.print("servidor: recibí '#{p}'")
+      Actor.send(cliente, Answer("respuesta a '#{p}'"))
+      servidor()
+    }
+    Answer(_) -> servidor()    # no espero respuestas, ignoro
+  }
+}
+
+fn main() : Unit / Console + Spawn + Cancel + Actor[Msg] {
+  with_mailbox { ->
+    let server = spawn_actor(() => servidor())
+
+    Actor.send(server, Query("dos+dos", Actor.self()))
+    match Actor.receive() {
+      Answer(r) -> Stdout.print("cliente: " ++ r)
+      Query(_, _) -> ()        # no debería pasar
+    }
+
+    Actor.send(server, Query("la vida", Actor.self()))
+    match Actor.receive() {
+      Answer(r) -> Stdout.print("cliente: " ++ r)
+      Query(_, _) -> ()
+    }
+  }
+}

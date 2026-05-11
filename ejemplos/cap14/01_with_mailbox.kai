@@ -1,0 +1,19 @@
+# `with_mailbox` instala un mailbox en la fibra actual.
+# Adentro tienes acceso al efecto `Actor[Msg]`, con tres
+# operaciones: `Actor.self()`, `Actor.send(pid, msg)` y
+# `Actor.receive()`.
+#
+# En este ejemplo la fibra principal se manda mensajes a sí
+# misma y los lee. Es la forma más sencilla de comprobar que
+# el sistema funciona.
+
+import actor
+
+fn main() : Unit / Console {
+  with_mailbox { ->
+    Actor.send(Actor.self(), "hola")
+    Actor.send(Actor.self(), "mundo")
+    Stdout.print(Actor.receive())
+    Stdout.print(Actor.receive())
+  }
+}
