@@ -87,7 +87,7 @@ fn main() {
 }
 ```
 
-Tres usos del prefijo, los tres consistentes: en la anotación
+Tres usos del prefijo, los tres coherentes: en la anotación
 de tipo (`: geometria.Punto`), en la construcción del record
 (`geometria.Punto { ... }`), y en la llamada a la función
 (`geometria.distancia(a, b)`). Un único patrón mental.
