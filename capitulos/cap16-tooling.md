@@ -380,9 +380,9 @@ El valor de `CFLAGS` te deja inyectar cualquier cosa que
 el compilador C acepte: `-include` para exponer
 declaraciones, fuentes `.c` extra para compilar adentro,
 `-l<lib>` para enlazar contra librerías instaladas,
-`pkg-config --cflags --libs raylib` para una librería
-gráfica real. Cuando crece más allá de una línea, lo
-envuelves en un `Makefile`.
+`pkg-config --cflags --libs <paquete>` para usar la
+información de una librería del sistema. Cuando crece más
+allá de una línea, lo envuelves en un `Makefile`.
 
 El flag `--backend=c` aquí es necesario porque el backend
 LLVM (capítulo 16 §16.1) no expone la misma plomería de
@@ -412,14 +412,6 @@ llamar a la librería real. El costo es una función C por
 cada entrada de la librería que use struct. Vale la pena
 para v1; FFI v2 quitará la capa de shim para el caso común.
 
-Un ejemplo real en producción es
-[`lnds/uira`](https://github.com/lnds/uira), que ata
-raylib (una librería gráfica que pasa `Color` y `Vector2`
-por valor casi en todos lados). El repo muestra las
-declaraciones kaikai, los shims C, y el Makefile que
-orquesta el enlace — útil como plantilla cuando ates una
-librería similar.
-
 ### Cuándo agarrar FFI
 
 La regla honesta: **solo cuando realmente necesites la
@@ -445,8 +437,8 @@ Una pequeña heurística: si te encuentras escribiendo más
 de diez `extern "C"` para envolver algo, y la librería
 tiene una API C estable, eso es candidato a un paquete
 kaikai propio cuando aterrice `kai bindgen`. Mientras
-tanto, el enfoque manual (el patrón de uira) funciona
-bien.
+tanto, el enfoque manual (un `extern "C"` por función, un
+shim C por cada entrada que use struct) funciona bien.
 
 ## 16.10 Filosofía: tres principios del tooling
 

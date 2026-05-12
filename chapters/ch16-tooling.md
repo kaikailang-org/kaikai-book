@@ -375,8 +375,9 @@ The `CFLAGS` value lets you splice anything the host C
 compiler accepts: `-include` to expose declarations,
 extra `.c` sources to compile in, `-l<lib>` to link
 against installed libraries, `pkg-config --cflags --libs
-raylib` for a real graphics library. Wrap the whole thing
-in a `Makefile` when it grows beyond one line.
+<package>` to pull in the flags of a system library. Wrap
+the whole thing in a `Makefile` when it grows beyond one
+line.
 
 The `--backend=c` flag here is required because the LLVM
 backend (chapter 16 §16.1) doesn't expose the same
@@ -406,14 +407,6 @@ function per struct-using entry point in the library
 you're binding. Worth it for v1; FFI v2 will remove the
 shim layer for the common case.
 
-A real-world example of this pattern in production is
-[`lnds/uira`](https://github.com/lnds/uira), which binds
-raylib (a graphics library that passes `Color` and
-`Vector2` by value almost everywhere). The repository
-shows the kaikai declarations, the C shims, and the
-Makefile that orchestrates linking — useful as a template
-when you bind a similar library yourself.
-
 ### When to reach for FFI
 
 The honest rule: **only when you genuinely need the C
@@ -437,7 +430,8 @@ A small heuristic: if you find yourself writing more than
 ten `extern "C"` declarations to wrap something, and the
 library has a stable C API, that's a candidate for a
 proper kaikai package once `kai bindgen` lands. Until
-then, the manual approach (uira's pattern) works fine.
+then, the manual approach (one `extern "C"` per function,
+one C shim per struct-using entry point) works fine.
 
 ## 16.10 Philosophy: three principles of the tooling
 
