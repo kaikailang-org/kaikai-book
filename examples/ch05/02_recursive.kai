@@ -5,10 +5,11 @@ type Tree
   = Leaf
   | Node(Int, Tree, Tree)
 
-fn height(t: Tree) : Int {
-  case Leaf            -> 0
-  case Node(_, l, r)   -> 1 + max_int(height(l), height(r))
-}
+fn height(t: Tree) : Int =
+  match t {
+    Leaf             -> 0
+    Node(_, l, r)    -> 1 + max_int(height(l), height(r))
+  }
 
 fn max_int(a: Int, b: Int) : Int =
   if a > b { a } else { b }

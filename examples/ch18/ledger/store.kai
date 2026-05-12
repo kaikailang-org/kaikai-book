@@ -18,12 +18,14 @@ pub type StoreMsg  = Ask(domain.Command, Pid[StoreResp])
 pub type StoreResp = Reply(domain.Response)
 
 # The store's state: known accounts, registered
-# transactions, next-ID counters.
+# transactions, next-ID counters. The counters carry their
+# branded type so we never confuse an account id with a
+# transaction id.
 type State = {
   accounts:         [domain.Account],
   transactions:     [domain.Transaction],
-  next_account_id:  Int,
-  next_tx_id:       Int,
+  next_account_id:  Int<AccountId>,
+  next_tx_id:       Int<TransactionId>,
 }
 
 # Pure logic. Takes the command and current state, returns
@@ -32,14 +34,14 @@ pub fn process(c: domain.Command, s: State) : (domain.Response, State) {
   match c {
     CreateAccount(name) -> {
       let acc = domain.Account {
-        id:      s.next_account_id<AccountId>,
+        id:      s.next_account_id,
         name:    name,
         balance: 0.0<USD>,
       }
       let s2 = State {
         ...s,
         accounts:         [acc, ...s.accounts],
-        next_account_id:  s.next_account_id + 1,
+        next_account_id:  s.next_account_id + 1<AccountId>,
       }
       (domain.AccountCreated(acc), s2)
     }
@@ -53,7 +55,7 @@ pub fn process(c: domain.Command, s: State) : (domain.Response, State) {
           Some(missing_id) -> (domain.UnknownAccount(missing_id), s)
           None -> {
             let tx = domain.Transaction {
-              id:          s.next_tx_id<TransactionId>,
+              id:          s.next_tx_id,
               description: desc,
               movements:   movs,
             }
@@ -62,7 +64,7 @@ pub fn process(c: domain.Command, s: State) : (domain.Response, State) {
               accounts:         updated_accounts,
               transactions:     [tx, ...s.transactions],
               next_account_id:  s.next_account_id,
-              next_tx_id:       s.next_tx_id + 1,
+              next_tx_id:       s.next_tx_id + 1<TransactionId>,
             }
             (domain.TransactionRegistered(tx), s2)
           }
@@ -120,10 +122,10 @@ fn apply_movs(cs: [domain.Account], ms: [domain.Movement]) : [domain.Account] {
 
 fn apply_one(cs: [domain.Account], m: domain.Movement) : [domain.Account] {
   let (id, delta) = delta_of(m)
-  list.map(cs, (c) =>
+  list.map(cs, (c) => {
     if c.id == id { domain.Account { ...c, balance: c.balance + delta } }
     else          { c }
-  )
+  })
 }
 
 fn delta_of(m: domain.Movement) : (Int<AccountId>, Real<USD>) =
@@ -147,8 +149,8 @@ pub fn start() : Pid[StoreMsg] / Spawn + Cancel + Actor[StoreMsg] + Actor[StoreR
   let initial = State {
     accounts:         [],
     transactions:     [],
-    next_account_id:  1,
-    next_tx_id:       1,
+    next_account_id:  1<AccountId>,
+    next_tx_id:       1<TransactionId>,
   }
   spawn_actor(() => loop(initial))
 }
@@ -164,7 +166,7 @@ pub fn ask(store: Pid[StoreMsg], c: domain.Command)
 # Tests against the pure logic, without actors.
 
 test "creating an account adds it to state" {
-  let s = State { accounts: [], transactions: [], next_account_id: 1, next_tx_id: 1 }
+  let s = State { accounts: [], transactions: [], next_account_id: 1<AccountId>, next_tx_id: 1<TransactionId> }
   let (r, s2) = process(domain.CreateAccount("cash"), s)
   let ok = match r {
     domain.AccountCreated(c) -> c.name == "cash"

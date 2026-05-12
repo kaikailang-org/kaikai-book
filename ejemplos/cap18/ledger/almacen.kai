@@ -22,8 +22,8 @@ pub type AlmacenResp = Respuesta(dominio.Respuesta)
 type Estado = {
   cuentas:        [dominio.Cuenta],
   transacciones:  [dominio.Transaccion],
-  proxima_cuenta: Int,
-  proxima_tx:     Int,
+  proxima_cuenta: Int<CuentaId>,
+  proxima_tx:     Int<TransaccionId>,
 }
 
 # La lógica pura. Recibe el comando y el estado actual,
@@ -32,14 +32,14 @@ pub fn procesar(c: dominio.Comando, s: Estado) : (dominio.Respuesta, Estado) {
   match c {
     CrearCuenta(nombre) -> {
       let nueva = dominio.Cuenta {
-        id:     s.proxima_cuenta<CuentaId>,
+        id:     s.proxima_cuenta,
         nombre: nombre,
         saldo:  0.0<USD>,
       }
       let s2 = Estado {
         ...s,
         cuentas:        [nueva, ...s.cuentas],
-        proxima_cuenta: s.proxima_cuenta + 1,
+        proxima_cuenta: s.proxima_cuenta + 1<CuentaId>,
       }
       (dominio.CuentaCreada(nueva), s2)
     }
@@ -53,7 +53,7 @@ pub fn procesar(c: dominio.Comando, s: Estado) : (dominio.Respuesta, Estado) {
           Some(id_faltante) -> (dominio.ErrorCuentaInexistente(id_faltante), s)
           None -> {
             let tx = dominio.Transaccion {
-              id:          s.proxima_tx<TransaccionId>,
+              id:          s.proxima_tx,
               descripcion: desc,
               movimientos: movs,
             }
@@ -62,7 +62,7 @@ pub fn procesar(c: dominio.Comando, s: Estado) : (dominio.Respuesta, Estado) {
               cuentas:        cuentas_actualizadas,
               transacciones:  [tx, ...s.transacciones],
               proxima_cuenta: s.proxima_cuenta,
-              proxima_tx:     s.proxima_tx + 1,
+              proxima_tx:     s.proxima_tx + 1<TransaccionId>,
             }
             (dominio.TransaccionRegistrada(tx), s2)
           }
@@ -121,10 +121,10 @@ fn aplicar_movs(cs: [dominio.Cuenta], ms: [dominio.Movimiento]) : [dominio.Cuent
 
 fn aplicar_uno(cs: [dominio.Cuenta], m: dominio.Movimiento) : [dominio.Cuenta] {
   let (id, delta) = delta_de(m)
-  list.map(cs, (c) =>
+  list.map(cs, (c) => {
     if c.id == id { dominio.Cuenta { ...c, saldo: c.saldo + delta } }
     else          { c }
-  )
+  })
 }
 
 fn delta_de(m: dominio.Movimiento) : (Int<CuentaId>, Real<USD>) =
@@ -148,8 +148,8 @@ pub fn arrancar() : Pid[AlmacenMsg] / Spawn + Cancel + Actor[AlmacenMsg] + Actor
   let inicial = Estado {
     cuentas:        [],
     transacciones:  [],
-    proxima_cuenta: 1,
-    proxima_tx:     1,
+    proxima_cuenta: 1<CuentaId>,
+    proxima_tx:     1<TransaccionId>,
   }
   spawn_actor(() => bucle(inicial))
 }
@@ -165,7 +165,7 @@ pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando)
 # Tests sobre la lógica pura, sin actores.
 
 test "crear una cuenta agrega al estado" {
-  let s = Estado { cuentas: [], transacciones: [], proxima_cuenta: 1, proxima_tx: 1 }
+  let s = Estado { cuentas: [], transacciones: [], proxima_cuenta: 1<CuentaId>, proxima_tx: 1<TransaccionId> }
   let (r, s2) = procesar(dominio.CrearCuenta("caja"), s)
   let ok = match r {
     dominio.CuentaCreada(c) -> c.nombre == "caja"
@@ -179,8 +179,8 @@ test "registrar transacción rechaza descuadre" {
   let s = Estado {
     cuentas:        [dominio.Cuenta { id: 1<CuentaId>, nombre: "a", saldo: 0.0<USD> }],
     transacciones:  [],
-    proxima_cuenta: 2,
-    proxima_tx:     1,
+    proxima_cuenta: 2<CuentaId>,
+    proxima_tx:     1<TransaccionId>,
   }
   let movs = [dominio.Debito(1<CuentaId>, 100.0<USD>)]   # solo débito, no cuadra
   let (r, _) = procesar(dominio.Registrar("test", movs), s)
@@ -198,8 +198,8 @@ test "registrar transacción que cuadra actualiza saldos" {
       dominio.Cuenta { id: 2<CuentaId>, nombre: "ventas", saldo: 0.0<USD> },
     ],
     transacciones:  [],
-    proxima_cuenta: 3,
-    proxima_tx:     1,
+    proxima_cuenta: 3<CuentaId>,
+    proxima_tx:     1<TransaccionId>,
   }
   let movs = [
     dominio.Debito(1<CuentaId>, 50.0<USD>),     # +50 a caja
