@@ -1,0 +1,9 @@
+## Atar `llabs` de libc (valor absoluto de long long). La forma
+## más simple de FFI: una declaración `extern "C"` que carga el
+## efecto `Ffi`, llamada como una función normal.
+
+extern "C" fn llabs(n: Int) : Int / Ffi
+
+fn main() : Unit / Console + Ffi {
+  print("|-7| = #{llabs(0 - 7)}")
+}

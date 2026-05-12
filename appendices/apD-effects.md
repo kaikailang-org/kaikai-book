@@ -295,7 +295,9 @@ effect Ffi
 The effect carried by every function declared with
 `extern "C" fn`. No operations of its own: it's a marker so
 the type system knows which functions touch code not
-audited by kaikai.
+audited by kaikai. Chapter 16 §16.9 covers the declaration
+syntax, type mapping at the boundary, linking with C
+shims, and what FFI v1 does and doesn't support.
 
 ## D.9 Composition: the `Io` alias
 

@@ -263,7 +263,192 @@ No es obligatorio. `kai run archivo.kai` corre cualquier
 archivo .kai sin importar dónde esté. Pero cuando el
 proyecto crece, esta estructura paga.
 
-## 16.9 Filosofía: tres principios del tooling
+## 16.9 Hablar con C: `extern "C"` y el efecto `Ffi`
+
+Tarde o temprano vas a necesitar una librería que ya existe
+en C: un driver de base de datos, un framework gráfico, un
+paquete numérico. La interfaz de funciones foráneas
+(**FFI**) de kaikai es cómo la llamas desde código kaikai
+sin perder el sistema de tipos ni la fila de efectos.
+
+### Declarar una función externa
+
+El caso más simple es atarse a una función de libc directo:
+
+```kai
+extern "C" fn llabs(n: Int) : Int / Ffi
+
+fn main() : Unit / Console + Ffi {
+  print("|-7| = #{llabs(0 - 7)}")
+}
+```
+
+```
+$ kai run abs.kai
+|-7| = 7
+```
+
+Línea por línea:
+
+- **`extern "C" fn name(args) : T / Ffi`** declara un
+  símbolo externo. El compilador emite una declaración
+  forward para que el linker de C la resuelva. El cuerpo
+  es implícito: el call site se compila a una llamada
+  directa a función C.
+- **`/ Ffi`** es el efecto. Cualquier función que llame a
+  un `extern "C"` — directa o transitivamente — tiene
+  `Ffi` en su fila. Misma disciplina que `Stdout` o
+  `File`: una función que habla con C lo declara en su
+  firma.
+
+El compilador mapea los tipos primitivos de kaikai a sus
+equivalentes en C en el cruce:
+
+| kaikai | C |
+|---|---|
+| `Int` | `int64_t` |
+| `Real` | `double` |
+| `Bool` | `int8_t` (0 / 1) |
+| `Char` | `int32_t` (codepoint) |
+| `String` | `const char *` (terminado en NUL, lo posee kaikai) |
+| `Unit` | `void` (solo retorno) |
+
+Cualquier cosa más estructurada — records, listas, tipos
+suma — **no** cruza directo en FFI v1. Volvemos sobre eso
+en un momento.
+
+### Renombrar el símbolo de C
+
+A veces el nombre del símbolo en C choca con un
+identificador de kaikai o simplemente se lee mal en línea.
+Usa el override entre paréntesis:
+
+```kai
+extern "C"("strlen") fn c_strlen(s: String) : Int / Ffi
+```
+
+El nombre del lado kaikai es `c_strlen`; el linker resuelve
+contra `strlen`. Útil cuando el nombre C es palabra
+reservada en kaikai, cuando quieres un nombre con sabor
+kaikai sobre uno genérico de C, o cuando necesitas dos
+bindings kaikai que apuntan al mismo símbolo C con firmas
+distintas.
+
+### Enlazar contra tu propio código C
+
+Para librerías que no estén en libc, la forma típica es:
+escribes un archivo C chico con las funciones que
+necesitas, y dejas que `kai build` invoque a su compilador
+C con ese archivo incluido. El gestor de paquetes no
+automatiza la compilación de C en v1, así que lo conectas
+vía la variable de entorno `CFLAGS` que `kai` pasa al
+compilador C anfitrión.
+
+Un ejemplo mínimo. El lado C:
+
+```c
+// shim.h
+#include <stdint.h>
+int64_t my_double(int64_t x);
+```
+
+```c
+// shim.c
+#include "shim.h"
+int64_t my_double(int64_t x) { return x * 2; }
+```
+
+El lado kaikai:
+
+```kai
+extern "C" fn my_double(x: Int) : Int / Ffi
+
+fn main() : Unit / Console + Ffi {
+  print("doble(21) = #{my_double(21)}")
+}
+```
+
+Compilando:
+
+```
+$ CFLAGS="-include shim.h shim.c" kai build --backend=c app.kai -o app
+$ ./app
+doble(21) = 42
+```
+
+El valor de `CFLAGS` te deja inyectar cualquier cosa que
+el compilador C acepte: `-include` para exponer
+declaraciones, fuentes `.c` extra para compilar adentro,
+`-l<lib>` para enlazar contra librerías instaladas,
+`pkg-config --cflags --libs raylib` para una librería
+gráfica real. Cuando crece más allá de una línea, lo
+envuelves en un `Makefile`.
+
+El flag `--backend=c` aquí es necesario porque el backend
+LLVM (capítulo 16 §16.1) no expone la misma plomería de
+`CFLAGS` en v1.
+
+### Lo que FFI v1 no hace
+
+La lista es corta pero importante:
+
+- **Records / structs por valor cruzando el borde.** No
+  puedes declarar `extern "C" fn dibujar(c: Color)` donde
+  `Color` sea un record kaikai que calza con un `struct`
+  C. v1 pasa solo primitivos.
+- **Parámetros de salida y argumentos puntero.** Nada de
+  `int *out`: todo cruza por valor.
+- **Funciones variádicas de C.** Sin binding directo a la
+  familia de `printf`; las envuelves en un helper C de
+  aridad fija.
+- **Callbacks de C de vuelta a kaikai.** Una función C que
+  recibe un puntero a función no puede llamar de vuelta a
+  una función kaikai. Pospuesto para FFI v2.
+
+El workaround canónico para el caso de structs es un
+**shim C**: una función C delgada que aplana el struct en
+primitivos en el borde kaikai y lo reconstruye antes de
+llamar a la librería real. El costo es una función C por
+cada entrada de la librería que use struct. Vale la pena
+para v1; FFI v2 quitará la capa de shim para el caso común.
+
+Un ejemplo real en producción es
+[`lnds/uira`](https://github.com/lnds/uira), que ata
+raylib (una librería gráfica que pasa `Color` y `Vector2`
+por valor casi en todos lados). El repo muestra las
+declaraciones kaikai, los shims C, y el Makefile que
+orquesta el enlace — útil como plantilla cuando ates una
+librería similar.
+
+### Cuándo agarrar FFI
+
+La regla honesta: **solo cuando realmente necesites la
+librería C**. Cada `extern "C"` es un hueco en las
+garantías del lado kaikai. El compilador no puede chequear
+qué hace la función C con sus argumentos, no puede probar
+sus efectos, no puede razonar sobre su modelo de memoria.
+El efecto `Ffi` al menos hace visible el hueco en la
+firma, pero el peso de auditoría de esa firma es
+"confiar en quien escribió la librería C" más "confiar
+en el compilador C".
+
+Para computación pura, prefiere una implementación kaikai.
+Para IO y facilidades del SO, prefiere los efectos del
+stdlib (`Stdout`, `File`, `NetTcp`, etc.) — esos ya están
+conectados a C por dentro pero en una forma que los
+diseñadores del lenguaje controlan. FFI es la herramienta
+correcta para atar ecosistemas C existentes que no quieres
+reescribir: drivers, toolkits nativos de UI, librerías
+específicas de hardware.
+
+Una pequeña heurística: si te encuentras escribiendo más
+de diez `extern "C"` para envolver algo, y la librería
+tiene una API C estable, eso es candidato a un paquete
+kaikai propio cuando aterrice `kai bindgen`. Mientras
+tanto, el enfoque manual (el patrón de uira) funciona
+bien.
+
+## 16.10 Filosofía: tres principios del tooling
 
 Si quieres recordar el tono general del tooling, son tres
 ideas:

@@ -1,0 +1,12 @@
+## A C shim that lives in this directory. Build with:
+##
+##   $ CFLAGS="-include shim.h shim.c" \
+##       kai build --backend=c app.kai -o app
+##   $ ./app
+##   double(21) = 42
+
+extern "C" fn my_double(x: Int) : Int / Ffi
+
+fn main() : Unit / Console + Ffi {
+  print("double(21) = #{my_double(21)}")
+}

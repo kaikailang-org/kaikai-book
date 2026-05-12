@@ -1,0 +1,10 @@
+## Renombrar el símbolo de C con `extern "C"("nombre")`. El
+## lado kaikai llama a la función `c_strlen`; el linker
+## resuelve contra `strlen` de libc.
+
+extern "C"("strlen") fn c_strlen(s: String) : Int / Ffi
+
+fn main() : Unit / Console + Ffi {
+  let s = "hola, kaikai"
+  print("largo = #{c_strlen(s)}")
+}
