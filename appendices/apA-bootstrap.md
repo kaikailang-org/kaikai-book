@@ -150,7 +150,7 @@ installed. No need to trust a binary downloaded from a web
 page. No `curl | bash`.
 
 ```sh
-$ git clone https://github.com/lnds/kaikai
+$ git clone https://github.com/kaikailang-org/kaikai
 $ cd kaikai
 $ make
 ```
@@ -194,7 +194,7 @@ follows.
 ## A.8 Going further
 
 The design decisions live in `docs/design.md` at
-`github.com/lnds/kaikai`. The physical files are under
+`github.com/kaikailang-org/kaikai`. The physical files are under
 `stage0/`, `stage1/`, `stage2/` of the repository. Ken
 Thompson's essay *Reflections on Trusting Trust* (CACM
 1984) is worth reading if you care about the philosophical

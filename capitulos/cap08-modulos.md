@@ -234,8 +234,8 @@ Cuando declaras una dependencia, tienes tres formas:
 
 ```toml
 [dependencies]
-manutara = { source = "github.com/lnds/manutara", ref = "v0.1.0" }
-kohau = "github.com/lnds/kohau@v0.2.0"
+manutara = { source = "github.com/kaikailang-org/manutara", ref = "v0.1.0" }
+kohau = "github.com/kaikailang-org/kohau@v0.2.0"
 local = { path = "../mi-otra-lib" }
 ```
 
@@ -257,7 +257,7 @@ republicar.
 ### Agregar una dependencia
 
 ```sh
-$ kai add github.com/lnds/manutara@v0.1.0
+$ kai add github.com/kaikailang-org/manutara@v0.1.0
 ```
 
 `kai add` hace dos cosas atómicamente: clona la dependencia y
@@ -277,7 +277,7 @@ repos, captura el commit exacto (la SHA), y escribe un archivo
 
 [[package]]
 name = "manutara"
-source = "github.com/lnds/manutara"
+source = "github.com/kaikailang-org/manutara"
 ref = "v0.1.0"
 sha = "abc123def456..."
 ```
@@ -342,7 +342,7 @@ La estructura del cache es:
 
 ```
 ~/Library/Caches/kai/pkg/
-  github.com/lnds/manutara/
+  github.com/kaikailang-org/manutara/
     abc123def456.../              # contenido fijado a esa SHA
     789abc012def.../              # otra SHA del mismo repo
 ```
@@ -497,7 +497,7 @@ desde el punto de vista del import?
 con `{ path = "../mi_lib" }`. Edita `mi_lib`, vuelve a correr
 `mi_app`. ¿Cuánto demora el ciclo edit-run?
 
-**8.4.** Mira un proyecto en `github.com/lnds/kaikai` (el
+**8.4.** Mira un proyecto en `github.com/kaikailang-org/kaikai` (el
 compilador mismo) y abre su `kai.toml` si lo tiene. ¿Qué
 dependencias declara? ¿Reconoces el patrón de versionado?
 

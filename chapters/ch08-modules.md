@@ -233,8 +233,8 @@ When you declare a dependency, three forms are accepted:
 
 ```toml
 [dependencies]
-manutara = { source = "github.com/lnds/manutara", ref = "v0.1.0" }
-kohau = "github.com/lnds/kohau@v0.2.0"
+manutara = { source = "github.com/kaikailang-org/manutara", ref = "v0.1.0" }
+kohau = "github.com/kaikailang-org/kohau@v0.2.0"
 local = { path = "../another-lib" }
 ```
 
@@ -256,7 +256,7 @@ republishing.
 ### Adding a dependency
 
 ```sh
-$ kai add github.com/lnds/manutara@v0.1.0
+$ kai add github.com/kaikailang-org/manutara@v0.1.0
 ```
 
 `kai add` does two things atomically: clones the dependency
@@ -276,7 +276,7 @@ repos, captures the exact commit (SHA), and writes a
 
 [[package]]
 name = "manutara"
-source = "github.com/lnds/manutara"
+source = "github.com/kaikailang-org/manutara"
 ref = "v0.1.0"
 sha = "abc123def456..."
 ```
@@ -340,7 +340,7 @@ The cache layout:
 
 ```
 ~/Library/Caches/kai/pkg/
-  github.com/lnds/manutara/
+  github.com/kaikailang-org/manutara/
     abc123def456.../              # content pinned to that SHA
     789abc012def.../              # another SHA of the same repo
 ```
@@ -494,7 +494,7 @@ uses it with `{ path = "../my_lib" }`. Edit `my_lib`, re-run
 `my_app`. How long is the edit-run cycle?
 
 **8.4.** Open a kaikai project on GitHub (say,
-`github.com/lnds/kaikai`) and read its `kai.toml` if any.
+`github.com/kaikailang-org/kaikai`) and read its `kai.toml` if any.
 What dependencies does it declare? Do you recognize the
 versioning pattern?
 

@@ -466,7 +466,7 @@ libro cumplió su propósito.
 
 Gracias por leer hasta acá. El compilador, el stdlib, los
 documentos de diseño y los ejemplos viven en
-`github.com/lnds/kaikai`. Hay una comunidad emergente, hay
+`github.com/kaikailang-org/kaikai`. Hay una comunidad emergente, hay
 issues que cerrar, hay piezas del lenguaje que están todavía
 tomando forma. Si encuentras este experimento interesante,
 hay lugar para que ayudes a hacerlo mejor.

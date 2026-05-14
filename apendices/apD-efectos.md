@@ -6,7 +6,7 @@ documentación de una función, vienes acá a confirmar qué
 provee `X`.
 
 La especificación completa vive en
-`github.com/lnds/kaikai/docs/effects-stdlib.md`. Acá
+`github.com/kaikailang-org/kaikai/docs/effects-stdlib.md`. Acá
 mostramos la declaración del efecto y para qué sirve.
 
 ## D.1 IO básico

@@ -144,7 +144,7 @@ que orquestan ese modelo:
 $ kai init miapp
 kai-pkg: wrote kai.toml for package 'miapp'
 
-$ kai add github.com/lnds/manutara@v0.1.0
+$ kai add github.com/kaikailang-org/manutara@v0.1.0
 $ kai install
 $ kai update                # refresca todas las deps
 $ kai update manutara       # refresca solo manutara

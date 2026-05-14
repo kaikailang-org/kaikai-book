@@ -6,7 +6,7 @@ documentation says `: Unit / X`, you come here to confirm
 what `X` provides.
 
 The full specification lives at
-`github.com/lnds/kaikai/docs/effects-stdlib.md`. Here we
+`github.com/kaikailang-org/kaikai/docs/effects-stdlib.md`. Here we
 show the effect's declaration and what it's for.
 
 ## D.1 Basic IO

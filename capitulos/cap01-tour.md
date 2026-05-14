@@ -632,7 +632,7 @@ name = "mi_app"
 version = "0.1.0"
 
 [dependencies]
-manutara = "github.com/lnds/manutara@v0.1"
+manutara = "github.com/kaikailang-org/manutara@v0.1"
 local    = { path = "../local-thing" }
 ```
 
@@ -640,7 +640,7 @@ El flujo del día a día son tres comandos:
 
 ```
 $ kai init                                       # crea kai.toml en el directorio actual
-$ kai add github.com/lnds/manutara@v0.1          # agrega una dependencia
+$ kai add github.com/kaikailang-org/manutara@v0.1          # agrega una dependencia
 $ kai run main.kai                               # compila y corre
 ```
 
@@ -670,7 +670,7 @@ piden cosas distintas. Por ahora basta saber que existe y que
 
 Para correr cualquiera de los programas anteriores necesitas el
 binario `kai`. El proyecto está en
-[github.com/lnds/kaikai](https://github.com/lnds/kaikai).
+[github.com/kaikailang-org/kaikai](https://github.com/kaikailang-org/kaikai).
 
 Desde un checkout fresco, lo único que se requiere es un
 compilador de C:

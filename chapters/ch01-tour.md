@@ -498,7 +498,7 @@ treats each one in detail.
 
 To run any of the programs above you need the `kai` binary.
 The project lives at
-[github.com/lnds/kaikai](https://github.com/lnds/kaikai).
+[github.com/kaikailang-org/kaikai](https://github.com/kaikailang-org/kaikai).
 
 From a fresh checkout, all you need is a C compiler:
 

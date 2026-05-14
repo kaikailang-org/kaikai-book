@@ -153,7 +153,7 @@ previamente instalado. No hace falta confiar en un binario
 descargado de una página web. No hace falta `curl | bash`.
 
 ```sh
-$ git clone https://github.com/lnds/kaikai
+$ git clone https://github.com/kaikailang-org/kaikai
 $ cd kaikai
 $ make
 ```
@@ -197,7 +197,7 @@ sigue.
 ## A.8 Para profundizar
 
 Las decisiones de diseño viven en `docs/design.md` de
-`github.com/lnds/kaikai`. Los archivos físicos están bajo
+`github.com/kaikailang-org/kaikai`. Los archivos físicos están bajo
 `stage0/`, `stage1/`, `stage2/` del repositorio. Hay un
 ensayo de Ken Thompson, *Reflections on Trusting Trust* (CACM
 1984), que vale la pena leer si te interesa la justificación

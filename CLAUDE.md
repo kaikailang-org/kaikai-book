@@ -270,7 +270,7 @@ No asumir nada. Diagnosticar:
      **consultarlo con el autor antes de seguir.** No asumir que
      el ejemplo está mal y reescribirlo silenciosamente.
 4. **Si es bug y el autor da el OK**, abrir un issue en
-   `lnds/kaikai` con el repro mínimo, hipótesis de causa, y
+   `kaikailang-org/kaikai` con el repro mínimo, hipótesis de causa, y
    workaround. El libro queda escrito en la forma idiomática
    asumiendo el fix; el ejemplo en disco puede fallar hoy hasta
    que se cierre el issue. Esa decisión es deliberada y queda

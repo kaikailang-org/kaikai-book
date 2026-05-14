@@ -1,6 +1,6 @@
 # The kaikai Programming Language
 
-A book about [kaikai](https://github.com/lnds/kaikai), a functional,
+A book about [kaikai](https://github.com/kaikailang-org/kaikai), a functional,
 statically typed programming language with algebraic effects as a
 first-class primitive, Elixir-style pipelines, native-code
 compilation via LLVM, and a memory model based on Perceus reference
@@ -14,7 +14,7 @@ By Eduardo Díaz ([lnds](https://github.com/lnds)).
 ## What this book is
 
 A reading book, not a reference manual. The reference lives in the
-language repo under [`kaikai/docs`](https://github.com/lnds/kaikai/tree/main/docs).
+language repo under [`kaikai/docs`](https://github.com/kaikailang-org/kaikai/tree/main/docs).
 This book is the long-form companion: chapters that explain the
 *why* behind the language and walk through working programs from
 the first page.
@@ -116,4 +116,4 @@ for the kaikai source).
 
 Issues and pull requests welcome on this repo. For comments on the
 language itself rather than the book, use
-[lnds/kaikai](https://github.com/lnds/kaikai).
+[kaikailang-org/kaikai](https://github.com/kaikailang-org/kaikai).

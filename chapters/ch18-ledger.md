@@ -473,7 +473,7 @@ done its job.
 
 Thanks for reading this far. The compiler, the stdlib,
 the design documents, and the examples live at
-`github.com/lnds/kaikai`. There's an emerging community,
+`github.com/kaikailang-org/kaikai`. There's an emerging community,
 issues to close, language pieces still taking shape. If you
 find this experiment interesting, there's room for you to
 help make it better.

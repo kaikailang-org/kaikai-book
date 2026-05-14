@@ -145,7 +145,7 @@ that orchestrate the model:
 $ kai init myapp
 kai-pkg: wrote kai.toml for package 'myapp'
 
-$ kai add github.com/lnds/manutara@v0.1.0
+$ kai add github.com/kaikailang-org/manutara@v0.1.0
 $ kai install
 $ kai update                # refresh all deps
 $ kai update manutara       # refresh only manutara
