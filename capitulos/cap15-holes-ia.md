@@ -380,10 +380,6 @@ una parte mecánica del trabajo (los detalles que satisfacen
 las restricciones de tipo). La otra parte (qué construir, qué
 abstraer, qué priorizar) sigue siendo del programador.
 
-Esto es lo que kaikai llama, en la palabra mapudungun, su
-**kimun**: la sabiduría que el sistema acumula para servir,
-sin imponerse sobre quien lo usa.
-
 ## 15.11 Caso de estudio: completar una función no trivial
 
 Cerramos con un ejercicio realista. Imagina que quieres

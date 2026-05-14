@@ -383,10 +383,6 @@ mechanical part of the work (the details that satisfy the
 type constraints). The other part (what to build, what to
 abstract, what to prioritize) remains the programmer's.
 
-This is what kaikai, in the Mapudungun word, calls its
-**kimun**: the wisdom the system accumulates to serve,
-without imposing itself on whoever uses it.
-
 ## 15.11 Case study: completing a non-trivial function
 
 We close with a realistic exercise. Imagine you want to

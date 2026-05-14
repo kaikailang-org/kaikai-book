@@ -137,9 +137,16 @@ recurrentes:
   el autor.
 - **Cierres con peso.** Frase corta, con resonancia. Evitar
   resúmenes burocráticos del tipo "en este artículo vimos…".
-- **Vocabulario propio y mapudungun donde aporta.** kaikai, kimun,
-  lonko son nombres con historia. Explicar la primera vez, usarlos
-  con confianza después.
+- **Vocabulario propio con nombres que tienen historia.** El nombre
+  `kaikai` es rapanui (la figura de cordel y el canto *pata'u
+  ta'u*), con una lectura mapuche secundaria (la serpiente Kai Kai)
+  que el lenguaje reconoce pero no declara como primaria — la
+  pública es rapanui. Las herramientas del ecosistema siguen la
+  misma cantera: `ahu` (plataforma de los moai), `manutara` (ave
+  migratoria de la ceremonia Tangata Manu), `hopu` (intercambio),
+  `taura` (cuerda). Explicar la primera vez, usarlos con confianza
+  después. Verificar la etimología contra la memoria del proyecto
+  del lenguaje antes de afirmar significados.
 
 ## Idioma
 

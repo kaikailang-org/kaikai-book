@@ -51,9 +51,12 @@ encaja:
   Lo que kaikai busca y lo que descarta a propósito (ningún GC,
   ningún borrow checker, ninguna typeclass, ningún async/await
   separado del resto).
-- **El nombre.** kaikai en mapudungun, la línea con kimun y
-  lonko, la decisión de poner nombres propios de la tierra del
-  autor a sus herramientas.
+- **El nombre.** `kai kai` en rapanui (la figura de cordel y el
+  canto *pata'u ta'u*), con la lectura mapuche de la serpiente Kai
+  Kai como eco secundario reconocido pero no declarado. La línea
+  con `ahu`, `manutara`, `hopu`, `taura` y los demás nombres del
+  ecosistema, todos de la misma cantera polinesia: la decisión de
+  poner nombres propios de la tierra del autor a sus herramientas.
 - **Por qué este libro.** No es la doc del lenguaje (eso vive en
   `kaikai/docs`). Es un libro de lectura para quien quiera
   entender el lenguaje completo, en orden, con casos reales.

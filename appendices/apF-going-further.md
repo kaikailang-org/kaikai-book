@@ -25,6 +25,11 @@ originals are worth going to directly.
 - **Effekt language.** `effekt-lang.org`. Has an effect
   system based on capabilities. Comparable to Koka with a
   different aesthetic.
+- **Eduardo Díaz, *Revelaciones*** (lnds.net, 2015, in Spanish,
+  `https://lnds.net/blog/lnds/2015/10/01/revelaciones/`). The
+  historical preface to kaikai's path: category theory and
+  monads as the bridge from classical functional programming
+  toward algebraic effects. Mentioned in the prologue.
 
 ## F.2 Perceus and reference counting
 
@@ -114,34 +119,19 @@ originals are worth going to directly.
   the other major exponent of contracts in an industrial
   language. To see what they look like in production.
 
-## F.8 Mapudungun and kaikai
+## F.8 Community and code
 
-The language's name and several of the book's terms come
-from Mapudungun, the language of the Mapuche people. If you
-want the cultural context:
-
-- **The author's blog** (`lnds.net`) has several posts
-  explaining why he picked Mapudungun for naming pieces of
-  the language, and what each term means. Look for posts
-  tagged with "kaikai" or "kimun".
-- **Mapuche-Spanish dictionaries** (several available
-  online): `kaikai`, `kimun`, `lonko`, `wenche` are names
-  with history. The book uses them with respect for that
-  history, not decoratively.
-
-## F.9 Community and code
-
-- **Official repository**: `github.com/lnds/kaikai`. The
+- **Official repository**: `github.com/kaikailang-org/kaikai`. The
   compiler, the stdlib, the design documents. Bug reports
   and proposals are welcome as issues.
-- **This book**: `github.com/lnds/kaikai-book`. PRs with
+- **This book**: `github.com/kaikailang-org/kaikai-book`. PRs with
   fixes are welcome. The book is in Spanish and English;
   both editions are maintained in parallel.
 - **Author's blog**: `lnds.net`. Where ideas appear before
   they make it into the book, with less discipline and
   more personal judgment.
 
-## F.10 Closing
+## F.9 Closing
 
 If the book left you wanting to try something, the best way
 to learn is to write code. Take any program you've written

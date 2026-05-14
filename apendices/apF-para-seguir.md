@@ -25,6 +25,11 @@ pena ir al original.
 - **Lenguaje Effekt.** `effekt-lang.org`. Tiene un sistema de
   efectos basado en capabilities. Comparable a Koka pero con
   otra estética.
+- **Eduardo Díaz, *Revelaciones*** (lnds.net, 2015,
+  `https://lnds.net/blog/lnds/2015/10/01/revelaciones/`). La
+  previa histórica al camino de kaikai: teoría de categorías y
+  mónadas como puente desde el mundo funcional clásico hacia
+  los efectos algebraicos. Mencionado en el prólogo.
 
 ## F.2 Perceus y reference counting
 
@@ -115,34 +120,19 @@ pena ir al original.
   otro gran exponente de contratos en un lenguaje de uso
   industrial. Para entender cómo se ven en producción.
 
-## F.8 Mapudungun y kaikai
+## F.8 La comunidad y el código
 
-El nombre del lenguaje y varios términos del libro vienen del
-mapudungun, lengua del pueblo mapuche. Si te interesa el
-contexto cultural:
-
-- **El blog del autor** (`lnds.net`) tiene varios posts donde
-  explica por qué eligió el mapudungun para nombrar piezas
-  del lenguaje, y qué significa cada término. Buscar las
-  entradas etiquetadas con "kaikai" o "kimun".
-- **Diccionario Mapuche-Español** (varios disponibles
-  online): `kaikai`, `kimun`, `lonko`, `wenche` son nombres
-  con historia. El libro los usa con respeto a esa historia,
-  no decorativamente.
-
-## F.9 La comunidad y el código
-
-- **Repositorio oficial**: `github.com/lnds/kaikai`. El
+- **Repositorio oficial**: `github.com/kaikailang-org/kaikai`. El
   compilador, el stdlib, los documentos de diseño. Issues
   abiertos para reportes y propuestas.
-- **Este libro**: `github.com/lnds/kaikai-book`. PRs con
+- **Este libro**: `github.com/kaikailang-org/kaikai-book`. PRs con
   correcciones son bienvenidos. El libro está en español e
   inglés; ambas ediciones se mantienen en paralelo.
 - **Blog del autor**: `lnds.net`. Donde aparecen ideas
   antes que en el libro, con menos disciplina y más juicio
   personal.
 
-## F.10 Cierre
+## F.9 Cierre
 
 Si el libro te dejó con ganas de probar algo, la mejor manera
 de aprender es escribir código. Toma cualquier programa que
