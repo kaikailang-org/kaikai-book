@@ -346,9 +346,8 @@ exits. It doesn't hang, it doesn't kill the process.
 
 The conceptual key: `Cancel.raise()` is the **operation**,
 and `handle ... with Cancel { ... }` is the handler. Same
-pattern as chapter 12. Cancellation isn't magic: it's
-another effect, with a handler written by the user or
-installed by the runtime.
+pattern as chapter 12: cancellation is another effect, with a
+handler written by the user or installed by the runtime.
 
 ## 13.6 Per-fiber mutable memory
 

@@ -343,8 +343,8 @@ sale. No se queda colgada, no aborta el proceso.
 
 La clave conceptual: `Cancel.raise()` es la **operación**, y
 `handle ... with Cancel { ... }` es el handler. Mismo patrón
-del cap. 12. La cancelación no es magia: es un efecto más, con
-un handler escrito por el usuario o instalado por el runtime.
+del cap. 12: la cancelación es un efecto más, con un handler
+escrito por el usuario o instalado por el runtime.
 
 ## 13.6 Memoria mutable por fibra
 

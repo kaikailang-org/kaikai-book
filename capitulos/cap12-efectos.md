@@ -496,9 +496,9 @@ bloque** donde el `var` aparece, el efecto `State[Int]` se
 cierra ahí mismo y no escapa a la firma de la función. Para
 quien la llama, `contar_pares` es `: Int`. Sin efectos.
 
-No es magia de enmascaramiento: es que el `handle` está
-literalmente al lado del `var`. La fila se cierra en el lugar
-exacto donde la celda se declara.
+El efecto no se enmascara: el `handle` está literalmente al
+lado del `var`. La fila se cierra en el lugar exacto donde la
+celda se declara.
 
 Y no es caro: el compilador detecta el patrón "celda local con
 `resume` de un disparo" y lo especializa a una posición de
@@ -662,83 +662,93 @@ escribir `type WithIo[e] = Io + e` (con variable de fila). Esa
 restricción evita complicaciones en la unificación que el
 compilador no necesita pagar.
 
-## 12.10 Tu propio handler por defecto: el patrón envoltorio
+## 12.10 Default handlers: el efecto trae el suyo
 
-¿Y si quieres que **tu** efecto venga con un handler "preinstalado",
-como `println` viene con `Stdout`? La respuesta corta es que en
-v1 no se puede: el runtime instala handlers por defecto solo para
-los efectos del stdlib (`Stdout`, `Stdin`, `Env`, `File`,
-`Random`, `Time`, etc.), y la capacidad de registrar handlers
-automáticos para efectos propios está fuera del alcance.
+Hasta aquí cada `handle` que vimos lo escribimos a mano. Pero hay
+efectos donde una de las implementaciones es tan obvia que pedirle
+al usuario que la escriba cada vez es ceremonia pura: si tu efecto
+es `Log` y la implementación "razonable" imprime con timestamp,
+querrías que esa implementación venga con el efecto.
 
-El patrón idiomático para acercarse es escribir una **función
-envoltorio** que aplica el handler estándar:
+Kaikai permite declarar un **bloque `default { }`** dentro de la
+declaración del efecto. Es exactamente lo mismo que un `handle ...
+with`, pero vive al lado de las operaciones y el compilador lo
+instala alrededor de `main` cuando nadie maneja el efecto a mano.
 
 ```kai
 effect Log {
-  log(msg: String) : Unit
-}
+  info(msg: String) : Unit
+  warn(msg: String) : Unit
 
-fn with_default_log[A](body: () -> A / Log) : A {
-  handle {
-    body()
-  } with Log {
-    log(msg, resume) -> {
-      println("[LOG] " ++ msg)
-      resume(())
-    }
+  default {
+    info(msg, resume) -> $extern_handler("kai_default_log_info")
+    warn(msg, resume) -> $extern_handler("kai_default_log_warn")
   }
 }
 ```
 
-`with_default_log` toma un body que necesita `Log` y devuelve
-**el mismo tipo del body**, ya manejado. Quien lo use, recibe el
-handler estándar sin escribirlo:
+Las cláusulas del bloque `default` tienen la **misma forma** que
+las de un `handle`: nombre de operación, parámetros, `resume`,
+flecha, cuerpo. Lo que cambia es dónde viven y quién las dispara.
+Si `main()` declara `: Unit / Log` y no hay ningún `handle ... with
+Log` envolviéndolo, el compilador genera código equivalente a:
 
 ```kai
-fn main() {
-  with_default_log(() => {
-    greet("kaikai")
-    greet("ada")
-  })
+handle {
+  main_original()
+} with Log {
+  info(msg, resume) -> ...   # las cláusulas del default
+  warn(msg, resume) -> ...
 }
 ```
 
-Quien quiera otro comportamiento, simplemente no llama a
-`with_default_log` y escribe su propio `handle`. La diferencia
-con un handler "automático" es la línea extra que envuelve al
-body, pero a cambio el comportamiento por defecto es **explícito
-y opcional**, no oculto en el runtime. Es lo que el stdlib mismo
-hace para construcciones como `try { body }` o `with_state(0)
-{ body }`: la sintaxis de trailing lambda lo deja casi tan
-limpio como un handler implícito:
+El usuario no escribe ese wrapping. El compilador lo deriva del
+bloque `default` y lo emite al entrar al programa.
 
-```kai
-fn main() {
-  with_default_log { ->
-    greet("kaikai")
-    greet("ada")
-  }
-}
-```
+### `$extern_handler`: el sigil y el puente a C
 
-Hay un valor pedagógico además del práctico: cuando el handler
-por defecto vive en una función nombrada del módulo del efecto,
-el lector que se topa con `with_default_log` puede ir a leerla y
-ver exactamente qué hace. El runtime no tiene esa transparencia
-para sus propios defaults.
+El cuerpo de cada cláusula del ejemplo anterior es
+`$extern_handler("kai_default_log_info")`. Eso necesita
+explicación.
 
-Si tu efecto tiene un default razonable para producción y otro
-distinto para tests, expón los dos como `with_default_log` y
-`with_test_log`, ambas con la misma firma. Quien escribe tests
-elige el segundo; quien escribe `main`, el primero. El módulo
-del efecto se vuelve el catálogo de "configuraciones canónicas".
+`$` es un **sigil**: un carácter que marca una forma sintáctica
+especial. En kaikai introduce un **compiler intrinsic**, una
+construcción que el compilador resuelve directamente en vez de
+buscar una función definida en código kaikai. La forma general es
+`$nombre(args)`. Hoy hay uno solo: `$extern_handler`. Mañana puede
+haber más; el sigil queda reservado para esa categoría.
 
-## 12.11 Handlers por defecto del runtime
+`$extern_handler("kai_default_log_info")` significa: "el cuerpo
+de esta cláusula es una llamada al símbolo C `kai_default_log_info`".
+Cuando el efecto se dispara, el compilador no busca una función
+kaikai que se llame así; emite directo una llamada al runtime de C
+que está enlazado al programa.
 
-Hay efectos que un programa usa tanto que `kai` los maneja sin que
-los declares. El caso más claro es `println`: imprime a la salida
-estándar, lo cual es un efecto. ¿Por qué no aparece en cada firma?
+Esto es el puente entre los efectos algebraicos de alto nivel y el
+mundo concreto: archivos, sockets, syscalls. Las primitivas del
+sistema operativo viven en C; los efectos viven en kaikai;
+`$extern_handler` los conecta.
+
+### Cuándo dispara el default y cuándo no
+
+La regla de búsqueda es la misma de §12.4 pero con un escalón
+extra al final:
+
+1. El `handle ... with Eff` más cercano que cubre la operación gana.
+2. Si no hay handle envolvente y la operación está en la fila de
+   `main`, el compilador instala el default del efecto.
+3. Si ni siquiera el default cubre la operación, el compilador
+   rechaza el programa al typecheckar `main`.
+
+Mira el detalle: el default **solo** se instala cuando la operación
+escaparía a `main`. Si tu función está dentro de un `handle`, gana
+el handle, no el default. No hay ambigüedad ni precedencia
+sorpresiva: lo más cercano siempre gana.
+
+### Volver al ejemplo desde otro ángulo
+
+Esto explica por qué `println` compila sin que cada firma cargue
+`/ Stdout`:
 
 ```kai
 fn hola() {
@@ -750,22 +760,172 @@ fn main() {
 }
 ```
 
-Esto compila. La razón: `println` está respaldado por un handler
-de `Stdout` que kaikai instala automáticamente alrededor de
-`main`. Para programas simples, no tienes que pensar en el
-efecto. Cuando quieras controlarlo (silenciar en tests, redirigir
-a archivo, capturar la salida), instalas tu propio handler de
-`Stdout`, y dentro del `handle` el de kaikai no participa.
+`Stdout` viene del stdlib con un bloque `default` cuyas cláusulas
+llaman a `$extern_handler("kai_default_stdout_print")` y similares.
+El símbolo C escribe al `stdout` real del proceso. Como `main` no
+maneja `Stdout`, el compilador instala ese default y el programa
+imprime.
 
-La regla: **los handlers más cercanos al uso ganan**. El handler
-implícito del runtime es el más lejano, así que es el último
-recurso. Cualquier `handle` que pongas más cerca interceptará
-primero.
+Cuando quieras controlar la salida (silenciar en tests, redirigir
+a archivo, capturar para asertar contra ella), pones tu propio
+`handle ... with Stdout` y dentro del bloque el default del runtime
+no participa. **Lo más cercano gana**: el `handle` que escribiste
+está más cerca que el wrapping implícito al entrar a `main`.
 
-Otros efectos con handlers por defecto en `main`: `Stdin`,
-`Random`, `Time`, `Env`. Esto es para tener programas
-"hola-mundo" sin firmas pesadas. La doc del cap. 12 del manual
-del lenguaje detalla cuáles son.
+### Tu propio default: el ejemplo completo
+
+Si declaras un efecto y lo equipas con un default, los programas
+que solo usan `main` se ven igual de simples:
+
+```kai
+effect MyLog {
+  info(msg: String) : Unit
+  default {
+    info(msg, resume) -> $extern_handler("kai_default_log_info")
+  }
+}
+
+fn greet(name: String) : Unit / MyLog {
+  MyLog.info("hola, " ++ name)
+}
+
+fn main() : Unit / Stdout {
+  let r = handle {
+    MyLog.info("hello from extern_handler")
+    7
+  } with MyLog {
+    info(msg, resume) -> resume(())   # silencia adentro del handle
+  }
+  print("result: #{int_to_string(r)}")
+}
+```
+
+Adentro del `handle ... with MyLog`, las cláusulas explícitas
+ganan: el `info` queda silenciado. Si en otro `main` no hubiera
+ese `handle`, el default disparía e imprimiría vía el runtime de C.
+La función `greet` no se entera: para ella, `MyLog` es lo que sea
+que el contexto haya decidido.
+
+### Cuándo no hay default — el efecto sin red
+
+No todos los efectos traen `default`. `Fail` es el contraejemplo
+claro: si una operación puede abortar el programa, no quieres que
+"olvidarse de manejarla" sea legal. La declaración pública de
+`Fail` (apéndice D) no tiene bloque `default`, y por eso una
+función que produce `/ Fail` obliga a ser manejada en algún lado
+antes de `main`, o el compilador rechaza con un mensaje claro.
+
+Lo mismo vale para `State[T]`, `Reader[T]`, `Writer[W]`: efectos
+genéricos en los que **no existe** una implementación razonable
+sin contexto, así que pedirle al usuario que la escriba no es
+ceremonia, es disciplina.
+
+La regla mental: un efecto trae `default` cuando hay **una sola**
+implementación obvia (escribir a `stdout`, leer del reloj del
+sistema, generar números pseudo-aleatorios). Si "razonable" depende
+del programa, no hay default y el usuario lo provee.
+
+### Función envoltorio: la alternativa cuando no hay default
+
+Cuando un efecto no trae `default`, o cuando el default existe pero
+tu programa siempre quiere otro, el patrón idiomático es una
+**función envoltorio**:
+
+```kai
+fn with_test_log[A](body: () -> A / MyLog) : A {
+  handle {
+    body()
+  } with MyLog {
+    info(msg, resume) -> resume(())   # silencia en tests
+  }
+}
+
+fn main() {
+  with_test_log { ->
+    greet("kaikai")
+    greet("ada")
+  }
+}
+```
+
+Es lo que el stdlib usa para construcciones como `try { body }` y
+`with_state(0) { body }`. La diferencia con un default es que la
+envoltura es **explícita en el código**: quien lee `main` ve la
+línea, abre la función, sabe qué hace. Un default vive en la
+declaración del efecto.
+
+Si tu efecto tiene un default razonable para producción y uno
+distinto para tests, expón los dos como funciones envoltorio
+(`with_test_log`, `with_quiet_log`) y deja que `main` use el
+default. Quien escribe tests llama a la envoltorio.
+
+## 12.11 Los handlers del stdlib son código kaikai
+
+Cuando un programa `println("hola")` simplemente funciona, es fácil
+imaginar que el compilador trae un caso especial para `Stdout`. No
+es así. Los handlers que el runtime instala alrededor de `main`
+para `Stdout`, `Stdin`, `Random`, `Clock`, `File`, `Env`, `NetTcp`,
+y los demás están escritos en **stdlib kaikai normal**: cada uno
+es un `effect ... { ops; default { ... } }` que usa el mismo sigil
+`$extern_handler` que tú usarías para conectar tu efecto con C.
+
+```kai
+# stdlib/io/console.kai (forma esquemática)
+effect Stdout {
+  print(s: String) : Unit
+  default {
+    print(s, resume) -> $extern_handler("kai_default_stdout_print")
+  }
+}
+```
+
+El compilador no conoce a `Stdout` por su nombre. Conoce **bloques
+`default`** y **`$extern_handler`**. Para `Stdout`, instala el
+default igual que para tu `MyLog`: caminando el AST de la
+declaración del efecto, no leyendo una tabla hardcoded.
+
+Esto no fue siempre así. Hasta la versión 0.55, el compilador
+traía tablas internas con los nombres `default_stdout_setup`,
+`default_random_shims`, etc., una entrada por cada efecto del
+stdlib. La trilogía #533 (PRs #551, #559, #561 en `kaikai-org/kaikai`)
+migró los diecisiete efectos builtin a `default { }` blocks
+declarados en stdlib y borró las tablas. El motivo no es estético:
+es que el AST se vuelve la única fuente de verdad, y los efectos
+de usuario obtienen exactamente las mismas garantías que los del
+stdlib. Si tu efecto declara `default { }` con `$extern_handler`,
+el compilador lo instala como builtin.
+
+La consecuencia práctica: **puedes leer cómo está implementado
+`Stdout`**. Está en `stdlib/io/console.kai` (o el archivo análogo
+de la versión que estés usando). Es código kaikai como el tuyo. Si
+te aparece una duda sobre semántica del default — "¿qué pasa si el
+pipe está cerrado?", "¿quién captura `EPIPE`?" — la respuesta vive
+en la cláusula `print(s, resume) -> ...` o en el símbolo C al que
+puentea. No hay un comportamiento secreto del runtime separado del
+código que puedes leer.
+
+Vale repetir la regla para amarrar el modelo: el compilador resuelve
+un efecto buscando, en orden, (1) el `handle ... with` más cercano,
+(2) el `default { }` block del efecto si la operación escapa a
+`main`, (3) error de compilación. Los handlers del stdlib no son
+una cuarta categoría; son instancias de (2).
+
+### Por qué el sigil tiene un nombre raro
+
+`$extern_handler` puede sonar largo. La razón es que el sigil es
+un sistema, no una sola operación. La trilogía #533 introdujo `$`
+como prefijo para una **familia** de intrinsics; `$extern_handler`
+es el primero. Si más adelante kaikai necesita exponer otros
+puentes al runtime — pedir el `errno` actual, llamar a un símbolo
+de plataforma específica — vivirán bajo el mismo sigil con nombres
+descriptivos: `$os_name`, `$panic_with_trace`, lo que sea. Reservar
+`$<ident>(args)` deja la puerta abierta sin reabrir el debate
+sintáctico cada vez.
+
+Para tu día a día: si nunca conectas un efecto a C, nunca vas a
+escribir `$extern_handler`. Pero cuando lo veas en stdlib sabes
+qué es: una cláusula que cede el cuerpo a un símbolo del runtime,
+declarada con la misma sintaxis que cualquier otro handler.
 
 ## 12.12 Caso de estudio: procesador de configuración
 
@@ -890,9 +1050,10 @@ Los efectos algebraicos vienen de la academia (Pretnar, Plotkin,
 Power) y aparecieron en lenguajes como Koka, Eff y Effekt antes
 que en kaikai. Lo que kaikai aporta es una sintaxis legible (la
 notación `/ Eff` en la firma), una integración con el resto del
-lenguaje (filas en vez de listas, alias), y handlers por defecto
-para que los programas simples no carguen ceremonia. Pero la idea
-de base es vieja y sólida.
+lenguaje (filas en vez de listas, alias), y un modelo de defaults
+que no tiene casos especiales: los handlers del stdlib están
+declarados en kaikai con la misma forma que los tuyos. Pero la
+idea de base es vieja y sólida.
 
 Si después de este capítulo todavía no estás cómodo, no te
 preocupes. Los efectos son la pieza que más tiempo toma asentar.
@@ -941,13 +1102,25 @@ original sobrevive sin cambios?
 que el caso common sea cheap y obliga a marcar explícitamente el
 caso caro?
 
-**12.8.** Toma `Log` de §12.10 y agrega un segundo "default":
-`with_silent_log`, que descarta los mensajes. Después escribe una
-función que use `Log` y pruébala con los dos handlers sin
-modificar la función. Compara con cómo harías lo mismo en un
-lenguaje con inyección de dependencias clásica.
+**12.8.** Declara un efecto `MyLog` con una operación `info(msg:
+String) : Unit` y un bloque `default { }` que puentee a un símbolo
+C ficticio `my_log_info_to_stderr` vía `$extern_handler`. Después
+escribe una función envoltorio `with_quiet_log` que silencie los
+mensajes. Un `main` sin envoltorio dispara el default; un `main`
+envuelto en `with_quiet_log` no. Compara con cómo harías lo mismo
+en un lenguaje con inyección de dependencias clásica.
 
-**12.9.** El capítulo 13 cubre fibras: tareas concurrentes
+**12.9.** ¿Por qué `Fail` no trae bloque `default { }`? Anota tres
+efectos hipotéticos (los tuyos o de stdlib que imagines) y para
+cada uno decide si llevaría default. Argumenta en una línea por
+qué sí o por qué no.
+
+**12.10.** Lee la declaración de `Stdout` en
+`stdlib/io/console.kai` del repositorio del lenguaje. ¿Qué hace la
+cláusula del default cuando el pipe está cerrado (`EPIPE`)? ¿Dónde
+vive esa lógica: en kaikai o en el símbolo C al que puentea?
+
+**12.11.** El capítulo 13 cubre fibras: tareas concurrentes
 manejadas como efectos. Anota antes de leerlo: ¿qué operaciones
 tendría que tener un efecto `Spawn`? ¿Qué decisión tomarías como
 handler cuando una fibra hija aborta?

@@ -448,8 +448,8 @@ base estás midiendo.
 
 ### Lo que el archivo no muestra
 
-No hay magia. El archivo declara funciones, declara tests,
-declara checks, declara benches, todo en el mismo lugar.
+El mecanismo es directo. El archivo declara funciones, declara
+tests, declara checks, declara benches, todo en el mismo lugar.
 Tres comandos lo procesan:
 
 ```

@@ -440,7 +440,7 @@ bottleneck: you know what baseline you're measuring against.
 
 ### What the file doesn't show
 
-There's no magic. The file declares functions, declares
+The mechanism is direct. The file declares functions, declares
 tests, declares checks, declares benches, all in the same
 place. Three commands process it:
 

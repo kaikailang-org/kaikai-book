@@ -513,9 +513,9 @@ where the `var` appears, the `State[Int]` effect closes right
 there and never escapes the function's signature. From the
 caller's side, `count_evens` is just `: Int`. No effects.
 
-It's not magic masking: the `handle` is literally next to the
-`var`. The row closes at the exact spot where the cell is
-declared.
+The effect isn't being masked: the `handle` is literally next
+to the `var`. The row closes at the exact spot where the cell
+is declared.
 
 And it isn't slow: the compiler detects the pattern "local
 cell with one-shot resume" and specializes it down to a stack
@@ -680,84 +680,92 @@ One restriction: aliases must be **closed**. You can't write
 restriction sidesteps unification complications the compiler
 doesn't need to pay for.
 
-## 12.10 Your own default handler: the wrapper pattern
+## 12.10 Default handlers: the effect carries its own
 
-What if you want **your** effect to come with a "preinstalled"
-handler, the way `println` comes with `Stdout`? The short
-answer is that in v1 you can't: the runtime installs default
-handlers only for stdlib effects (`Stdout`, `Stdin`, `Env`,
-`File`, `Random`, `Time`, etc.), and the ability to register
-automatic handlers for your own effects is out of scope.
+Every `handle` we've seen so far was written by hand. But there
+are effects where one of the implementations is so obvious that
+making the user write it every time is pure ceremony: if your
+effect is `Log` and the "reasonable" implementation writes to
+stderr with a timestamp, you'd want that implementation to ship
+with the effect.
 
-The idiomatic pattern that gets close is to write a **wrapper
-function** that applies the standard handler:
+Kaikai lets you declare a **`default { }` block** inside the
+effect declaration. It's exactly like a `handle ... with`, but it
+lives next to the operations and the compiler installs it around
+`main` when nobody handles the effect by hand.
 
 ```kai
 effect Log {
-  log(msg: String) : Unit
-}
+  info(msg: String) : Unit
+  warn(msg: String) : Unit
 
-fn with_default_log[A](body: () -> A / Log) : A {
-  handle {
-    body()
-  } with Log {
-    log(msg, resume) -> {
-      println("[LOG] " ++ msg)
-      resume(())
-    }
+  default {
+    info(msg, resume) -> $extern_handler("kai_default_log_info")
+    warn(msg, resume) -> $extern_handler("kai_default_log_warn")
   }
 }
 ```
 
-`with_default_log` takes a body that needs `Log` and returns
-**the same type the body returns**, already handled. Whoever
-uses it gets the standard handler without writing it:
+The clauses inside the `default` block have the **same shape** as
+the ones in a `handle`: op name, parameters, `resume`, arrow, body.
+What changes is where they live and who fires them. If `main()`
+declares `: Unit / Log` and no `handle ... with Log` wraps it, the
+compiler emits code equivalent to:
 
 ```kai
-fn main() {
-  with_default_log(() => {
-    greet("kaikai")
-    greet("ada")
-  })
+handle {
+  original_main()
+} with Log {
+  info(msg, resume) -> ...   # the default block's clauses
+  warn(msg, resume) -> ...
 }
 ```
 
-Whoever wants different behavior just doesn't call
-`with_default_log` and writes their own `handle`. The
-difference from an "automatic" handler is the extra line
-wrapping the body, but in exchange the default behavior is
-**explicit and opt-in**, not hidden in the runtime. This is
-what the stdlib itself does for constructs like `try { body }`
-or `with_state(0) { body }`: trailing-lambda syntax keeps it
-almost as clean as an implicit handler:
+The user doesn't write that wrapping. The compiler derives it from
+the `default` block and emits it at program entry.
 
-```kai
-fn main() {
-  with_default_log { ->
-    greet("kaikai")
-    greet("ada")
-  }
-}
-```
+### `$extern_handler`: the sigil and the C bridge
 
-There's a pedagogical value on top of the practical one: when
-the default handler lives in a named function in the effect's
-module, the reader who runs into `with_default_log` can go
-read it and see exactly what it does. The runtime doesn't
-offer that transparency for its own defaults.
+The body of each clause above is `$extern_handler("kai_default_log_info")`.
+That needs an explanation.
 
-If your effect has one default for production and another for
-tests, expose both as `with_default_log` and `with_test_log`,
-same signature. Whoever writes tests picks the second;
-whoever writes `main`, the first. The effect's module becomes
-a catalog of "canonical configurations".
+`$` is a **sigil**: a character that marks a special syntactic
+form. In kaikai it introduces a **compiler intrinsic**, a
+construct the compiler resolves directly instead of looking up a
+function defined in kaikai code. The general form is
+`$name(args)`. Today there's just one: `$extern_handler`. There
+may be more tomorrow; the sigil is reserved for that family.
 
-## 12.11 Runtime default handlers
+`$extern_handler("kai_default_log_info")` means: "the body of this
+clause is a call to the C symbol `kai_default_log_info`". When the
+effect fires, the compiler doesn't look for a kaikai function by
+that name; it emits a direct call to the C runtime linked into the
+program.
 
-There are effects a program uses so often that `kai` handles
-them without you declaring anything. The clearest case is
-`println`: it writes to standard output, which is an effect.
-Why doesn't it show up in every signature?
+This is the bridge between high-level algebraic effects and the
+concrete world — files, sockets, syscalls. OS primitives live in
+C; effects live in kaikai; `$extern_handler` joins them.
+
+### When the default fires and when it doesn't
+
+The lookup rule is the one from §12.4 with one extra step at the
+bottom:
+
+1. The nearest `handle ... with Eff` that covers the op wins.
+2. If no enclosing handle exists and the op is in `main`'s row,
+   the compiler installs the effect's default.
+3. If even the default doesn't cover the op, the compiler rejects
+   the program when typechecking `main`.
+
+Note the detail: the default **only** fires when the op would
+escape to `main`. If your function is inside a `handle`, the
+handle wins, not the default. There's no ambiguity, no surprising
+precedence: nearest wins, always.
+
+### Looking at the original example again
+
+This explains why `println` compiles without every signature
+carrying `/ Stdout`:
 
 ```kai
 fn hi() {
@@ -769,21 +777,172 @@ fn main() {
 }
 ```
 
-This compiles. The reason: `println` is backed by a `Stdout`
-handler that kaikai installs automatically around `main`. For
-simple programs, you don't have to think about the effect.
-When you want to control it (silence in tests, redirect to
-file, capture the output), install your own `Stdout` handler,
-and inside the `handle` the runtime's one steps out.
+`Stdout` ships from stdlib with a `default` block whose clauses
+call `$extern_handler("kai_default_stdout_print")` and friends.
+The C symbol writes to the process's real `stdout`. Since `main`
+doesn't handle `Stdout`, the compiler installs that default and
+the program prints.
 
-The rule: **handlers closer to the use win**. The runtime's
-implicit handler is the farthest, so it's the last resort.
-Any `handle` you place closer intercepts first.
+When you want to control the output (silence in tests, redirect
+to a file, capture it for assertions), you write your own `handle
+... with Stdout` and inside the block the runtime default doesn't
+participate. **Nearest wins**: the `handle` you wrote is closer
+than the implicit wrapping at `main`'s entry.
 
-Other effects with default handlers in `main`: `Stdin`,
-`Random`, `Time`, `Env`. This is so "hello-world" programs
-don't carry signature ceremony. The language reference's
-chapter 12 lists exactly which.
+### Your own default: the complete example
+
+If you declare an effect and equip it with a default, programs
+that just call `main` look just as simple:
+
+```kai
+effect MyLog {
+  info(msg: String) : Unit
+  default {
+    info(msg, resume) -> $extern_handler("kai_default_log_info")
+  }
+}
+
+fn greet(name: String) : Unit / MyLog {
+  MyLog.info("hi, " ++ name)
+}
+
+fn main() : Unit / Stdout {
+  let r = handle {
+    MyLog.info("hello from extern_handler")
+    7
+  } with MyLog {
+    info(msg, resume) -> resume(())   # silence inside the handle
+  }
+  print("result: #{int_to_string(r)}")
+}
+```
+
+Inside the `handle ... with MyLog`, the explicit clauses win: the
+`info` is silenced. If another `main` skipped that `handle`, the
+default would fire and print via the C runtime. `greet` doesn't
+know the difference: for it, `MyLog` is whatever the context
+decided.
+
+### When there's no default — the effect without a net
+
+Not every effect carries a `default`. `Fail` is the clear
+counter-example: if an op can abort the program, you don't want
+"forgetting to handle it" to be legal. The public declaration of
+`Fail` (appendix D) has no `default` block, and so a function
+producing `/ Fail` must be handled somewhere before `main`, or the
+compiler rejects with a clear message.
+
+The same applies to `State[T]`, `Reader[T]`, `Writer[W]`: generic
+effects where **no** reasonable implementation exists without
+context, so making the user write it isn't ceremony, it's
+discipline.
+
+The mental rule: an effect carries a `default` when there's **one
+obvious** implementation (write to `stdout`, read the system
+clock, generate pseudo-random numbers). If "reasonable" depends on
+the program, there's no default and the user provides it.
+
+### Wrapper function: the alternative when there's no default
+
+When an effect doesn't ship a `default`, or when the default
+exists but your program always wants a different one, the
+idiomatic pattern is a **wrapper function**:
+
+```kai
+fn with_test_log[A](body: () -> A / MyLog) : A {
+  handle {
+    body()
+  } with MyLog {
+    info(msg, resume) -> resume(())   # silence in tests
+  }
+}
+
+fn main() {
+  with_test_log { ->
+    greet("kaikai")
+    greet("ada")
+  }
+}
+```
+
+This is what stdlib uses for constructs like `try { body }` and
+`with_state(0) { body }`. The difference from a default is that
+the wrapping is **explicit in the code**: whoever reads `main`
+sees the line, opens the function, knows what it does. A default
+lives in the effect declaration.
+
+If your effect has one reasonable default for production and a
+different one for tests, expose both as wrapper functions
+(`with_test_log`, `with_quiet_log`) and let `main` use the
+default. Whoever writes tests calls the wrapper.
+
+## 12.11 The stdlib handlers are kaikai code
+
+When a program runs `println("hi")` and it just works, it's easy
+to imagine the compiler ships a special case for `Stdout`. It
+doesn't. The handlers the runtime installs around `main` for
+`Stdout`, `Stdin`, `Random`, `Clock`, `File`, `Env`, `NetTcp`, and
+the rest are written in **plain stdlib kaikai**: each one is an
+`effect ... { ops; default { ... } }` using the same
+`$extern_handler` sigil you'd use to connect your effect to C.
+
+```kai
+# stdlib/io/console.kai (schematic form)
+effect Stdout {
+  print(s: String) : Unit
+  default {
+    print(s, resume) -> $extern_handler("kai_default_stdout_print")
+  }
+}
+```
+
+The compiler doesn't know `Stdout` by name. It knows **`default`
+blocks** and **`$extern_handler`**. For `Stdout`, it installs the
+default the same way it does for your `MyLog`: by walking the AST
+of the effect declaration, not by reading a hardcoded table.
+
+This wasn't always the case. Until version 0.55, the compiler
+shipped internal tables with names like `default_stdout_setup`,
+`default_random_shims`, one entry per stdlib effect. The #533
+trilogy (PRs #551, #559, #561 in `kaikai-org/kaikai`) migrated all
+seventeen builtin effects to `default { }` blocks declared in
+stdlib and deleted the tables. The motive isn't aesthetic: it's
+that the AST becomes the single source of truth, and user effects
+get exactly the same guarantees as stdlib ones. If your effect
+declares `default { }` with `$extern_handler`, the compiler
+installs it like a builtin.
+
+The practical consequence: **you can read how `Stdout` is
+implemented**. It's in `stdlib/io/console.kai` (or the analogous
+file in the version you're running). It's kaikai code like yours.
+If a question about default semantics comes up — "what happens if
+the pipe is closed?", "who catches `EPIPE`?" — the answer lives in
+the clause `print(s, resume) -> ...` or in the C symbol it
+bridges. There's no secret runtime behavior separate from code you
+can read.
+
+Worth repeating the rule, to nail down the model: the compiler
+resolves an effect by checking, in order, (1) the nearest `handle
+... with`, (2) the effect's `default { }` block if the op escapes
+to `main`, (3) compile error. The stdlib handlers aren't a fourth
+category; they're instances of (2).
+
+### Why the sigil has an odd name
+
+`$extern_handler` may sound long. The reason is that the sigil is
+a system, not a single operation. The #533 trilogy introduced `$`
+as the prefix for a **family** of intrinsics; `$extern_handler` is
+the first. If kaikai later needs to expose other runtime bridges —
+asking the current `errno`, calling a platform-specific symbol —
+they'll live under the same sigil with descriptive names:
+`$os_name`, `$panic_with_trace`, whatever. Reserving
+`$<ident>(args)` leaves the door open without reopening the
+syntactic debate every time.
+
+For your daily work: if you never bridge an effect to C, you'll
+never write `$extern_handler`. But when you see it in stdlib you
+know what it is: a clause that hands its body off to a runtime
+symbol, declared with the same syntax as any other handler.
 
 ## 12.12 Case study: configuration processor
 
@@ -908,9 +1067,10 @@ Algebraic effects come from academia (Pretnar, Plotkin,
 Power) and appeared in languages like Koka, Eff and Effekt
 before kaikai. What kaikai contributes is readable syntax
 (the `/ Eff` notation in the signature), integration with the
-rest of the language (rows instead of lists, aliases), and
-default handlers so simple programs don't carry ceremony. But
-the underlying idea is old and solid.
+rest of the language (rows instead of lists, aliases), and a
+default-handler model with no special cases: the stdlib
+handlers are declared in kaikai with the same shape yours use.
+But the underlying idea is old and solid.
 
 If after this chapter you're still not comfortable, don't
 worry. Effects are the piece that takes the longest to land.
@@ -961,13 +1121,27 @@ original code survives unchanged?
 kaikai make the common case cheap and force you to mark the
 expensive case explicitly?
 
-**12.8.** Take `Log` from §12.10 and add a second "default":
-`with_silent_log`, which drops the messages. Then write a
-function that uses `Log` and test it with both handlers
-without modifying the function. Compare with how you'd do the
-same thing in a language with classical dependency injection.
+**12.8.** Declare an effect `MyLog` with operation `info(msg:
+String) : Unit` and a `default { }` block that bridges to a
+fictional C symbol `my_log_info_to_stderr` via
+`$extern_handler`. Then write a wrapper function
+`with_quiet_log` that silences the messages. A `main` without
+the wrapper triggers the default; a `main` wrapped in
+`with_quiet_log` doesn't. Compare with how you'd do the same
+in a language with classical dependency injection.
 
-**12.9.** Chapter 13 covers fibers: concurrent tasks
-modeled as effects. Note before reading it: what operations
-would an effect `Spawn` need? What decision would you make as
-a handler when a child fiber aborts?
+**12.9.** Why doesn't `Fail` carry a `default { }` block? Pick
+three hypothetical effects (yours or stdlib ones you imagine)
+and for each decide whether it would have a default. Argue in
+one line why or why not.
+
+**12.10.** Read the declaration of `Stdout` in
+`stdlib/io/console.kai` in the language repo. What does the
+default's clause do when the pipe is closed (`EPIPE`)? Where
+does that logic live: in kaikai or in the C symbol it bridges
+to?
+
+**12.11.** Chapter 13 covers fibers: concurrent tasks modeled
+as effects. Note before reading it: what operations would an
+effect `Spawn` need? What decision would you make as a handler
+when a child fiber aborts?
