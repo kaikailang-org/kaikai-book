@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 240" width="760" height="240">
+  <!-- kaikai logo — light mode (default).
+       For dark mode: use kaikai-logo-dark.svg.
+       Embed via: <picture><source srcset="kaikai-logo-dark.svg" media="(prefers-color-scheme: dark)"><img src="kaikai-logo.svg"></picture> -->
+  <defs>
+    <style>
+      .strand { fill: none; stroke: #0d3b66; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+      .accent { fill: none; stroke: #faa916; stroke-width: 7; stroke-linecap: round; }
+    </style>
+  </defs>
+  <g transform="translate(10, 10)">
+    <path class="strand" d="M 70 70  Q 128 40  186 70  Q 156 128 186 186  Q 128 216 70 186  Q 100 128 70 70 Z"/>
+    <path class="accent" d="M 128 60  Q 196 100 196 128  Q 156 156 128 196  Q 60 156 60 128  Q 100 100 128 60 Z"
+          transform="rotate(45 128 128)"/>
+    <g stroke="#5b2333" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="113" y1="100" x2="113" y2="156"/>
+      <line x1="113" y1="128" x2="148" y2="100"/>
+      <line x1="113" y1="128" x2="148" y2="156"/>
+    </g>
+    <circle cx="113" cy="128" r="7" fill="#fff" stroke="#5b2333" stroke-width="3"/>
+  </g>
+  <text x="270" y="120"
+        font-family="ui-monospace, 'SF Mono', Menlo, monospace"
+        font-size="80" font-weight="700"
+        fill="#0d3b66" letter-spacing="4"
+        dominant-baseline="central" text-anchor="start">
+    kaikai
+  </text>
+</svg>

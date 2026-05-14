@@ -1,0 +1,111 @@
+%YAML 1.2
+---
+# Sublime Text syntax for the kaikai language.
+# Used by typst (via syntect) to highlight ```kai fenced blocks.
+
+name: kaikai
+file_extensions: [kai]
+scope: source.kai
+
+variables:
+  ident: '[A-Za-z_][A-Za-z0-9_]*'
+
+contexts:
+  main:
+    - include: comments
+    - include: strings
+    - include: numbers
+    - include: keywords
+    - include: types
+    - include: effect-row
+    - include: intrinsics
+    - include: operators
+    - include: punctuation
+
+  comments:
+    - match: '#.*$'
+      scope: comment.line.number-sign.kai
+
+  strings:
+    - match: '"'
+      scope: punctuation.definition.string.begin.kai
+      push: string-body
+    - match: "'"
+      scope: punctuation.definition.string.begin.kai
+      push: char-body
+
+  string-body:
+    - meta_scope: string.quoted.double.kai
+    - match: '\\.'
+      scope: constant.character.escape.kai
+    - match: '#\{'
+      scope: punctuation.section.interpolation.begin.kai
+      push: interpolation
+    - match: '"'
+      scope: punctuation.definition.string.end.kai
+      pop: true
+
+  interpolation:
+    - meta_scope: meta.interpolation.kai
+    - match: '\}'
+      scope: punctuation.section.interpolation.end.kai
+      pop: true
+    - include: main
+
+  char-body:
+    - meta_scope: string.quoted.single.kai
+    - match: '\\.'
+      scope: constant.character.escape.kai
+    - match: "'"
+      scope: punctuation.definition.string.end.kai
+      pop: true
+
+  numbers:
+    - match: '\b\d+(\.\d+)?([eE][+-]?\d+)?(<{{ident}}(\s*[*/^]\s*{{ident}})*>)?\b'
+      scope: constant.numeric.kai
+    - match: '\b0x[0-9A-Fa-f_]+\b'
+      scope: constant.numeric.hex.kai
+
+  keywords:
+    - match: '\b(fn|let|var|if|else|match|case|when|where|return|do|then|in|as|of)\b'
+      scope: keyword.control.kai
+    - match: '\b(effect|handle|with|resume|default)\b'
+      scope: keyword.effect.kai
+    - match: '\b(type|unit|protocol|impl|axiom|const|extern|import|use|pub)\b'
+      scope: keyword.declaration.kai
+    - match: '\b(test|check|bench|assert|requires|ensures|result|todo)\b'
+      scope: keyword.contract.kai
+    - match: '\b(and|or|not)\b'
+      scope: keyword.operator.logical.kai
+    - match: '\b(true|false)\b'
+      scope: constant.language.boolean.kai
+    - match: '\b_\b'
+      scope: variable.language.wildcard.kai
+
+  types:
+    - match: '\b(Int|Real|Bool|Char|String|Unit|Nothing|Option|Result|List|Array|Ref|Cont)\b'
+      scope: support.type.builtin.kai
+    - match: '\b[A-Z][A-Za-z0-9_]*\b'
+      scope: support.type.kai
+
+  effect-row:
+    - match: '(/)\s*([A-Z]{{ident}})'
+      captures:
+        1: keyword.operator.effect-row.kai
+        2: support.type.effect.kai
+
+  intrinsics:
+    - match: '\$[A-Za-z_][A-Za-z0-9_]*'
+      scope: support.function.intrinsic.kai
+
+  operators:
+    - match: '->|=>|:=|\|>|\||\+\+|==|!=|<=|>=|<|>|&&|\|\||\+|-|\*|/|%|='
+      scope: keyword.operator.kai
+    - match: '@'
+      scope: keyword.operator.deref.kai
+
+  punctuation:
+    - match: '[\(\)\[\]\{\}]'
+      scope: punctuation.kai
+    - match: '[,;.:]'
+      scope: punctuation.kai

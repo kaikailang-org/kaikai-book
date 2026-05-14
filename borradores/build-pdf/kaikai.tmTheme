@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>name</key>
+  <string>kaikai-book</string>
+  <key>settings</key>
+  <array>
+    <dict>
+      <key>settings</key>
+      <dict>
+        <key>background</key>
+        <string>#F7F7F5</string>
+        <key>foreground</key>
+        <string>#1A1A1A</string>
+        <key>caret</key>
+        <string>#1A1A1A</string>
+        <key>lineHighlight</key>
+        <string>#00000010</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Comment</string>
+      <key>scope</key><string>comment</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#6B7280</string>
+        <key>fontStyle</key><string>italic</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>String</string>
+      <key>scope</key><string>string</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#5B2333</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Escape</string>
+      <key>scope</key><string>constant.character.escape</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#A06030</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Interpolation marker</string>
+      <key>scope</key><string>punctuation.section.interpolation</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#FAA916</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Number</string>
+      <key>scope</key><string>constant.numeric</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#0F766E</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Booleans / wildcard</string>
+      <key>scope</key><string>constant.language</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#0F766E</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Control keywords (fn, let, if, match, …)</string>
+      <key>scope</key><string>keyword.control</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#0D3B66</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Effect keywords (effect, handle, with, resume)</string>
+      <key>scope</key><string>keyword.effect</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#B45309</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Declarations (type, protocol, impl, pub, import …)</string>
+      <key>scope</key><string>keyword.declaration</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#0D3B66</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Contract keywords (requires, ensures, test, check, bench)</string>
+      <key>scope</key><string>keyword.contract</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#7C3AED</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Logical operators (and, or, not)</string>
+      <key>scope</key><string>keyword.operator.logical</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#0D3B66</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Operators</string>
+      <key>scope</key><string>keyword.operator</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#374151</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Effect row separator (/)</string>
+      <key>scope</key><string>keyword.operator.effect-row</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#B45309</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Builtin types</string>
+      <key>scope</key><string>support.type.builtin</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#0F766E</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Effect types in row</string>
+      <key>scope</key><string>support.type.effect</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#B45309</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Types (PascalCase)</string>
+      <key>scope</key><string>support.type</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#0F766E</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Compiler intrinsics ($extern_handler, …)</string>
+      <key>scope</key><string>support.function.intrinsic</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#B45309</string>
+        <key>fontStyle</key><string>bold italic</string>
+      </dict>
+    </dict>
+
+    <dict>
+      <key>name</key><string>Punctuation</string>
+      <key>scope</key><string>punctuation</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#4B5563</string>
+      </dict>
+    </dict>
+  </array>
+  <key>uuid</key>
+  <string>4d1d99ab-2d6b-4f37-9d34-9b8d3c97f0e1</string>
+</dict>
+</plist>
