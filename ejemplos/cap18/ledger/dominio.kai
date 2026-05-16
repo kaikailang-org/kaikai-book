@@ -17,7 +17,7 @@ unit USD
 pub unit CuentaId
 pub unit TransaccionId
 
-#derive(Show)
+#[derive(Show)]
 pub type Cuenta = {
   id:     Int<CuentaId>,
   nombre: String,
@@ -29,12 +29,12 @@ pub type Cuenta = {
 # negativo, un crédito. Por convención mantenemos los dos
 # tipos separados con un sum, para que el sistema de tipos no
 # nos deje sumar "monto de débito" con "monto de crédito".
-#derive(Show)
+#[derive(Show)]
 pub type Movimiento
   = Debito(Int<CuentaId>, Real<USD>)     # cargar a la cuenta
   | Credito(Int<CuentaId>, Real<USD>)    # abonar a la cuenta
 
-#derive(Show)
+#[derive(Show)]
 pub type Transaccion = {
   id:           Int<TransaccionId>,
   descripcion:  String,
@@ -51,7 +51,7 @@ pub type Comando
   | Listar
 
 # Respuestas del nivel de dominio.
-#derive(Show)
+#[derive(Show)]
 pub type Respuesta
   = CuentaCreada(Cuenta)
   | TransaccionRegistrada(Transaccion)

@@ -477,7 +477,7 @@ exitoso, y reintenta con un lote alternativo si falló.
 ```kai
 import actor
 
-#derive(Show)
+#[derive(Show)]
 type ResultadoLote
   = Done(Int)             # suma total exitosa
   | Failed(String)        # razón de la falla

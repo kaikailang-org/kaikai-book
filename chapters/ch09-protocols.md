@@ -149,27 +149,27 @@ If implementing three operations of `Ord` feels like too much
 work, hold on for §9.4: in many cases, the compiler derives
 them for you.
 
-## 9.4 `#derive(...)` and when to use it
+## 9.4 `#[derive(...)]` and when to use it
 
 For records where the obvious "delegate to each field"
 implementation is enough, kaikai gives you a shortcut: the
-`#derive(...)` directive before the type declaration.
+`#[derive(...)]` directive before the type declaration.
 
 ```kai
-#derive(Show)
+#[derive(Show)]
 type Person = {
   name: String,
   age: Int,
 }
 
-#derive(Show, Eq)
+#[derive(Show, Eq)]
 type Point = {
   x: Int,
   y: Int,
 }
 ```
 
-`#derive(Show)` tells the compiler "generate me a `Show` for
+`#[derive(Show)]` tells the compiler "generate me a `Show` for
 this record, walking the fields and delegating to each
 field's `Show`". The result for `Person`:
 
@@ -179,7 +179,7 @@ Person { name: Ada, age: 30 }
 ```
 
 The canonical format — `TypeName { field: value, ... }` — is
-what `#derive(Show)` produces, and is reasonable for
+what `#[derive(Show)]` produces, and is reasonable for
 debugging and logs. If you want a different format (say,
 the classic `(3, 4)` for a point), you write the `impl` by
 hand, like §9.1.
@@ -187,7 +187,7 @@ hand, like §9.1.
 `#derive` works for the five stdlib protocols, as long as
 **every field of the record also implements** the protocol
 you're deriving. If your record has a field whose type
-doesn't have `Show`, `#derive(Show)` fails compilation with
+doesn't have `Show`, `#[derive(Show)]` fails compilation with
 a message pointing at the offending field.
 
 The practical rule:
@@ -199,7 +199,7 @@ The practical rule:
   by some fields only, comparison by a specific field (not
   the natural ordering).
 
-You already saw `#derive(Show)` over `Point` in the tour
+You already saw `#[derive(Show)]` over `Point` in the tour
 (§1.6); here we show the manual implementation too and when
 each form pays off.
 
@@ -332,7 +332,7 @@ automatically `a1 == a2` (with `a1, a2 : Account`) calls
 your implementation.
 
 ```kai
-#derive(Eq)
+#[derive(Eq)]
 type Point = { x: Int, y: Int }
 
 fn main() {
@@ -377,7 +377,7 @@ three cards that `cmp(c1, c2)` returns the expected
 numbers.
 
 **9.3.** Take any record from earlier chapters and add
-`#derive(Show, Eq)` above the declaration. Verify that
+`#[derive(Show, Eq)]` above the declaration. Verify that
 `show` and `eq` work without you writing anything else.
 
 **9.4.** Declare your own protocol `Validable` with an

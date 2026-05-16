@@ -5,7 +5,7 @@
 # request.
 # A response is what the handler returns for serialisation.
 
-#derive(Show)
+#[derive(Show)]
 pub type Note = { id: Int, body: String }
 
 # Commands the server understands.

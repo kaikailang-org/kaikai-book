@@ -13,7 +13,7 @@
 
 import actor
 
-#derive(Show)
+#[derive(Show)]
 type ResultadoLote
   = Done(Int)             # suma total exitosa
   | Failed(String)        # razón de la falla

@@ -4,7 +4,7 @@
 # Un comando es lo que el handler interpreta del HTTP request.
 # Una respuesta es lo que el handler devuelve para serializar.
 
-#derive(Show)
+#[derive(Show)]
 pub type Nota = { id: Int, cuerpo: String }
 
 # Comandos que el servidor entiende.

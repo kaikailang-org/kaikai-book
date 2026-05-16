@@ -1,12 +1,12 @@
 # Protocols: extending types with operations declared elsewhere.
 #
 # A `protocol` declares a contract; an `impl ... for T` implements
-# it for a specific type. `#derive(...)` synthesises the
+# it for a specific type. `#[derive(...)]` synthesises the
 # implementation structurally for records whose fields already
 # satisfy the protocol (here `Show` for `Int`, which the stdlib
 # already provides).
 
-#derive(Show)
+#[derive(Show)]
 type Point = { x: Int, y: Int }
 
 fn main() {

@@ -139,27 +139,27 @@ impl Ord for Cuenta {
 Si `Ord` te da pereza implementar tres operaciones, espera a
 §9.4: en muchos casos, el compilador las deriva por ti.
 
-## 9.4 `#derive(...)` y cuándo usarlo
+## 9.4 `#[derive(...)]` y cuándo usarlo
 
 Para records donde la implementación obvia "delega en cada
 campo" basta, kaikai te ofrece un atajo: la directiva
-`#derive(...)` antes de la declaración de tipo.
+`#[derive(...)]` antes de la declaración de tipo.
 
 ```kai
-#derive(Show)
+#[derive(Show)]
 type Persona = {
   nombre: String,
   edad: Int,
 }
 
-#derive(Show, Eq)
+#[derive(Show, Eq)]
 type Punto = {
   x: Int,
   y: Int,
 }
 ```
 
-`#derive(Show)` le dice al compilador "genérame un `Show` para
+`#[derive(Show)]` le dice al compilador "genérame un `Show` para
 este record, recorriendo los campos y delegando en el `Show`
 de cada tipo de campo". El resultado para `Persona`:
 
@@ -169,7 +169,7 @@ Persona { nombre: Ada, edad: 30 }
 ```
 
 El formato canónico, `TipoNombre { campo: valor, ... }`,
-es lo que el `#derive(Show)` produce, y es razonable para
+es lo que el `#[derive(Show)]` produce, y es razonable para
 debugging y logs. Si quieres otro formato (por ejemplo, el
 clásico `(3, 4)` para un punto), escribes el `impl` a mano,
 como en §9.1.
@@ -177,7 +177,7 @@ como en §9.1.
 `#derive` funciona para los cinco protocolos del stdlib,
 siempre que **cada campo del record también implemente** el
 protocolo que estás derivando. Si tu record tiene un campo
-cuyo tipo no tiene `Show`, `#derive(Show)` falla en compilación
+cuyo tipo no tiene `Show`, `#[derive(Show)]` falla en compilación
 con un mensaje que apunta al campo problemático.
 
 La regla práctica:
@@ -189,7 +189,7 @@ La regla práctica:
   campos, comparación según un campo específico (no el orden
   natural).
 
-Ya viste `#derive(Show)` sobre `Punto` en el tour (§1.6); acá
+Ya viste `#[derive(Show)]` sobre `Punto` en el tour (§1.6); acá
 mostramos también la implementación manual y cuándo conviene
 una sobre la otra.
 
@@ -324,7 +324,7 @@ automáticamente `c1 == c2` (con `c1, c2 : Cuenta`) llama a tu
 implementación.
 
 ```kai
-#derive(Eq)
+#[derive(Eq)]
 type Punto = { x: Int, y: Int }
 
 fn main() {
@@ -367,7 +367,7 @@ dale `impl Ord` que ordene por `valor`. Verifica con tres
 cartas que `cmp(c1, c2)` devuelve los números esperados.
 
 **9.3.** Toma cualquier record que hayas escrito en capítulos
-anteriores y agrégale `#derive(Show, Eq)` arriba de la
+anteriores y agrégale `#[derive(Show, Eq)]` arriba de la
 declaración. Verifica que `show` y `eq` funcionan sin que
 hayas escrito nada más.
 

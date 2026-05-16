@@ -5,7 +5,7 @@
 
 import domain
 
-#derive(Show)
+#[derive(Show)]
 pub type HttpReq = { method: String, path: String, body: String }
 
 pub fn parse_request(raw: String) : Result[String, HttpReq] {

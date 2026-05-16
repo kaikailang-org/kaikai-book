@@ -81,7 +81,7 @@ hide their mutation behind a mailbox; `main.kai` is glue.*
 We start in the center. `domain.kai`:
 
 ```kai
-#derive(Show)
+#[derive(Show)]
 pub type Note = { id: Int, body: String }
 
 pub type Command
@@ -109,7 +109,7 @@ HTTP, this file doesn't change. If you decide to switch
 storage from memory to SQLite, this file doesn't change.
 It's the program's invariant.
 
-The `#derive(Show)` on `Note` is what lets us interpolate
+The `#[derive(Show)]` on `Note` is what lets us interpolate
 `#{note}` in a string (chapter 9). Without it, we'd have
 to write `impl Show for Note` by hand.
 
@@ -448,7 +448,7 @@ one by one:
   logic without starting fibers.
 - **Ch. 8** (modules): five files each with its `pub`,
   imports between them.
-- **Ch. 9** (protocols): `#derive(Show)` for interpolating
+- **Ch. 9** (protocols): `#[derive(Show)]` for interpolating
   notes.
 - **Ch. 12** (effects): each function declares its row;
   `handle` doesn't appear directly because the `handle`s

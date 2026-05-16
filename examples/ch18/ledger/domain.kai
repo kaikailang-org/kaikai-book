@@ -17,7 +17,7 @@ unit USD
 pub unit AccountId
 pub unit TransactionId
 
-#derive(Show)
+#[derive(Show)]
 pub type Account = {
   id:      Int<AccountId>,
   name:    String,
@@ -28,12 +28,12 @@ pub type Account = {
 # amount. We keep the two kinds (debit vs credit) as distinct
 # constructors of a sum type, so the type system won't let
 # us add "debit amount" with "credit amount".
-#derive(Show)
+#[derive(Show)]
 pub type Movement
   = Debit(Int<AccountId>, Real<USD>)     # charge to the account
   | Credit(Int<AccountId>, Real<USD>)    # credit to the account
 
-#derive(Show)
+#[derive(Show)]
 pub type Transaction = {
   id:           Int<TransactionId>,
   description:  String,
@@ -49,7 +49,7 @@ pub type Command
   | ListAccounts
 
 # Domain-level responses.
-#derive(Show)
+#[derive(Show)]
 pub type Response
   = AccountCreated(Account)
   | TransactionRegistered(Transaction)

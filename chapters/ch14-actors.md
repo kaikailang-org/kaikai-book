@@ -479,7 +479,7 @@ it failed.
 ```kai
 import actor
 
-#derive(Show)
+#[derive(Show)]
 type BatchResult
   = Done(Int)             # successful total
   | Failed(String)        # reason for the failure

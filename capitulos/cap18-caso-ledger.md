@@ -71,19 +71,19 @@ unit USD
 pub unit CuentaId
 pub unit TransaccionId
 
-#derive(Show)
+#[derive(Show)]
 pub type Cuenta = {
   id:     Int<CuentaId>,
   nombre: String,
   saldo:  Real<USD>,
 }
 
-#derive(Show)
+#[derive(Show)]
 pub type Movimiento
   = Debito(Int<CuentaId>, Real<USD>)
   | Credito(Int<CuentaId>, Real<USD>)
 
-#derive(Show)
+#[derive(Show)]
 pub type Transaccion = {
   id:           Int<TransaccionId>,
   descripcion:  String,

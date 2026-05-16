@@ -344,7 +344,7 @@ satisfacer. Es el equivalente conceptual a las interfaces de
 Go, los traits de Rust o los protocols de Clojure y Elixir.
 
 ```kai
-#derive(Show)
+#[derive(Show)]
 type Punto = { x: Int, y: Int }
 
 fn main() {
@@ -361,7 +361,7 @@ Punto { x: 3, y: 4 }
 `Show` es uno de los protocolos del stdlib (`Eq`, `Ord`,
 `Hash`, `Show`, `Serialize`). Su contrato es una sola
 operación: dado un valor, devolver un `String`. La línea
-`#derive(Show)` arriba del record le dice al compilador que
+`#[derive(Show)]` arriba del record le dice al compilador que
 **genere automáticamente** una implementación de `Show` para
 `Punto`, recorriendo los campos y delegando en el `Show` de
 cada uno. Como `Int` ya implementa `Show` en el stdlib, el

@@ -1,17 +1,17 @@
-# `#derive(...)` deriva la implementación estructuralmente:
+# `#[derive(...)]` deriva la implementación estructuralmente:
 # para cada campo del record, delega en el `impl` del campo.
 #
 # Para `Show`, esto produce el formato canónico
 # `TipoNombre { campo1: ..., campo2: ... }` reutilizando el
 # `Show` de cada tipo de campo.
 
-#derive(Show)
+#[derive(Show)]
 type Persona = {
   nombre: String,
   edad: Int,
 }
 
-#derive(Show, Eq)
+#[derive(Show, Eq)]
 type Punto = {
   x: Int,
   y: Int,

@@ -344,7 +344,7 @@ matches Go interfaces, Rust traits, or Clojure / Elixir
 protocols.
 
 ```kai
-#derive(Show)
+#[derive(Show)]
 type Point = { x: Int, y: Int }
 
 fn main() {
@@ -360,7 +360,7 @@ Point { x: 3, y: 4 }
 
 `Show` is one of the stdlib protocols (`Eq`, `Ord`, `Hash`,
 `Show`, `Serialize`). Its contract is a single op: given a
-value, return a `String`. The line `#derive(Show)` above the
+value, return a `String`. The line `#[derive(Show)]` above the
 record tells the compiler to **synthesize** a `Show`
 implementation for `Point`, walking the fields and delegating
 to each one's `Show`. Since `Int` already implements `Show` in

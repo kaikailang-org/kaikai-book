@@ -5,7 +5,7 @@
 
 import dominio
 
-#derive(Show)
+#[derive(Show)]
 pub type ReqHttp = { metodo: String, path: String, cuerpo: String }
 
 pub fn parsear_request(raw: String) : Result[String, ReqHttp] {

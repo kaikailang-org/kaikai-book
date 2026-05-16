@@ -81,7 +81,7 @@ es pegamento.*
 Empezamos por el centro. `dominio.kai`:
 
 ```kai
-#derive(Show)
+#[derive(Show)]
 pub type Nota = { id: Int, cuerpo: String }
 
 pub type Comando
@@ -109,7 +109,7 @@ vez de HTTP, este archivo no cambia. Si decides cambiar el
 almacenamiento de memoria a SQLite, este archivo no cambia. Es
 el invariante del programa.
 
-El `#derive(Show)` sobre `Nota` es lo que nos permite
+El `#[derive(Show)]` sobre `Nota` es lo que nos permite
 interpolar `#{nota}` en un string (cap. 9). Sin él, tendríamos
 que escribir un `impl Show for Nota` a mano.
 
@@ -453,7 +453,7 @@ Vale enumerar qué piezas del libro se usan, una a una:
   la lógica sin arrancar fibras.
 - **Cap. 8** (módulos): cinco archivos cada uno con su `pub`,
   imports entre ellos.
-- **Cap. 9** (protocolos): `#derive(Show)` para interpolar
+- **Cap. 9** (protocolos): `#[derive(Show)]` para interpolar
   notas.
 - **Cap. 12** (efectos): cada función declara su fila;
   `handle` no aparece directamente porque los `handle`s viven
