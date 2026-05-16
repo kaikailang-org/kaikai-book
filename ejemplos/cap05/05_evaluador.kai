@@ -78,7 +78,7 @@ fn describir(e: ErrorEval) : String =
     NoDefinida(nombre) -> "variable no definida: " ++ nombre
   }
 
-fn imprimir(r: Result[ErrorEval, Real]) : Unit =
+fn imprimir(r: Result[ErrorEval, Real]) : Unit / Stdout =
   match r {
     Ok(v)  -> println("ok: " ++ real_to_string(v))
     Err(e) -> println("error: " ++ describir(e))

@@ -18,7 +18,7 @@ fn greet(name: String) : Unit / Log {
 
 # El "default" del usuario: una función que toma un body y lo
 # corre con el handler estándar para Log.
-fn with_default_log[A](body: () -> A / Log) : A {
+fn with_default_log[A](body: () -> A / Log) : A / Stdout {
   handle {
     body()
   } with Log {

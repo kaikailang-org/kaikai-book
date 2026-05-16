@@ -76,7 +76,7 @@ fn describe(e: EvalError) : String =
     Undefined(name)  -> "undefined variable: " ++ name
   }
 
-fn print_result(r: Result[EvalError, Real]) : Unit =
+fn print_result(r: Result[EvalError, Real]) : Unit / Stdout =
   match r {
     Ok(v)  -> println("ok: " ++ real_to_string(v))
     Err(e) -> println("error: " ++ describe(e))
