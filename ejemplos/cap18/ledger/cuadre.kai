@@ -3,36 +3,45 @@
 # central de un ledger de doble entrada.
 #
 # La función `cuadra` es pura. La verificamos con tests y la
-# usamos como precondición de `registrar` en el almacén.
+# usamos como precondición de `aplicar_si_cuadra` y del
+# `procesar` del actor.
 
 import dominio
 
 # Suma los débitos de una lista de movimientos.
-pub fn total_debitos(ms: [dominio.Movimiento]) : Real<USD> {
-  match ms {
-    []                         -> 0.0<USD>
-    [dominio.Debito(_, m), ...rest]  -> m + total_debitos(rest)
-    [dominio.Credito(_, _), ...rest] -> total_debitos(rest)
-  }
+pub fn total_debitos(ms: [dominio.Movimiento]) : Real<USD> = match ms {
+  []                              -> 0.0<USD>
+  [dominio.Debito(_, m), ...rest]  -> m + total_debitos(rest)
+  [dominio.Credito(_, _), ...rest] -> total_debitos(rest)
 }
 
 # Suma los créditos.
-pub fn total_creditos(ms: [dominio.Movimiento]) : Real<USD> {
-  match ms {
-    []                         -> 0.0<USD>
-    [dominio.Credito(_, m), ...rest] -> m + total_creditos(rest)
-    [dominio.Debito(_, _), ...rest]  -> total_creditos(rest)
-  }
+pub fn total_creditos(ms: [dominio.Movimiento]) : Real<USD> = match ms {
+  []                               -> 0.0<USD>
+  [dominio.Credito(_, m), ...rest] -> m + total_creditos(rest)
+  [dominio.Debito(_, _), ...rest]  -> total_creditos(rest)
 }
 
-# La invariante: ambas sumas son iguales.
-pub fn cuadra(ms: [dominio.Movimiento]) : Bool =
-  total_debitos(ms) == total_creditos(ms)
+# La invariante: ambas sumas son iguales. Va marcada con el
+# attribute `[<refinement_pure>]` para que `requires` y
+# `ensures` puedan llamarla desde sus predicados (kaikai 0.70
+# solo permite el conjunto cerrado del pure-prelude más fns
+# explícitamente opt-in vía este attribute).
+#
+# Nota: en 0.70 `pub` no convive con `[<refinement_pure>]` —
+# combinar los dos hace que el símbolo no se exporte. Por eso
+# `cuadra` es privada y exponemos `esta_cuadrada` como
+# wrapper público para que el resto del proyecto (almacén,
+# tests) la pueda usar.
+fn cuadra(ms: [dominio.Movimiento]) : Bool
+  [<refinement_pure>]
+  = total_debitos(ms) == total_creditos(ms)
 
-# Y la versión con contrato del cap. 11: si llamas a esta
-# función, garantizas que los movimientos cuadran. El
-# compilador inserta un assert si no lo puede verificar
-# estáticamente.
+pub fn esta_cuadrada(ms: [dominio.Movimiento]) : Bool = cuadra(ms)
+
+# Versión con contrato del cap. 11: si llamas a esta función,
+# garantizas que los movimientos cuadran. El compilador
+# inserta un assert si no lo puede verificar estáticamente.
 pub fn aplicar_si_cuadra(ms: [dominio.Movimiento]) : [dominio.Movimiento]
   requires cuadra(ms)
   ensures  cuadra(result)
@@ -43,7 +52,7 @@ test "cuadra con una entrada y una salida" {
     dominio.Debito(1<CuentaId>, 100.0<USD>),
     dominio.Credito(2<CuentaId>, 100.0<USD>),
   ]
-  assert cuadra(ms)
+  assert esta_cuadrada(ms)
 }
 
 test "no cuadra cuando los montos difieren" {
@@ -51,7 +60,7 @@ test "no cuadra cuando los montos difieren" {
     dominio.Debito(1<CuentaId>, 100.0<USD>),
     dominio.Credito(2<CuentaId>, 90.0<USD>),
   ]
-  assert not cuadra(ms)
+  assert not esta_cuadrada(ms)
 }
 
 test "cuadra con múltiples líneas" {
@@ -60,5 +69,5 @@ test "cuadra con múltiples líneas" {
     dominio.Debito(2<CuentaId>, 40.0<USD>),
     dominio.Credito(3<CuentaId>, 100.0<USD>),
   ]
-  assert cuadra(ms)
+  assert esta_cuadrada(ms)
 }

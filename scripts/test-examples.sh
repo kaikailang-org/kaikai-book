@@ -162,8 +162,8 @@ project|ejemplos/cap16/ffi/03_shim|ok|app.kai|-include shim.h shim.c
 # Capítulo 17 — caso notas
 project|ejemplos/cap17/notas|ok
 
-# Capítulo 18 — caso ledger (refactor pendiente: refinement-pure + spread)
-project|ejemplos/cap18/ledger|fail
+# Capítulo 18 — caso ledger
+project|ejemplos/cap18/ledger|ok
 
 # ===== Edición inglés =====
 
@@ -285,7 +285,7 @@ project|examples/ch16/ffi/03_shim|ok|app.kai|-include shim.h shim.c
 project|examples/ch17/notes|ok
 
 # Chapter 18
-project|examples/ch18/ledger|fail
+project|examples/ch18/ledger|ok
 EOF
 
 # ============================================================

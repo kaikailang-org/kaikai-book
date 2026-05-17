@@ -3,36 +3,45 @@
 # of a double-entry ledger.
 #
 # The `balances` function is pure. We verify it with tests
-# and use it as a precondition for `register` in the store.
+# and use it as a precondition for `apply_if_balanced` and
+# the actor's `process`.
 
 import domain
 
 # Sum the debits of a movement list.
-pub fn total_debits(ms: [domain.Movement]) : Real<USD> {
-  match ms {
-    []                              -> 0.0<USD>
-    [domain.Debit(_, m), ...rest]   -> m + total_debits(rest)
-    [domain.Credit(_, _), ...rest]  -> total_debits(rest)
-  }
+pub fn total_debits(ms: [domain.Movement]) : Real<USD> = match ms {
+  []                              -> 0.0<USD>
+  [domain.Debit(_, m), ...rest]   -> m + total_debits(rest)
+  [domain.Credit(_, _), ...rest]  -> total_debits(rest)
 }
 
 # Sum the credits.
-pub fn total_credits(ms: [domain.Movement]) : Real<USD> {
-  match ms {
-    []                              -> 0.0<USD>
-    [domain.Credit(_, m), ...rest]  -> m + total_credits(rest)
-    [domain.Debit(_, _), ...rest]   -> total_credits(rest)
-  }
+pub fn total_credits(ms: [domain.Movement]) : Real<USD> = match ms {
+  []                              -> 0.0<USD>
+  [domain.Credit(_, m), ...rest]  -> m + total_credits(rest)
+  [domain.Debit(_, _), ...rest]   -> total_credits(rest)
 }
 
-# The invariant: both sums are equal.
-pub fn balances(ms: [domain.Movement]) : Bool =
-  total_debits(ms) == total_credits(ms)
+# The invariant: both sums are equal. Marked with the
+# attribute `[<refinement_pure>]` so `requires` / `ensures`
+# can call it from their predicates (kaikai 0.70 only allows
+# the closed pure-prelude set plus fns explicitly opted in
+# via this attribute).
+#
+# Note: in 0.70 `pub` doesn't coexist with `[<refinement_pure>]`
+# — combining the two prevents the symbol from being exported.
+# So `balances` is private and we expose `is_balanced` as a
+# public wrapper for the rest of the project (store, tests)
+# to use.
+fn balances(ms: [domain.Movement]) : Bool
+  [<refinement_pure>]
+  = total_debits(ms) == total_credits(ms)
 
-# And the contract version from chapter 11: if you call this
-# function, you guarantee that the movements balance. The
-# compiler inserts an assert if it can't verify it
-# statically.
+pub fn is_balanced(ms: [domain.Movement]) : Bool = balances(ms)
+
+# Contract version from chapter 11: if you call this function,
+# you guarantee that the movements balance. The compiler
+# inserts an assert if it can't verify it statically.
 pub fn apply_if_balanced(ms: [domain.Movement]) : [domain.Movement]
   requires balances(ms)
   ensures  balances(result)
@@ -43,7 +52,7 @@ test "balances with one debit and one credit" {
     domain.Debit(1<AccountId>, 100.0<USD>),
     domain.Credit(2<AccountId>, 100.0<USD>),
   ]
-  assert balances(ms)
+  assert is_balanced(ms)
 }
 
 test "doesn't balance when amounts differ" {
@@ -51,7 +60,7 @@ test "doesn't balance when amounts differ" {
     domain.Debit(1<AccountId>, 100.0<USD>),
     domain.Credit(2<AccountId>, 90.0<USD>),
   ]
-  assert not balances(ms)
+  assert not is_balanced(ms)
 }
 
 test "balances with multiple lines" {
@@ -60,5 +69,5 @@ test "balances with multiple lines" {
     domain.Debit(2<AccountId>, 40.0<USD>),
     domain.Credit(3<AccountId>, 100.0<USD>),
   ]
-  assert balances(ms)
+  assert is_balanced(ms)
 }

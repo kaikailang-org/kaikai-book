@@ -11,19 +11,19 @@ import fs.file
 
 pub type Event = Line(String)
 
-fn loop(path: String) : Unit / Actor[Event] + File {
+# Actor body. Appends each line and recurses to await the
+# next event.
+pub fn persistence_loop(path: String) : Unit / Actor[Event] + File = {
   match Actor.receive() {
     Line(s) -> {
-      file.file_append(path, s ++ "\n")
-      loop(path)
+      file_append(path, s ++ "\n")
+      persistence_loop(path)
     }
   }
 }
 
-pub fn start(path: String) : Pid[Event] / Spawn + Cancel + Actor[Event] + File {
-  # Append-only: if the file exists, we'd open it in append
-  # mode without truncating. For a simple demo we create it
-  # empty.
-  file.file_write_file(path, "")
-  spawn_actor(() => loop(path))
+# Truncate the log file before the actor starts so each run
+# begins with an empty log.
+pub fn reset_log(path: String) : Unit / File = {
+  file_write_file(path, "")
 }

@@ -1,73 +1,97 @@
-# Programa que arma todo y ejecuta una serie de operaciones
-# de ejemplo. Es CLI, no servidor HTTP: el énfasis del cap. 18
-# está en las invariantes contables, no en la concurrencia.
+# Cablea el ledger y ejecuta una serie de operaciones de
+# ejemplo. Es CLI, no servidor HTTP: el cap. 18 enfatiza las
+# invariantes contables, no la concurrencia. Para un demo
+# más completo (CLI interactivo, o expuesto vía HTTP usando
+# el patrón del cap. 17), las piezas están listas.
 #
-# Para un demo más completo (CLI con comandos interactivos, o
-# expuesto vía HTTP usando el patrón del cap. 17), las piezas
-# están listas.
+# Dos notas estructurales (heredadas de los cap. 14 y 17):
+#
+#   1. `Actor[T]` no tiene un handler default en el scope de
+#      `main`. Acá instalamos los tres mailboxes que `step`
+#      toca anidando tres bloques `with_mailbox` antes de
+#      spawnear los actores.
+#
+#   2. `spawn_actor(body)` devuelve un `Pid[Msg]` branded al
+#      scope de `Spawn` que lo creó. El pid nunca sale de
+#      `main` — spawn y uso ocurren en el mismo bloque.
 
 import actor
 import spawn
 import fs.file
 import dominio
 import almacen
-import cuadre
 import persistencia
 
 const PATH_LOG : String = "ledger.audit.log"
 
-fn imprimir(r: dominio.Respuesta) : Unit / Console {
+fn imprimir(r: dominio.Respuesta) : Unit / Stdout = {
   println("  -> #{r}")
 }
 
-fn registrar_evento(log_pid: Pid[persistencia.Evento], r: dominio.Respuesta)
-    : Unit / Actor[persistencia.Evento] {
-  match r {
-    dominio.CuentaCreada(c)        -> Actor.send(log_pid, persistencia.Linea("CUENTA #{c.id} #{c.nombre}"))
-    dominio.TransaccionRegistrada(t) -> Actor.send(log_pid, persistencia.Linea("TX #{t.id} #{t.descripcion}"))
-    _                                -> ()
-  }
+fn registrar_evento(log_pid: Pid[persistencia.Evento], r: dominio.Respuesta) : Unit / Actor[persistencia.Evento] = match r {
+  dominio.CuentaCreada(c)          -> Actor.send(log_pid, persistencia.Linea("CUENTA #{c.id} #{c.nombre}"))
+  dominio.TransaccionRegistrada(t) -> Actor.send(log_pid, persistencia.Linea("TX #{t.id} #{t.descripcion}"))
+  _                                 -> ()
 }
 
+# Un paso del demo: manda el comando al almacén, imprime la
+# respuesta, registra el evento.
 fn paso(
   almacen_pid: Pid[almacen.AlmacenMsg],
   log_pid: Pid[persistencia.Evento],
   c: dominio.Comando,
-) : Unit / Console + Spawn + Cancel + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
+) : Unit / Stdout + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] = {
   let r = almacen.preguntar(almacen_pid, c)
   imprimir(r)
   registrar_evento(log_pid, r)
 }
 
-fn main() : Unit / Console + File + Spawn + Cancel + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
-  let almacen_pid = almacen.arrancar()
-  let log_pid     = persistencia.arrancar(PATH_LOG)
+fn main() : Int / Stdout + File + Spawn + Cancel = {
+  persistencia.reset_log(PATH_LOG)
 
-  println("== creando cuentas ==")
-  paso(almacen_pid, log_pid, dominio.CrearCuenta("caja"))
-  paso(almacen_pid, log_pid, dominio.CrearCuenta("ventas"))
-  paso(almacen_pid, log_pid, dominio.CrearCuenta("gastos"))
+  # `paso()` toca tres efectos Actor[T]:
+  #   - Actor[AlmacenMsg]  : manda comandos al almacén
+  #   - Actor[AlmacenResp] : recibe su respuesta
+  #   - Actor[Evento]      : manda una línea de log a persistencia
+  # así que `main` anida tres `with_mailbox` para cerrarlos
+  # antes de llegar a la fila externa del programa.
+  with_mailbox {
+    with_mailbox {
+      with_mailbox {
+        let almacen_body: () -> Unit / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] = () => almacen.almacen_loop(almacen.estado_inicial())
+        let log_body:     () -> Unit / Actor[persistencia.Evento] + File = () => persistencia.persistencia_loop(PATH_LOG)
+        let almacen_pid = spawn_actor(almacen_body)
+        let log_pid     = spawn_actor(log_body)
 
-  println("== registrando una venta ==")
-  paso(almacen_pid, log_pid, dominio.Registrar("venta de tarjeta", [
-    dominio.Debito(1<CuentaId>, 50.0<USD>),
-    dominio.Credito(2<CuentaId>, 50.0<USD>),
-  ]))
+        println("== creando cuentas ==")
+        paso(almacen_pid, log_pid, dominio.CrearCuenta("caja"))
+        paso(almacen_pid, log_pid, dominio.CrearCuenta("ventas"))
+        paso(almacen_pid, log_pid, dominio.CrearCuenta("gastos"))
 
-  println("== pagando un gasto ==")
-  paso(almacen_pid, log_pid, dominio.Registrar("café del equipo", [
-    dominio.Debito(3<CuentaId>, 8.0<USD>),
-    dominio.Credito(1<CuentaId>, 8.0<USD>),
-  ]))
+        println("== registrando una venta ==")
+        paso(almacen_pid, log_pid, dominio.Registrar("venta de tarjeta", [
+          dominio.Debito(1<CuentaId>, 50.0<USD>),
+          dominio.Credito(2<CuentaId>, 50.0<USD>),
+        ]))
 
-  println("== intento descuadrado (debe fallar) ==")
-  paso(almacen_pid, log_pid, dominio.Registrar("error", [
-    dominio.Debito(1<CuentaId>, 100.0<USD>),
-    dominio.Credito(2<CuentaId>, 50.0<USD>),
-  ]))
+        println("== pagando un gasto ==")
+        paso(almacen_pid, log_pid, dominio.Registrar("café del equipo", [
+          dominio.Debito(3<CuentaId>, 8.0<USD>),
+          dominio.Credito(1<CuentaId>, 8.0<USD>),
+        ]))
 
-  println("== saldos finales ==")
-  paso(almacen_pid, log_pid, dominio.ConsultarSaldo(1<CuentaId>))
-  paso(almacen_pid, log_pid, dominio.ConsultarSaldo(2<CuentaId>))
-  paso(almacen_pid, log_pid, dominio.ConsultarSaldo(3<CuentaId>))
+        println("== intento descuadrado (debe fallar) ==")
+        paso(almacen_pid, log_pid, dominio.Registrar("error", [
+          dominio.Debito(1<CuentaId>, 100.0<USD>),
+          dominio.Credito(2<CuentaId>, 50.0<USD>),
+        ]))
+
+        println("== saldos finales ==")
+        paso(almacen_pid, log_pid, dominio.ConsultarSaldo(1<CuentaId>))
+        paso(almacen_pid, log_pid, dominio.ConsultarSaldo(2<CuentaId>))
+        paso(almacen_pid, log_pid, dominio.ConsultarSaldo(3<CuentaId>))
+      }
+    }
+  }
+  0
 }

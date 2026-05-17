@@ -1,73 +1,96 @@
-# Program that wires it all and runs a series of example
-# operations. It's a CLI, not an HTTP server: the emphasis
-# of chapter 18 is on accounting invariants, not
-# concurrency.
+# Wires the ledger together and runs a series of example
+# operations. It's a CLI, not an HTTP server: chapter 18
+# focuses on accounting invariants, not concurrency. For a
+# richer demo (interactive CLI, or HTTP-fronted using
+# chapter 17's pattern), the pieces are ready.
 #
-# For a more complete demo (interactive CLI, or HTTP-fronted
-# using chapter 17's pattern), the pieces are ready.
+# Two structural notes (carried over from chapter 14 and 17):
+#
+#   1. `Actor[T]` has no top-level default handler. `main`
+#      installs the two mailboxes it needs by nesting two
+#      `with_mailbox` blocks before spawning the actors.
+#
+#   2. `spawn_actor(body)` returns a `Pid[Msg]` branded to
+#      the surrounding `Spawn` scope. The pid never leaves
+#      `main` — we spawn and use it in the same block.
 
 import actor
 import spawn
 import fs.file
 import domain
 import store
-import balance
 import persistence
 
 const LOG_PATH : String = "ledger.audit.log"
 
-fn show(r: domain.Response) : Unit / Console {
+fn print_response(r: domain.Response) : Unit / Stdout = {
   println("  -> #{r}")
 }
 
-fn record_event(log_pid: Pid[persistence.Event], r: domain.Response)
-    : Unit / Actor[persistence.Event] {
-  match r {
-    domain.AccountCreated(c)          -> Actor.send(log_pid, persistence.Line("ACCOUNT #{c.id} #{c.name}"))
-    domain.TransactionRegistered(t)   -> Actor.send(log_pid, persistence.Line("TX #{t.id} #{t.description}"))
-    _                                  -> ()
-  }
+fn record_event(log_pid: Pid[persistence.Event], r: domain.Response) : Unit / Actor[persistence.Event] = match r {
+  domain.AccountCreated(c)        -> Actor.send(log_pid, persistence.Line("ACCOUNT #{c.id} #{c.name}"))
+  domain.TransactionRegistered(t) -> Actor.send(log_pid, persistence.Line("TX #{t.id} #{t.description}"))
+  _                                -> ()
 }
 
+# One demo step: send a command to the store, print the
+# response, log the event.
 fn step(
   store_pid: Pid[store.StoreMsg],
   log_pid: Pid[persistence.Event],
   c: domain.Command,
-) : Unit / Console + Spawn + Cancel + Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] {
+) : Unit / Stdout + Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] = {
   let r = store.ask(store_pid, c)
-  show(r)
+  print_response(r)
   record_event(log_pid, r)
 }
 
-fn main() : Unit / Console + File + Spawn + Cancel + Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] {
-  let store_pid = store.start()
-  let log_pid   = persistence.start(LOG_PATH)
+fn main() : Int / Stdout + File + Spawn + Cancel = {
+  persistence.reset_log(LOG_PATH)
 
-  println("== creating accounts ==")
-  step(store_pid, log_pid, domain.CreateAccount("cash"))
-  step(store_pid, log_pid, domain.CreateAccount("sales"))
-  step(store_pid, log_pid, domain.CreateAccount("expenses"))
+  # `step()` touches three Actor[T] effects:
+  #   - Actor[StoreMsg]  : send commands to the store
+  #   - Actor[StoreResp] : receive its reply
+  #   - Actor[Event]     : send a log line to persistence
+  # so `main` nests three `with_mailbox` blocks to close
+  # them before reaching the program's outermost row.
+  with_mailbox {
+    with_mailbox {
+      with_mailbox {
+        let store_body: () -> Unit / Actor[store.StoreMsg] + Actor[store.StoreResp] = () => store.store_loop(store.initial_state())
+        let log_body:   () -> Unit / Actor[persistence.Event] + File = () => persistence.persistence_loop(LOG_PATH)
+        let store_pid = spawn_actor(store_body)
+        let log_pid   = spawn_actor(log_body)
 
-  println("== recording a sale ==")
-  step(store_pid, log_pid, domain.Register("card sale", [
-    domain.Debit(1<AccountId>, 50.0<USD>),
-    domain.Credit(2<AccountId>, 50.0<USD>),
-  ]))
+        println("== creating accounts ==")
+        step(store_pid, log_pid, domain.CreateAccount("cash"))
+        step(store_pid, log_pid, domain.CreateAccount("sales"))
+        step(store_pid, log_pid, domain.CreateAccount("expenses"))
 
-  println("== paying an expense ==")
-  step(store_pid, log_pid, domain.Register("team coffee", [
-    domain.Debit(3<AccountId>, 8.0<USD>),
-    domain.Credit(1<AccountId>, 8.0<USD>),
-  ]))
+        println("== recording a sale ==")
+        step(store_pid, log_pid, domain.Register("card sale", [
+          domain.Debit(1<AccountId>, 50.0<USD>),
+          domain.Credit(2<AccountId>, 50.0<USD>),
+        ]))
 
-  println("== unbalanced attempt (should fail) ==")
-  step(store_pid, log_pid, domain.Register("error", [
-    domain.Debit(1<AccountId>, 100.0<USD>),
-    domain.Credit(2<AccountId>, 50.0<USD>),
-  ]))
+        println("== paying an expense ==")
+        step(store_pid, log_pid, domain.Register("team coffee", [
+          domain.Debit(3<AccountId>, 8.0<USD>),
+          domain.Credit(1<AccountId>, 8.0<USD>),
+        ]))
 
-  println("== final balances ==")
-  step(store_pid, log_pid, domain.QueryBalance(1<AccountId>))
-  step(store_pid, log_pid, domain.QueryBalance(2<AccountId>))
-  step(store_pid, log_pid, domain.QueryBalance(3<AccountId>))
+        println("== unbalanced attempt (should fail) ==")
+        step(store_pid, log_pid, domain.Register("error", [
+          domain.Debit(1<AccountId>, 100.0<USD>),
+          domain.Credit(2<AccountId>, 50.0<USD>),
+        ]))
+
+        println("== final balances ==")
+        step(store_pid, log_pid, domain.QueryBalance(1<AccountId>))
+        step(store_pid, log_pid, domain.QueryBalance(2<AccountId>))
+        step(store_pid, log_pid, domain.QueryBalance(3<AccountId>))
+      }
+    }
+  }
+  0
 }

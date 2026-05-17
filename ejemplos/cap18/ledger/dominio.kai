@@ -25,10 +25,10 @@ pub type Cuenta = {
 }
 
 # Un movimiento es una línea de una transacción: una cuenta y
-# un monto. Si el monto es positivo, es un débito; si es
-# negativo, un crédito. Por convención mantenemos los dos
-# tipos separados con un sum, para que el sistema de tipos no
-# nos deje sumar "monto de débito" con "monto de crédito".
+# un monto. Mantenemos los dos tipos (débito vs crédito) como
+# constructores distintos de un sum type, para que el sistema
+# de tipos no nos deje sumar "monto de débito" con "monto de
+# crédito".
 #[derive(Show)]
 pub type Movimiento
   = Debito(Int<CuentaId>, Real<USD>)     # cargar a la cuenta
@@ -42,8 +42,7 @@ pub type Transaccion = {
 }
 
 # Comandos que el ledger acepta. Crear cuenta, registrar
-# transacción, consultar saldo de una cuenta, exportar todas
-# las transacciones del día.
+# transacción, consultar saldo de una cuenta, listar cuentas.
 pub type Comando
   = CrearCuenta(String)                          # nombre de cuenta nueva
   | Registrar(String, [Movimiento])              # descripción + movs
