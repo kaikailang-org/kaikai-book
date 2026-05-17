@@ -46,7 +46,11 @@ fn attempt(me: Pid[BatchResult], batch: [(Int, Int)])
 
 # The supervisor starts a worker with a batch. If it fails,
 # retries with an alternate batch. Up to two attempts.
-fn supervisor() : Unit / Console + Spawn + Cancel + Actor[BatchResult] {
+#
+# The inner `with_mailbox` closes `Actor[BatchResult]`, so
+# `supervisor`'s signature no longer carries it — only `attempt`,
+# which runs inside the block, declares the effect.
+fn supervisor() : Unit / Console + Spawn + Cancel {
   with_mailbox {
     let me = Actor.self()
     let first_batch  = [(10, 2), (20, 4), (30, 0)]   # will fail

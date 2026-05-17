@@ -139,12 +139,13 @@ build|ejemplos/cap13/04_race.kai|ok
 build|ejemplos/cap13/05_worker_pool.kai|ok
 build|ejemplos/cap13/06_eco_concurrente.kai|ok
 
-# Capítulo 14 — actores (03 y 05 fallan en 0.68, ver reporte)
+# Capítulo 14 — actores (03 falla por bug del compilador en
+# Actor.send Request/Reply, ver issue tracker)
 build|ejemplos/cap14/01_with_mailbox.kai|ok
 build|ejemplos/cap14/02_spawn_actor.kai|ok
 build|ejemplos/cap14/03_request_reply.kai|fail
 build|ejemplos/cap14/04_mailbox_policy.kai|ok
-build|ejemplos/cap14/05_supervisor.kai|fail
+build|ejemplos/cap14/05_supervisor.kai|ok
 
 # Capítulo 15 — holes (compilan, abortan en runtime al llegar al hole)
 run|ejemplos/cap15/01_hole_basico.kai|run_panic
@@ -266,7 +267,7 @@ build|examples/ch14/01_with_mailbox.kai|ok
 build|examples/ch14/02_spawn_actor.kai|ok
 build|examples/ch14/03_request_reply.kai|fail
 build|examples/ch14/04_mailbox_policy.kai|ok
-build|examples/ch14/05_supervisor.kai|fail
+build|examples/ch14/05_supervisor.kai|ok
 
 # Chapter 15 — holes
 run|examples/ch15/01_basic_hole.kai|run_panic

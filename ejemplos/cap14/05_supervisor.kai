@@ -46,7 +46,11 @@ fn intento(me: Pid[ResultadoLote], lote: [(Int, Int)])
 
 # El supervisor arranca un trabajador con un lote. Si falla,
 # reintenta con un lote alternativo. Hasta dos intentos.
-fn supervisor() : Unit / Console + Spawn + Cancel + Actor[ResultadoLote] {
+#
+# El `with_mailbox` interno cierra el efecto `Actor[ResultadoLote]`,
+# así que la firma de `supervisor` ya no lo lleva — solo `intento`
+# (que corre adentro del bloque) lo declara.
+fn supervisor() : Unit / Console + Spawn + Cancel {
   with_mailbox {
     let me = Actor.self()
     let primer_lote = [(10, 2), (20, 4), (30, 0)]   # va a fallar
