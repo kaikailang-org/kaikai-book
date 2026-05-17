@@ -1,8 +1,10 @@
 # Tipos de dominio del servidor de notas.
 #
 # Una nota tiene un id (entero) y un cuerpo (string).
-# Un comando es lo que el handler interpreta del HTTP request.
-# Una respuesta es lo que el handler devuelve para serializar.
+# Un comando es lo que el handler interpreta de un request
+# HTTP. Una respuesta es lo que el handler devuelve para que
+# se serialice. Sin efectos: este módulo es el invariante del
+# programa.
 
 #[derive(Show)]
 pub type Nota = { id: Int, cuerpo: String }
@@ -14,10 +16,12 @@ pub type Comando
   | Crear(String)
   | Borrar(Int)
 
-# Respuestas del nivel de dominio. El traductor a HTTP las
-# convierte en status codes + cuerpos JSON.
+# Respuestas del nivel de dominio. La variante "ok" se llama
+# `Guardado` (no `Ok`) para no colisionar con `Result.Ok` en
+# los matches del capítulo. El traductor a HTTP las convierte
+# en status codes + cuerpos.
 pub type Respuesta
-  = Ok(String)                      # 200, body = String
+  = Guardado(String)                # 200, body = String
   | Creado(Nota)                    # 201, body = nota serializada
   | NoEncontrado                    # 404
   | ErrorCliente(String)            # 400

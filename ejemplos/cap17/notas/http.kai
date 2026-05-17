@@ -1,14 +1,15 @@
-# Parser y serializador HTTP mínimos. Cubrimos lo justo para
-# servir requests sencillos. Para producción real se usaría el
-# parser de stdlib/net/http.kai; acá lo escribimos a mano para
-# que la cadena completa quepa en la cabeza del lector.
+# Parser y serializador HTTP mínimos para el servidor de
+# notas. Manipulación pura de strings — sin efectos. Para
+# producción real se usaría el parser de `stdlib/net/http.kai`;
+# acá lo escribimos a mano para que la cadena completa quepa
+# en la cabeza del lector.
 
 import dominio
 
 #[derive(Show)]
 pub type ReqHttp = { metodo: String, path: String, cuerpo: String }
 
-pub fn parsear_request(raw: String) : Result[String, ReqHttp] {
+pub fn parsear_request(raw: String) : Result[String, ReqHttp] = {
   match string.split(raw, "\r\n\r\n") {
     [head, ...cuerpo_partes] -> {
       let cuerpo = string.join(cuerpo_partes, "\r\n\r\n")
@@ -21,21 +22,21 @@ pub fn parsear_request(raw: String) : Result[String, ReqHttp] {
   }
 }
 
-fn parsear_primera_linea(linea: String, cuerpo: String) : Result[String, ReqHttp] {
+fn parsear_primera_linea(linea: String, cuerpo: String) : Result[String, ReqHttp] = {
   match string.split(linea, " ") {
     [metodo, path, ..._] -> Ok(ReqHttp { metodo: metodo, path: path, cuerpo: cuerpo })
-    _                     -> Err("primera línea malformada: '#{linea}'")
+    _                     -> Err("primera línea mal formada: '#{linea}'")
   }
 }
 
-# Traduce un ReqHttp en un Comando del dominio. Si la URL no
-# calza con ninguna ruta, devuelve una Respuesta inmediata.
-pub fn enrutar(req: ReqHttp) : Result[dominio.Respuesta, dominio.Comando] {
+# Traduce un ReqHttp a un Comando de dominio. Si la URL no
+# matchea ninguna ruta, devuelve una respuesta inmediata.
+pub fn enrutar(req: ReqHttp) : Result[dominio.Respuesta, dominio.Comando] = {
   if req.metodo == "GET" {
     if req.path == "/notas" {
       Ok(dominio.Listar)
     } else {
-      enrutar_id(req.path, (id) => dominio.Obtener(id))
+      enrutar_id(req.path, (n) => dominio.Obtener(n))
     }
   } else if req.metodo == "POST" {
     if req.path == "/notas" {
@@ -44,16 +45,21 @@ pub fn enrutar(req: ReqHttp) : Result[dominio.Respuesta, dominio.Comando] {
       Err(dominio.NoEncontrado)
     }
   } else if req.metodo == "DELETE" {
-    enrutar_id(req.path, (id) => dominio.Borrar(id))
+    enrutar_id(req.path, (n) => dominio.Borrar(n))
   } else {
     Err(dominio.NoEncontrado)
   }
 }
 
-fn enrutar_id(path: String, f: (Int) -> dominio.Comando) : Result[dominio.Respuesta, dominio.Comando] {
+fn drop_prefix(s: String, prefix: String) : String = {
+  let n = string.length(prefix)
+  string.slice(s, n, string.length(s) - n)
+}
+
+fn enrutar_id(path: String, f: (Int) -> dominio.Comando) : Result[dominio.Respuesta, dominio.Comando] = {
   if string.starts_with(path, "/notas/") {
-    let sin_prefijo = string.drop_prefix(path, "/notas/")
-    match int.parse(sin_prefijo) {
+    let sufijo = drop_prefix(path, "/notas/")
+    match string.to_int(sufijo) {
       Some(n) -> Ok(f(n))
       None    -> Err(dominio.ErrorCliente("id inválido en path: '#{path}'"))
     }
@@ -62,20 +68,18 @@ fn enrutar_id(path: String, f: (Int) -> dominio.Comando) : Result[dominio.Respue
   }
 }
 
-# Serializa una respuesta del dominio en bytes HTTP.
-pub fn serializar_respuesta(r: dominio.Respuesta) : String {
-  match r {
-    dominio.Ok(body)            -> respuesta(200, "OK", body)
-    dominio.Creado(nota)        -> respuesta(201, "Created", "#{nota}")
-    dominio.NoEncontrado         -> respuesta(404, "Not Found", "")
-    dominio.ErrorCliente(msg)   -> respuesta(400, "Bad Request", msg)
-    dominio.ErrorServidor(msg)  -> respuesta(500, "Internal Error", msg)
-  }
+# Serializa una Respuesta de dominio a bytes HTTP.
+pub fn serializar_respuesta(r: dominio.Respuesta) : String = match r {
+  dominio.Guardado(cuerpo) -> respuesta(200, "OK", cuerpo)
+  dominio.Creado(nota)     -> respuesta(201, "Created", "#{nota}")
+  dominio.NoEncontrado     -> respuesta(404, "Not Found", "")
+  dominio.ErrorCliente(m)  -> respuesta(400, "Bad Request", m)
+  dominio.ErrorServidor(m) -> respuesta(500, "Internal Error", m)
 }
 
-fn respuesta(status: Int, reason: String, body: String) : String {
-  let largo = string.length(body)
-  "HTTP/1.1 #{status} #{reason}\r\nContent-Length: #{largo}\r\nContent-Type: text/plain\r\n\r\n#{body}"
+fn respuesta(status: Int, razon: String, cuerpo: String) : String = {
+  let len = string.length(cuerpo)
+  "HTTP/1.1 #{status} #{razon}\r\nContent-Length: #{len}\r\nContent-Type: text/plain\r\n\r\n#{cuerpo}"
 }
 
 test "parsear GET /notas" {

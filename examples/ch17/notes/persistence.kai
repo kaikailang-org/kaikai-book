@@ -1,26 +1,25 @@
-# The persistence actor receives each note created or
-# deleted and writes it to a log file. In a real system, its
-# mailbox would be `Bounded(N, DropOldest)` to protect
-# against flooding. Here we use `spawn_actor` (Unbounded
-# default) because for the demo it's enough.
+# The persistence actor: receives log lines and appends them
+# to a file.  Isolating the file write in its own actor lets
+# the store keep responding without waiting on disk.
 
 import actor
 import fs.file
 
 pub type Event = Line(String)
 
-fn loop(path: String) : Unit / Actor[Event] + File {
+# Actor body.  Appends each line and recurses to await the
+# next event.
+pub fn persistence_loop(path: String) : Unit / Actor[Event] + File = {
   match Actor.receive() {
     Line(s) -> {
-      file.file_append(path, s ++ "\n")
-      loop(path)
+      file_append(path, s ++ "\n")
+      persistence_loop(path)
     }
   }
 }
 
-pub fn start(path: String)
-    : Pid[Event] / Spawn + Cancel + Actor[Event] + File {
-  # Truncate the file on start so we begin clean.
-  file.file_write_file(path, "")
-  spawn_actor(() => loop(path))
+# Truncate the log file before the actor starts so each run
+# begins with an empty log.
+pub fn reset_log(path: String) : Unit / File = {
+  file_write_file(path, "")
 }

@@ -158,8 +158,8 @@ build|ejemplos/cap16/ffi/01_libc_abs.kai|ok
 build|ejemplos/cap16/ffi/02_renombre.kai|ok
 project|ejemplos/cap16/ffi/03_shim|ok|app.kai|-include shim.h shim.c
 
-# Capítulo 17 — caso notas (refactor pendiente: colisión con Result.Ok)
-project|ejemplos/cap17/notas|fail
+# Capítulo 17 — caso notas
+project|ejemplos/cap17/notas|ok
 
 # Capítulo 18 — caso ledger (refactor pendiente: refinement-pure + spread)
 project|ejemplos/cap18/ledger|fail
@@ -189,9 +189,9 @@ build|examples/ch04/03_lists.kai|ok
 build|examples/ch04/04_option_result.kai|ok
 build|examples/ch04/05_tuples.kai|ok
 
-# Chapter 5 (05_evaluator tiene bug del libro: Node/Leaf vs TNode/TEmpty)
+# Chapter 5
 build|examples/ch05/01_basic_sums.kai|ok
-build|examples/ch05/02_recursive.kai|fail
+build|examples/ch05/02_recursive.kai|ok
 build|examples/ch05/03_match_guards.kai|ok
 build|examples/ch05/04_unions.kai|ok
 build|examples/ch05/05_evaluator.kai|ok
@@ -281,7 +281,7 @@ build|examples/ch16/ffi/02_rename.kai|ok
 project|examples/ch16/ffi/03_shim|ok|app.kai|-include shim.h shim.c
 
 # Chapter 17
-project|examples/ch17/notes|fail
+project|examples/ch17/notes|ok
 
 # Chapter 18
 project|examples/ch18/ledger|fail

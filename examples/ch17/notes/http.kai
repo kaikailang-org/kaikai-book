@@ -1,14 +1,14 @@
-# Minimal HTTP parser and serializer. We cover just enough
-# to serve simple requests. For real production you'd use the
-# parser in stdlib/net/http.kai; here we write it by hand so
-# the whole chain fits in the reader's head.
+# Minimal HTTP parser and serializer for the notes server.
+# Pure string manipulation — no effects.  In production you'd
+# use `stdlib/net/http.kai`; here we write it by hand so the
+# whole chain fits in the reader's head.
 
 import domain
 
 #[derive(Show)]
 pub type HttpReq = { method: String, path: String, body: String }
 
-pub fn parse_request(raw: String) : Result[String, HttpReq] {
+pub fn parse_request(raw: String) : Result[String, HttpReq] = {
   match string.split(raw, "\r\n\r\n") {
     [head, ...body_parts] -> {
       let body = string.join(body_parts, "\r\n\r\n")
@@ -21,16 +21,16 @@ pub fn parse_request(raw: String) : Result[String, HttpReq] {
   }
 }
 
-fn parse_first_line(line: String, body: String) : Result[String, HttpReq] {
+fn parse_first_line(line: String, body: String) : Result[String, HttpReq] = {
   match string.split(line, " ") {
     [method, path, ..._] -> Ok(HttpReq { method: method, path: path, body: body })
     _                     -> Err("malformed first line: '#{line}'")
   }
 }
 
-# Translate an HttpReq into a domain Command. If the URL
-# doesn't match any route, return an immediate Response.
-pub fn route(req: HttpReq) : Result[domain.Response, domain.Command] {
+# Translate an HttpReq into a domain Command.  If the URL
+# doesn't match any route, return an immediate Reply.
+pub fn route(req: HttpReq) : Result[domain.Reply, domain.Command] = {
   if req.method == "GET" {
     if req.path == "/notes" {
       Ok(domain.List)
@@ -50,10 +50,15 @@ pub fn route(req: HttpReq) : Result[domain.Response, domain.Command] {
   }
 }
 
-fn route_id(path: String, f: (Int) -> domain.Command) : Result[domain.Response, domain.Command] {
+fn drop_prefix(s: String, prefix: String) : String = {
+  let n = string.length(prefix)
+  string.slice(s, n, string.length(s) - n)
+}
+
+fn route_id(path: String, f: (Int) -> domain.Command) : Result[domain.Reply, domain.Command] = {
   if string.starts_with(path, "/notes/") {
-    let suffix = string.drop_prefix(path, "/notes/")
-    match int.parse(suffix) {
+    let suffix = drop_prefix(path, "/notes/")
+    match string.to_int(suffix) {
       Some(n) -> Ok(f(n))
       None    -> Err(domain.ClientError("invalid id in path: '#{path}'"))
     }
@@ -62,18 +67,16 @@ fn route_id(path: String, f: (Int) -> domain.Command) : Result[domain.Response, 
   }
 }
 
-# Serialise a domain Response into HTTP bytes.
-pub fn serialize_response(r: domain.Response) : String {
-  match r {
-    domain.Ok(body)             -> response(200, "OK", body)
-    domain.Created(note)        -> response(201, "Created", "#{note}")
-    domain.NotFound              -> response(404, "Not Found", "")
-    domain.ClientError(msg)     -> response(400, "Bad Request", msg)
-    domain.ServerError(msg)     -> response(500, "Internal Error", msg)
-  }
+# Serialise a domain Reply into HTTP bytes.
+pub fn serialize_reply(r: domain.Reply) : String = match r {
+  domain.Stored(body)     -> response(200, "OK", body)
+  domain.Created(note)    -> response(201, "Created", "#{note}")
+  domain.NotFound         -> response(404, "Not Found", "")
+  domain.ClientError(msg) -> response(400, "Bad Request", msg)
+  domain.ServerError(msg) -> response(500, "Internal Error", msg)
 }
 
-fn response(status: Int, reason: String, body: String) : String {
+fn response(status: Int, reason: String, body: String) : String = {
   let len = string.length(body)
   "HTTP/1.1 #{status} #{reason}\r\nContent-Length: #{len}\r\nContent-Type: text/plain\r\n\r\n#{body}"
 }

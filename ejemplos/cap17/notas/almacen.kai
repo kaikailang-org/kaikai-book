@@ -1,98 +1,88 @@
-# El almacén de notas es un actor. Vive como una fibra con un
-# mailbox, mantiene la lista de notas como estado interno, y
-# responde a los comandos que le mandan los handlers HTTP.
+# El almacén de notas: actor que tiene la lista de notas como
+# estado interno y responde a comandos enviados por los
+# handlers HTTP.
 #
-# Como vive en un solo actor, no hay concurrencia entre
-# escrituras: cada comando se procesa en orden. Eso evita
-# races sin necesidad de locks.
+# Tres piezas:
+#   - `procesar` es la lógica pura (sin efectos), testeable
+#     aisladamente.
+#   - `almacen_loop` es el cuerpo del actor: envuelve a
+#     `procesar` en un loop sobre `Actor.receive()`.
+#   - `preguntar` es el wrapper sincrónico para el cliente.
 
 import actor
 import dominio
 
-# El protocolo del almacén: el comando de dominio más el Pid
-# del que pregunta para que el almacén pueda responder.
-pub type AlmacenMsg = Pregunta(dominio.Comando, Pid[AlmacenResp])
-pub type AlmacenResp = Respuesta(dominio.Respuesta)
+# Protocolo del almacén: un comando más el Pid del que pide la
+# respuesta. El almacén lee `Pregunta`, calcula, y manda de
+# vuelta `Respondido`.
+pub type AlmacenMsg  = Pregunta(dominio.Comando, Pid[AlmacenResp])
+pub type AlmacenResp = Respondido(dominio.Respuesta)
 
-# El bucle del actor. Recibe pregunta, decide qué hacer según
-# el estado, responde, y se llama recursivamente con el estado
-# actualizado.
-fn bucle(notas: [dominio.Nota], proximo_id: Int)
-    : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] {
-  match Actor.receive() {
-    Pregunta(comando, cliente) -> {
-      let (resp, notas_nuevas, id_nuevo) =
-        procesar(comando, notas, proximo_id)
-      Actor.send(cliente, Respuesta(resp))
-      bucle(notas_nuevas, id_nuevo)
-    }
-  }
-}
-
-# La lógica pura: dado un comando y el estado, devuelve la
-# respuesta, las notas nuevas y el próximo id. Sin efectos.
-# Testeable sin arrancar fibras.
+# Pura: dado un comando y el estado, devuelve la respuesta, la
+# nueva lista de notas y el próximo id. Testeable sin arrancar
+# fibras.
 pub fn procesar(c: dominio.Comando, notas: [dominio.Nota], next_id: Int)
-    : (dominio.Respuesta, [dominio.Nota], Int) {
+    : (dominio.Respuesta, [dominio.Nota], Int) = {
   match c {
     Listar -> {
-      let cuerpos = list.map(notas, (n) => n.cuerpo)
-      (dominio.Ok(serializar_lista(cuerpos)), notas, next_id)
+      let cuerpos = list.map(notas, (nota) => nota.cuerpo)
+      (dominio.Guardado(serializar_lista(cuerpos)), notas, next_id)
     }
-    Obtener(id) ->
-      match buscar(notas, id) {
-        Some(n) -> (dominio.Ok(n.cuerpo), notas, next_id)
-        None    -> (dominio.NoEncontrado, notas, next_id)
-      }
+    Obtener(id_buscado) -> match buscar_nota(notas, id_buscado) {
+      Some(nota) -> (dominio.Guardado(nota.cuerpo), notas, next_id)
+      None       -> (dominio.NoEncontrado, notas, next_id)
+    }
     Crear(cuerpo) -> {
-      let nueva = dominio.Nota { id: next_id, cuerpo: cuerpo }
-      (dominio.Creado(nueva), [nueva, ...notas], next_id + 1)
+      let nota = dominio.Nota { id: next_id, cuerpo: cuerpo }
+      (dominio.Creado(nota), [nota, ...notas], next_id + 1)
     }
-    Borrar(id) ->
-      match buscar(notas, id) {
-        Some(_) -> {
-          let restantes = list.filter(notas, (n) => n.id != id)
-          (dominio.Ok("borrada"), restantes, next_id)
-        }
-        None -> (dominio.NoEncontrado, notas, next_id)
+    Borrar(id_buscado) -> match buscar_nota(notas, id_buscado) {
+      Some(_) -> {
+        let restantes = list.filter(notas, (nota) => nota.id != id_buscado)
+        (dominio.Guardado("borrada"), restantes, next_id)
       }
+      None -> (dominio.NoEncontrado, notas, next_id)
+    }
   }
 }
 
-fn buscar(notas: [dominio.Nota], id: Int) : Option[dominio.Nota] {
-  match notas {
-    []           -> None
-    [h, ...rest] -> if h.id == id { Some(h) } else { buscar(rest, id) }
+fn buscar_nota(notas: [dominio.Nota], id_buscado: Int) : Option[dominio.Nota] = match notas {
+  []           -> None
+  [h, ...rest] -> if h.id == id_buscado { Some(h) } else { buscar_nota(rest, id_buscado) }
+}
+
+fn serializar_lista(cuerpos: [String]) : String = match cuerpos {
+  []           -> "[]"
+  [h, ...rest] -> "[" ++ h ++ unir_con_coma(rest) ++ "]"
+}
+
+fn unir_con_coma(xs: [String]) : String = match xs {
+  []           -> ""
+  [h, ...rest] -> ", " ++ h ++ unir_con_coma(rest)
+}
+
+# Cuerpo del actor. Recibe una `Pregunta`, llama a `procesar`,
+# manda de vuelta la respuesta al solicitante, recursa con el
+# nuevo estado. La fila del handler lleva tanto Actor[AlmacenMsg]
+# (el mailbox propio del actor, instalado por spawn_actor) como
+# Actor[AlmacenResp] (usado solo por `Actor.send` — el mailbox
+# es propiedad de la fibra que llama).
+pub fn almacen_loop(notas: [dominio.Nota], next_id: Int) : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] = {
+  match Actor.receive() {
+    Pregunta(comando, cliente) -> {
+      let (resp, notas_nuevas, id_nuevo) = procesar(comando, notas, next_id)
+      Actor.send(cliente, Respondido(resp))
+      almacen_loop(notas_nuevas, id_nuevo)
+    }
   }
 }
 
-fn serializar_lista(cuerpos: [String]) : String {
-  match cuerpos {
-    []           -> "[]"
-    [h, ...rest] -> "[" ++ h ++ unir(rest) ++ "]"
-  }
-}
-
-fn unir(xs: [String]) : String {
-  match xs {
-    []           -> ""
-    [h, ...rest] -> ", " ++ h ++ unir(rest)
-  }
-}
-
-# Arranca el almacén como actor. Devuelve el Pid para que el
-# servidor le mande preguntas.
-pub fn arrancar() : Pid[AlmacenMsg] / Spawn + Cancel + Actor[AlmacenMsg] + Actor[AlmacenResp] {
-  spawn_actor(() => bucle([], 1))
-}
-
-# Helper para que un cliente del almacén haga una pregunta
-# sincrónica: envía, espera la respuesta, la devuelve.
-pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando)
-    : dominio.Respuesta / Actor[AlmacenMsg] + Actor[AlmacenResp] + Cancel {
+# Helper del lado del cliente. El que llama debe tener un
+# mailbox Actor[AlmacenResp] (la respuesta cae ahí).
+pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respuesta / Actor[AlmacenMsg] + Actor[AlmacenResp] = {
   Actor.send(almacen, Pregunta(c, Actor.self()))
   match Actor.receive() {
-    Respuesta(r) -> r
+    Respondido(r) -> r
   }
 }
 
@@ -104,10 +94,11 @@ test "crear y obtener" {
   }
   assert creado_ok
   assert id1 == 2
+
   let (r2, _, _) = procesar(dominio.Obtener(1), n1, id1)
   let obtener_ok = match r2 {
-    dominio.Ok(c) -> c == "primera"
-    _              -> false
+    dominio.Guardado(c) -> c == "primera"
+    _                    -> false
   }
   assert obtener_ok
 }
@@ -126,8 +117,8 @@ test "borrar reduce la lista" {
   let (_, n2, id2) = procesar(dominio.Crear("b"), n1, id1)
   let (r, n3, _)   = procesar(dominio.Borrar(1), n2, id2)
   let ok = match r {
-    dominio.Ok(_) -> true
-    _              -> false
+    dominio.Guardado(_) -> true
+    _                    -> false
   }
   assert ok
   assert list.length(n3) == 1

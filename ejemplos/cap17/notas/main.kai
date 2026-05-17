@@ -1,35 +1,48 @@
-# Servidor HTTP de notas. Arma todas las piezas:
-# - El almacén corre como actor con la lista de notas en
-#   memoria.
-# - La persistencia corre como otro actor que escribe a un
-#   log.
-# - El bucle principal acepta conexiones TCP, parsea el HTTP,
-#   pregunta al almacén, escribe al log si corresponde, y
-#   responde.
+# Servidor HTTP de notas. Cablea todas las piezas.
 #
-# Cada conexión entrante se procesa en su propia fibra dentro
-# del nursery. El scheduler las intercala cooperativamente, y
-# el accept del puerto bloqueado yieldea hasta que llega una
-# conexión nueva.
+# Tres notas estructurales:
+#
+#   1. `nursery { n -> ... }` es un cap binder sintáctico.
+#      `n` no es un valor de tipo `Nursery`; la pasada previa
+#      al typechecker reescribe `n.spawn(task)` en
+#      `Spawn.spawn(task)` etiquetado con el brand del
+#      nursery. Esto significa que la llamada a spawn debe
+#      aparecer léxicamente dentro del bloque del nursery; no
+#      podemos factorizar el bucle accept a una función libre
+#      que reciba `n` como parámetro.
+#
+#   2. `Actor[T]` no tiene un handler default a nivel `main`.
+#      Toda fibra que llama `Actor.send` / `Actor.receive`
+#      debe correr bajo un `with_mailbox` (o `spawn_actor`).
+#      `main` instala los dos mailboxes que necesita
+#      (`AlmacenResp` para recibir las respuestas del almacén,
+#      `Evento` para que el servidor pueda mandar a
+#      persistencia) anidando dos bloques `with_mailbox` antes
+#      de abrir el nursery.
+#
+#   3. `Pid[T]` está branded por la región del nursery que
+#      tiene el handler de Spawn. Por eso spawn-eamos los dos
+#      actores *dentro* del bloque `nursery { n -> ... }` y
+#      usamos sus pids desde el mismo bloque.
 
 import actor
 import spawn
+import loop
 import fs.file
+import net.tcp
+import net.http
 import dominio
 import almacen
 import persistencia
 import http as http_lib
-import net.tcp
 
-const PUERTO : Int = 8080
+const PUERTO   : Int    = 8080
 const PATH_LOG : String = "notas.log"
 
-fn manejar_conexion(
-  conn: Conn,
-  almacen_pid: Pid[almacen.AlmacenMsg],
-  log_pid: Pid[persistencia.Evento],
-) : Unit / NetTcp + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] + Cancel {
-  let raw = leer_request(conn)
+# Arma la respuesta de cable para un request HTTP. Le pega al
+# almacén vía `almacen.preguntar` y loguea los comandos
+# mutantes al actor de persistencia antes de responder.
+fn manejar_request(raw: String, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: Pid[persistencia.Evento]) : String / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] = {
   let resp = match http_lib.parsear_request(raw) {
     Err(msg) -> dominio.ErrorCliente(msg)
     Ok(req)  -> match http_lib.enrutar(req) {
@@ -40,62 +53,75 @@ fn manejar_conexion(
       }
     }
   }
-  NetTcp.send(conn, string_to_bytes(http_lib.serializar_respuesta(resp)))
+  http_lib.serializar_respuesta(resp)
+}
+
+fn registrar(log_pid: Pid[persistencia.Evento], c: dominio.Comando) : Unit / Actor[persistencia.Evento] = match c {
+  dominio.Crear(cuerpo) -> Actor.send(log_pid, persistencia.Linea("CREAR " ++ cuerpo))
+  dominio.Borrar(id)    -> Actor.send(log_pid, persistencia.Linea("BORRAR #{id}"))
+  _                      -> ()
+}
+
+fn leer_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
+  Ok(bytes) -> http_bytes_to_string(bytes)
+  Err(_)    -> ""
+}
+
+# Atiende una conexión de punta a punta. Se spawn-ea bajo el
+# nursery en `main`; la fibra llamante instalará su propio
+# mailbox Actor[AlmacenResp] vía `with_mailbox` para que el
+# `almacen.preguntar` sincrónico dentro de `manejar_request`
+# aterrice la respuesta en el mailbox de esta fibra.
+#
+# La fila declara cada Actor[T] que toca el cuerpo. El bloque
+# `with_mailbox` en main cierra AlmacenResp antes del spawn,
+# pero el cuerpo del spawn sigue llevando Actor[AlmacenMsg]
+# (envíos al almacén) y Actor[Evento] (envíos a persistencia)
+# porque esos mailboxes son propiedad de *otras* fibras.
+fn atender_conexion(conn: Conn, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: Pid[persistencia.Evento]) : Unit / NetTcp + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] + Cancel = {
+  let raw  = leer_request(conn)
+  let wire = manejar_request(raw, almacen_pid, log_pid)
+  let _    = NetTcp.send(conn, http_string_to_bytes(wire))
   NetTcp.close(conn)
 }
 
-fn leer_request(conn: Conn) : String / NetTcp {
-  match NetTcp.recv(conn, 4096) {
-    Ok(bytes) -> bytes_to_string(bytes)
-    Err(_)    -> ""
-  }
-}
-
-fn registrar(log_pid: Pid[persistencia.Evento], c: dominio.Comando)
-    : Unit / Actor[persistencia.Evento] {
-  match c {
-    dominio.Crear(cuerpo)  -> Actor.send(log_pid, persistencia.Linea("CREAR " ++ cuerpo))
-    dominio.Borrar(id)     -> Actor.send(log_pid, persistencia.Linea("BORRAR #{id}"))
-    _                       -> ()           # lecturas no se registran
-  }
-}
-
-fn aceptar_loop(
-  listener: Listener,
-  almacen_pid: Pid[almacen.AlmacenMsg],
-  log_pid: Pid[persistencia.Evento],
-) : Unit / NetTcp + Spawn + Cancel + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
-  nursery { n ->
-    forever_accept(n, listener, almacen_pid, log_pid)
-  }
-}
-
-fn forever_accept(
-  n: Nursery,
-  listener: Listener,
-  almacen_pid: Pid[almacen.AlmacenMsg],
-  log_pid: Pid[persistencia.Evento],
-) : Unit / NetTcp + Spawn + Cancel + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
-  match NetTcp.accept(listener) {
-    Err(_) -> ()           # listener cerrado, salimos
-    Ok(conn) -> {
-      let _ = n.spawn(() => manejar_conexion(conn, almacen_pid, log_pid))
-      forever_accept(n, listener, almacen_pid, log_pid)
+fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel = {
+  # Mailbox externo: permite que `main` mande `AlmacenMsg` al
+  # actor almacén. (Estrictamente, acá solo hace falta
+  # Actor.send, pero la forma del handler exige que el mailbox
+  # exista.)
+  with_mailbox {
+    # Mailbox interno: permite que `main` mande `Evento` al
+    # actor de persistencia.
+    with_mailbox {
+      persistencia.reset_log(PATH_LOG)
+      nursery { n ->
+        let almacen_body: () -> Unit / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] = () => almacen.almacen_loop([], 1)
+        let log_body:     () -> Unit / Actor[persistencia.Evento] + File = () => persistencia.persistencia_loop(PATH_LOG)
+        let almacen_pid = spawn_actor(almacen_body)
+        let log_pid     = spawn_actor(log_body)
+        match NetTcp.listen("0.0.0.0", PUERTO) {
+          Err(msg) -> println("error al arrancar el servidor: " ++ msg)
+          Ok(listener) -> {
+            println("servidor escuchando en puerto #{PUERTO}")
+            # Bucle accept: cada conexión se vuelve una fibra
+            # hija spawn-eada vía el cap `n` del nursery. El
+            # closure captura `n`, `almacen_pid` y `log_pid`
+            # del scope del nursery que lo rodea.
+            forever(() => match NetTcp.accept(listener) {
+              Err(_)   -> ()
+              Ok(conn) -> {
+                # Cada fibra de conexión instala su propio
+                # mailbox Actor[AlmacenResp] para recibir la
+                # respuesta del almacén (ver `atender_conexion`).
+                let _ = n.spawn(() => with_mailbox(() => atender_conexion(conn, almacen_pid, log_pid)))
+                ()
+              }
+            })
+          }
+        }
+      }
     }
   }
-}
-
-fn main() : Unit / Console + NetTcp + File + Spawn + Cancel + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
-  let almacen_pid = almacen.arrancar()
-  let log_pid     = persistencia.arrancar(PATH_LOG)
-
-  match NetTcp.listen("0.0.0.0", PUERTO) {
-    Err(msg) -> {
-      println("error al levantar el servidor: " ++ msg)
-    }
-    Ok(listener) -> {
-      println("servidor escuchando en puerto #{PUERTO}")
-      aceptar_loop(listener, almacen_pid, log_pid)
-    }
-  }
+  0
 }

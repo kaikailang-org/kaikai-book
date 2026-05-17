@@ -1,98 +1,87 @@
-# The notes store is an actor. It lives as a fiber with a
-# mailbox, keeps the list of notes as internal state, and
-# answers commands sent by the HTTP handlers.
+# The notes store actor: holds the list of notes as internal
+# state and answers commands sent by HTTP handlers.
 #
-# Since it lives in a single actor, there's no concurrency
-# between writes: each command is processed in order. That
-# avoids races without locks.
+# Three pieces:
+#   - `process` is the pure logic (no effects), testable in
+#     isolation.
+#   - `store_loop` is the actor body that wraps `process` in
+#     an `Actor.receive()` loop.
+#   - `ask` is the client-side synchronous wrapper.
 
 import actor
 import domain
 
-# The store's protocol: the domain command plus the Pid of
-# whoever is asking, so the store can reply.
-pub type StoreMsg = Ask(domain.Command, Pid[StoreResp])
-pub type StoreResp = Reply(domain.Response)
+# The store's protocol: a command plus the Pid that wants the
+# reply.  The store reads `Ask`, computes, and sends back
+# `Reply`.
+pub type StoreMsg  = Ask(domain.Command, Pid[StoreResp])
+pub type StoreResp = Replied(domain.Reply)
 
-# The actor's loop. Receives an ask, decides what to do
-# based on state, replies, and recurses with the updated
-# state.
-fn loop(notes: [domain.Note], next_id: Int)
-    : Unit / Actor[StoreMsg] + Actor[StoreResp] {
-  match Actor.receive() {
-    Ask(command, client) -> {
-      let (resp, new_notes, new_id) =
-        process(command, notes, next_id)
-      Actor.send(client, Reply(resp))
-      loop(new_notes, new_id)
-    }
-  }
-}
-
-# The pure logic: given a command and the state, return the
-# response, the new notes and the new next id. No effects.
-# Testable without starting fibers.
+# Pure: given a command and the state, return the reply, the
+# new list of notes and the new next id.  Tested without
+# starting fibers.
 pub fn process(c: domain.Command, notes: [domain.Note], next_id: Int)
-    : (domain.Response, [domain.Note], Int) {
+    : (domain.Reply, [domain.Note], Int) = {
   match c {
     List -> {
-      let bodies = list.map(notes, (n) => n.body)
-      (domain.Ok(serialize_list(bodies)), notes, next_id)
+      let bodies = list.map(notes, (note) => note.body)
+      (domain.Stored(serialize_list(bodies)), notes, next_id)
     }
-    Get(id) ->
-      match find(notes, id) {
-        Some(n) -> (domain.Ok(n.body), notes, next_id)
-        None    -> (domain.NotFound, notes, next_id)
-      }
+    Get(target_id) -> match find_note(notes, target_id) {
+      Some(note) -> (domain.Stored(note.body), notes, next_id)
+      None       -> (domain.NotFound, notes, next_id)
+    }
     Create(body) -> {
-      let n = domain.Note { id: next_id, body: body }
-      (domain.Created(n), [n, ...notes], next_id + 1)
+      let note = domain.Note { id: next_id, body: body }
+      (domain.Created(note), [note, ...notes], next_id + 1)
     }
-    Delete(id) ->
-      match find(notes, id) {
-        Some(_) -> {
-          let remaining = list.filter(notes, (n) => n.id != id)
-          (domain.Ok("deleted"), remaining, next_id)
-        }
-        None -> (domain.NotFound, notes, next_id)
+    Delete(target_id) -> match find_note(notes, target_id) {
+      Some(_) -> {
+        let remaining = list.filter(notes, (note) => note.id != target_id)
+        (domain.Stored("deleted"), remaining, next_id)
       }
+      None -> (domain.NotFound, notes, next_id)
+    }
   }
 }
 
-fn find(notes: [domain.Note], id: Int) : Option[domain.Note] {
-  match notes {
-    []           -> None
-    [h, ...rest] -> if h.id == id { Some(h) } else { find(rest, id) }
+fn find_note(notes: [domain.Note], target_id: Int) : Option[domain.Note] = match notes {
+  []           -> None
+  [h, ...rest] -> if h.id == target_id { Some(h) } else { find_note(rest, target_id) }
+}
+
+fn serialize_list(bodies: [String]) : String = match bodies {
+  []           -> "[]"
+  [h, ...rest] -> "[" ++ h ++ join_with_comma(rest) ++ "]"
+}
+
+fn join_with_comma(xs: [String]) : String = match xs {
+  []           -> ""
+  [h, ...rest] -> ", " ++ h ++ join_with_comma(rest)
+}
+
+# Actor body.  Receives an `Ask`, calls `process`, sends the
+# reply back to the requester, recurses with the new state.
+# The handler row carries both Actor[StoreMsg] (the actor's
+# own mailbox, installed by spawn_actor) and Actor[StoreResp]
+# (used by `Actor.send` only — the caller's fiber owns that
+# mailbox).
+pub fn store_loop(notes: [domain.Note], next_id: Int) : Unit / Actor[StoreMsg] + Actor[StoreResp] = {
+  match Actor.receive() {
+    Ask(command, client) -> {
+      let (reply, new_notes, new_id) = process(command, notes, next_id)
+      Actor.send(client, Replied(reply))
+      store_loop(new_notes, new_id)
+    }
   }
 }
 
-fn serialize_list(bodies: [String]) : String {
-  match bodies {
-    []           -> "[]"
-    [h, ...rest] -> "[" ++ h ++ join(rest) ++ "]"
-  }
-}
-
-fn join(xs: [String]) : String {
-  match xs {
-    []           -> ""
-    [h, ...rest] -> ", " ++ h ++ join(rest)
-  }
-}
-
-# Start the store as an actor. Returns the Pid so the server
-# can send it asks.
-pub fn start() : Pid[StoreMsg] / Spawn + Cancel + Actor[StoreMsg] + Actor[StoreResp] {
-  spawn_actor(() => loop([], 1))
-}
-
-# Helper for a client of the store to make a synchronous ask:
-# send, wait for the reply, return it.
-pub fn ask(store: Pid[StoreMsg], c: domain.Command)
-    : domain.Response / Actor[StoreMsg] + Actor[StoreResp] + Cancel {
+# Client-side helper.  Caller must own an Actor[StoreResp]
+# mailbox (the reply lands there).
+pub fn ask(store: Pid[StoreMsg], c: domain.Command) : domain.Reply / Actor[StoreMsg] + Actor[StoreResp] = {
   Actor.send(store, Ask(c, Actor.self()))
   match Actor.receive() {
-    Reply(r) -> r
+    Replied(r) -> r
   }
 }
 
@@ -107,8 +96,8 @@ test "create and get" {
 
   let (r2, _, _) = process(domain.Get(1), n1, id1)
   let get_ok = match r2 {
-    domain.Ok(c) -> c == "first"
-    _             -> false
+    domain.Stored(c) -> c == "first"
+    _                 -> false
   }
   assert get_ok
 }
@@ -127,8 +116,8 @@ test "delete shrinks the list" {
   let (_, n2, id2) = process(domain.Create("b"), n1, id1)
   let (r, n3, _)   = process(domain.Delete(1), n2, id2)
   let ok = match r {
-    domain.Ok(_) -> true
-    _             -> false
+    domain.Stored(_) -> true
+    _                 -> false
   }
   assert ok
   assert list.length(n3) == 1

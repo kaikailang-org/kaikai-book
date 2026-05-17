@@ -1,9 +1,10 @@
 # Domain types of the notes server.
 #
 # A note has an id (integer) and a body (string).
-# A command is what the handler interprets from the HTTP
-# request.
-# A response is what the handler returns for serialisation.
+# A command is what the handler interprets from an HTTP
+# request.  A reply is what the handler returns for
+# serialisation.  No effects: this module is the program's
+# invariant.
 
 #[derive(Show)]
 pub type Note = { id: Int, body: String }
@@ -15,10 +16,13 @@ pub type Command
   | Create(String)
   | Delete(Int)
 
-# Domain-level responses. The HTTP translator turns these
-# into status codes + JSON bodies.
-pub type Response
-  = Ok(String)                      # 200, body = String
+# Domain-level replies.  Named `Reply` instead of `Response`
+# so the constructors do not visually clash with the HTTP
+# `Response` record from `stdlib/net/http.kai`, and the
+# `Stored` arm is named (rather than `Ok`) so the chapter's
+# pattern matches do not shadow `Result.Ok`.
+pub type Reply
+  = Stored(String)                  # 200, body = String
   | Created(Note)                   # 201, body = serialized note
   | NotFound                        # 404
   | ClientError(String)             # 400

@@ -1,27 +1,25 @@
-# El actor de persistencia recibe cada nota creada o borrada y
-# la escribe a un archivo de log. En un sistema real, el
-# mailbox sería `Bounded(1024, DropOldest)` para que el log
-# nunca infle la memoria si la escritura a disco se atrasa.
-# Acá usamos `spawn_actor` (mailbox Unbounded por default)
-# porque para el demo alcanza.
+# El actor de persistencia recibe líneas de log y las anexa a
+# un archivo. Aislar la escritura a disco en su propio actor
+# permite que el almacén siga respondiendo sin esperar a I/O.
 
 import actor
 import fs.file
 
 pub type Evento = Linea(String)
 
-fn bucle(path: String) : Unit / Actor[Evento] + File {
+# Cuerpo del actor. Anexa cada línea y se llama recursivamente
+# a la espera del próximo evento.
+pub fn persistencia_loop(path: String) : Unit / Actor[Evento] + File = {
   match Actor.receive() {
     Linea(s) -> {
-      file.file_append(path, s ++ "\n")
-      bucle(path)
+      file_append(path, s ++ "\n")
+      persistencia_loop(path)
     }
   }
 }
 
-pub fn arrancar(path: String)
-    : Pid[Evento] / Spawn + Cancel + Actor[Evento] + File {
-  # Truncamos el archivo al arrancar y empezamos limpio.
-  file.file_write_file(path, "")
-  spawn_actor(() => bucle(path))
+# Trunca el archivo de log antes de arrancar el actor para que
+# cada corrida empiece con un log vacío.
+pub fn reset_log(path: String) : Unit / File = {
+  file_write_file(path, "")
 }
