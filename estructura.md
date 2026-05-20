@@ -379,6 +379,8 @@ un experimento en esa dirección.
 - 16.5 Variables de entorno: `KAI_NO_STDLIB`, `KAI_STDLIB`,
        `CC`, `CFLAGS`
 - 16.6 Estructura típica de un proyecto kaikai
+- 16.7 Ediciones: estabilidad sin estancamiento. `edition`
+       en `kai.toml`, multi-edición, `#[unstable]`.
 - *Sin ejercicios*: capítulo de referencia.
 
 #### Capítulo 17 · Caso de estudio: servidor HTTP

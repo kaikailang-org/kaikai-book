@@ -433,7 +433,124 @@ proper kaikai package once `kai bindgen` lands. Until
 then, the manual approach (one `extern "C"` per function,
 one C shim per struct-using entry point) works fine.
 
-## 16.10 Philosophy: three principles of the tooling
+## 16.10 Editions: stability without stagnation
+
+There's one decision the rest of the book takes for granted
+without quite explaining it: kaikai uses **editions** to
+separate *what we promise won't change* from *what we
+reserve the right to move*. The idea isn't new — Rust
+formalized it in 2014 — but kaikai takes it seriously from
+the start.
+
+### What an edition is
+
+An edition is a name — `tongariki`, `hanga-roa`, `orongo` —
+that pins a version of the **language contract** between
+kaikai and your code. Within one edition, the following
+don't change in incompatible ways:
+
+- syntax and reserved keywords;
+- type and effect system semantics;
+- `pub` signatures in stdlib;
+- the `kai` CLI flags and behaviour;
+- the `kai.toml` schema.
+
+Outside the contract — and therefore free to change between
+releases — is everything that doesn't touch your source:
+internal variant layout, fiber stack format, on-disk cache
+format, exact diagnostic wording, typer passes, Perceus
+internals, performance characteristics.
+
+The commitment to you is simple: **upgrading the compiler
+is painless**. Read the release notes, install the new
+version, recompile. The commitment to the kaikai team is
+also simple: we can iterate hard on internals as long as we
+don't break what's outside. Both sides win.
+
+### How you declare it
+
+In your `kai.toml`:
+
+```toml
+name = "myapp"
+version = "0.1.0"
+edition = "hanga-roa"
+
+[dependencies]
+```
+
+And to check the active edition of your installation:
+
+```
+$ kai --version
+kaikai 0.76.0 - hanga-roa (stage 2, self-hosted)
+```
+
+If `kai.toml` omits the field, the compiler assumes the
+installation's default edition. Recommendation: as soon as a
+package is going to live past a weekend, pin it explicitly.
+It's the difference between "compiles today" and "will
+keep compiling."
+
+### Multi-edition: old code, new compiler
+
+The kaikai compiler accepts **any edition it knows about**.
+If your package declares `edition = "tongariki"` and the
+installation is on `hanga-roa`, the compiler applies the
+tongariki rules to that package — even when another package
+on the same machine builds against hanga-roa. That's the
+mechanic behind "stability without stagnation": you don't
+have to migrate your whole world at once.
+
+When an edition is sunset (after the ecosystem has migrated),
+later kaikai releases may drop support for it. Until then,
+old and new coexist.
+
+### The escape hatch: `#[unstable]`
+
+Sometimes a module wants to expose a new API *for real*
+without yet committing to the exact signature. The
+`#[unstable]` annotation marks declarations as outside the
+edition contract:
+
+```kai
+#[unstable]
+pub fn from_stdin() : Source[String, Stdin + Spawn] / Spawn =
+  ?from_stdin
+
+#[unstable]
+pub type Source[t, e] = { pid: Pid[Demand] }
+```
+
+Consuming an `#[unstable]` API has to be declared in **your
+own** `kai.toml`:
+
+```toml
+[unstable]
+ahu = true
+```
+
+The idea: nobody uses an API in flux without knowing. The
+edition contract still covers everything else.
+
+### Existing editions
+
+At the time this book ships, kaikai knows three:
+
+| Edition | Status | Notes |
+|---|---|---|
+| `tongariki` | closed | Fast-iteration phase before 2026. Only packages that haven't migrated. |
+| `hanga-roa` | active (default) | The first public edition. This book is written against it. |
+| `orongo` | future | Next edition. Items deferred from Hanga Roa land here. |
+
+The names follow the Rapa Nui geography used across the
+ecosystem: places on Rapa Nui in chronological order. When
+`hanga-roa` is sunset, you'll get an announcement, a
+migration guide, and `kai migrate` to automate the
+mechanical changes. Until then, what you wrote against
+hanga-roa keeps compiling.
+
+## 16.11 Philosophy: three principles of the tooling
 
 If you want to keep the overall feel of the tooling, three
 ideas:

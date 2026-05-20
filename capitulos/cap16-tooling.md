@@ -440,7 +440,124 @@ kaikai propio cuando aterrice `kai bindgen`. Mientras
 tanto, el enfoque manual (un `extern "C"` por función, un
 shim C por cada entrada que use struct) funciona bien.
 
-## 16.10 Filosofía: tres principios del tooling
+## 16.10 Ediciones: estabilidad sin estancamiento
+
+Hay una decisión que el resto del libro asume sin
+explicarla del todo: kaikai usa **ediciones** para separar
+*qué prometemos que no cambia* de *qué nos reservamos el
+derecho de mover*. La idea no es nueva — Rust la formalizó
+en 2014 — pero kaikai la toma en serio desde temprano.
+
+### Qué es una edición
+
+Una edición es un nombre — `tongariki`, `hanga-roa`,
+`orongo` — que fija una versión del **contrato del
+lenguaje** entre kaikai y tu código. Dentro de una edición,
+estas cosas no cambian de manera incompatible:
+
+- la sintaxis y las palabras reservadas;
+- la semántica del sistema de tipos y los efectos;
+- las firmas `pub` del stdlib;
+- los flags y el comportamiento del binario `kai`;
+- el esquema de `kai.toml`.
+
+Fuera del contrato — y por lo tanto libre de cambiar entre
+versiones — está todo lo que no toca tu código fuente:
+representación interna de variantes, layout de stacks de
+fibras, formato del caché en disco, texto exacto de los
+diagnósticos, fases del typer, internals del Perceus,
+performance.
+
+El compromiso para ti es simple: **subir el compilador es
+indoloro**. Lees las notas de release, instalas la versión
+nueva, recompilas. El compromiso para el equipo de kaikai
+es también simple: podemos iterar fuerte por dentro mientras
+no rompamos lo de afuera. Las dos partes ganan.
+
+### Cómo se declara
+
+En tu `kai.toml`:
+
+```toml
+name = "miapp"
+version = "0.1.0"
+edition = "hanga-roa"
+
+[dependencies]
+```
+
+Y para verificar la edición activa de tu instalación:
+
+```
+$ kai --version
+kaikai 0.76.0 - hanga-roa (stage 2, self-hosted)
+```
+
+Si el `kai.toml` omite el campo, el compilador asume la
+edición default de la instalación. Recomendación: en cuanto
+un paquete va a tener vida más allá de un fin de semana,
+fíjala explícitamente. Es la diferencia entre "esto
+compila hoy" y "esto va a seguir compilando".
+
+### Multi-edición: viejo código, compilador nuevo
+
+El compilador kaikai acepta **cualquier edición que conozca**.
+Si tu paquete declara `edition = "tongariki"` y la instalación
+está en `hanga-roa`, el compilador aplica las reglas de
+tongariki para ese paquete, aunque otro paquete de la misma
+máquina compile contra hanga-roa. Esa es la mecánica de
+"estabilidad sin estancamiento": no tienes que migrar todo
+tu mundo al mismo tiempo.
+
+Cuando una edición se cierra (cuando todo el ecosistema ya
+migró), las versiones siguientes de kaikai pueden dejar de
+aceptarla. Hasta entonces, viejo y nuevo conviven.
+
+### El escape hatch: `#[unstable]`
+
+A veces un módulo quiere exponer un API nuevo *en serio*
+pero todavía no se compromete con la firma exacta. La
+anotación `#[unstable]` marca declaraciones que están
+fuera del contrato de la edición:
+
+```kai
+#[unstable]
+pub fn from_stdin() : Source[String, Stdin + Spawn] / Spawn =
+  ?from_stdin
+
+#[unstable]
+pub type Source[t, e] = { pid: Pid[Demand] }
+```
+
+Quien consume un API `#[unstable]` tiene que decirlo en
+**su propio** `kai.toml`:
+
+```toml
+[unstable]
+ahu = true
+```
+
+La idea: nadie usa una API en evolución sin enterarse. El
+contrato de la edición sigue cubriendo lo demás.
+
+### Ediciones existentes
+
+Al cierre de este libro, kaikai conoce tres:
+
+| Edición | Estado | Notas |
+|---|---|---|
+| `tongariki` | cerrada | Fase de iteración rápida pre-2026. Solo paquetes que aún no migraron. |
+| `hanga-roa` | activa (default) | La primera edición pública. El libro está escrito contra esta. |
+| `orongo` | futura | Próxima edición. Lo que se difiera de Hanga Roa aterriza acá. |
+
+Los nombres siguen la cantera rapanui del resto del
+ecosistema: lugares de Rapa Nui en orden cronológico.
+Cuando se cierre `hanga-roa`, llegará un anuncio, una
+guía de migración, y `kai migrate` para automatizar los
+cambios mecánicos. Mientras tanto, el código que escribiste
+contra hanga-roa va a seguir compilando.
+
+## 16.11 Filosofía: tres principios del tooling
 
 Si quieres recordar el tono general del tooling, son tres
 ideas:

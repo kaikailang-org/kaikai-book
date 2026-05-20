@@ -1,0 +1,18 @@
+# Módulo `caja`. Expone `Cuenta` con un campo `saldo` privado.
+# La idea es que el resto del programa no pueda construir
+# cuentas con saldos arbitrarios ni leerlos sin pasar por
+# `saldo_de`. Las invariantes (saldo siempre derivado de
+# operaciones que el módulo controla) viven adentro.
+
+pub type Cuenta = {
+  nombre:     String,
+  priv saldo: Real,
+}
+
+pub fn abrir(nombre: String) : Cuenta =
+  Cuenta { nombre: nombre, saldo: 0.0 }
+
+pub fn depositar(c: Cuenta, monto: Real) : Cuenta =
+  Cuenta { ...c, saldo: c.saldo + monto }
+
+pub fn saldo_de(c: Cuenta) : Real = c.saldo

@@ -1,0 +1,18 @@
+# Module `safe`. Exposes `Account` with a private `balance`
+# field. The point is that no other module can construct
+# accounts with arbitrary balances nor read them without going
+# through `balance_of`. The invariants (balance always derived
+# from operations the module controls) live inside.
+
+pub type Account = {
+  name:         String,
+  priv balance: Real,
+}
+
+pub fn open(name: String) : Account =
+  Account { name: name, balance: 0.0 }
+
+pub fn deposit(a: Account, amount: Real) : Account =
+  Account { ...a, balance: a.balance + amount }
+
+pub fn balance_of(a: Account) : Real = a.balance

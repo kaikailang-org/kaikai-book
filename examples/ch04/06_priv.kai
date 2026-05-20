@@ -1,0 +1,34 @@
+# Private fields with `priv`.
+#
+# By default, record fields are public: any module that imports
+# the type can read them and name them when constructing a
+# literal. The `priv` keyword in front of a field name flips that
+# default — the field is visible only inside the module that
+# declares it.
+#
+# Here we live in a single file, so the private `balance` field
+# is freely accessible. Ch. 8 shows the rejection from another
+# module. The point: the rest of `main` no longer touches
+# `balance` directly — it goes through the constructors and
+# operations, the only places authorized to manipulate the
+# invariant.
+
+type Account = {
+  name:         String,
+  priv balance: Real,
+}
+
+fn open(name: String) : Account =
+  Account { name: name, balance: 0.0 }
+
+fn deposit(a: Account, amount: Real) : Account =
+  Account { ...a, balance: a.balance + amount }
+
+fn balance_of(a: Account) : Real = a.balance
+
+fn main() {
+  let a0 = open("savings")
+  let a1 = deposit(a0, 100.0)
+  let a2 = deposit(a1, 50.0)
+  println("#{a2.name}: #{balance_of(a2)}")
+}

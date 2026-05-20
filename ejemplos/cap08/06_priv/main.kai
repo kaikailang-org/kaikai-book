@@ -1,0 +1,27 @@
+# Cliente del módulo `caja`. Vive en otro módulo, así que el
+# campo `saldo` está fuera de su alcance.
+#
+# Las dos líneas comentadas son los rechazos que produciría el
+# compilador si las descomentaras:
+#
+#   error: field `saldo` of `Cuenta` is private to module `caja`
+#
+#   error: cannot construct `Cuenta` from outside module `caja`:
+#          field `saldo` is private
+#
+# La forma idiomática: pedirle al módulo que cree el valor
+# (`caja.abrir`), pasarlo por sus operaciones (`caja.depositar`)
+# y leerlo por su getter público (`caja.saldo_de`). El campo
+# crudo queda escondido.
+
+import caja
+
+fn main() {
+  let c0 = caja.abrir("ahorros")
+  let c1 = caja.depositar(c0, 100.0)
+  let c2 = caja.depositar(c1, 50.0)
+  println("#{c2.nombre}: #{caja.saldo_de(c2)}")
+
+  # println("#{c2.saldo}")
+  # let _ = caja.Cuenta { nombre: "x", saldo: 999.0 }
+}

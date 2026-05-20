@@ -1,0 +1,34 @@
+# Campos privados con `priv`.
+#
+# Por defecto los campos de un record son públicos: cualquier
+# módulo que importe el tipo los puede leer y construir un
+# literal nombrándolos. La palabra `priv` antes del nombre del
+# campo invierte ese default — el campo queda visible solo
+# dentro del módulo que lo declara.
+#
+# Acá vivimos en un solo archivo, así que el campo `saldo`
+# privado se puede tocar libremente. El cap. 8 muestra el
+# rechazo desde otro módulo. La gracia: el resto del código del
+# `main` ya no toca `saldo` directamente — pasa por los
+# constructores y operaciones, que son los únicos puntos
+# autorizados a manipular el invariante.
+
+type Cuenta = {
+  nombre:     String,
+  priv saldo: Real,
+}
+
+fn abrir(nombre: String) : Cuenta =
+  Cuenta { nombre: nombre, saldo: 0.0 }
+
+fn depositar(c: Cuenta, monto: Real) : Cuenta =
+  Cuenta { ...c, saldo: c.saldo + monto }
+
+fn saldo_de(c: Cuenta) : Real = c.saldo
+
+fn main() {
+  let c0 = abrir("ahorros")
+  let c1 = depositar(c0, 100.0)
+  let c2 = depositar(c1, 50.0)
+  println("#{c2.nombre}: #{saldo_de(c2)}")
+}

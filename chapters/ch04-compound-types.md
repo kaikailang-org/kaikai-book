@@ -72,6 +72,61 @@ down:
   punned or positional. These are deliberate: they make it
   obvious who wins on a duplicate.
 
+### 4.1.1 Private fields
+
+Record fields are public by default: any module that imports
+the type can read them and name them when constructing a
+literal. The `priv` keyword in front of a field name flips
+that default:
+
+```kai
+# module `safe`
+pub type Account = {
+  name:         String,    # public by default
+  priv balance: Real,      # private to module `safe`
+}
+
+pub fn open(name: String) : Account =
+  Account { name: name, balance: 0.0 }
+
+pub fn deposit(a: Account, amount: Real) : Account =
+  Account { ...a, balance: a.balance + amount }
+
+pub fn balance_of(a: Account) : Real = a.balance
+```
+
+From inside the `safe` module, the `balance` field reads and
+writes like any other. From outside, it doesn't:
+
+```kai
+import safe
+
+fn main() {
+  let a = safe.open("savings")
+  println("#{a.name}")            # OK, `name` is public
+  println("#{safe.balance_of(a)}")  # OK, going through the getter
+
+  # The next two lines don't compile:
+  # println("#{a.balance}")          # ← field `balance` is private to module `safe`
+  # let d = safe.Account {            # ← cannot construct `Account` from outside …
+  #   name: "x",
+  #   balance: 1000.0,
+  # }
+}
+```
+
+The rule is strict: no external reads, no mention inside a
+construction literal. If module `safe` wants a consumer to
+create accounts, it exposes constructors (`open`) and
+operations (`deposit`) that preserve the invariants; the
+raw field stays hidden.
+
+This turns a record into a lightweight abstract type: public
+shape, interior under the author's control. We'll use this
+in ch. 17 to hide the store actor's state, and in ch. 18 so
+ledger balances can't be constructed from outside the domain
+module.
+
 ## 4.2 Field access and destructuring
 
 Accessing with `.` is fine for one or two fields. When you

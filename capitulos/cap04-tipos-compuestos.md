@@ -75,6 +75,61 @@ que conviene tener presentes:
   posicionales. Estas restricciones son a propósito: hacen
   obvio quién gana cuando hay duplicados.
 
+### 4.1.1 Campos privados
+
+Por defecto los campos de un record son públicos: cualquier
+módulo que importe el tipo los puede leer y mencionar al
+construir el record. La palabra `priv` antes del nombre del
+campo invierte ese default:
+
+```kai
+# módulo `caja`
+pub type Cuenta = {
+  nombre:    String,      # público por defecto
+  priv saldo: Real,       # privado al módulo `caja`
+}
+
+pub fn abrir(nombre: String) : Cuenta =
+  Cuenta { nombre: nombre, saldo: 0.0 }
+
+pub fn depositar(c: Cuenta, monto: Real) : Cuenta =
+  Cuenta { ...c, saldo: c.saldo + monto }
+
+pub fn saldo_de(c: Cuenta) : Real = c.saldo
+```
+
+Desde el módulo `caja` el campo `saldo` se lee y escribe
+como cualquier otro. Desde fuera, no:
+
+```kai
+import caja
+
+fn main() {
+  let c = caja.abrir("ahorros")
+  println("#{c.nombre}")          # OK, `nombre` es pública
+  println("#{caja.saldo_de(c)}")  # OK, paso por el getter
+
+  # Las dos líneas siguientes no compilan:
+  # println("#{c.saldo}")             # ← field `saldo` is private to module `caja`
+  # let d = caja.Cuenta {              # ← cannot construct `Cuenta` from outside …
+  #   nombre: "x",
+  #   saldo: 1000.0,
+  # }
+}
+```
+
+La regla es estricta: ni lectura desde afuera, ni mención
+dentro de un literal de construcción. Si el módulo `caja`
+quiere que un consumidor pueda crear cuentas, expone
+constructores (`abrir`) y operaciones (`depositar`) que
+mantengan los invariantes; el campo crudo queda escondido.
+
+Esto convierte el record en un tipo abstracto liviano:
+forma pública, interior bajo control del autor. Lo usaremos
+así en el cap. 17 para esconder el estado del actor del
+almacén, y en el cap. 18 para que los saldos del libro mayor
+no se construyan por fuera del módulo de dominio.
+
 ## 4.2 Acceso a campos y destructuring
 
 Acceder con `.` está bien para uno o dos campos. Cuando

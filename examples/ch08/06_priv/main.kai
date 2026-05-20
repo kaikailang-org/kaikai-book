@@ -1,0 +1,28 @@
+# Client of the `safe` module. It lives in another module, so
+# the `balance` field is out of reach.
+#
+# The two commented lines are the rejections the compiler would
+# produce if you uncommented them:
+#
+#   error: field `balance` of `Account` is private to module
+#          `safe`
+#
+#   error: cannot construct `Account` from outside module
+#          `safe`: field `balance` is private
+#
+# The idiomatic shape: ask the module to create the value
+# (`safe.open`), pass it through its operations (`safe.deposit`),
+# and read it through its public getter (`safe.balance_of`).
+# The raw field stays hidden.
+
+import safe
+
+fn main() {
+  let a0 = safe.open("savings")
+  let a1 = safe.deposit(a0, 100.0)
+  let a2 = safe.deposit(a1, 50.0)
+  println("#{a2.name}: #{safe.balance_of(a2)}")
+
+  # println("#{a2.balance}")
+  # let _ = safe.Account { name: "x", balance: 999.0 }
+}

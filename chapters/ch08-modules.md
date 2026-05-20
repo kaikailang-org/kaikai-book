@@ -162,6 +162,39 @@ Most languages with public-by-default end up with modules
 whose "real API" is mixed with everything else. kaikai
 inverts that: public is what you named explicitly.
 
+### Private fields inside a public type
+
+There's a useful asymmetry. When you declare
+`pub type T = { ... }`, the record's fields are **public by
+default**: the type is part of the contract, so are its
+fields. That's what you want most of the time.
+
+But sometimes the type itself belongs in the contract while
+a particular field is an implementation detail. The `priv`
+keyword before a field name marks it as invisible to other
+modules:
+
+```kai
+pub type Account = {
+  name:         String,
+  priv balance: Real,
+}
+```
+
+Outside the module that declares `Account`, `a.balance`
+doesn't compile and a literal `Account { name: "x", balance:
+100.0 }` doesn't either. Only the declaring module can read
+the field and name it when constructing. §4.1.1 covered the
+pattern in detail; what matters for ch. 8 is that `priv`
+works at **field granularity**, complements the `pub` that
+controls visibility at the declaration level, and together
+they cover a very common case: "export the type, hide its
+interior."
+
+The `ch08/06_priv/` example is a two-file project that shows
+exactly this rejection from the other side of the module
+boundary.
+
 ## 8.4 The stdlib you get for free
 
 There is one special module you **don't need to import**: the
@@ -215,6 +248,34 @@ convention). After 1.0, standard semver.
 `[dependencies]` is the table where you declare which other
 projects yours needs. Empty if your project has no external
 deps beyond the stdlib.
+
+### `edition`
+
+There's one more optional field worth pinning the moment a
+project stops being a sketch:
+
+```toml
+name = "myapp"
+version = "0.1.0"
+edition = "hanga-roa"
+
+[dependencies]
+```
+
+`edition` binds the source to a version of the **language
+contract**: syntax, type-system semantics, stdlib signatures,
+the `kai` CLI surface. While an edition is active, kaikai
+guarantees your project keeps compiling as the compiler moves
+forward, even when internals change. When an edition closes
+and a new one opens, kaikai keeps accepting the old one — you
+just have to declare which one you use.
+
+If you omit the field, the compiler assumes the installation's
+default edition. That's fine for sketches; for any project
+that will live, pinning the edition is what stops a silent
+upgrade from moving the ground under you. Ch. 16 covers the
+rest: how editions are chosen, how to migrate between them,
+and what `#[unstable]` means for APIs in flux.
 
 ### Starting a fresh project
 

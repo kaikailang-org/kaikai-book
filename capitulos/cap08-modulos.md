@@ -163,6 +163,38 @@ defecto acaban con módulos cuyo "API real" se mezcla con
 todo el resto. kaikai invierte eso: lo público es lo que
 nombraste explícitamente.
 
+### Campos privados dentro de un tipo público
+
+Hay una asimetría útil. Cuando declaras `pub type T = { ... }`,
+los campos del record son **públicos por defecto**: el tipo
+está en el contrato, sus campos también. Eso es lo que
+quieres la mayoría de las veces.
+
+Pero a veces el tipo en sí merece ser parte del contrato y
+algún campo es detalle de implementación. La palabra `priv`
+antes del nombre del campo lo marca como invisible para
+otros módulos:
+
+```kai
+pub type Cuenta = {
+  nombre:     String,
+  priv saldo: Real,
+}
+```
+
+Desde fuera del módulo que declara `Cuenta`, `c.saldo` no
+compila y un literal `Cuenta { nombre: "x", saldo: 100.0 }`
+tampoco. Solo el módulo declarante puede leer el campo y
+mencionarlo al construir. Los §4.1.1 mostró el detalle del
+patrón; lo importante para el cap. 8 es que `priv` opera a
+**granularidad de campo**, complementa el `pub` que controla
+visibilidad a nivel de declaración, y juntos cubren un caso
+muy común: "el tipo se exporta, su interior no".
+
+El ejemplo `cap08/06_priv/` es un proyecto de dos archivos
+que demuestra exactamente este rechazo desde el otro lado del
+límite del módulo.
+
 ## 8.4 El stdlib que ya tienes
 
 Hay un módulo especial que **no necesitas importar**: el
@@ -216,6 +248,36 @@ flags y otros sustos.
 `[dependencies]` es la tabla donde declaras qué otros proyectos
 necesita el tuyo. Vacío si tu proyecto no depende de nadie más
 fuera del stdlib.
+
+### `edition`
+
+Hay un campo opcional más que conviene fijar en cuanto un
+proyecto deja de ser un experimento:
+
+```toml
+name = "miapp"
+version = "0.1.0"
+edition = "hanga-roa"
+
+[dependencies]
+```
+
+`edition` ata el código fuente a una versión del **contrato
+del lenguaje**: sintaxis, semántica del sistema de tipos,
+firma del stdlib, API del binario `kai`. Mientras una edición
+esté activa, kaikai garantiza que tu proyecto seguirá
+compilando al subir el compilador, aunque internamente
+cambien cosas. Cuando una edición se cierra y entra una
+nueva, kaikai sigue aceptando la anterior — solo que tienes
+que decir cuál usas.
+
+Si omites el campo, el compilador asume la edición default de
+la instalación. Eso está bien para borradores; pero en un
+proyecto que va a vivir, fijar la edición es lo que evita
+que un upgrade silencioso te cambie el suelo. El cap. 16
+cuenta el resto: cómo se eligen las ediciones, cómo
+migrar entre ellas, y qué pasa con APIs marcadas como
+`#[unstable]`.
 
 ### Crear un proyecto nuevo
 
