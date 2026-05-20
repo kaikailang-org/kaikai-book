@@ -1,13 +1,20 @@
 name: build-pdf
 
-# Builds both PDF editions of the book on every push to main and
-# on manual dispatch. The PDFs are attached as workflow artifacts
-# (90-day retention). The repo only stores the source (markdown
-# + typst templates); the PDFs are always reproducible.
+# Builds both PDF editions of the book.
+#
+# Triggers:
+#   - push to main: builds PDFs and uploads them as workflow
+#     artifacts (90-day retention). Repo stays source-only;
+#     PDFs are always reproducible.
+#   - push of a tag matching v* (e.g. v0.1, v1.0-rc1): builds
+#     the PDFs and publishes them as assets of a GitHub Release
+#     named after the tag.
+#   - workflow_dispatch: manual rebuild from the Actions UI.
 
 on:
   push:
     branches: [main]
+    tags: ['v*']
   workflow_dispatch:
 
 jobs:
@@ -62,3 +69,46 @@ jobs:
           name: kaikai-book-en
           path: borradores/build-pdf/kaikai-book-en.pdf
           if-no-files-found: error
+
+  release:
+    # Only when the trigger is a tag matching v*. Reuses the
+    # binaries that `build` just produced; no recompilation.
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: write   # needed to create the GitHub Release
+
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Download Spanish PDF
+        uses: actions/download-artifact@v4
+        with:
+          name: kaikai-libro-es
+          path: pdfs/
+
+      - name: Download English PDF
+        uses: actions/download-artifact@v4
+        with:
+          name: kaikai-book-en
+          path: pdfs/
+
+      - name: Rename PDFs with tag suffix
+        # Versioned filenames make sense when several releases
+        # coexist on a user's disk.
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          mv pdfs/kaikai-libro-es.pdf "pdfs/kaikai-libro-es-${TAG}.pdf"
+          mv pdfs/kaikai-book-en.pdf  "pdfs/kaikai-book-en-${TAG}.pdf"
+          ls -lh pdfs/
+
+      - name: Publish release with PDFs attached
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pdfs/*.pdf
+          generate_release_notes: true
+          fail_on_unmatched_files: true
