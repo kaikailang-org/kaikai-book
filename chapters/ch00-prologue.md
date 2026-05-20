@@ -12,15 +12,15 @@
 > hard, it is the opposite of entangled.
 >
 > The etymology and the simple/easy distinction come from
-Rich Hickey in his talk *Simple Made Easy* (Strange Loop, 2011),
-available at
-[InfoQ](https://www.infoq.com/presentations/Simple-Made-Easy/).
-
+> Rich Hickey in his talk *Simple Made Easy* (Strange Loop, 2011),
+> available at
+> [InfoQ](https://www.infoq.com/presentations/Simple-Made-Easy/).
+>
 > Hickey's thesis runs through this whole book: simple is an
-objective property of things (how many threads compose them);
-easy is a property relative to the observer (how close it is to
-what they already know). Kaikai bets on the first even when it
-costs the second.
+> objective property of things (how many threads compose them);
+> easy is a property relative to the observer (how close it is to
+> what they already know). Kaikai bets on the first even when it
+> costs the second.
 
 I've wanted to write a programming language since I learned how
 to build compilers in college. Once I got into industry I ended

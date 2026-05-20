@@ -12,15 +12,15 @@
 > de lo difícil, es lo opuesto de lo entrelazado.
 >
 > La etimología y la distinción entre *simple* y *easy*
-las desarrolla Rich Hickey en su charla *Simple Made Easy*
-(Strange Loop, 2011), disponible en
-[InfoQ](https://www.infoq.com/presentations/Simple-Made-Easy/).
-
+> las desarrolla Rich Hickey en su charla *Simple Made Easy*
+> (Strange Loop, 2011), disponible en
+> [InfoQ](https://www.infoq.com/presentations/Simple-Made-Easy/).
+>
 > La tesis de Hickey atraviesa todo este libro: simple es una
-propiedad objetiva de las cosas (cuántos hilos las componen);
-easy es una propiedad relativa al observador (cuán cerca está
-de lo que ya sabe). Kaikai apuesta por lo primero aunque le
-cueste lo segundo.
+> propiedad objetiva de las cosas (cuántos hilos las componen);
+> easy es una propiedad relativa al observador (cuán cerca está
+> de lo que ya sabe). Kaikai apuesta por lo primero aunque le
+> cueste lo segundo.
 
 Cuando aprendí a construir compiladores en la universidad quedé fascinado con el diseño de lenguajes de programación. Luego en mi vida laboral resolví varios problemas creando pequeños lenguajes (hoy en día se conocen como lenguajes de dominio específico, o DSL por sus siglas en inglés).  
 
