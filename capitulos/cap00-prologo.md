@@ -1,7 +1,7 @@
 # Prólogo
 
 > Un *kaikai* es un hilo único que dibuja una figura entre las
-> manos. En la cultura rapanui, su nombre da nombre al arte
+> manos. En la cultura rapanui, esto corresponde al arte
 > completo: el hilo, la figura, y el *pata'u ta'u* — el canto
 > que la acompaña.
 >
@@ -9,14 +9,14 @@
 > *simplex*: "un solo pliegue, un solo hilo". *Complex* viene de
 > *complectere*: "trenzado junto". El argumento del libro, y la
 > apuesta del lenguaje, es que la simplicidad no es lo opuesto
-> de lo difícil — es lo opuesto de lo entrelazado. Es una
-> decisión, no un hábito.[^hickey]
-
-[^hickey]: La etimología y la distinción entre *simple* y *easy*
+> de lo difícil, es lo opuesto de lo entrelazado.
+>
+> La etimología y la distinción entre *simple* y *easy*
 las desarrolla Rich Hickey en su charla *Simple Made Easy*
 (Strange Loop, 2011), disponible en
 [InfoQ](https://www.infoq.com/presentations/Simple-Made-Easy/).
-La tesis de Hickey atraviesa todo este libro: simple es una
+
+> La tesis de Hickey atraviesa todo este libro: simple es una
 propiedad objetiva de las cosas (cuántos hilos las componen);
 easy es una propiedad relativa al observador (cuán cerca está
 de lo que ya sabe). Kaikai apuesta por lo primero aunque le
@@ -27,11 +27,11 @@ Cuando aprendí a construir compiladores en la universidad quedé fascinado con 
 Me encanta el diseño de lenguajes de programación, y me gusta aprenderlos, compararlos, entender por qué sus autores tomaron las decisiones que tomaron.
 También aprendí por qué hay tantos lenguajes de programación.
 Hace años hice una charla en una conferencia donde explico por qué pasa esto,
-la pueden encontrar en YouTube (https://www.youtube.com/watch?v=Hp9HwLPYkjI).
+la pueden encontrar en YouTube (<https://www.youtube.com/watch?v=Hp9HwLPYkjI>).
 En aquella charla presenté a Ogú, un lenguaje que inventé y desarrollé hace varios años.
 
 **Ogú** es un personaje de caricatura, un cavernícola amigo de Mampato
-creado por el ilustrador y caricaturista chileno Themo Lobos. 
+creado por el ilustrador y caricaturista chileno Themo Lobos.
 Conseguí el permiso para usar el personaje como mascota del lenguaje, una de las
 gestiones de las que estoy más orgulloso. El repositorio nació
 hacia 2010, anuncié intenciones en el blog, escribí parsers,
@@ -69,9 +69,9 @@ Y tuve una segunda epifanía.
 Fue así como nació la idea de un nuevo lenguaje, que llamé kaikai.
 
 Inicialmente el nombre era por la mítica serpiente de la mitología mapuche, pero descubrí que kai kai en la cultura Rapa Nui, hace referencia a
-un juego en que se hacen figuras con cordel que se tejen con los dedos mientras se canta un *pata'u ta'u*, un verso recitado. 
+un juego en que se hacen figuras con cordel que se tejen con los dedos mientras se canta un *pata'u ta'u*, un verso recitado.
 En el kai kai la estructura y la narración van de la mano, como en un
-programa bien tipado. 
+programa bien tipado.
 
 Lo que distingue a kaikai de intentos anteriores, y lo que le da
 originalidad y novedad, es lo que está en este libro: te toca a ti descubrirlo.
@@ -94,13 +94,13 @@ lenguaje en tiempo récord.
 Ese método lo documenté en lo que llamo ELP: *Empirical Lane Parallelism*.
 Esta forma de usar los agentes para amplificar tu proceso de desarrollo
 y construir productos de software robustos en poco tiempo está
-documentada en mi repo: https://github.com/lnds/elp. Te invito a leerlo
+documentada en mi repo: <https://github.com/lnds/elp>. Te invito a leerlo
 para que entiendas cómo pude construir un compilador tan complejo como
 el de kaikai en tan solo un mes.
 
 ## Una nota sobre cómo se escribió este libro
 
-Este libro se escribió con la asistencia de un agente de IA 
+Este libro se escribió con la asistencia de un agente de IA
 ([Claude Code](https://claude.com/product/claude-code) de
 Anthropic) bajo mi dirección como autor y editor. Yo decidí qué
 capítulos había, en qué orden, con qué voz, con qué énfasis.
@@ -109,7 +109,7 @@ a editar. Los ejemplos los validamos contra el compilador. Las
 afirmaciones técnicas las verificamos contra la documentación
 del lenguaje. La voz del libro la calibramos contra mi blog.
 
-Lo menciono no como disculpa, sino como reconocimiento de la 
+Lo menciono no como disculpa, sino como reconocimiento de la
 realidad que vivimos los ingenieros de software en 2026.
 La IA escribió partes, mi
 juicio decidió todo. En *El fin del software artesanal* escribí
@@ -241,7 +241,7 @@ del compilador se validó.
 
 ## Quién debería leer este libro
 
-Programadores con experiencia en algún lenguaje: 
+Programadores con experiencia en algún lenguaje:
 Python, JavaScript, Go, Java, C#, Rust, lo que sea, que tengan
 curiosidad por uno nuevo. No asumo background funcional: si
 nunca tocaste Haskell, OCaml o Elixir, los capítulos

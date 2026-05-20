@@ -1,22 +1,22 @@
 # Prologue
 
 > A *kaikai* is a single thread that draws a figure between the
-> hands. In Rapa Nui culture, the name names the whole practice:
-> the thread, the figure, and the *pata'u ta'u* — the chant that
-> goes with it.
+> hands. In Rapa Nui culture, this corresponds to the whole
+> practice: the thread, the figure, and the *pata'u ta'u* — the
+> chant that goes with it.
 >
 > This book borrows that image. *Simple* comes from Latin
 > *simplex*: "one fold, one thread." *Complex* comes from
 > *complectere*: "braided together." The book's argument, and
 > the language's bet, is that simplicity is not the opposite of
-> hard — it is the opposite of entangled. It is a decision, not
-> a habit.[^hickey]
-
-[^hickey]: The etymology and the simple/easy distinction come
-from Rich Hickey's talk *Simple Made Easy* (Strange Loop, 2011),
+> hard, it is the opposite of entangled.
+>
+> The etymology and the simple/easy distinction come from
+Rich Hickey in his talk *Simple Made Easy* (Strange Loop, 2011),
 available at
 [InfoQ](https://www.infoq.com/presentations/Simple-Made-Easy/).
-Hickey's thesis runs through this whole book: simple is an
+
+> Hickey's thesis runs through this whole book: simple is an
 objective property of things (how many threads compose them);
 easy is a property relative to the observer (how close it is to
 what they already know). Kaikai bets on the first even when it
