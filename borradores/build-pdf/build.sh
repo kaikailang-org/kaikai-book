@@ -29,8 +29,10 @@ OUT="kaikai-libro-es.pdf"
   done
 } > "$BODY"
 
-# Reescribir rutas de figuras (capítulos referencian ../figuras/)
-sed -i '' 's|\.\./figuras/|figuras/|g' "$BODY"
+# Reescribir rutas de figuras (capítulos referencian ../figuras/).
+# Usamos perl -i porque sed -i es incompatible entre BSD (macOS)
+# y GNU (Linux/CI) en el manejo del argumento de backup.
+perl -i -pe 's|\.\./figuras/|figuras/|g' "$BODY"
 
 # --- 2. Markdown → typst (cuerpo) -----------------------------------------
 # (pandoc invocation below)
@@ -47,7 +49,7 @@ pandoc "$BODY" \
   -o "$BODY_TYP"
 
 # Replace #horizontalrule (unknown to typst) with a visible separator.
-sed -i '' 's|^#horizontalrule$|#v(0.5em) #line(length: 30%, stroke: 0.5pt) #v(0.5em)|g' "$BODY_TYP"
+perl -i -pe 's|^#horizontalrule$|#v(0.5em) #line(length: 30%, stroke: 0.5pt) #v(0.5em)|g' "$BODY_TYP"
 
 # --- 3. Envolver con plantilla --------------------------------------------
 cat > kaikai-libro-es.typ <<'EOF'
