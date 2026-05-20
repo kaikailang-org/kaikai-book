@@ -8,13 +8,24 @@
 #
 # Typed Pids guarantee that each mailbox receives only the
 # message type it expects.
+#
+# `main` nests two `with_mailbox` blocks: the outer one
+# installs the `Reply` mailbox (where the client's replies
+# land), the inner one installs the `Request` mailbox (which
+# gives the client the effect it needs to call
+# `Actor.send(server, Query(...))`).
+#
+# We annotate the spawn's handle explicitly as
+# `Pid[Request]`: without the annotation the typer infers
+# `Pid[Reply]` (the most recent mailbox in scope) and the
+# call to `Actor.send` does not check.
 
 import actor
 
 type Request = Query(String, Pid[Reply])
 type Reply   = Answer(String)
 
-fn server() : Unit / Actor[Request] + Actor[Reply] + Console {
+fn server() : Unit / Actor[Request] + Actor[Reply] + Stdout = {
   match Actor.receive() {
     Query(q, client) -> {
       Stdout.print("server: got '#{q}'")
@@ -24,18 +35,21 @@ fn server() : Unit / Actor[Request] + Actor[Reply] + Console {
   }
 }
 
-fn main() : Unit / Console + Spawn + Cancel + Actor[Reply] {
-  with_mailbox {
-    let s = spawn_actor(() => server())
+fn main() : Unit / Stdout + Spawn + Cancel = {
+  with_mailbox {       # Reply mailbox: where server replies land
+    with_mailbox {     # Request mailbox: gives the client the effect to send
+      let server_body : () -> Unit / Actor[Request] + Actor[Reply] + Stdout = () => server()
+      let s : Pid[Request] = spawn_actor(server_body)
 
-    Actor.send(s, Query("two+two", Actor.self()))
-    match Actor.receive() {
-      Answer(r) -> Stdout.print("client: " ++ r)
-    }
+      Actor.send(s, Query("two+two", Actor.self()))
+      match Actor.receive() {
+        Answer(r) -> Stdout.print("client: " ++ r)
+      }
 
-    Actor.send(s, Query("the meaning of life", Actor.self()))
-    match Actor.receive() {
-      Answer(r) -> Stdout.print("client: " ++ r)
+      Actor.send(s, Query("the meaning of life", Actor.self()))
+      match Actor.receive() {
+        Answer(r) -> Stdout.print("client: " ++ r)
+      }
     }
   }
 }

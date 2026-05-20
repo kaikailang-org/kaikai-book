@@ -37,8 +37,8 @@ Las fibras son **cooperativas**. Cada una corre hasta que llega a
 un **punto de yield**: una llamada que voluntariamente le pasa el
 control al scheduler. Los puntos de yield son explícitos:
 
-- `fiber_yield()`: "ya pude correr un rato, prueba otra".
-- `fiber_await(f)`: "espera a que termine la fibra `f`".
+- `spawn.yield()`: "ya pude correr un rato, prueba otra".
+- `spawn.await(f)`: "espera a que termine la fibra `f`".
 - Las operaciones de IO que el scheduler intercepta (lecturas de
   red, sleep, etc.).
 
@@ -130,8 +130,8 @@ simplifica el RC.
 
 ## 13.3 Crear y esperar fibras: las operaciones básicas
 
-La forma más simple de usar fibras es con `fiber_spawn` y
-`fiber_await`:
+La forma más simple de usar fibras es con `spawn.spawn` y
+`spawn.await`:
 
 ```kai
 import spawn
@@ -139,15 +139,15 @@ import spawn
 fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
   if n > 0 {
     println(tag)
-    fiber_yield()
+    spawn.yield()
     worker(tag, n - 1)
   }
 }
 
 fn main() {
-  let f = fiber_spawn(() => worker("B", 3))
+  let f = spawn.spawn(() => worker("B", 3))
   worker("A", 3)
-  fiber_await(f)
+  spawn.await(f)
 }
 ```
 
@@ -166,16 +166,16 @@ B
 Lectura literal:
 
 - `import spawn` trae las operaciones de fibras.
-- `fiber_spawn(() => worker("B", 3))` crea una fibra nueva que
+- `spawn.spawn(() => worker("B", 3))` crea una fibra nueva que
   va a correr el lambda cuando el scheduler la elija.
 - `worker("A", 3)` corre en la fibra actual (la del `main`).
-- `fiber_yield()` dentro de `worker` cede el control. Cada
+- `spawn.yield()` dentro de `worker` cede el control. Cada
   vuelta, la otra fibra toma su turno.
-- `fiber_await(f)` espera a que `f` termine antes de que `main`
+- `spawn.await(f)` espera a que `f` termine antes de que `main`
   retorne.
 
 `Spawn` aparece en la firma de `worker` porque la función llama
-a `fiber_yield()`, que es una operación de `Spawn`. La fila
+a `spawn.yield()`, que es una operación de `Spawn`. La fila
 contagia hacia arriba como con cualquier efecto del cap. 12.
 
 ### Por qué los yields son explícitos
@@ -193,12 +193,12 @@ cedas el control. Esto reduce mucho la carga cognitiva.
 
 A cambio, tienes que **acordarte de poner los yields**. La regla
 mental es: si tu función tiene un bucle largo de puro cómputo,
-agrega un `fiber_yield()` cada cierto número de iteraciones.
+agrega un `spawn.yield()` cada cierto número de iteraciones.
 Las funciones de IO ya yieldan por dentro.
 
 ## 13.4 Nurseries: concurrencia estructurada
 
-`fiber_spawn` + `fiber_await` funciona, pero tiene un problema:
+`spawn.spawn` + `spawn.await` funciona, pero tiene un problema:
 si te olvidas del `await`, la fibra se queda viva más allá del
 scope donde la creaste. Y si esa fibra falla, te enteras tarde
 o no te enteras.
@@ -213,7 +213,7 @@ import spawn
 fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
   if n > 0 {
     println(tag)
-    fiber_yield()
+    spawn.yield()
     worker(tag, n - 1)
   }
 }
@@ -332,7 +332,7 @@ fn trabajador_largo(tag: String) : Unit / Stdout + Spawn + Cancel {
 
 fn contar(tag: String, n: Int) : Unit / Stdout + Spawn + Cancel {
   println("#{tag}: #{n}")
-  fiber_yield()
+  spawn.yield()
   contar(tag, n + 1)
 }
 ```
@@ -438,7 +438,7 @@ fn worker(id: Int) : Unit / Stdout + Spawn + State[[String]] {
     None       -> println("worker #{id}: cola vacía, salgo")
     Some(tarea) -> {
       println("worker #{id}: procesando '#{tarea}'")
-      fiber_yield()
+      spawn.yield()
       worker(id)
     }
   }
@@ -563,7 +563,7 @@ el modelo.
 **13.1.** Modifica el ejemplo §13.3 (dos fibras cooperativas)
 para que `worker("A")` haga 5 iteraciones y `worker("B")` haga
 2. ¿Cómo cambia la salida? ¿Qué pasa si quitas los
-`fiber_yield()` de uno solo de los dos workers?
+`spawn.yield()` de uno solo de los dos workers?
 
 **13.2.** Una fibra crea un `Array[Int]` localmente y lo
 modifica con `a[i] := v`. Después termina sin pasarlo a nadie.
@@ -583,7 +583,7 @@ tengan prioridad alta y los workers las procesen primero.
 Pista: el `State` puede ser un record con dos listas.
 
 **13.5.** Una fibra que entra a un bucle infinito sin
-`fiber_yield()` bloquea a todas las demás. Escribe ese código
+`spawn.yield()` bloquea a todas las demás. Escribe ese código
 y observa qué pasa. Después agrega yields cada N
 iteraciones. ¿Cada cuántas? ¿Cómo decides el N?
 

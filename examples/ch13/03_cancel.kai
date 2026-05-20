@@ -20,7 +20,7 @@ fn long_worker(tag: String) : Unit / Stdout + Spawn + Cancel {
 
 fn count(tag: String, n: Int) : Unit / Stdout + Spawn + Cancel {
   println("#{tag}: #{n}")
-  fiber_yield()
+  spawn.yield()
   count(tag, n + 1)
 }
 
@@ -30,7 +30,7 @@ fn quit(n: Int) : Unit / Stdout + Spawn + Fail {
     Fail.fail("quitting after 3 steps")
   } else {
     println("step #{n}")
-    fiber_yield()
+    spawn.yield()
     quit(n + 1)
   }
 }

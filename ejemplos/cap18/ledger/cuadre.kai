@@ -47,27 +47,5 @@ pub fn aplicar_si_cuadra(ms: [dominio.Movimiento]) : [dominio.Movimiento]
   ensures  cuadra(result)
 = ms
 
-test "cuadra con una entrada y una salida" {
-  let ms = [
-    dominio.Debito(1<CuentaId>, 100.0<USD>),
-    dominio.Credito(2<CuentaId>, 100.0<USD>),
-  ]
-  assert esta_cuadrada(ms)
-}
-
-test "no cuadra cuando los montos difieren" {
-  let ms = [
-    dominio.Debito(1<CuentaId>, 100.0<USD>),
-    dominio.Credito(2<CuentaId>, 90.0<USD>),
-  ]
-  assert not esta_cuadrada(ms)
-}
-
-test "cuadra con múltiples líneas" {
-  let ms = [
-    dominio.Debito(1<CuentaId>, 60.0<USD>),
-    dominio.Debito(2<CuentaId>, 40.0<USD>),
-    dominio.Credito(3<CuentaId>, 100.0<USD>),
-  ]
-  assert esta_cuadrada(ms)
-}
+# Los tests viven en `cuadre_tests.kai` — workaround del bug del
+# typer en kaikai 0.74.0 (ver almacen.kai).

@@ -8,16 +8,16 @@ import spawn
 
 fn rapido() : Int / Stdout + Spawn {
   println("rapido: empieza")
-  fiber_yield()
+  spawn.yield()
   println("rapido: termina")
   1
 }
 
 fn lento() : Int / Stdout + Spawn {
   println("lento: empieza")
-  fiber_yield()
-  fiber_yield()
-  fiber_yield()
+  spawn.yield()
+  spawn.yield()
+  spawn.yield()
   println("lento: termina")
   2
 }

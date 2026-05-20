@@ -30,9 +30,9 @@ the value. Once the result is returned, the fiber ceases to
 exist.
 
 ```kai
-let f = fiber_spawn(() => parse_file("input.txt"))
+let f = spawn.spawn(() => parse_file("input.txt"))
 # ... other work in parallel ...
-let errors = fiber_await(f)   # one value, and you're done
+let errors = spawn.await(f)   # one value, and you're done
 ```
 
 Task B is a **live process**: it has no single return value,
@@ -62,7 +62,7 @@ Side by side:
 | What is it? | Unit of execution | Fiber with typed mailbox |
 | Communication | One return value via `await` | Messages via `send`/`receive` |
 | Lifecycle | Start, compute, return, die | Start, loop processing, die when it decides |
-| How to create | `fiber_spawn` or `n.spawn` | `spawn_actor` |
+| How to create | `spawn.spawn` or `n.spawn` | `spawn_actor` |
 | How you talk to it | `await` to get its `T` | `send` any number of times |
 | When to pick | Discrete concurrent computation | Long-lived service, internal state, queries |
 
@@ -98,7 +98,7 @@ It's the same principle as `nursery` from chapter 13: the
 language core has only effects; the use patterns (fibers,
 actors, supervision) appear in libraries any reader can
 read. If after this chapter you wonder how `spawn_actor`
-works inside, the answer is a `fiber_spawn` plus a
+works inside, the answer is a `spawn.spawn` plus a
 `handle ... with Actor[Msg]`.
 
 ## 14.1 `Actor[Msg]`: the effect
@@ -218,10 +218,10 @@ fn main() : Unit / Console + Spawn + Cancel + Actor[String] {
     Actor.send(pid, "task-1")
     Actor.send(pid, "task-2")
     Actor.send(pid, "task-3")
-    fiber_yield()
-    fiber_yield()
-    fiber_yield()
-    fiber_yield()
+    spawn.yield()
+    spawn.yield()
+    spawn.yield()
+    spawn.yield()
   }
 }
 ```
@@ -239,7 +239,7 @@ context. The `with_mailbox` in `main` provides that
 capability. The `pid` already identifies the destination
 mailbox; the handler only dispatches the operation.
 
-The `fiber_yield()`s at the end give the scheduler a chance
+The `spawn.yield()`s at the end give the scheduler a chance
 to run the worker. Without them, `main` would exit before
 the worker processed anything.
 
@@ -587,7 +587,7 @@ these:
    `with_mailbox`, `spawn_actor`, the policies. The library's
    code is there for you to read. If you ever wonder "what
    does `spawn_actor` do underneath", the answer is a
-   `handle` and a `fiber_spawn`.
+   `handle` and a `spawn.spawn`.
 
 2. **Every actor has a fixed message type.** The compiler
    guarantees you don't send the wrong message to the wrong
@@ -606,7 +606,7 @@ ordinary function in kaikai with these pieces.
 
 **14.1.** Modify the §14.3 example so the worker processes
 five tasks instead of three. What happens if you reduce the
-parent's `fiber_yield()`s? What's the minimum that lets all
+parent's `spawn.yield()`s? What's the minimum that lets all
 tasks get processed?
 
 **14.2.** Take `BoundedDropOldest` from §14.4 and change it

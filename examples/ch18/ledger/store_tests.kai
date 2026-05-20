@@ -1,0 +1,62 @@
+# Store tests. Separate file to work around a kaikai 0.74.0 typer
+# bug: direct `test "..."` blocks in `store.kai` break export
+# resolution when `main.kai` also loads another local module
+# (`balance`). `main.kai` does not import this file; `kai test`
+# still picks it up over the whole project.
+
+import store
+import domain
+
+test "creating an account adds it to state" {
+  let (r, s2) = store.process(domain.CreateAccount("cash"), store.initial_state())
+  let ok = match r {
+    domain.AccountCreated(c) -> c.name == "cash"
+    _                         -> false
+  }
+  assert ok
+  assert list.length(s2.accounts) == 1
+}
+
+test "registering a transaction rejects an imbalance" {
+  let s = store.State {
+    accounts:         [domain.Account { id: 1<domain.AccountId>, name: "a", balance: 0.0<domain.USD> }],
+    transactions:     [],
+    next_account_id:  2<domain.AccountId>,
+    next_tx_id:       1<domain.TransactionId>,
+  }
+  let movs = [domain.Debit(1<domain.AccountId>, 100.0<domain.USD>)]   # only debit, doesn't balance
+  let (r, _) = store.process(domain.Register("test", movs), s)
+  let ok = match r {
+    domain.UnbalancedError(_) -> true
+    _                          -> false
+  }
+  assert ok
+}
+
+test "registering a balanced transaction updates balances" {
+  let s = store.State {
+    accounts: [
+      domain.Account { id: 1<domain.AccountId>, name: "cash",  balance: 0.0<domain.USD> },
+      domain.Account { id: 2<domain.AccountId>, name: "sales", balance: 0.0<domain.USD> },
+    ],
+    transactions:     [],
+    next_account_id:  3<domain.AccountId>,
+    next_tx_id:       1<domain.TransactionId>,
+  }
+  let movs = [
+    domain.Debit(1<domain.AccountId>, 50.0<domain.USD>),     # +50 to cash
+    domain.Credit(2<domain.AccountId>, 50.0<domain.USD>),    # -50 to sales
+  ]
+  let (r, s2) = store.process(domain.Register("sale", movs), s)
+  let ok = match r {
+    domain.TransactionRegistered(_) -> true
+    _                                -> false
+  }
+  assert ok
+  let cash = store.find_account(s2.accounts, 1<domain.AccountId>)
+  let cash_balance = match cash {
+    Some(c) -> c.balance
+    None    -> 0.0<domain.USD>
+  }
+  assert cash_balance == 50.0<domain.USD>
+}

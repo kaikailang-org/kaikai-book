@@ -85,40 +85,6 @@ pub fn ask(store: Pid[StoreMsg], c: domain.Command) : domain.Reply / Actor[Store
   }
 }
 
-test "create and get" {
-  let (r1, n1, id1) = process(domain.Create("first"), [], 1)
-  let created_ok = match r1 {
-    domain.Created(_) -> true
-    _                  -> false
-  }
-  assert created_ok
-  assert id1 == 2
-
-  let (r2, _, _) = process(domain.Get(1), n1, id1)
-  let get_ok = match r2 {
-    domain.Stored(c) -> c == "first"
-    _                 -> false
-  }
-  assert get_ok
-}
-
-test "get missing note" {
-  let (r, _, _) = process(domain.Get(99), [], 1)
-  let ok = match r {
-    domain.NotFound -> true
-    _                -> false
-  }
-  assert ok
-}
-
-test "delete shrinks the list" {
-  let (_, n1, id1) = process(domain.Create("a"), [], 1)
-  let (_, n2, id2) = process(domain.Create("b"), n1, id1)
-  let (r, n3, _)   = process(domain.Delete(1), n2, id2)
-  let ok = match r {
-    domain.Stored(_) -> true
-    _                 -> false
-  }
-  assert ok
-  assert list.length(n3) == 1
-}
+# Tests live in `store_tests.kai` — kaikai 0.74.0 has a typer
+# bug that breaks export resolution when `test "..."` blocks and
+# two local modules from the same project load together.

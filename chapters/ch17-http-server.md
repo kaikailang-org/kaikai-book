@@ -36,7 +36,7 @@ notes/
 ├── domain.kai           # types: Note, Command, Response
 ├── store.kai            # actor that holds the notes
 ├── persistence.kai      # actor that writes the log
-└── http.kai             # minimal HTTP parser and serializer
+└── web.kai              # minimal HTTP parser and serializer
 ```
 
 Five files, five distinct concerns:
@@ -53,7 +53,7 @@ Five files, five distinct concerns:
   (creation, deletion), writes them to a log file.
   Isolating the disk in an actor lets the store keep
   responding even if the write is slow.
-- **`http.kai`** is pure functions: parsing HTTP bytes into
+- **`web.kai`** is pure functions: parsing HTTP bytes into
   a `HttpReq` structure, translating requests into domain
   commands, serialising responses to bytes. No actors, no
   IO.
@@ -72,7 +72,7 @@ pieces.
 Figure 17.1 · *Notes server architecture. Five modules,
 two actors (store and persistence), one fiber per
 incoming connection. The pure modules (`domain.kai`,
-`http.kai`, green cluster) have no effects; the stateful
+`web.kai`, green cluster) have no effects; the stateful
 modules (`store.kai`, `persistence.kai`, red cluster)
 hide their mutation behind a mailbox; `main.kai` is glue.*
 
@@ -266,14 +266,14 @@ pub type Event = Line(String)
 fn loop(path: String) : Unit / Actor[Event] + File {
   match Actor.receive() {
     Line(s) -> {
-      file.file_append(path, s ++ "\n")
+      file.append(path, s ++ "\n")
       loop(path)
     }
   }
 }
 
 pub fn start(path: String) : Pid[Event] / Spawn + Cancel + Actor[Event] + File {
-  file.file_write_file(path, "")    # truncate at start
+  file.write(path, "")    # truncate at start
   spawn_actor(() => loop(path))
 }
 ```
@@ -296,7 +296,7 @@ explicit and lives in one line, easy to change.
 
 ## 17.5 HTTP parser
 
-`http.kai` is pure string manipulation. The central piece
+`web.kai` is pure string manipulation. The central piece
 is `route`, which translates an HTTP request into a domain
 command:
 
@@ -344,8 +344,8 @@ import fs.file
 import domain
 import store
 import persistence
-import http as http_lib
 import net.tcp
+import web
 
 const PORT : Int = 8080
 const LOG_PATH : String = "notes.log"
@@ -378,23 +378,21 @@ three message channels. The signature hides nothing: if
 `main` did more things, its row would grow accordingly.
 
 The accept loop opens a nursery and spawns a fiber per
-connection:
+connection. Note: `n` is not a `Nursery` value that can
+travel to another function — the compiler rewrites every
+`n.spawn(...)` to `Spawn.spawn(...)` tagged with *this*
+nursery's brand, so the `spawn` has to appear lexically
+inside the block. That's why the accept loop is inline:
 
 ```kai
-fn accept_loop(listener, store_pid, log_pid) : ... {
-  nursery { n ->
-    forever_accept(n, listener, store_pid, log_pid)
-  }
-}
-
-fn forever_accept(n: Nursery, listener, store_pid, log_pid) : ... {
-  match NetTcp.accept(listener) {
-    Err(_) -> ()
+nursery { n ->
+  forever(() => match NetTcp.accept(listener) {
+    Err(_)   -> ()
     Ok(conn) -> {
       let _ = n.spawn(() => handle_connection(conn, store_pid, log_pid))
-      forever_accept(n, listener, store_pid, log_pid)
+      ()
     }
-  }
+  })
 }
 ```
 
@@ -408,9 +406,9 @@ And per connection, the handler:
 ```kai
 fn handle_connection(conn, store_pid, log_pid) {
   let raw = read_request(conn)
-  let resp = match http_lib.parse_request(raw) {
+  let resp = match web.parse_request(raw) {
     Err(msg) -> domain.ClientError(msg)
-    Ok(req)  -> match http_lib.route(req) {
+    Ok(req)  -> match web.route(req) {
       Err(r)       -> r
       Ok(command)  -> {
         record(log_pid, command)
@@ -418,7 +416,7 @@ fn handle_connection(conn, store_pid, log_pid) {
       }
     }
   }
-  NetTcp.send(conn, string_to_bytes(http_lib.serialize_response(resp)))
+  NetTcp.send(conn, string_to_bytes(web.serialize_response(resp)))
   NetTcp.close(conn)
 }
 ```

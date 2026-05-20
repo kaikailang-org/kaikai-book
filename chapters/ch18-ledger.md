@@ -67,7 +67,7 @@ is the emphasis:
 The center of the program is the types:
 
 ```kai
-unit USD
+pub unit USD
 
 pub unit AccountId
 pub unit TransactionId
@@ -271,7 +271,7 @@ pub type Event = Line(String)
 fn loop(path: String) : Unit / Actor[Event] + File {
   match Actor.receive() {
     Line(s) -> {
-      file.file_append(path, s ++ "\n")
+      file.append(path, s ++ "\n")
       loop(path)
     }
   }

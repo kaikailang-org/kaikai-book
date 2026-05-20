@@ -66,7 +66,7 @@ cambia es el énfasis:
 El centro del programa son los tipos:
 
 ```kai
-unit USD
+pub unit USD
 
 pub unit CuentaId
 pub unit TransaccionId
@@ -270,7 +270,7 @@ pub type Evento = Linea(String)
 fn bucle(path: String) : Unit / Actor[Evento] + File {
   match Actor.receive() {
     Linea(s) -> {
-      file.file_append(path, s ++ "\n")
+      file.append(path, s ++ "\n")
       bucle(path)
     }
   }

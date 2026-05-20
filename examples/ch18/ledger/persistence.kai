@@ -16,7 +16,7 @@ pub type Event = Line(String)
 pub fn persistence_loop(path: String) : Unit / Actor[Event] + File = {
   match Actor.receive() {
     Line(s) -> {
-      file_append(path, s ++ "\n")
+      file.append(path, s ++ "\n")
       persistence_loop(path)
     }
   }
@@ -25,5 +25,5 @@ pub fn persistence_loop(path: String) : Unit / Actor[Event] + File = {
 # Truncate the log file before the actor starts so each run
 # begins with an empty log.
 pub fn reset_log(path: String) : Unit / File = {
-  file_write_file(path, "")
+  file.write(path, "")
 }

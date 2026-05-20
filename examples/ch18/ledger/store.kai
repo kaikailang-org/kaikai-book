@@ -167,58 +167,6 @@ pub fn ask(store: Pid[StoreMsg], c: domain.Command) : domain.Response / Actor[St
   }
 }
 
-# Tests against the pure logic, without actors.
-
-test "creating an account adds it to state" {
-  let (r, s2) = process(domain.CreateAccount("cash"), initial_state())
-  let ok = match r {
-    domain.AccountCreated(c) -> c.name == "cash"
-    _                         -> false
-  }
-  assert ok
-  assert list.length(s2.accounts) == 1
-}
-
-test "registering a transaction rejects an imbalance" {
-  let s = State {
-    accounts:         [domain.Account { id: 1<AccountId>, name: "a", balance: 0.0<USD> }],
-    transactions:     [],
-    next_account_id:  2<AccountId>,
-    next_tx_id:       1<TransactionId>,
-  }
-  let movs = [domain.Debit(1<AccountId>, 100.0<USD>)]   # only debit, doesn't balance
-  let (r, _) = process(domain.Register("test", movs), s)
-  let ok = match r {
-    domain.UnbalancedError(_) -> true
-    _                          -> false
-  }
-  assert ok
-}
-
-test "registering a balanced transaction updates balances" {
-  let s = State {
-    accounts: [
-      domain.Account { id: 1<AccountId>, name: "cash",  balance: 0.0<USD> },
-      domain.Account { id: 2<AccountId>, name: "sales", balance: 0.0<USD> },
-    ],
-    transactions:     [],
-    next_account_id:  3<AccountId>,
-    next_tx_id:       1<TransactionId>,
-  }
-  let movs = [
-    domain.Debit(1<AccountId>, 50.0<USD>),     # +50 to cash
-    domain.Credit(2<AccountId>, 50.0<USD>),    # -50 to sales
-  ]
-  let (r, s2) = process(domain.Register("sale", movs), s)
-  let ok = match r {
-    domain.TransactionRegistered(_) -> true
-    _                                -> false
-  }
-  assert ok
-  let cash = find_account(s2.accounts, 1<AccountId>)
-  let cash_balance = match cash {
-    Some(c) -> c.balance
-    None    -> 0.0<USD>
-  }
-  assert cash_balance == 50.0<USD>
-}
+# Tests live in `store_tests.kai` — workaround for the kaikai 0.74.0
+# typer bug that breaks export resolution when `test "..."` blocks
+# and another local module (`balance`) load together.

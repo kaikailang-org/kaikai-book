@@ -30,11 +30,10 @@ import spawn
 import loop
 import fs.file
 import net.tcp
-import net.http
 import dominio
 import almacen
 import persistencia
-import http as http_lib
+import web
 
 const PUERTO   : Int    = 8080
 const PATH_LOG : String = "notas.log"
@@ -43,9 +42,9 @@ const PATH_LOG : String = "notas.log"
 # almacén vía `almacen.preguntar` y loguea los comandos
 # mutantes al actor de persistencia antes de responder.
 fn manejar_request(raw: String, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: Pid[persistencia.Evento]) : String / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] = {
-  let resp = match http_lib.parsear_request(raw) {
+  let resp = match web.parsear_request(raw) {
     Err(msg) -> dominio.ErrorCliente(msg)
-    Ok(req)  -> match http_lib.enrutar(req) {
+    Ok(req)  -> match web.enrutar(req) {
       Err(r)        -> r
       Ok(comando)   -> {
         registrar(log_pid, comando)
@@ -53,7 +52,7 @@ fn manejar_request(raw: String, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: P
       }
     }
   }
-  http_lib.serializar_respuesta(resp)
+  web.serializar_respuesta(resp)
 }
 
 fn registrar(log_pid: Pid[persistencia.Evento], c: dominio.Comando) : Unit / Actor[persistencia.Evento] = match c {
@@ -63,7 +62,7 @@ fn registrar(log_pid: Pid[persistencia.Evento], c: dominio.Comando) : Unit / Act
 }
 
 fn leer_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
-  Ok(bytes) -> http_bytes_to_string(bytes)
+  Ok(bytes) -> web.bytes_to_string(bytes)
   Err(_)    -> ""
 }
 
@@ -81,7 +80,7 @@ fn leer_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
 fn atender_conexion(conn: Conn, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: Pid[persistencia.Evento]) : Unit / NetTcp + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] + Cancel = {
   let raw  = leer_request(conn)
   let wire = manejar_request(raw, almacen_pid, log_pid)
-  let _    = NetTcp.send(conn, http_string_to_bytes(wire))
+  let _    = NetTcp.send(conn, web.string_to_bytes(wire))
   NetTcp.close(conn)
 }
 

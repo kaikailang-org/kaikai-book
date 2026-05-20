@@ -13,7 +13,7 @@ import spawn
 fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
   if n > 0 {
     println(tag)
-    fiber_yield()
+    spawn.yield()
     worker(tag, n - 1)
   }
 }

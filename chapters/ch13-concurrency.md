@@ -37,8 +37,8 @@ Fibers are **cooperative**. Each one runs until it hits a
 **yield point**: a call that voluntarily hands control back
 to the scheduler. Yield points are explicit:
 
-- `fiber_yield()`: "I've run for a while, try another".
-- `fiber_await(f)`: "wait until fiber `f` finishes".
+- `spawn.yield()`: "I've run for a while, try another".
+- `spawn.await(f)`: "wait until fiber `f` finishes".
 - IO operations that the scheduler intercepts (network
   reads, sleep, etc.).
 
@@ -131,8 +131,8 @@ keeps the reference counting lock-free.
 
 ## 13.3 Creating and awaiting fibers: the basic operations
 
-The simplest way to use fibers is with `fiber_spawn` and
-`fiber_await`:
+The simplest way to use fibers is with `spawn.spawn` and
+`spawn.await`:
 
 ```kai
 import spawn
@@ -140,15 +140,15 @@ import spawn
 fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
   if n > 0 {
     println(tag)
-    fiber_yield()
+    spawn.yield()
     worker(tag, n - 1)
   }
 }
 
 fn main() {
-  let f = fiber_spawn(() => worker("B", 3))
+  let f = spawn.spawn(() => worker("B", 3))
   worker("A", 3)
-  fiber_await(f)
+  spawn.await(f)
 }
 ```
 
@@ -167,16 +167,16 @@ B
 Reading literally:
 
 - `import spawn` brings in the fiber operations.
-- `fiber_spawn(() => worker("B", 3))` creates a new fiber
+- `spawn.spawn(() => worker("B", 3))` creates a new fiber
   that will run the lambda when the scheduler picks it.
 - `worker("A", 3)` runs in the current fiber (`main`'s).
-- `fiber_yield()` inside `worker` hands control back. On
+- `spawn.yield()` inside `worker` hands control back. On
   each yield, the other fiber gets its turn.
-- `fiber_await(f)` waits for `f` to finish before `main`
+- `spawn.await(f)` waits for `f` to finish before `main`
   returns.
 
 `Spawn` appears in `worker`'s signature because the function
-calls `fiber_yield()`, which is a `Spawn` operation. The row
+calls `spawn.yield()`, which is a `Spawn` operation. The row
 propagates upward like any other effect from chapter 12.
 
 ### Why yields are explicit
@@ -194,12 +194,12 @@ give up control. This drops a lot of cognitive load.
 
 In exchange, you have to **remember to yield**. The mental
 rule: if your function has a long pure-CPU loop, add a
-`fiber_yield()` every so many iterations. IO functions
+`spawn.yield()` every so many iterations. IO functions
 already yield internally.
 
 ## 13.4 Nurseries: structured concurrency
 
-`fiber_spawn` + `fiber_await` works, but it has a problem:
+`spawn.spawn` + `spawn.await` works, but it has a problem:
 if you forget the `await`, the fiber outlives the scope that
 created it. And if that fiber fails, you find out late or
 not at all.
@@ -214,7 +214,7 @@ import spawn
 fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
   if n > 0 {
     println(tag)
-    fiber_yield()
+    spawn.yield()
     worker(tag, n - 1)
   }
 }
@@ -335,7 +335,7 @@ fn long_worker(tag: String) : Unit / Stdout + Spawn + Cancel {
 
 fn count(tag: String, n: Int) : Unit / Stdout + Spawn + Cancel {
   println("#{tag}: #{n}")
-  fiber_yield()
+  spawn.yield()
   count(tag, n + 1)
 }
 ```
@@ -440,7 +440,7 @@ fn worker(id: Int) : Unit / Stdout + Spawn + State[[String]] {
     None       -> println("worker #{id}: queue empty, exiting")
     Some(task) -> {
       println("worker #{id}: processing '#{task}'")
-      fiber_yield()
+      spawn.yield()
       worker(id)
     }
   }
@@ -568,7 +568,7 @@ model.
 **13.1.** Modify the §13.3 example (two cooperative fibers)
 so that `worker("A")` does 5 iterations and `worker("B")`
 does 2. How does the output change? What happens if you
-remove the `fiber_yield()`s from one worker only?
+remove the `spawn.yield()`s from one worker only?
 
 **13.2.** A fiber creates an `Array[Int]` locally and
 modifies it with `a[i] := v`. Then it exits without passing
@@ -588,7 +588,7 @@ priority and the workers process those first. Hint: the
 `State` can be a record with two lists.
 
 **13.5.** A fiber that enters an infinite loop without
-`fiber_yield()` blocks all the others. Write that code and
+`spawn.yield()` blocks all the others. Write that code and
 observe what happens. Then add yields every N iterations.
 How often? How do you choose N?
 

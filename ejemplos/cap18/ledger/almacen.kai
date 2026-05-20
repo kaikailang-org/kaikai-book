@@ -174,58 +174,6 @@ pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respues
   }
 }
 
-# Tests contra la lógica pura, sin actores.
-
-test "crear cuenta la agrega al estado" {
-  let (r, s2) = procesar(dominio.CrearCuenta("caja"), estado_inicial())
-  let ok = match r {
-    dominio.CuentaCreada(c) -> c.nombre == "caja"
-    _                        -> false
-  }
-  assert ok
-  assert list.length(s2.cuentas) == 1
-}
-
-test "registrar transacción descuadrada falla" {
-  let s = Estado {
-    cuentas:        [dominio.Cuenta { id: 1<CuentaId>, nombre: "a", saldo: 0.0<USD> }],
-    transacciones:  [],
-    proxima_cuenta: 2<CuentaId>,
-    proxima_tx:     1<TransaccionId>,
-  }
-  let movs = [dominio.Debito(1<CuentaId>, 100.0<USD>)]   # solo débito, no cuadra
-  let (r, _) = procesar(dominio.Registrar("test", movs), s)
-  let ok = match r {
-    dominio.ErrorDescuadre(_) -> true
-    _                          -> false
-  }
-  assert ok
-}
-
-test "registrar transacción que cuadra actualiza saldos" {
-  let s = Estado {
-    cuentas: [
-      dominio.Cuenta { id: 1<CuentaId>, nombre: "caja",   saldo: 0.0<USD> },
-      dominio.Cuenta { id: 2<CuentaId>, nombre: "ventas", saldo: 0.0<USD> },
-    ],
-    transacciones:  [],
-    proxima_cuenta: 3<CuentaId>,
-    proxima_tx:     1<TransaccionId>,
-  }
-  let movs = [
-    dominio.Debito(1<CuentaId>, 50.0<USD>),     # +50 a caja
-    dominio.Credito(2<CuentaId>, 50.0<USD>),    # -50 a ventas
-  ]
-  let (r, s2) = procesar(dominio.Registrar("venta", movs), s)
-  let ok = match r {
-    dominio.TransaccionRegistrada(_) -> true
-    _                                 -> false
-  }
-  assert ok
-  let caja = buscar_cuenta(s2.cuentas, 1<CuentaId>)
-  let saldo_caja = match caja {
-    Some(c) -> c.saldo
-    None    -> 0.0<USD>
-  }
-  assert saldo_caja == 50.0<USD>
-}
+# Los tests viven en `almacen_tests.kai` — kaikai 0.74.0 tiene un
+# bug que rompe la resolución de exports cuando bloques `test "..."`
+# y otro módulo local (`cuadre`) se cargan juntos.

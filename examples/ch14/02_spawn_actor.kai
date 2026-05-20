@@ -16,15 +16,15 @@ fn worker() : Unit / Actor[String] + Console {
   Stdout.print("working: " ++ t3)
 }
 
-fn main() : Unit / Console + Spawn + Cancel + Actor[String] {
+fn main() : Unit / Console + Spawn + Cancel {
   with_mailbox {
     let pid = spawn_actor(() => worker())
     Actor.send(pid, "task-1")
     Actor.send(pid, "task-2")
     Actor.send(pid, "task-3")
-    fiber_yield()
-    fiber_yield()
-    fiber_yield()
-    fiber_yield()
+    spawn.yield()
+    spawn.yield()
+    spawn.yield()
+    spawn.yield()
   }
 }

@@ -1,0 +1,47 @@
+# Tests del almacén. Viven en un archivo aparte para esquivar
+# un bug del typer en kaikai 0.74.0 que se gatilla al combinar
+# `import almacen` + `import web` cuando `almacen.kai` contiene
+# bloques `test "..."` directos. `main.kai` no importa este
+# archivo; `kai test` igual lo recoge cuando se corre sobre el
+# proyecto completo.
+
+import almacen
+import dominio
+
+test "crear y obtener" {
+  let (r1, n1, id1) = almacen.procesar(dominio.Crear("primera"), [], 1)
+  let creado_ok = match r1 {
+    dominio.Creado(_) -> true
+    _                  -> false
+  }
+  assert creado_ok
+  assert id1 == 2
+
+  let (r2, _, _) = almacen.procesar(dominio.Obtener(1), n1, id1)
+  let obtener_ok = match r2 {
+    dominio.Guardado(c) -> c == "primera"
+    _                    -> false
+  }
+  assert obtener_ok
+}
+
+test "obtener nota inexistente" {
+  let (r, _, _) = almacen.procesar(dominio.Obtener(99), [], 1)
+  let ok = match r {
+    dominio.NoEncontrado -> true
+    _                     -> false
+  }
+  assert ok
+}
+
+test "borrar reduce la lista" {
+  let (_, n1, id1) = almacen.procesar(dominio.Crear("a"), [], 1)
+  let (_, n2, id2) = almacen.procesar(dominio.Crear("b"), n1, id1)
+  let (r, n3, _)   = almacen.procesar(dominio.Borrar(1), n2, id2)
+  let ok = match r {
+    dominio.Guardado(_) -> true
+    _                    -> false
+  }
+  assert ok
+  assert list.length(n3) == 1
+}

@@ -10,7 +10,7 @@
 # extend this to multiple currencies with explicit
 # conversions).
 
-unit USD
+pub unit USD
 
 # Branded identifiers so the compiler won't let you pass a
 # AccountId where a TransactionId is expected.

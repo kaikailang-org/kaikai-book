@@ -20,7 +20,7 @@ fn trabajador_largo(tag: String) : Unit / Stdout + Spawn + Cancel {
 
 fn contar(tag: String, n: Int) : Unit / Stdout + Spawn + Cancel {
   println("#{tag}: #{n}")
-  fiber_yield()
+  spawn.yield()
   contar(tag, n + 1)
 }
 
@@ -30,7 +30,7 @@ fn renunciar(n: Int) : Unit / Stdout + Spawn + Fail {
     Fail.fail("renuncio después de 3 pasos")
   } else {
     println("paso #{n}")
-    fiber_yield()
+    spawn.yield()
     renunciar(n + 1)
   }
 }

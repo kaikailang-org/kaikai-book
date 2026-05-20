@@ -1,7 +1,7 @@
 # Dos fibras cooperativas.
 #
-# `fiber_spawn` agenda una fibra pero no la ejecuta todavía — el
-# scheduler la levanta en el próximo punto de yield. `fiber_yield`
+# `spawn.spawn` agenda una fibra pero no la ejecuta todavía — el
+# scheduler la levanta en el próximo punto de yield. `spawn.yield`
 # es un punto explícito de cooperación: la fibra actual se suspende
 # y el scheduler toma la siguiente que esté lista.
 #
@@ -21,13 +21,13 @@ import spawn
 fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
   if n > 0 {
     println(tag)
-    fiber_yield()
+    spawn.yield()
     worker(tag, n - 1)
   }
 }
 
 fn main() {
-  let f = fiber_spawn(() => worker("B", 3))
+  let f = spawn.spawn(() => worker("B", 3))
   worker("A", 3)
-  fiber_await(f)
+  spawn.await(f)
 }

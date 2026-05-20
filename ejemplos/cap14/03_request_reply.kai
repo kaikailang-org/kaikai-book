@@ -8,13 +8,24 @@
 #
 # Los Pid tipados garantizan que cada mailbox recibe solo el
 # tipo de mensaje que le corresponde.
+#
+# `main` anida dos `with_mailbox`: el externo instala el
+# mailbox de `Reply` (donde caen las respuestas que el
+# cliente recibe), el interno instala el de `Request` (que
+# le da al cliente el efecto necesario para hacer
+# `Actor.send(server, Query(...))`).
+#
+# Anotamos explícitamente `Pid[Request]` al recibir el handle
+# de `spawn_actor`: sin la anotación el typer infiere
+# `Pid[Reply]` (el mailbox más cercano en scope) y la
+# llamada a `Actor.send` no chequea.
 
 import actor
 
 type Request = Query(String, Pid[Reply])
 type Reply   = Answer(String)
 
-fn servidor() : Unit / Actor[Request] + Actor[Reply] + Console {
+fn servidor() : Unit / Actor[Request] + Actor[Reply] + Stdout = {
   match Actor.receive() {
     Query(p, cliente) -> {
       Stdout.print("servidor: recibí '#{p}'")
@@ -24,18 +35,21 @@ fn servidor() : Unit / Actor[Request] + Actor[Reply] + Console {
   }
 }
 
-fn main() : Unit / Console + Spawn + Cancel + Actor[Reply] {
-  with_mailbox {
-    let server = spawn_actor(() => servidor())
+fn main() : Unit / Stdout + Spawn + Cancel = {
+  with_mailbox {       # mailbox de Reply: dónde caen las respuestas del server
+    with_mailbox {     # mailbox de Request: efecto para Actor.send al server
+      let server_body : () -> Unit / Actor[Request] + Actor[Reply] + Stdout = () => servidor()
+      let server : Pid[Request] = spawn_actor(server_body)
 
-    Actor.send(server, Query("dos+dos", Actor.self()))
-    match Actor.receive() {
-      Answer(r) -> Stdout.print("cliente: " ++ r)
-    }
+      Actor.send(server, Query("dos+dos", Actor.self()))
+      match Actor.receive() {
+        Answer(r) -> Stdout.print("cliente: " ++ r)
+      }
 
-    Actor.send(server, Query("la vida", Actor.self()))
-    match Actor.receive() {
-      Answer(r) -> Stdout.print("cliente: " ++ r)
+      Actor.send(server, Query("la vida", Actor.self()))
+      match Actor.receive() {
+        Answer(r) -> Stdout.print("cliente: " ++ r)
+      }
     }
   }
 }

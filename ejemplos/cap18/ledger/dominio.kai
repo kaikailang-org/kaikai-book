@@ -10,7 +10,7 @@
 # cómo extenderlo a múltiples monedas con conversiones
 # explícitas).
 
-unit USD
+pub unit USD
 
 # Identificadores branded para que el compilador no nos deje
 # pasar una CuentaId donde se espera una TransaccionId.

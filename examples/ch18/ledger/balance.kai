@@ -47,27 +47,5 @@ pub fn apply_if_balanced(ms: [domain.Movement]) : [domain.Movement]
   ensures  balances(result)
 = ms
 
-test "balances with one debit and one credit" {
-  let ms = [
-    domain.Debit(1<AccountId>, 100.0<USD>),
-    domain.Credit(2<AccountId>, 100.0<USD>),
-  ]
-  assert is_balanced(ms)
-}
-
-test "doesn't balance when amounts differ" {
-  let ms = [
-    domain.Debit(1<AccountId>, 100.0<USD>),
-    domain.Credit(2<AccountId>, 90.0<USD>),
-  ]
-  assert not is_balanced(ms)
-}
-
-test "balances with multiple lines" {
-  let ms = [
-    domain.Debit(1<AccountId>, 60.0<USD>),
-    domain.Debit(2<AccountId>, 40.0<USD>),
-    domain.Credit(3<AccountId>, 100.0<USD>),
-  ]
-  assert is_balanced(ms)
-}
+# Tests live in `balance_tests.kai` — workaround for the kaikai
+# 0.74.0 typer bug (see store.kai).

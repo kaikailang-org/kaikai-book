@@ -31,9 +31,9 @@ valor de salida, termina. Eso es una **fibra**. La creas con
 Una vez devuelto el resultado, la fibra deja de existir.
 
 ```kai
-let f = fiber_spawn(() => parsear_archivo("entrada.txt"))
+let f = spawn.spawn(() => parsear_archivo("entrada.txt"))
 # ... otro trabajo concurrente ...
-let errores = fiber_await(f)   # un solo valor, y se acabó
+let errores = spawn.await(f)   # un solo valor, y se acabó
 ```
 
 La tarea B es un **proceso vivo**: no tiene un único valor de
@@ -63,7 +63,7 @@ Comparación lado a lado:
 | ¿Qué es? | Unidad de ejecución | Fibra con mailbox tipado |
 | Comunicación | Un valor de retorno vía `await` | Mensajes vía `send`/`receive` |
 | Ciclo de vida | Arranca, calcula, devuelve, muere | Arranca, queda en bucle procesando, muere cuando decide |
-| Cómo se crea | `fiber_spawn` o `n.spawn` | `spawn_actor` |
+| Cómo se crea | `spawn.spawn` o `n.spawn` | `spawn_actor` |
 | Cómo le hablas | `await` para obtener su `T` | `send` cualquier cantidad de veces |
 | Cuándo elegirlo | Cálculo discreto concurrente | Servicio de larga vida, estado interno, consultas |
 
@@ -102,7 +102,7 @@ lenguaje core tiene solo efectos; los patrones de uso
 (fibras, actores, supervisión) aparecen en bibliotecas que
 cualquier lector puede leer. Si después de este capítulo te
 preguntas cómo funciona `spawn_actor` por dentro, la respuesta
-es un `fiber_spawn` más un `handle ... with Actor[Msg]`.
+es un `spawn.spawn` más un `handle ... with Actor[Msg]`.
 
 ## 14.1 `Actor[Msg]`: el efecto
 
@@ -221,10 +221,10 @@ fn main() : Unit / Console + Spawn + Cancel + Actor[String] {
     Actor.send(pid, "tarea-1")
     Actor.send(pid, "tarea-2")
     Actor.send(pid, "tarea-3")
-    fiber_yield()
-    fiber_yield()
-    fiber_yield()
-    fiber_yield()
+    spawn.yield()
+    spawn.yield()
+    spawn.yield()
+    spawn.yield()
   }
 }
 ```
@@ -242,7 +242,7 @@ disponible en el contexto. El `with_mailbox` de `main` provee
 esa capacidad. El `pid` ya identifica al mailbox destino;
 el handler solo dispatcha la operación.
 
-Los `fiber_yield()` al final son para darle al scheduler la
+Los `spawn.yield()` al final son para darle al scheduler la
 chance de correr al trabajador. Sin ellos, `main` saldría antes
 de que el trabajador procesara nada.
 
@@ -586,7 +586,7 @@ Si quieres recordar dos cosas del capítulo, que sean estas:
    provee `with_mailbox`, `spawn_actor`, las policies. El
    código de esa biblioteca está disponible para leer. Si
    alguna vez te preguntas "qué hace `spawn_actor` por
-   dentro", la respuesta es un `handle` con un `fiber_spawn`.
+   dentro", la respuesta es un `handle` con un `spawn.spawn`.
 
 2. **Cada actor tiene un tipo de mensaje fijo.** El compilador
    te garantiza que no mandas el mensaje equivocado al
@@ -606,7 +606,7 @@ estas piezas.
 
 **14.1.** Modifica el ejemplo §14.3 para que el trabajador
 procese cinco tareas en vez de tres. ¿Qué pasa si reduces los
-`fiber_yield()` del padre? ¿Cuál es el mínimo que hace que
+`spawn.yield()` del padre? ¿Cuál es el mínimo que hace que
 todas las tareas se procesen?
 
 **14.2.** Toma el `BoundedDropOldest` de §14.4 y cámbialo a

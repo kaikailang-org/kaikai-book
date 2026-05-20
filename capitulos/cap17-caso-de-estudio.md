@@ -37,7 +37,7 @@ notas/
 ├── dominio.kai          # tipos: Nota, Comando, Respuesta
 ├── almacen.kai          # actor que guarda las notas
 ├── persistencia.kai     # actor que escribe el log a disco
-└── http.kai             # parser y serializador HTTP mínimos
+└── web.kai              # parser y serializador HTTP mínimos
 ```
 
 Cinco archivos, cinco preocupaciones distintas:
@@ -54,7 +54,7 @@ Cinco archivos, cinco preocupaciones distintas:
   (creación, borrado), los escribe a un archivo de log. Aislar
   el disco en un actor nos permite que el almacén siga
   respondiendo aunque la escritura sea lenta.
-- **`http.kai`** son funciones puras: parsear bytes HTTP en una
+- **`web.kai`** son funciones puras: parsear bytes HTTP en una
   estructura `ReqHttp`, traducir requests en comandos de
   dominio, serializar respuestas a bytes. Sin actores, sin IO.
 - **`main.kai`** arma todo: arranca los actores, levanta el
@@ -71,7 +71,7 @@ sin tocar el disco. El `main` solo conecta las piezas.
 Figura 17.1 · *Arquitectura del servidor de notas. Cinco
 módulos, dos actores (almacén y persistencia), una fibra
 por conexión entrante. Los módulos puros (`dominio.kai`,
-`http.kai`, cluster verde) no tienen efectos; los módulos
+`web.kai`, cluster verde) no tienen efectos; los módulos
 con estado (`almacen.kai`, `persistencia.kai`, cluster
 rojo) esconden su mutación detrás de un mailbox; `main.kai`
 es pegamento.*
@@ -266,7 +266,7 @@ pub type Evento = Linea(String)
 fn bucle(path: String) : Unit / Actor[Evento] + File {
   match Actor.receive() {
     Linea(s) -> {
-      file.file_append(path, s ++ "\n")
+      file.append(path, s ++ "\n")
       bucle(path)
     }
   }
@@ -274,7 +274,7 @@ fn bucle(path: String) : Unit / Actor[Evento] + File {
 
 pub fn arrancar(path: String)
     : Pid[Evento] / Spawn + Cancel + Actor[Evento] + File {
-  file.file_write_file(path, "")    # trunca al inicio
+  file.write(path, "")    # trunca al inicio
   spawn_actor(() => bucle(path))
 }
 ```
@@ -297,7 +297,7 @@ explícita y vive en una sola línea, fácil de cambiar.
 
 ## 17.5 Parser HTTP
 
-`http.kai` es código puro de string manipulation. La pieza
+`web.kai` es código puro de string manipulation. La pieza
 central es `enrutar`, que traduce un request HTTP en un
 comando del dominio:
 
@@ -345,8 +345,8 @@ import fs.file
 import dominio
 import almacen
 import persistencia
-import http as http_lib
 import net.tcp
+import web
 
 const PUERTO : Int = 8080
 const PATH_LOG : String = "notas.log"
@@ -379,27 +379,22 @@ de los tres canales de mensajes. La firma no oculta nada: si
 el `main` hiciera más cosas, su fila crecería en consecuencia.
 
 El bucle de aceptación abre un nursery y por cada conexión
-nueva lanza una fibra:
+nueva lanza una fibra. Ojo: `n` no es un valor de tipo
+`Nursery` que pueda viajar a otra función — el compilador
+reescribe cada `n.spawn(...)` en `Spawn.spawn(...)`
+etiquetado con el brand de *este* nursery, así que el `spawn`
+tiene que aparecer léxicamente dentro del bloque. Por eso el
+bucle accept va inline:
 
 ```kai
-fn aceptar_loop(
-  listener: Listener,
-  almacen_pid: Pid[almacen.AlmacenMsg],
-  log_pid: Pid[persistencia.Evento],
-) : Unit / NetTcp + Spawn + Cancel + ... {
-  nursery { n ->
-    forever_accept(n, listener, almacen_pid, log_pid)
-  }
-}
-
-fn forever_accept(n: Nursery, listener, almacen_pid, log_pid) : ... {
-  match NetTcp.accept(listener) {
-    Err(_) -> ()
+nursery { n ->
+  forever(() => match NetTcp.accept(listener) {
+    Err(_)   -> ()
     Ok(conn) -> {
       let _ = n.spawn(() => manejar_conexion(conn, almacen_pid, log_pid))
-      forever_accept(n, listener, almacen_pid, log_pid)
+      ()
     }
-  }
+  })
 }
 ```
 
@@ -413,9 +408,9 @@ Y por cada conexión, el handler:
 ```kai
 fn manejar_conexion(conn, almacen_pid, log_pid) {
   let raw = leer_request(conn)
-  let resp = match http_lib.parsear_request(raw) {
+  let resp = match web.parsear_request(raw) {
     Err(msg) -> dominio.ErrorCliente(msg)
-    Ok(req)  -> match http_lib.enrutar(req) {
+    Ok(req)  -> match web.enrutar(req) {
       Err(r)        -> r
       Ok(comando)   -> {
         registrar(log_pid, comando)
@@ -423,7 +418,7 @@ fn manejar_conexion(conn, almacen_pid, log_pid) {
       }
     }
   }
-  NetTcp.send(conn, string_to_bytes(http_lib.serializar_respuesta(resp)))
+  NetTcp.send(conn, string_to_bytes(web.serializar_respuesta(resp)))
   NetTcp.close(conn)
 }
 ```

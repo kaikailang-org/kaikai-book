@@ -275,15 +275,15 @@ import spawn
 fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
   if n > 0 {
     println(tag)
-    fiber_yield()
+    spawn.yield()
     worker(tag, n - 1)
   }
 }
 
 fn main() {
-  let f = fiber_spawn(() => worker("B", 3))
+  let f = spawn.spawn(() => worker("B", 3))
   worker("A", 3)
-  fiber_await(f)
+  spawn.await(f)
 }
 ```
 
@@ -299,12 +299,12 @@ B
 
 A **fiber** is a unit of cooperative execution. It weighs
 much less than an OS thread and lives inside the process.
-`fiber_spawn` schedules a new fiber but does not run it
+`spawn.spawn` schedules a new fiber but does not run it
 immediately; the scheduler picks it up at the next cooperation
-point. `fiber_yield` is exactly that: a point where the
+point. `spawn.yield` is exactly that: a point where the
 current fiber says "I can wait — give someone else a turn".
 
-Without the `fiber_yield` calls, worker A would run all three
+Without the `spawn.yield` calls, worker A would run all three
 iterations before giving B a chance. With them, the output
 ends up interleaved.
 
@@ -316,7 +316,7 @@ type.
 
 `(() => worker("B", 3))` is a **lambda**: an anonymous
 function with no arguments that calls `worker`. We pass it to
-`fiber_spawn` so it runs inside the new fiber.
+`spawn.spawn` so it runs inside the new fiber.
 
 There is much to say about kaikai's concurrency model — why
 fibers are isolated, how they cancel, what happens to memory —

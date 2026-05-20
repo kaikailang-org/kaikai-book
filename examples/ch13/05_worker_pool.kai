@@ -7,8 +7,8 @@ import spawn
 
 fn process(id: Int, x: Int) : Int / Stdout + Spawn {
   println("worker #{id}: processing #{x}")
-  fiber_yield()
-  fiber_yield()
+  spawn.yield()
+  spawn.yield()
   let r = x * x
   println("worker #{id}: done #{x} -> #{r}")
   r

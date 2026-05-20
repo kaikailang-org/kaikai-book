@@ -272,15 +272,15 @@ import spawn
 fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
   if n > 0 {
     println(tag)
-    fiber_yield()
+    spawn.yield()
     worker(tag, n - 1)
   }
 }
 
 fn main() {
-  let f = fiber_spawn(() => worker("B", 3))
+  let f = spawn.spawn(() => worker("B", 3))
   worker("A", 3)
-  fiber_await(f)
+  spawn.await(f)
 }
 ```
 
@@ -296,13 +296,13 @@ B
 
 Una **fibra** es una unidad de ejecución cooperativa. Pesa
 mucho menos que un thread del sistema operativo y vive dentro
-del proceso. `fiber_spawn` agenda una fibra nueva pero no la
+del proceso. `spawn.spawn` agenda una fibra nueva pero no la
 arranca de inmediato; el scheduler la levanta en el próximo
-punto de cooperación. `fiber_yield` es justamente eso: un
+punto de cooperación. `spawn.yield` es justamente eso: un
 punto donde la fibra actual dice "puedo esperar, dale paso a
 otra".
 
-Sin los `fiber_yield`, el `worker` "A" correría sus tres
+Sin los `spawn.yield`, el `worker` "A" correría sus tres
 iteraciones antes de soltarle el turno a "B". Con ellos, la
 salida queda alternada.
 
@@ -314,7 +314,7 @@ su tipo.
 
 `(() => worker("B", 3))` es una **lambda**: una función anónima
 sin parámetros que llama a `worker`. La pasamos como argumento
-a `fiber_spawn` para que la corra dentro de la fibra nueva.
+a `spawn.spawn` para que la corra dentro de la fibra nueva.
 
 Hay mucho que decir sobre el modelo de concurrencia de kaikai
 (por qué las fibras son aisladas, cómo se cancelan, qué pasa

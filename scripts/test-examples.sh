@@ -66,6 +66,7 @@ build|ejemplos/cap04/02_destructuring.kai|ok
 build|ejemplos/cap04/03_listas.kai|ok
 build|ejemplos/cap04/04_option_result.kai|ok
 build|ejemplos/cap04/05_tuplas.kai|ok
+build|ejemplos/cap04/06_priv.kai|ok
 
 # Capítulo 5 — pattern matching
 build|ejemplos/cap05/01_sumas_basicas.kai|ok
@@ -98,6 +99,7 @@ project|ejemplos/cap08/02b_selectivo|ok
 project|ejemplos/cap08/03_qualified|ok
 project|ejemplos/cap08/04_alias|ok
 project|ejemplos/cap08/05_proyecto|ok
+project|ejemplos/cap08/06_priv|ok
 
 # Capítulo 9 — protocolos
 build|ejemplos/cap09/01_protocolo_basico.kai|ok
@@ -139,11 +141,10 @@ build|ejemplos/cap13/04_race.kai|ok
 build|ejemplos/cap13/05_worker_pool.kai|ok
 build|ejemplos/cap13/06_eco_concurrente.kai|ok
 
-# Capítulo 14 — actores (03 falla por bug del compilador en
-# Actor.send Request/Reply, ver issue tracker)
+# Capítulo 14 — actores
 build|ejemplos/cap14/01_with_mailbox.kai|ok
 build|ejemplos/cap14/02_spawn_actor.kai|ok
-build|ejemplos/cap14/03_request_reply.kai|fail
+build|ejemplos/cap14/03_request_reply.kai|ok
 build|ejemplos/cap14/04_mailbox_policy.kai|ok
 build|ejemplos/cap14/05_supervisor.kai|ok
 
@@ -176,6 +177,8 @@ build|examples/ch01/05_concurrent.kai|ok
 test|examples/ch01/06_tests.kai|ok
 build|examples/ch01/07_protocols.kai|ok
 build|examples/ch01/08_units.kai|ok
+build|examples/ch01/09_contracts.kai|ok
+build|examples/ch01/10_holes.kai|ok
 
 # Chapter 3
 build|examples/ch03/01_arithmetic.kai|ok
@@ -189,6 +192,7 @@ build|examples/ch04/02_destructuring.kai|ok
 build|examples/ch04/03_lists.kai|ok
 build|examples/ch04/04_option_result.kai|ok
 build|examples/ch04/05_tuples.kai|ok
+build|examples/ch04/06_priv.kai|ok
 
 # Chapter 5
 build|examples/ch05/01_basic_sums.kai|ok
@@ -221,6 +225,7 @@ project|examples/ch08/02b_selective|ok
 project|examples/ch08/03_qualified|ok
 project|examples/ch08/04_alias|ok
 project|examples/ch08/05_project|ok
+project|examples/ch08/06_priv|ok
 
 # Chapter 9
 build|examples/ch09/01_basic_protocol.kai|ok
@@ -265,7 +270,7 @@ build|examples/ch13/06_task_queue.kai|ok
 # Chapter 14
 build|examples/ch14/01_with_mailbox.kai|ok
 build|examples/ch14/02_spawn_actor.kai|ok
-build|examples/ch14/03_request_reply.kai|fail
+build|examples/ch14/03_request_reply.kai|ok
 build|examples/ch14/04_mailbox_policy.kai|ok
 build|examples/ch14/05_supervisor.kai|ok
 

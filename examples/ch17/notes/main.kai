@@ -28,11 +28,10 @@ import spawn
 import loop
 import fs.file
 import net.tcp
-import net.http
 import domain
 import store
 import persistence
-import http as http_lib
+import web
 
 const PORT     : Int    = 8080
 const LOG_PATH : String = "notes.log"
@@ -41,9 +40,9 @@ const LOG_PATH : String = "notes.log"
 # store via `store.ask` and logs mutating commands to the
 # persistence actor before replying.
 fn handle_request(raw: String, store_pid: Pid[store.StoreMsg], log_pid: Pid[persistence.Event]) : String / Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] = {
-  let reply = match http_lib.parse_request(raw) {
+  let reply = match web.parse_request(raw) {
     Err(msg) -> domain.ClientError(msg)
-    Ok(req)  -> match http_lib.route(req) {
+    Ok(req)  -> match web.route(req) {
       Err(r)      -> r
       Ok(command) -> {
         record_event(log_pid, command)
@@ -51,7 +50,7 @@ fn handle_request(raw: String, store_pid: Pid[store.StoreMsg], log_pid: Pid[pers
       }
     }
   }
-  http_lib.serialize_reply(reply)
+  web.serialize_reply(reply)
 }
 
 fn record_event(log_pid: Pid[persistence.Event], c: domain.Command) : Unit / Actor[persistence.Event] = match c {
@@ -61,7 +60,7 @@ fn record_event(log_pid: Pid[persistence.Event], c: domain.Command) : Unit / Act
 }
 
 fn read_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
-  Ok(bytes) -> http_bytes_to_string(bytes)
+  Ok(bytes) -> web.bytes_to_string(bytes)
   Err(_)    -> ""
 }
 
@@ -83,7 +82,7 @@ fn read_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
 fn serve_connection(conn: Conn, store_pid: Pid[store.StoreMsg], log_pid: Pid[persistence.Event]) : Unit / NetTcp + Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] + Cancel = {
   let raw  = read_request(conn)
   let wire = handle_request(raw, store_pid, log_pid)
-  let _    = NetTcp.send(conn, http_string_to_bytes(wire))
+  let _    = NetTcp.send(conn, web.string_to_bytes(wire))
   NetTcp.close(conn)
 }
 

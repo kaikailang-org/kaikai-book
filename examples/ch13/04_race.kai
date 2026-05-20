@@ -9,16 +9,16 @@ import spawn
 
 fn fast() : Int / Stdout + Spawn {
   println("fast: start")
-  fiber_yield()
+  spawn.yield()
   println("fast: done")
   1
 }
 
 fn slow() : Int / Stdout + Spawn {
   println("slow: start")
-  fiber_yield()
-  fiber_yield()
-  fiber_yield()
+  spawn.yield()
+  spawn.yield()
+  spawn.yield()
   println("slow: done")
   2
 }

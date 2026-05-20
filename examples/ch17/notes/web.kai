@@ -8,6 +8,25 @@ import domain
 #[derive(Show)]
 pub type HttpReq = { method: String, path: String, body: String }
 
+# bytes ⇄ String conversions for the buffers `NetTcp` returns and
+# accepts. Inlined here to avoid `import net.http`, which on
+# 0.74.0 collides with local modules in the typer (pending issue
+# in kaikailang-org/kaikai).
+fn string_to_bytes_loop(s: String, i: Int, n: Int, acc: [Int]) : [Int] =
+  if i >= n { list_reverse(acc) }
+  else { match char_at(s, i) {
+    Some(c) -> string_to_bytes_loop(s, i + 1, n, [char_to_int(c), ...acc])
+    None    -> list_reverse(acc)
+  } }
+
+pub fn string_to_bytes(s: String) : [Int] =
+  string_to_bytes_loop(s, 0, string_length(s), [])
+
+fn byte_to_str(b: Int) : String = "#{int_to_char(b)}"
+
+pub fn bytes_to_string(bs: [Int]) : String =
+  string_concat_all(list.map(bs, byte_to_str))
+
 pub fn parse_request(raw: String) : Result[String, HttpReq] = {
   match string.split(raw, "\r\n\r\n") {
     [head, ...body_parts] -> {

@@ -29,7 +29,7 @@ fn worker(id: Int) : Unit / Stdout + Spawn + State[[String]] {
     None       -> println("worker #{id}: queue empty, exiting")
     Some(task) -> {
       println("worker #{id}: processing '#{task}'")
-      fiber_yield()
+      spawn.yield()
       worker(id)
     }
   }
