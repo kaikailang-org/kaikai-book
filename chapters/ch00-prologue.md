@@ -1,5 +1,17 @@
 # Prologue
 
+> A *kaikai* is a single thread that draws a figure between the
+> hands. In Rapa Nui culture, the name names the whole practice:
+> the thread, the figure, and the *pata'u ta'u* — the chant that
+> goes with it.
+>
+> This book borrows that image. *Simple* comes from Latin
+> *simplex*: "one fold, one thread." *Complex* comes from
+> *complectere*: "braided together." The book's argument, and
+> the language's bet, is that simplicity is not the opposite of
+> hard — it is the opposite of entangled. It is a decision, not
+> a habit.
+
 I've wanted to write a programming language since I learned how
 to build compilers in college. Once I got into industry I ended
 up solving more than a few problems by inventing small languages

@@ -66,8 +66,8 @@
 }
 
 #let book(
-  title: "kaikai",
-  subtitle: "The Programming Language",
+  title: "Simple programming with kaikai",
+  subtitle: "A language for humans and agents",
   author: "Eduardo Díaz",
   year: 2026,
   logo-path: "kaikai-logo.svg",

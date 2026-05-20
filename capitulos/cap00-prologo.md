@@ -1,5 +1,17 @@
 # Prólogo
 
+> Un *kaikai* es un hilo único que dibuja una figura entre las
+> manos. En la cultura rapanui, su nombre da nombre al arte
+> completo: el hilo, la figura, y el *pata'u ta'u* — el canto
+> que la acompaña.
+>
+> Este libro toma esa imagen prestada. *Simple* viene del latín
+> *simplex*: "un solo pliegue, un solo hilo". *Complex* viene de
+> *complectere*: "trenzado junto". El argumento del libro, y la
+> apuesta del lenguaje, es que la simplicidad no es lo opuesto
+> de lo difícil — es lo opuesto de lo entrelazado. Es una
+> decisión, no un hábito.
+
 Cuando aprendí a construir compiladores en la universidad quedé fascinado con el diseño de lenguajes de programación. Luego en mi vida laboral resolví varios problemas creando pequeños lenguajes (hoy en día se conocen como lenguajes de dominio específico, o DSL por sus siglas en inglés).  
 
 Me encanta el diseño de lenguajes de programación, y me gusta aprenderlos, compararlos, entender por qué sus autores tomaron las decisiones que tomaron.

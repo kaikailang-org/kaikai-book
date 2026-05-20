@@ -66,8 +66,8 @@
 }
 
 #let book(
-  title: "kaikai",
-  subtitle: "El lenguaje de programación",
+  title: "Programación simple con kaikai",
+  subtitle: "Un lenguaje para humanos y agentes",
   author: "Eduardo Díaz",
   year: 2026,
   logo-path: "kaikai-logo.svg",
