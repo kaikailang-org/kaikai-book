@@ -198,10 +198,11 @@ boundary.
 ## 8.4 The stdlib you get for free
 
 There is one special module you **don't need to import**: the
-core stdlib. Functions like `println`, `assert`, `string_concat`,
+**core**. Functions like `println`, `assert`, `string_concat`,
 `real_sqrt` live in the global namespace and are available in
-every `.kai` file without ceremony. This is what other languages
-call the **prelude**.
+every `.kai` file without ceremony. Other languages call this
+the *prelude* (Haskell) or *built-ins* (Python); kaikai calls
+it core, and it lives under `stdlib/core/` in the compiler tree.
 
 What lives in core is deliberately small: primitive types,
 arithmetic operators, `Option` and `Result`, a handful of list
@@ -210,7 +211,7 @@ functions, basic IO via `println`. The rest of the stdlib
 modules imported like any other:
 
 ```kai
-import list                  # non-prelude list operations
+import list                  # list operations outside core
 import string                # string operations
 import encoding.json         # JSON parsing
 ```

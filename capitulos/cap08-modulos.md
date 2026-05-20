@@ -198,10 +198,11 @@ límite del módulo.
 ## 8.4 El stdlib que ya tienes
 
 Hay un módulo especial que **no necesitas importar**: el
-stdlib core. Funciones como `println`, `assert`, `string_concat`,
+**core**. Funciones como `println`, `assert`, `string_concat`,
 `real_sqrt` viven en el namespace global y están disponibles en
-todo archivo .kai sin trámite. Es lo que en otros lenguajes se
-conoce como **prelude**.
+todo archivo .kai sin trámite. En otros lenguajes, esto se llama
+*prelude* (Haskell) o *built-ins* (Python); kaikai lo llama
+core, y vive bajo `stdlib/core/` en el árbol del compilador.
 
 Lo que vive en core es deliberadamente pequeño: los tipos
 primitivos, las operaciones aritméticas, los `Option` y `Result`,
@@ -210,7 +211,7 @@ stdlib (encoding, redes, archivos, criptografía) vive en módulos
 separados que se importan como cualquier otro:
 
 ```kai
-import list                  # operaciones de lista no-prelude
+import list                  # operaciones de lista fuera de core
 import string                # operaciones de string
 import encoding.json         # parseo de JSON
 ```
