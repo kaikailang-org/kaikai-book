@@ -15,6 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
+    # Opt the JavaScript-based actions (checkout, upload-artifact,
+    # setup-typst) into Node 24. Node 20 is deprecated on the
+    # runner from September 2026; this silences the warning and
+    # forward-tests the build against the new default.
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
