@@ -20,9 +20,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install pandoc
+        # The apt-packaged pandoc on Ubuntu 24.04 is 3.1.3, which
+        # emits typst constructs (`#blockquote`, ...) that our
+        # template doesn't define. Fetch a fresh release from
+        # upstream instead.
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends pandoc
+          PANDOC_VERSION=3.5
+          curl -fsSL -o /tmp/pandoc.deb \
+            "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-1-amd64.deb"
+          sudo dpkg -i /tmp/pandoc.deb
           pandoc --version | head -1
 
       - name: Install typst
