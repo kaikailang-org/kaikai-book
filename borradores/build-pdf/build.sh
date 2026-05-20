@@ -29,7 +29,13 @@ OUT="kaikai-libro-es.pdf"
   done
 } > "$BODY"
 
-# Reescribir rutas de figuras (capítulos referencian ../figuras/).
+# Asegurar que las figuras estén accesibles desde el dir de
+# build con el path `figuras/`. Los capítulos las referencian
+# como `../figuras/...` desde sus rutas en `capitulos/` y
+# `chapters/`; reescribimos a `figuras/` y exponemos el dir
+# real (en raíz) vía symlink.
+ln -snf "$ROOT/figuras" figuras
+
 # Usamos perl -i porque sed -i es incompatible entre BSD (macOS)
 # y GNU (Linux/CI) en el manejo del argumento de backup.
 perl -i -pe 's|\.\./figuras/|figuras/|g' "$BODY"

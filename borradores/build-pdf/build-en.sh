@@ -29,7 +29,12 @@ OUT="kaikai-book-en.pdf"
   done
 } > "$BODY"
 
-# Rewrite figure paths (chapters reference ../figuras/).
+# Make the figures reachable from the build dir under
+# `figuras/`. Chapters reference them as `../figuras/...` from
+# their paths in `capitulos/` and `chapters/`; we rewrite to
+# `figuras/` and expose the real dir (at root) via symlink.
+ln -snf "$ROOT/figuras" figuras
+
 # Using perl -i because sed -i is incompatible between BSD
 # (macOS) and GNU (Linux/CI) in its handling of the backup arg.
 perl -i -pe 's|\.\./figuras/|figuras/|g' "$BODY"
