@@ -1,0 +1,51 @@
+name: build-pdf
+
+# Builds both PDF editions of the book on every push to main and
+# on manual dispatch. The PDFs are attached as workflow artifacts
+# (90-day retention). The repo only stores the source (markdown
+# + typst templates); the PDFs are always reproducible.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pandoc
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends pandoc
+          pandoc --version | head -1
+
+      - name: Install typst
+        uses: typst-community/setup-typst@v3
+        with:
+          typst-version: latest
+
+      - name: Build Spanish edition
+        run: bash borradores/build-pdf/build.sh
+
+      - name: Build English edition
+        run: bash borradores/build-pdf/build-en.sh
+
+      - name: Upload Spanish PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: kaikai-libro-es
+          path: borradores/build-pdf/kaikai-libro-es.pdf
+          if-no-files-found: error
+
+      - name: Upload English PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: kaikai-book-en
+          path: borradores/build-pdf/kaikai-book-en.pdf
+          if-no-files-found: error
