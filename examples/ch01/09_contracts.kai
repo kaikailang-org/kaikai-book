@@ -1,0 +1,21 @@
+# Programming by contract: pre- and postconditions on the
+# function signature.
+#
+# `requires` declares what must hold when entering the function.
+# `ensures` declares what the function guarantees on exit, where
+# `result` is the return value.
+
+fn divide(a: Int, b: Int) : Int
+  requires b != 0
+  ensures  result * b + (a % b) == a
+= a / b
+
+fn main() {
+  println("10 / 2 = #{divide(10, 2)}")
+  println("17 / 3 = #{divide(17, 3)}")
+
+  # If you uncomment the next line, the program aborts on
+  # entry to `divide` because `b` is 0:
+  #
+  #   println("10 / 0 = #{divide(10, 0)}")
+}

@@ -1,0 +1,20 @@
+# Typed holes: leave gaps in the code and compile anyway.
+#
+# `?` and `?name` are valid expressions. The compiler accepts
+# the program, infers the expected type at each hole, and lets
+# the rest of the file keep compiling. At runtime, evaluating
+# a hole panics with `unfilled hole`.
+#
+# This is the bet of ch. 15 made syntax: kaikai designed for
+# conversation with the compiler (human or AI agent).
+
+fn circle_area(r: Real) : Real = ?formula
+
+fn circle_perimeter(r: Real) : Real = ?
+
+fn main() {
+  # The program compiles fully, but calling `circle_area` or
+  # `circle_perimeter` aborts with `panic: unfilled hole`. We
+  # leave them uncalled so the example exits cleanly.
+  println("compiled: the body is pending")
+}
