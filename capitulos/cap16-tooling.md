@@ -196,7 +196,62 @@ comparable, en ergonomía cotidiana, al de Rust o TypeScript:
 la retroalimentación es instantánea, sin necesidad de ir al
 terminal para descubrir un error.
 
-## 16.7 Variables de entorno
+## 16.7 Documentación interactiva: `kai info`
+
+Al lado de `kai lsp`, que sirve al editor, vive `kai info`:
+páginas de referencia del lenguaje, organizadas por tema,
+accesibles desde la línea de comandos sin abrir un navegador.
+Estilo `man` o `info` de Unix, pero el contenido es kaikai
+mismo.
+
+Sin argumentos te lista los temas que conoce:
+
+```
+$ kai info
+kai info — language reference, organized by topic.
+
+Topics:
+  actors       Message-passing concurrency built on fibers
+  effects      Algebraic effects and handlers
+  fibers       Structured concurrency via nursery, spawn, await, cancel
+  holes        Typed holes for incremental development.
+  loop         Control flow — `if`, `while`, `until`, and iteration via pipes.
+  match        Pattern matching with exhaustiveness checking.
+  packages     `kai.toml`, imports, visibility.
+  pipes        Apply, map, flat-map, filter — four pipe operators.
+  protocols    Single-dispatch protocols, Go/Clojure/Elixir-style.
+  syntax       One-page reference of the forms kaikai actually has.
+  testing      Test blocks, assertions, benchmarks, property checks.
+  units        Units of measure on `Real`.
+```
+
+Pasando un tema, lo despliega:
+
+```
+$ kai info holes
+# holes
+...
+```
+
+Tres flags útiles:
+
+- `kai info --list` — solo nombres de temas, uno por línea. Útil
+  para shells y scripts.
+- `kai info -k <keyword>` — busca en todos los temas. Devuelve
+  los que mencionan la palabra.
+- `kai info <topic> --json` — la página estructurada en JSON.
+
+Esta última forma es deliberada: kaikai trata su propia
+documentación como **datos**, no como prosa estática. Un
+agente IA puede consumir `kai info effects --json` y
+disponer de la doc completa del sistema de efectos sin
+necesidad de scrapear markdown ni de tener el repo del
+lenguaje a mano. Es el otro extremo del puente que el cap. 15
+abre desde el lado de los holes: el lenguaje provee a quien
+escribe código —humano o agente— la información que
+necesita, en el formato que mejor le sirva.
+
+## 16.8 Variables de entorno
 
 Unas cuantas variables de entorno controlan el comportamiento
 del binario `kai` para casos especiales:
@@ -222,7 +277,7 @@ del binario `kai` para casos especiales:
 Para uso normal no necesitas tocar nada de esto. El binario
 viene preconfigurado para encontrar todo lo suyo.
 
-## 16.8 Estructura típica de un proyecto
+## 16.9 Estructura típica de un proyecto
 
 Un proyecto kaikai estándar se ve así:
 
@@ -263,7 +318,7 @@ No es obligatorio. `kai run archivo.kai` corre cualquier
 archivo .kai sin importar dónde esté. Pero cuando el
 proyecto crece, esta estructura paga.
 
-## 16.9 Hablar con C: `extern "C"` y el efecto `Ffi`
+## 16.10 Hablar con C: `extern "C"` y el efecto `Ffi`
 
 Tarde o temprano vas a necesitar una librería que ya existe
 en C: un driver de base de datos, un framework gráfico, un
@@ -440,7 +495,7 @@ kaikai propio cuando aterrice `kai bindgen`. Mientras
 tanto, el enfoque manual (un `extern "C"` por función, un
 shim C por cada entrada que use struct) funciona bien.
 
-## 16.10 Ediciones: estabilidad sin estancamiento
+## 16.11 Ediciones: estabilidad sin estancamiento
 
 Hay una decisión que el resto del libro asume sin
 explicarla del todo: kaikai usa **ediciones** para separar
@@ -557,7 +612,7 @@ guía de migración, y `kai migrate` para automatizar los
 cambios mecánicos. Mientras tanto, el código que escribiste
 contra hanga-roa va a seguir compilando.
 
-## 16.11 Filosofía: tres principios del tooling
+## 16.12 Filosofía: tres principios del tooling
 
 Si quieres recordar el tono general del tooling, son tres
 ideas:

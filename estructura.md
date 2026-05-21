@@ -375,11 +375,14 @@ un experimento en esa dirección.
 - 16.2 `kai fmt`
 - 16.3 `kai init`, `kai add`, `kai install`, `kai update`:
        gestión de paquetes (extiende lo del cap. 8)
-- 16.4 `kai lsp` e integración con editores
-- 16.5 Variables de entorno: `KAI_NO_STDLIB`, `KAI_STDLIB`,
+- 16.4 `kai watch` para el ciclo edit-save-run
+- 16.5 `kai lsp` e integración con editores
+- 16.6 `kai info`: documentación interactiva en línea de
+       comandos, con salida JSON para agentes.
+- 16.7 Variables de entorno: `KAI_NO_STDLIB`, `KAI_STDLIB`,
        `CC`, `CFLAGS`
-- 16.6 Estructura típica de un proyecto kaikai
-- 16.7 Ediciones: estabilidad sin estancamiento. `edition`
+- 16.8 Estructura típica de un proyecto kaikai
+- 16.9 Ediciones: estabilidad sin estancamiento. `edition`
        en `kai.toml`, multi-edición, `#[unstable]`.
 - *Sin ejercicios*: capítulo de referencia.
 
