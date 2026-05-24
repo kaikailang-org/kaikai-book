@@ -145,13 +145,28 @@ holds `exit_code`, `stdout`, and `stderr`.
 ### `Signal`
 
 ```kai
+type Sig = SigInt | SigTerm | SigHup | SigUsr1 | SigUsr2
+
 effect Signal {
-  handle(sig: SignalKind, action: () -> Unit) : Unit
+  on(sig: Sig)  : Unit
+  off(sig: Sig) : Unit
+  await()       : Sig
 }
 ```
 
-Register handlers for system signals (`SIGINT`, `SIGTERM`,
-etc.). Useful for orderly cleanup on process shutdown.
+Wait for a POSIX signal without blocking the rest of the
+fibers. `on(sig)` subscribes the process to `sig`; the
+runtime blocks the signal at the process level so the
+kernel queues delivery instead of applying the default
+disposition. `await()` parks the calling fiber until any
+subscribed signal arrives and returns the matching `Sig`
+variant. `off(sig)` unsubscribes.
+
+The default handler is installed around `main` whenever
+`Signal` is in the row. Only one fiber may sit in `await()`
+at a time; a second concurrent call panics. Useful for
+orderly shutdown — `Signal.on(SigInt); match Signal.await()
+{ ... }` replaces the typical hand-written SIGINT handler.
 
 ## D.5 State
 

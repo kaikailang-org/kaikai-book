@@ -41,12 +41,15 @@ that the program aborts with a clear message:
 
 ```
 $ kai run examples/ch15/01_basic_hole.kai
-panic: unfilled hole: ?formula
+panic: unfilled hole: ?formula at line 1 col 27, expected Real
 ```
 
 It's not a compile-time error. It's a **deferred promise**:
 you left a gap that you'll fill later, and the system stays
-with you until you do.
+with you until you do. The panic carries everything an agent
+(human or AI) needs in order to fill it: the hole's name, its
+exact location, and the type the compiler inferred it should
+have.
 
 The difference between `?` and `?name` is that the name
 helps identify the hole in messages and, more importantly,

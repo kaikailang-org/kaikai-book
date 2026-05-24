@@ -349,6 +349,30 @@ and `handle ... with Cancel { ... }` is the handler. Same
 pattern as chapter 12: cancellation is another effect, with a
 handler written by the user or installed by the runtime.
 
+### `Spawn.cancel(f)` and user-installed `Cancel` handlers
+
+Two related names worth pinning apart:
+
+- **The `Cancel` effect** is what a fiber **receives** when
+  cancellation reaches it. Its single op `raise()` is injected
+  by the scheduler at the next yield point.
+- **`Spawn.cancel(f)`** is what a fiber **calls** to ask the
+  scheduler to deliver `Cancel.raise()` to fiber `f`.
+
+When you `n.spawn(...)` with a nursery cap `n` and get back a
+child fiber, `Spawn.cancel(child)` does not kill it: it
+schedules the delivery. The child, on its next yield, receives
+`Cancel.raise()` and its own `Cancel` handler runs — exactly
+the one the child installed with `with Cancel { ... }`. If it
+installed none, the fiber unwinds cleanly and any handlers
+further up the stack (typically the nursery's) take over.
+
+The one exception is **trap-exit** in the actor model
+(ch. 14): a fiber can mark itself so that peer crashes turn
+into mailbox messages instead of triggering cancellation, but
+that's an explicit local opt-in — the default remains the
+cooperative cancellation described here.
+
 ## 13.6 Per-fiber mutable memory
 
 Chapter 12 §12.7 covered `var` (local cells, sugar over

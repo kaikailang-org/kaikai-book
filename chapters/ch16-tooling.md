@@ -183,8 +183,17 @@ IntelliJ with plugin) can connect and get:
 
 - Type-on-hover: hover over an expression and see its type.
 - Goto-definition: jump to where a name was declared.
+- Document symbols: the file's symbol tree for the editor's
+  side panel.
+- Completion: candidate list as you type, with the type and
+  origin of each one.
+- Signature help: when you open a paren in a call, the
+  function's signature shows with the current parameter
+  highlighted.
 - Live diagnostics: errors and warnings from the compiler
-  appear in the buffer as you type.
+  appear in the buffer as you type. **Unfilled holes** surface
+  as warnings — the editor reminds you of what's still pending
+  without breaking your flow.
 
 The exact editor configuration varies. For VS Code, there's
 an official extension that starts `kai lsp` automatically.
@@ -249,6 +258,25 @@ the other end of the bridge that ch. 15 opens from the holes
 side: the language gives whoever is writing code — human or
 agent — the information they need, in the format that best
 suits them.
+
+The same idea extends to `kai build`. Three flags emit
+structured information instead of diagnostic prose:
+
+- `kai build --diags-json` — every compiler error and warning
+  as a JSON array, with fields `severity`, `file`, `line`,
+  `col`, `message`, `code`. What the editor consumes through
+  LSP is also reachable from scripts and agents that call
+  `kai build` directly.
+- `kai build --effects-json` — the effect row inferred for
+  each `pub` function in the file. Lets an agent answer
+  "does this function touch disk?" without parsing source.
+- `kai build --library-mode` — compile without requiring a
+  `fn main`. Useful for analyzing packages meant to be used
+  as a library.
+
+The three share a purpose: making the information the
+compiler already has live outside the binary, in a format
+any consumer can process without reimplementing the typer.
 
 ## 16.8 Environment variables
 

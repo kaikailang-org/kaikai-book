@@ -144,14 +144,29 @@ Ejecutar comandos externos como subprocesos.
 ### `Signal`
 
 ```kai
+type Sig = SigInt | SigTerm | SigHup | SigUsr1 | SigUsr2
+
 effect Signal {
-  handle(sig: SignalKind, action: () -> Unit) : Unit
+  on(sig: Sig)  : Unit
+  off(sig: Sig) : Unit
+  await()       : Sig
 }
 ```
 
-Registrar handlers para señales del sistema (`SIGINT`,
-`SIGTERM`, etc.). Útil para limpieza ordenada al apagar el
-proceso.
+Esperar a una señal POSIX sin bloquear las demás fibras.
+`on(sig)` subscribe el proceso a `sig`; el runtime bloquea
+la señal a nivel del proceso y el kernel encola la entrega
+en vez de aplicar la disposición por defecto. `await()`
+parkea la fibra que llama hasta que llegue cualquiera de
+las señales subscritas y devuelve la variante `Sig`
+correspondiente. `off(sig)` desuscribe.
+
+El handler default vive alrededor de `main` cuando `Signal`
+está en la fila. Solo una fibra puede estar en `await()` a
+la vez; un segundo llamado concurrente entra en pánico.
+Útil para limpieza ordenada al apagar el proceso —
+`Signal.on(SigInt); match Signal.await() { ... }` reemplaza
+el típico handler de SIGINT escrito a mano.
 
 ## D.5 Estado
 

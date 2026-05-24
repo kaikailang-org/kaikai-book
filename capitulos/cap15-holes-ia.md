@@ -40,12 +40,15 @@ programa aborta con un mensaje claro:
 
 ```
 $ kai run ejemplos/cap15/01_hole_basico.kai
-panic: unfilled hole: ?formula
+panic: unfilled hole: ?formula at line 1 col 27, expected Real
 ```
 
 No es un error de compilación. Es una **promesa diferida**: te
 dejaste un agujero que vas a llenar después, y el sistema te
-acompaña hasta entonces.
+acompaña hasta entonces. El mensaje del panic trae todo lo
+que el agente (humano o IA) necesita para rellenarlo: el
+nombre del hole, su posición exacta, y el tipo que el
+compilador infirió que debería tener.
 
 La diferencia entre `?` y `?nombre` es que el nombre te sirve
 para identificar el hole en mensajes y, sobre todo, para hacer

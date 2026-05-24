@@ -104,12 +104,20 @@ Compila el archivo en modo `--test` (que activa los bloques
 `test`), produce un binario, lo ejecuta, y reporta. El ciclo
 edición → prueba toma uno o dos segundos en archivos chicos.
 
-Si llamas a `kai test` sin nombre de archivo, no hay un
-descubrimiento automático estilo `pytest` o `cargo test`. Eso
-es deliberado (kaikai todavía no tiene un layout de proyecto
-estándar), pero conviene saber el flujo: tú apuntas al archivo,
-el runner corre todo lo que ese archivo y sus imports declaren
-con `test`.
+Si estás dentro de un proyecto (un directorio con `kai.toml`),
+`kai test .` corre los tests del paquete principal y también
+descubre automáticamente cualquier `.kai` bajo el directorio
+`tests/`. Cada archivo de `tests/` se compila como una unidad
+aparte — no como parte del paquete, sino como su propio
+programa de prueba. Si necesitas ejercer una función `pub`
+del paquete desde `tests/`, impórtala como cualquier
+dependencia: `import mi_paquete`.
+
+Si llamas a `kai test mi_archivo.kai` apuntando a un archivo
+suelto, el runner corre todo lo que ese archivo y sus
+imports declaren con `test`. No hay descubrimiento estilo
+`pytest` en archivos sueltos; el modelo descubre solo cuando
+hay un `kai.toml` que defina el paquete.
 
 Hay tres recomendaciones prácticas que vas a internalizar a
 las pocas semanas:

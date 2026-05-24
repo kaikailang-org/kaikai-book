@@ -104,12 +104,20 @@ Compiles the file in `--test` mode (which activates `test`
 blocks), produces a binary, runs it, and reports. The
 edit→run cycle takes a second or two on small files.
 
-If you call `kai test` without a file name, there's no
-auto-discovery like `pytest` or `cargo test`. That's
-deliberate — kaikai doesn't have a standard project layout
-yet — but the flow is worth knowing: you point at the file,
-the runner runs everything that file and its imports declare
-with `test`.
+If you are inside a project (a directory with `kai.toml`),
+`kai test .` runs the main package's tests and also
+auto-discovers any `.kai` under the `tests/` directory. Each
+file under `tests/` is compiled as its own unit — not as
+part of the package, but as a standalone test program. If
+you need to exercise a `pub` function of the package from
+`tests/`, import it like any other dependency:
+`import my_package`.
+
+If you call `kai test my_file.kai` against a loose file, the
+runner runs everything that file and its imports declare
+with `test`. There is no `pytest`-style discovery on loose
+files; the model only discovers when there is a `kai.toml`
+defining the package.
 
 Three practical recommendations you'll internalize within
 weeks:

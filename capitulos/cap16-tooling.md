@@ -183,8 +183,16 @@ Emacs, IntelliJ con plugin) puede conectarse y obtener:
   tipo.
 - Goto-definition: saltas al lugar donde un nombre fue
   declarado.
+- Document symbols: el árbol de símbolos del archivo para el
+  panel lateral del editor.
+- Completion: lista de candidatos al teclear, con tipo y
+  origen para cada uno.
+- Signature help: al abrir paréntesis en una llamada, muestra
+  la firma de la función y resalta el parámetro actual.
 - Diagnósticos en vivo: los errores y warnings del compilador
-  aparecen en el buffer mientras escribes.
+  aparecen en el buffer mientras escribes. Los **holes sin
+  rellenar** salen como warnings — el editor te recuerda lo
+  que queda pendiente sin romperte el flujo.
 
 La configuración exacta del editor varía. Para VS Code, hay
 una extensión oficial que arranca `kai lsp` automáticamente.
@@ -250,6 +258,26 @@ lenguaje a mano. Es el otro extremo del puente que el cap. 15
 abre desde el lado de los holes: el lenguaje provee a quien
 escribe código —humano o agente— la información que
 necesita, en el formato que mejor le sirva.
+
+La misma idea se extiende a `kai build`. Tres flags emiten
+información estructurada en vez de prosa diagnóstica:
+
+- `kai build --diags-json` — todos los errores y warnings del
+  compilador como un array JSON, con campos `severity`,
+  `file`, `line`, `col`, `message`, `code`. Lo que el editor
+  vía LSP consume queda accesible también desde scripts y
+  agentes que llaman a `kai build` directamente.
+- `kai build --effects-json` — la fila de efectos inferida
+  para cada función `pub` del archivo. Permite que un agente
+  responda "¿esta función toca el disco?" sin parsear código.
+- `kai build --library-mode` — compila sin requerir un
+  `fn main`. Útil para analizar paquetes que se van a usar
+  como librería.
+
+Las tres formas comparten propósito: hacer que la
+información que el compilador ya tiene viva fuera del
+binario, en un formato que cualquier consumidor pueda
+procesar sin reimplementar el typer.
 
 ## 16.8 Variables de entorno
 

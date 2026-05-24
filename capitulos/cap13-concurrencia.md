@@ -346,6 +346,32 @@ La clave conceptual: `Cancel.raise()` es la **operación**, y
 del cap. 12: la cancelación es un efecto más, con un handler
 escrito por el usuario o instalado por el runtime.
 
+### `Spawn.cancel(f)` y los handlers de `Cancel`
+
+Vale distinguir dos nombres parecidos:
+
+- **El efecto `Cancel`** es lo que la fibra **recibe** cuando
+  la cancelación le llega. Su única op `raise()` la inyecta
+  el scheduler en el próximo punto de yield.
+- **`Spawn.cancel(f)`** es lo que una fibra **llama** para
+  pedirle al scheduler que entregue `Cancel.raise()` a la
+  fibra `f`.
+
+Cuando llamas `n.spawn(...)` con un binding `n` y obtienes una
+fibra hija, `Spawn.cancel(hija)` no la mata: agenda la entrega.
+La hija, en su próximo yield, recibe `Cancel.raise()` y su
+propio handler de `Cancel` corre — exactamente el que la fibra
+hija instaló con `with Cancel { ... }`. Si no instaló ninguno,
+la fibra se desenrolla limpiamente y los handlers más arriba
+en la pila (típicamente del nursery) toman el control.
+
+La única excepción es el **trap-exit** del modelo de actores
+(cap. 14): una fibra puede marcarse para que los crashes de
+sus pares se conviertan en mensajes en su mailbox en vez de
+gatillar cancelación, pero esa es una opción explícita y
+local — el default sigue siendo la cancelación cooperativa
+descrita aquí.
+
 ## 13.6 Memoria mutable por fibra
 
 El cap. 12 §12.7 cubrió `var` (celdas locales, azúcar sobre
