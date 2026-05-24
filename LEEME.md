@@ -9,7 +9,7 @@ estilo BEAM: sin garbage collector y sin borrow checker.
 
 Por Eduardo Díaz ([lnds](https://github.com/lnds)).
 
-[Read this README in English](./README.md).
+Otros idiomas: [English](./README.md) · [中文](./README.zh-CN.md).
 
 ## Qué es este libro
 

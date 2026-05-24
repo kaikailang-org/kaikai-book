@@ -9,7 +9,7 @@ no borrow checker.
 
 By Eduardo Díaz ([lnds](https://github.com/lnds)).
 
-[Leer este README en español](./LEEME.md).
+Other languages: [Español](./LEEME.md) · [中文](./README.zh-CN.md).
 
 ## What this book is
 
