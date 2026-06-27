@@ -243,6 +243,53 @@ The `spawn.yield()`s at the end give the scheduler a chance
 to run the worker. Without them, `main` would exit before
 the worker processed anything.
 
+### `receive_timeout`: receive with a deadline
+
+`Actor.receive()` blocks: if the mailbox is empty, the fiber
+suspends until a message arrives, however long that takes.
+That's what you want almost always, but sometimes waiting
+forever is precisely what you don't want. A supervisor running
+a health check shouldn't hang if the worker stopped responding;
+a client asking for something over the network wants to retry
+if nobody answers within 50 ms.
+
+That's what `receive_timeout(d)` is for: it receives from the
+mailbox, gives up after a `Duration`, and returns an `Option`:
+
+```kai
+import actor
+import time
+
+fn main() : Unit / Console + Spawn + Cancel + Clock + Actor[String] {
+  with_mailbox {
+    match receive_timeout(time.millis(10)) {
+      Some(m) -> Stdout.print("received: " ++ m)
+      None    -> Stdout.print("timeout: nobody answered")
+    }
+  }
+}
+```
+
+Output:
+
+```
+$ kai run examples/ch14/06_receive_timeout.kai
+timeout: nobody answered
+received: pong
+```
+
+`Some(msg)` if a message arrived before the deadline, `None` if
+the deadline elapsed first. The `Duration` comes from `time`'s
+constructors (`time.millis`, `time.seconds`, `time.minutes`);
+because the deadline is measured against the clock, the
+signature gains the `Clock` effect. Having to `match` on the
+`Option` is the point: the compiler won't let you forget the
+case where time ran out.
+
+For the module's full repertoire — `spawn_actor_policy`, the
+typed wrappers, the raw nanosecond op `receive_timeout` is
+built on — see `kai doc actor`.
+
 ## 14.4 Mailbox policies: what happens when it fills
 
 By default, `with_mailbox` and `spawn_actor` create an
@@ -559,8 +606,10 @@ What's missing for this to be production-ready? A few
 things:
 
 - **Per-attempt timeout.** Today if the worker hangs, the
-  supervisor hangs too. The solution is `with_timeout`
-  (chapter 13 exercise) around `attempt`.
+  supervisor hangs too, because `attempt` ends in an
+  `Actor.receive()` that blocks with no deadline. Swapping that
+  `receive` for `receive_timeout` (§14.3) hands the supervisor a
+  `None` to react to instead of waiting indefinitely.
 - **Cancel the worker if the supervisor gives up.** If we
   say "I give up" while the worker is still processing, we
   want the worker to end too. With `Link.link(worker)` after

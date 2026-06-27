@@ -1,0 +1,28 @@
+# `receive` bloquea hasta que llega un mensaje; `receive_timeout`
+# se rinde tras una `Duration` y devuelve `Option`: `Some(msg)`
+# si llegó algo a tiempo, `None` si el plazo expiró primero.
+#
+# Sirve para no quedarse colgado esperando para siempre: health
+# checks, supervisión, "espera la respuesta hasta 50 ms y si no,
+# reintenta". El presupuesto de tiempo viaja sobre el efecto
+# `Clock`.
+
+import actor
+import time
+
+fn main() : Unit / Console + Spawn + Cancel + Clock + Actor[String] {
+  with_mailbox {
+    # Mailbox vacío: el deadline expira antes de que llegue nada.
+    match receive_timeout(time.millis(10)) {
+      Some(m) -> Stdout.print("inesperado: " ++ m)
+      None    -> Stdout.print("timeout: nadie respondió")
+    }
+
+    # Ahora sí hay un mensaje a la mano: llega antes del deadline.
+    Actor.send(Actor.self(), "pong")
+    match receive_timeout(time.millis(10)) {
+      Some(m) -> Stdout.print("recibido: " ++ m)
+      None    -> Stdout.print("inesperado: timeout")
+    }
+  }
+}

@@ -262,15 +262,14 @@ sort :: Ord a => [a] -> [a]
 The `Ord a =>` is the **constraint**. When you call `sort
 xs`, the compiler looks up the `Ord` for the type of `xs` on
 its own and "injects" it into the function without you
-writing anything. The constraint travels hidden.
+writing anything. The constraint travels hidden, and it
+**propagates**: if `sort` calls another function that also
+needs `Ord`, Haskell threads the lookup along on its own.
 
-In kaikai that doesn't exist. You can't write:
-
-```kai
-fn sort[T : Ord](xs: [T]) : [T] = ...    # ERROR: kaikai admits no constraints
-```
-
-How do you sort a list, then? The function takes the
+kaikai lets you write a bound in the signature — you'll see
+it in §9.7 — but that bound is a **statement of intent**, not
+a resolver traveling hidden. The difference shows when you
+sort a list. In kaikai the function can take the
 **comparator as an explicit argument**:
 
 ```kai
@@ -300,8 +299,9 @@ kaikai are addressed with algebraic effects (chapter 12) and
 explicit combinators.
 
 **No constraint propagation**. A polymorphic function does
-not "carry" `Ord` to the functions it calls. If you call
-something that requires `Ord`, you pass the comparator.
+not "carry" `Ord` to the functions it calls. The bound in
+§9.7 documents what *that* function asks for; it doesn't
+propagate on its own to the functions it invokes.
 
 What do you gain with these restrictions? Three things:
 
@@ -323,7 +323,78 @@ and friends. That trade-off is deliberate: the abstractions
 kaikai prioritizes live in the effect system (chapter 12),
 not in the type system.
 
-## 9.7 Operators: `+`, `==`, `<` as protocols
+## 9.7 Protocol bounds on generic functions
+
+So far protocols showed up in two places: the `impl` that
+implements them and the call site that calls an operation.
+There's a third. A generic function over some `T` can
+**require that `T` implement a protocol**, and write it in
+the signature:
+
+```kai
+fn show_two[T: Show](a: T, b: T) : String =
+  "#{show(a)} and #{show(b)}"
+```
+
+The bound `[T: Show]` reads "for any `T` that implements
+`Show`". Inside the body, the protocol's operations are
+available: `show(a)` dispatches to the `impl Show` of
+whatever concrete type arrives at each call.
+
+```kai
+fn main() : Unit / Stdout = {
+  Stdout.print(show_two(1, 2))      # 1 and 2
+  Stdout.print(show_two("x", "y"))  # x and y
+}
+```
+
+If you come from another language with generics, this rings
+a bell. In Rust it's `where T: Trait`; in Java, a bounded
+generic `<T extends Comparable>`. The idea is the same — a
+type parameter that isn't "anything" but "anything that
+satisfies this contract" — except in kaikai the contract is a
+protocol.
+
+Bounds stack with `+` when the body uses more than one
+protocol, and each type parameter carries its own:
+
+```kai
+fn label[T: Show + Eq](a: T, b: T) : String =
+  if eq(a, b) { "equal: #{show(a)}" }
+  else { "#{show(a)} and #{show(b)}" }
+
+fn pair[T: Show, U: Show](a: T, b: U) : String =
+  "#{show(a)}, #{show(b)}"
+```
+
+It works with any protocol, stdlib or your own. A function
+that takes the `larger` of two values asks for `Ord`; one
+that renders asks for your `Drawable`:
+
+```kai
+fn larger[T: Ord](a: T, b: T) : T = max(a, b)
+fn render[T: Drawable](x: T) : String = "[" ++ draw(x) ++ "]"
+```
+
+Now read carefully, because this is where kaikai parts ways
+with Haskell even though the syntax looks alike. The bound is
+a **statement of intent**, not the propagating constraint of
+§9.6. The compiler doesn't resolve a dictionary and inject
+it: what happens is that each call monomorphizes the function
+to the concrete type, and there `show`, `eq`, or `cmp`
+resolve to the matching `impl` — the same static dispatch as
+always. The bound documents the contract in the signature and
+makes the error, when a type doesn't implement the protocol,
+clear: `no impl of 'Ord' for type 'X'`.
+
+This is the natural evolution of a generic over some bare
+`T`: from "this function works for any type" to "this
+function works for any type that knows how to `show`". The
+bound doesn't give you Haskell's implicit resolver or its
+propagation; it gives you the contract written where it's
+read, which is almost always what you wanted.
+
+## 9.8 Operators: `+`, `==`, `<` as protocols
 
 A practical note: standard operators **are** protocols. `==`
 is `Eq.eq`, `<` is comparison based on `Ord.cmp`, `+` is
@@ -366,10 +437,8 @@ the compiler rejects that expression.
 
 **9.1.** Define `type Distance = { meters: Int }` and give
 it an `impl Show` so `show(d)` produces `"42 m"`. Then test
-`println("the distance is #{d}")`. Note: interpolation
-works, but if you call another protocol op inside the
-`#{...}` with multiple args, remember the binding-first
-workaround.
+`println("the distance is #{d}")` and confirm interpolation
+picks up your `impl Show` automatically.
 
 **9.2.** Define `type Card = { suit: String, value: Int }`
 and give it `impl Ord` ordering by `value`. Verify with

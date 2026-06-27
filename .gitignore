@@ -9,3 +9,12 @@ borradores/build-pdf/body*.typ
 borradores/build-pdf/kaikai-libro-es.typ
 borradores/build-pdf/kaikai-book-en.typ
 borradores/build-pdf/figuras/
+
+# Compiled example binaries and runtime logs (kai build/run output)
+ejemplos/**/main
+examples/**/main
+ejemplos/cap17/notas/notas
+ejemplos/cap17/notas/*.log
+ejemplos/cap18/ledger/ledger
+examples/ch17/notes/notes
+examples/ch18/ledger/ledger

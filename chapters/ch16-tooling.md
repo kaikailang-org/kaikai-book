@@ -22,8 +22,10 @@ hello, kaikai
 `kai run` compiles the file to a native binary, runs it,
 and forwards any extra arguments to the program. It's the
 edit-save-run cycle of the day-to-day. Underneath there's a
-compiler (`kaic2`) that produces C, then invokes `cc` to
-compile to an executable, and finally runs the executable.
+compiler (`kaic2`) that by default lowers to a native object
+with LLVM linked into the compiler itself — no `.ll` text on
+disk, no separate `clang` process — and then runs the
+executable.
 
 If you want the binary without running it, use `kai build`:
 
@@ -51,9 +53,10 @@ program of a few hundred lines compiles in less than a
 second on a reasonable machine. That speed isn't an
 accident: the compiler is self-hosted (kaikai compiled in
 kaikai), avoids costly passes like global type inference
-where it doesn't need to, and emits C directly instead of
-going through LLVM. For larger programs there's a cache
-(chapter 8 §8.8 covers the package cache; the per-file
+where it doesn't need to, and lowers to LLVM in the same
+process — no intermediate files written, no external linker
+launched on the common path. For larger programs there's a
+cache (chapter 8 §8.8 covers the package cache; the per-file
 compilation cache is another story).
 
 To put it in perspective: a Rust program of comparable
@@ -221,9 +224,11 @@ kai info — language reference, organized by topic.
 Topics:
   actors       Message-passing concurrency built on fibers
   effects      Algebraic effects and handlers
+  ffi          Foreign function interface — calling C via `Ffi`.
   fibers       Structured concurrency via nursery, spawn, await, cancel
   holes        Typed holes for incremental development.
   loop         Control flow — `if`, `while`, `until`, and iteration via pipes.
+  lsp          The kaikai Language Server (`kai lsp`).
   match        Pattern matching with exhaustiveness checking.
   packages     `kai.toml`, imports, visibility.
   pipes        Apply, map, flat-map, filter — four pipe operators.
@@ -278,33 +283,115 @@ The three share a purpose: making the information the
 compiler already has live outside the binary, in a format
 any consumer can process without reimplementing the typer.
 
-## 16.8 Environment variables
+## 16.8 The stdlib reference: `kai doc`
+
+`kai info` documents the **language**, by topic. Its sibling
+`kai doc` documents the **stdlib**, by module: it reads the
+`#[doc("...")]` attributes each stdlib function carries and
+prints them in the terminal. Where `kai info effects` explains
+the effect system, `kai doc effects` lists the atomic
+capabilities the runtime ships.
+
+With no arguments it lists the modules:
+
+```
+$ kai doc
+kai doc — stdlib reference, by module.
+
+Modules:
+  array                Bridge helpers between `[T]` (linked list) and `Array[T]`
+  collections/hashmap  Mutable, separately-chained hash table `HashMap[k, v]` behind the
+  core/string          core.string — byte-indexed string helpers over the runtime string
+  date                 Civil calendar dates (proleptic Gregorian).
+  encoding/json        stdlib/encoding/json.kai — JSON encoder + decoder.
+  string_builder       Amortised text accumulator.
+  ...
+```
+
+Pass a module and it prints its symbol table with a one-line
+summary for each entry:
+
+```
+$ kai doc date
+# date   (date.kai)
+
+  Civil calendar dates (proleptic Gregorian).
+
+  add_days       Shift by `n` civil days (negative goes backwards). Total: every
+  day_of_week    ISO-8601 weekday numbering: 1 = Monday … 7 = Sunday.
+  make           Validating constructor. `None` when the month is outside 1..12 or
+  parse          Strict ISO-8601 `YYYY-MM-DD`: exactly 10 chars, ASCII digits in the
+  today          Today's civil date in UTC. The only effectful fn in this module —
+  ...
+
+Run 'kai doc date.<symbol>' for a symbol's signature and full doc.
+```
+
+And `module.symbol` shows a symbol's signature and full doc:
+
+```
+$ kai doc date.parse
+# date.parse   (date.kai)
+
+  parse(s: String) -> Option
+
+  Strict ISO-8601 `YYYY-MM-DD`: exactly 10 chars, ASCII digits in the
+  three fields, `-` separators. Anything else — wrong length, signs,
+  spaces, `2026/01/02`, `2026-1-2` — is `None`, as is a well-formed
+  string naming an invalid date (`2026-02-30`, `2026-13-01`).
+```
+
+`kai doc` resolves names against the current package, not just
+the stdlib: if your project has a module carrying `#[doc("...")]`
+attributes, it reads those too. That closes the loop — you
+document your code with the same attribute the stdlib uses, and
+the same tool surfaces it.
+
+## 16.9 Two backends: native and C
+
+`kai build` and `kai run` have two codegen backends. The default
+is **`native`**: it lowers to LLVM linked into the compiler, in
+the same process, and emits a native object. It writes no `.ll`
+text and spawns no `clang`. Because libLLVM is linked into
+`kaic2`, the binary you produce runs the native backend with no
+system LLVM.
+
+The other is **`--backend=c`**: the portable C-text backend,
+which emits C and links it with `cc`. It's the compiler's own
+bootstrap path and the more portable fallback. If you hit a
+construct the native backend doesn't cover yet, `--backend=c`
+usually compiles it.
+
+```
+$ kai build app.kai                  # native backend (default)
+$ kai build --backend=c app.kai      # portable C backend
+```
 
 A handful of environment variables control the `kai` binary's
 behavior for special cases:
 
-- **`CC`** (default: `cc`): the C compiler `kai` invokes to
-  produce the final executable. If you have multiple C
-  versions on the system, or want to use `clang`
-  specifically, you set it here: `CC=clang kai run
-  file.kai`.
-- **`CFLAGS`** (default: empty): extra flags for the C
-  compiler. Useful for optimization (`CFLAGS=-O3`) or
-  warnings (`CFLAGS=-Wall`).
-- **`KAI_NO_STDLIB=1`**: skips automatic stdlib loading.
-  For advanced cases: compiler bootstrap, embedded targets
-  without full libc, experiments.
-- **`KAI_STDLIB`**: override the stdlib root. By default,
-  `kai` auto-detects where it lives (installed vs
-  development checkout). If you want to use an alternate
-  version, you point it here.
-- **`KAI_INCLUDE`**: override the runtime headers
-  (`runtime.h`) root. Same principle as `KAI_STDLIB`.
+- **`KAI_BACKEND`** (`c` | `native`): the default backend when
+  you don't pass `--backend`. The flag overrides it.
+- **`KAI_NATIVE_OPT`** (`0|1|2|3|s|z`, default `2`): the
+  optimization level of the native backend's LLVM pipeline.
+  `--debug` lowers it to `0`, `--release` keeps it at `2`.
+- **`CC`** (default `cc`) and **`CFLAGS`**: the C compiler and
+  its flags, used **only by the `c` backend** to produce the
+  final executable (`CC=clang`, `CFLAGS=-O3`).
+- **`KAI_NO_STDLIB=1`**: skips automatic stdlib loading. For
+  advanced cases: compiler bootstrap, embedded targets without
+  full libc, experiments.
+- **`KAI_STDLIB`**: override the stdlib root. By default, `kai`
+  auto-detects where it lives (installed vs development
+  checkout). If you want to use an alternate version, you point
+  it here.
+- **`KAI_INCLUDE`**: override the runtime headers (`runtime.h`)
+  root. Same principle as `KAI_STDLIB`.
 
-For normal use you don't need to touch any of this. The
-binary comes preconfigured to find its own things.
+For normal use you don't need to touch any of this. The binary
+comes preconfigured to find its own things.
 
-## 16.9 Typical project structure
+## 16.10 Typical project structure
 
 A standard kaikai project looks like this:
 
@@ -343,7 +430,7 @@ None of this is required. `kai run file.kai` runs any
 `.kai` file regardless of where it lives. But when the
 project grows, this structure pays off.
 
-## 16.10 Talking to C: `extern "C"` and the `Ffi` effect
+## 16.11 Talking to C: `extern "C"` and the `Ffi` effect
 
 Sooner or later you need a library that already exists in
 C: a database driver, a graphics framework, a numeric
@@ -391,9 +478,19 @@ equivalents at the boundary:
 | `String` | `const char *` (NUL-terminated, kaikai-owned) |
 | `Unit` | `void` (return only) |
 
-Anything more structured — records, lists, sum types — is
-**not** crossable directly in FFI v1. We come back to that
-in a moment.
+For exact widths at the boundary there are **fixed-width**
+annotations: `U8 U16 U32 U64 I8 I16 I32 I64 F32` pin the precise
+C type (`uint8_t`, `int32_t`, `float`, …). They are *boundary-only*
+annotations: on the kaikai side the value is still a plain `Int`
+(or `Real` for `F32`), so it mixes with ordinary literals and
+arithmetic. The shim C-casts at the call.
+
+```kai
+extern "C"("SetVolume") fn set_volume(level: U8) : Unit / Ffi
+```
+
+Lists and sum types don't cross directly; records do, as structs
+by value, which we get to in a moment.
 
 ### Renaming the C symbol
 
@@ -417,9 +514,8 @@ For libraries that aren't already in libc, the typical
 shape is: write a small C file with the functions you need,
 let `kai build` invoke its C compiler with that file
 included. The package manager doesn't automate C
-compilation in v1, so you wire it via the `CFLAGS`
-environment variable that `kai` passes through to the host
-C compiler.
+compilation, so you wire it via the `CFLAGS` environment
+variable that `kai` passes through to the host C compiler.
 
 A minimal example. The C side:
 
@@ -461,33 +557,79 @@ against installed libraries, `pkg-config --cflags --libs
 the whole thing in a `Makefile` when it grows beyond one
 line.
 
-The `--backend=c` flag here is required because the LLVM
-backend (chapter 16 §16.1) doesn't expose the same
-`CFLAGS` plumbing in v1.
+The `--backend=c` flag here is required because the native
+backend (§16.1, §16.9) doesn't expose the same `CFLAGS`
+plumbing.
 
-### What FFI v1 doesn't do
+### Structs by value
 
-The list is short but important:
+A kaikai record can cross the boundary as a C `struct` **by
+value**, both ways, by declaring it with `extern "C" type`.
+Each field carries an exact width (a fixed-width type or a
+nested `extern "C" type`); `Int`, `Real`, and `String` are
+rejected as struct fields, because they'd break the layout the
+C compiler lays out for small structs.
 
-- **Records / structs by value across the boundary.** You
-  can't declare `extern "C" fn draw(c: Color)` where
-  `Color` is a kaikai record matching a C `struct`. v1
-  passes primitives only.
-- **Out-parameters and pointer arguments.** No
-  `int *out` style: every value crosses by value.
-- **Variadic C functions.** No direct binding to `printf`'s
-  family; you wrap them in a fixed-arity C helper.
-- **C callbacks back into kaikai.** A C function that takes
-  a function pointer can't call back into a kaikai
-  function. Post-FFI-v2.
+```kai
+extern "C" type Color   = { r: U8, g: U8, b: U8, a: U8 }
+extern "C" type Vector2 = { x: F32, y: F32 }
 
-The canonical workaround for the struct case is a **C
-shim**: a thin C function that flattens the struct into
-primitives at the kaikai boundary and reconstructs it
-before calling the real library. The cost is one C
-function per struct-using entry point in the library
-you're binding. Worth it for v1; FFI v2 will remove the
-shim layer for the common case.
+extern "C"("vec_add")
+fn vec_add(a: Vector2, b: Vector2) : Vector2 / Ffi
+```
+
+The shim unwraps the record's fields into a local C struct with
+the real widths, calls by value, and re-boxes the returned
+struct into a fresh record. The ABI classification (small struct
+in registers vs. memory, per SysV or AAPCS) is the C compiler's
+job, not kaikai's.
+
+There's one rule to know on the C side: the shim must declare
+the struct with the tag the compiler mints, `struct
+__kai_ffi_<Name>`, so the by-value calling convention lines up
+field-for-field. The canonical, compiling example lives in
+`examples/ffi/v2_struct_by_value.kai` with its `v2_shim.c`; `kai
+info ffi` carries the exact reference.
+
+> Struct-by-value compiles on the C backend (`--backend=c`); the
+> native backend routes struct FFI through the C backend and, on
+> a native build, reports the gap along with the fix
+> (`--backend=c`). Native struct marshalling is a planned
+> follow-up.
+
+### Opaque handles
+
+For a resource the kaikai side passes from hand to hand but
+never inspects — a database connection, a socket — there's
+`extern "C" opaque`. The value sits behind a reference-counted
+box that parks C's `void *`.
+
+```kai
+extern "C" opaque Conn
+
+extern "C"("PQconnectdb") fn connect(s: String) : Conn / Ffi
+extern "C"("PQexec")      fn exec(c: Conn, q: String) : Int / Ffi
+extern "C"("PQfinish")    fn finish(c: Conn) : Unit / Ffi
+```
+
+kaikai's reference counting manages the handle **box**, but it
+never frees the C resource living inside it: the binding author
+calls the C destructor explicitly (`PQfinish` above). Passing
+the handle to two calls doesn't free it twice. Opaque handles
+work on both backends.
+
+### What FFI still rejects
+
+Out of scope, rejected at compile time:
+
+- **C unions, bitfields, and variadic functions.** No direct
+  binding to `printf`'s family; you wrap them in a fixed-arity
+  C helper.
+- **C callbacks back into kaikai.** A function-typed extern
+  parameter doesn't fit: a kaikai closure is a heap box with
+  captures, not a bare C function pointer.
+- **Struct fields that aren't fixed-width** or a nested
+  `extern "C" type`.
 
 ### When to reach for FFI
 
@@ -508,14 +650,13 @@ control. FFI is the right tool for binding existing C
 ecosystems you don't want to rewrite: drivers, native UI
 toolkits, hardware-specific libraries.
 
-A small heuristic: if you find yourself writing more than
-ten `extern "C"` declarations to wrap something, and the
-library has a stable C API, that's a candidate for a
-proper kaikai package once `kai bindgen` lands. Until
-then, the manual approach (one `extern "C"` per function,
-one C shim per struct-using entry point) works fine.
+A small heuristic: if you find yourself writing a lot of
+`extern "C"` declarations to wrap something, and the library
+has a stable C API, that's a candidate to package as a
+reusable kaikai binding the rest of the ecosystem can import,
+instead of repeating the declarations in every project.
 
-## 16.11 Editions: stability without stagnation
+## 16.12 Editions: stability without stagnation
 
 There's one decision the rest of the book takes for granted
 without quite explaining it: kaikai uses **editions** to
@@ -565,7 +706,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.76.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.91.2 - hanga-roa (stage 2, self-hosted)
 ```
 
 If `kai.toml` omits the field, the compiler assumes the
@@ -632,7 +773,7 @@ migration guide, and `kai migrate` to automate the
 mechanical changes. Until then, what you wrote against
 hanga-roa keeps compiling.
 
-## 16.12 Philosophy: three principles of the tooling
+## 16.13 Philosophy: three principles of the tooling
 
 If you want to keep the overall feel of the tooling, three
 ideas:

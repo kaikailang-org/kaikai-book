@@ -1,0 +1,19 @@
+import core.string
+import core.list
+
+# A String is not a list of Char, and "length" means two distinct
+# things: bytes versus Unicode codepoints.
+
+fn main() {
+  let s = "café"
+
+  # length / byte_length count bytes (O(1)).
+  # char_count counts Unicode codepoints.
+  println("bytes:      #{string.length(s)}")       # 5
+  println("codepoints: #{string.char_count(s)}")   # 4
+
+  # chars decodes the UTF-8 view into codepoints;
+  # bytes hands back the raw bytes, one per byte.
+  println("chars:      #{list.length(string.chars(s))}")  # 4
+  println("bytes list: #{list.length(string.bytes(s))}")  # 5
+}

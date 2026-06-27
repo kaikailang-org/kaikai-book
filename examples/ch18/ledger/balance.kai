@@ -3,8 +3,9 @@
 # of a double-entry ledger.
 #
 # The `balances` function is pure. We verify it with tests
-# and use it as a precondition for `apply_if_balanced` and
-# the actor's `process`.
+# and use it as a precondition for `apply_if_balanced`. Since
+# its effect row is empty, `requires`/`ensures` predicates can
+# call it with no extra markers.
 
 import domain
 
@@ -22,22 +23,11 @@ pub fn total_credits(ms: [domain.Movement]) : Real<USD> = match ms {
   [domain.Debit(_, _), ...rest]   -> total_credits(rest)
 }
 
-# The invariant: both sums are equal. Marked with the
-# attribute `[<refinement_pure>]` so `requires` / `ensures`
-# can call it from their predicates (kaikai 0.70 only allows
-# the closed pure-prelude set plus fns explicitly opted in
-# via this attribute).
-#
-# Note: in 0.70 `pub` doesn't coexist with `[<refinement_pure>]`
-# — combining the two prevents the symbol from being exported.
-# So `balances` is private and we expose `is_balanced` as a
-# public wrapper for the rest of the project (store, tests)
-# to use.
-fn balances(ms: [domain.Movement]) : Bool
-  [<refinement_pure>]
-  = total_debits(ms) == total_credits(ms)
-
-pub fn is_balanced(ms: [domain.Movement]) : Bool = balances(ms)
+# The invariant: both sums are equal. Purity is derived from
+# the empty effect row, so `requires`/`ensures` can invoke it
+# directly from their predicates.
+pub fn balances(ms: [domain.Movement]) : Bool =
+  total_debits(ms) == total_credits(ms)
 
 # Contract version from chapter 11: if you call this function,
 # you guarantee that the movements balance. The compiler
@@ -47,5 +37,27 @@ pub fn apply_if_balanced(ms: [domain.Movement]) : [domain.Movement]
   ensures  balances(result)
 = ms
 
-# Tests live in `balance_tests.kai` — workaround for the kaikai
-# 0.74.0 typer bug (see store.kai).
+test "balances with one debit and one credit" {
+  let ms = [
+    domain.Debit(1<AccountId>, 100.0<USD>),
+    domain.Credit(2<AccountId>, 100.0<USD>),
+  ]
+  assert balances(ms)
+}
+
+test "doesn't balance when amounts differ" {
+  let ms = [
+    domain.Debit(1<AccountId>, 100.0<USD>),
+    domain.Credit(2<AccountId>, 90.0<USD>),
+  ]
+  assert not balances(ms)
+}
+
+test "balances with multiple lines" {
+  let ms = [
+    domain.Debit(1<AccountId>, 60.0<USD>),
+    domain.Debit(2<AccountId>, 40.0<USD>),
+    domain.Credit(3<AccountId>, 100.0<USD>),
+  ]
+  assert balances(ms)
+}

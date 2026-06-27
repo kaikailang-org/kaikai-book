@@ -51,7 +51,7 @@ pub fn process(c: domain.Command, s: State) : (domain.Response, State) = match c
     (domain.AccountCreated(acc), s2)
   }
   Register(desc, movs) ->
-    if not balance.is_balanced(movs) {
+    if not balance.balances(movs) {
       (domain.UnbalancedError(
         "debits #{balance.total_debits(movs)}, credits #{balance.total_credits(movs)}"
       ), s)
@@ -116,11 +116,8 @@ fn apply_movs(cs: [domain.Account], ms: [domain.Movement]) : [domain.Account] = 
   [m, ...rest] -> apply_movs(apply_one(cs, m), rest)
 }
 
-# Manual recursion (not `list.map` + lambda) because kaikai
-# 0.70 still trips when resolving qualified record types
-# inside the spread sugar (`mod.Type { ...x, field: ... }`).
-# We also write the updated record field-by-field instead of
-# spreading.
+# Manual recursion over the account list: for each account,
+# if its id matches the movement's, apply the delta.
 fn apply_one(cs: [domain.Account], m: domain.Movement) : [domain.Account] = {
   let (target_id, delta) = delta_of(m)
   walk_accounts(cs, target_id, delta)
@@ -167,6 +164,56 @@ pub fn ask(store: Pid[StoreMsg], c: domain.Command) : domain.Response / Actor[St
   }
 }
 
-# Tests live in `store_tests.kai` — workaround for the kaikai 0.74.0
-# typer bug that breaks export resolution when `test "..."` blocks
-# and another local module (`balance`) load together.
+test "creating an account adds it to state" {
+  let (r, s2) = process(domain.CreateAccount("cash"), initial_state())
+  let ok = match r {
+    domain.AccountCreated(c) -> c.name == "cash"
+    _                         -> false
+  }
+  assert ok
+  assert list.length(s2.accounts) == 1
+}
+
+test "registering a transaction rejects an imbalance" {
+  let s = State {
+    accounts:         [domain.Account { id: 1<AccountId>, name: "a", balance: 0.0<USD> }],
+    transactions:     [],
+    next_account_id:  2<AccountId>,
+    next_tx_id:       1<TransactionId>,
+  }
+  let movs = [domain.Debit(1<AccountId>, 100.0<USD>)]   # only debit, doesn't balance
+  let (r, _) = process(domain.Register("test", movs), s)
+  let ok = match r {
+    domain.UnbalancedError(_) -> true
+    _                          -> false
+  }
+  assert ok
+}
+
+test "registering a balanced transaction updates balances" {
+  let s = State {
+    accounts: [
+      domain.Account { id: 1<AccountId>, name: "cash",  balance: 0.0<USD> },
+      domain.Account { id: 2<AccountId>, name: "sales", balance: 0.0<USD> },
+    ],
+    transactions:     [],
+    next_account_id:  3<AccountId>,
+    next_tx_id:       1<TransactionId>,
+  }
+  let movs = [
+    domain.Debit(1<AccountId>, 50.0<USD>),     # +50 to cash
+    domain.Credit(2<AccountId>, 50.0<USD>),    # -50 to sales
+  ]
+  let (r, s2) = process(domain.Register("sale", movs), s)
+  let ok = match r {
+    domain.TransactionRegistered(_) -> true
+    _                                -> false
+  }
+  assert ok
+  let cash = find_account(s2.accounts, 1<AccountId>)
+  let cash_balance = match cash {
+    Some(c) -> c.balance
+    None    -> 0.0<USD>
+  }
+  assert cash_balance == 50.0<USD>
+}

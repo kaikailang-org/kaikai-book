@@ -254,15 +254,14 @@ sort :: Ord a => [a] -> [a]
 El `Ord a =>` es la **constraint**. Cuando llamas a `sort
 xs`, el compilador busca por su cuenta el `Ord` para el tipo
 de `xs` y se lo "inyecta" a la función sin que tú escribas
-nada. La constraint viaja escondida.
+nada. La constraint viaja escondida, y se **propaga**: si
+`sort` llama a otra función que también pide `Ord`, Haskell
+encadena la búsqueda solo.
 
-En kaikai eso no existe. No puedes escribir:
-
-```kai
-fn ordenar[T : Ord](xs: [T]) : [T] = ...    # ERROR: kaikai no admite constraints
-```
-
-¿Cómo se ordena entonces una lista? La función recibe el
+kaikai te deja escribir una cota en la firma —lo verás en
+§9.7— pero esa cota es una **declaración de intención**, no
+un resolver que viaja escondido. La diferencia se ve cuando
+ordenas una lista. En kaikai la función puede recibir el
 **comparador como un argumento explícito**:
 
 ```kai
@@ -292,8 +291,9 @@ que en kaikai se resuelven con efectos algebraicos (cap. 12)
 y combinadores explícitos.
 
 **Sin propagación de constraints**. Una función polimórfica
-no "lleva" el `Ord` consigo a las funciones que llama. Si
-llamas a algo que requiere `Ord`, le pasas el comparador.
+no "lleva" el `Ord` consigo a las funciones que llama. La
+cota de §9.7 documenta qué pide *esa* función; no se propaga
+sola a las que ella invoque.
 
 ¿Qué se gana con estas restricciones? Tres cosas:
 
@@ -315,7 +315,78 @@ amigos. Ese trade-off es deliberado: las abstracciones que
 kaikai prioriza viven en el sistema de efectos (cap. 12), no
 en el sistema de tipos.
 
-## 9.7 Operadores: `+`, `==`, `<` como protocolos
+## 9.7 Cotas de protocolo en funciones genéricas
+
+Hasta acá los protocolos aparecían en dos lugares: el `impl`
+que los implementa y el call site que llama la operación.
+Falta un tercero. Una función genérica sobre un `T` cualquiera
+puede **exigir que ese `T` implemente un protocolo**, y
+escribirlo en la firma:
+
+```kai
+fn mostrar_dos[T: Show](a: T, b: T) : String =
+  "#{show(a)} y #{show(b)}"
+```
+
+La cota `[T: Show]` se lee "para cualquier `T` que implemente
+`Show`". Dentro del cuerpo, las operaciones del protocolo
+están disponibles: `show(a)` despacha al `impl Show` del tipo
+concreto que llegue en cada llamada.
+
+```kai
+fn main() : Unit / Stdout = {
+  Stdout.print(mostrar_dos(1, 2))      # 1 y 2
+  Stdout.print(mostrar_dos("x", "y"))  # x y y
+}
+```
+
+Si vienes de otro lenguaje con genéricos, esto te suena. En
+Rust es `where T: Trait`; en Java, un genérico acotado
+`<T extends Comparable>`. La idea es la misma —un parámetro
+de tipo que no es "cualquier cosa" sino "cualquier cosa que
+cumpla este contrato"— solo que en kaikai el contrato es un
+protocolo.
+
+Las cotas se apilan con `+` cuando el cuerpo usa más de un
+protocolo, y cada parámetro de tipo lleva la suya:
+
+```kai
+fn etiquetar[T: Show + Eq](a: T, b: T) : String =
+  if eq(a, b) { "iguales: #{show(a)}" }
+  else { "#{show(a)} y #{show(b)}" }
+
+fn par[T: Show, U: Show](a: T, b: U) : String =
+  "#{show(a)}, #{show(b)}"
+```
+
+Funciona con cualquier protocolo, del stdlib o propio. Una
+función que toma el `mayor` de dos valores pide `Ord`; una que
+renderiza pide tu `Dibujable`:
+
+```kai
+fn mayor[T: Ord](a: T, b: T) : T = max(a, b)
+fn render[T: Dibujable](x: T) : String = "[" ++ dibujar(x) ++ "]"
+```
+
+Ahora bien, lee con cuidado, porque acá es donde kaikai se
+separa de Haskell aunque la sintaxis se parezca. La cota es
+una **declaración de intención**, no la constraint con
+propagación de §9.6. No es que el compilador resuelva un
+diccionario y lo inyecte: lo que ocurre es que cada llamada
+monomorfiza la función al tipo concreto, y ahí `show`, `eq` o
+`cmp` se resuelven al `impl` que corresponde —el mismo
+despacho estático de siempre—. La cota documenta el contrato
+en la firma y hace que el error, cuando un tipo no implementa
+el protocolo, sea claro: `no impl of 'Ord' for type 'X'`.
+
+Esto es la evolución natural de un genérico sobre un `T`
+cualquiera: de "esta función sirve para cualquier tipo" a
+"esta función sirve para cualquier tipo que sepa hacer `show`".
+La cota no te da el resolver implícito de Haskell ni la
+propagación; te da el contrato escrito donde se lee, que casi
+siempre es lo que querías.
+
+## 9.8 Operadores: `+`, `==`, `<` como protocolos
 
 Una nota práctica: los operadores estándar **son** protocolos.
 `==` es `Eq.eq`, `<` es comparación basada en `Ord.cmp`, `+`
@@ -358,9 +429,8 @@ y el compilador rechaza esa expresión.
 
 **9.1.** Define `type Distancia = { metros: Int }` y dale un
 `impl Show` para que `show(d)` produzca `"42 m"`. Luego
-prueba `println("la distancia es #{d}")`. Cuidado: la
-interpolación funciona, pero recuerda el workaround del cap.
-9 si llamas a otro protocolo dentro.
+prueba `println("la distancia es #{d}")` y comprueba que la
+interpolación toma tu `impl Show` automáticamente.
 
 **9.2.** Define `type Carta = { palo: String, valor: Int }` y
 dale `impl Ord` que ordene por `valor`. Verifica con tres
