@@ -1,0 +1,25 @@
+protocol Dibujable {
+  dibujar(x: Self) : String
+}
+
+type Circulo = { radio: Int }
+
+impl Dibujable for Circulo {
+  fn dibujar(c: Circulo) : String = "círculo de radio #{show(c.radio)}"
+}
+
+fn mayor[T: Ord](a: T, b: T) : T = max(a, b)
+
+fn render[T: Dibujable](x: T) : String = "[" ++ dibujar(x) ++ "]"
+
+fn etiquetar[T: Show + Eq](a: T, b: T) : String =
+  if eq(a, b) { "iguales: #{show(a)}" }
+  else { "#{show(a)} y #{show(b)}" }
+
+fn main() : Unit / Stdout = {
+  Stdout.print(show(mayor(3, 7)))
+  Stdout.print(show(mayor("a", "b")))
+  Stdout.print(render(Circulo { radio: 5 }))
+  Stdout.print(etiquetar(1, 1))
+  Stdout.print(etiquetar(2, 9))
+}

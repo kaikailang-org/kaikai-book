@@ -1,0 +1,14 @@
+import string_builder
+import core.list
+
+# Concatenating with ++ in a loop is O(n^2): each ++ copies the
+# whole accumulator. StringBuilder gathers the fragments and joins
+# them in one pass with build. append rides Mutable; build is pure.
+fn join(names: [String]) : String = {
+  let sb = list.foldl(names, string_builder.new(), (b, n) => string_builder.append(b, "#{n}, "))
+  string_builder.build(sb)
+}
+
+fn main() : Unit / Console = {
+  println(join(["ana", "ben", "cleo"]))
+}

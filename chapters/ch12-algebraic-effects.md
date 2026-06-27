@@ -901,20 +901,15 @@ blocks** and **`$extern_handler`**. For `Stdout`, it installs the
 default the same way it does for your `MyLog`: by walking the AST
 of the effect declaration, not by reading a hardcoded table.
 
-This wasn't always the case. Until version 0.55, the compiler
-shipped internal tables with names like `default_stdout_setup`,
-`default_random_shims`, one entry per stdlib effect. The #533
-trilogy (PRs #551, #559, #561 in `kaikai-org/kaikai`) migrated all
-seventeen builtin effects to `default { }` blocks declared in
-stdlib and deleted the tables. The motive isn't aesthetic: it's
-that the AST becomes the single source of truth, and user effects
-get exactly the same guarantees as stdlib ones. If your effect
-declares `default { }` with `$extern_handler`, the compiler
-installs it like a builtin.
+The motive isn't aesthetic: the AST becomes the single source
+of truth, with no internal tables to keep in sync, and user
+effects get exactly the same guarantees as stdlib ones. If your
+effect declares `default { }` with `$extern_handler`, the
+compiler installs it like a builtin.
 
 The practical consequence: **you can read how `Stdout` is
-implemented**. It's in `stdlib/io/console.kai` (or the analogous
-file in the version you're running). It's kaikai code like yours.
+implemented**. `kai doc effects.Stdout` shows its signature and
+its default; the effect is kaikai code like yours.
 If a question about default semantics comes up — "what happens if
 the pipe is closed?", "who catches `EPIPE`?" — the answer lives in
 the clause `print(s, resume) -> ...` or in the C symbol it

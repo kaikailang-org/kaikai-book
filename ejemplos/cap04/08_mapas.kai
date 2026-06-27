@@ -1,0 +1,49 @@
+# HashMap y HashSet: las dos estructuras asociativas del
+# stdlib. El HashMap asocia claves a valores; el HashSet
+# guarda un conjunto sin duplicados. A diferencia de records
+# y listas, son mutables: sus operaciones rinden el efecto
+# `Mutable`, así que las funciones que las tocan lo declaran.
+
+import collections.hashmap as hashmap
+import collections.hashset as hashset
+
+# Cuenta cuántas veces aparece cada palabra de una lista.
+fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] / Mutable = {
+  let m = hashmap.empty()
+  contar(m, palabras)
+  m
+}
+
+fn contar(m: hashmap.HashMap[String, Int], palabras: [String]) : Unit / Mutable = match palabras {
+  []           -> ()
+  [p, ...rest] -> {
+    let actual = match m[p] {
+      Some(n) -> n
+      None    -> 0
+    }
+    hashmap.put(m, p, actual + 1)
+    contar(m, rest)
+  }
+}
+
+fn main() : Unit / Stdout + Mutable = {
+  let texto = ["sol", "mar", "sol", "viento", "mar", "sol"]
+  let m = frecuencias(texto)
+
+  # Indexación m[clave]: devuelve Option, None si la clave falta.
+  match m["sol"] {
+    Some(n) -> Stdout.print("sol aparece #{int_to_string(n)} veces")
+    None    -> Stdout.print("sol no aparece")
+  }
+  Stdout.print("palabras distintas: #{int_to_string(hashmap.size(m))}")
+
+  # Un HashSet descarta duplicados al insertar.
+  let vistas = hashset.empty()
+  marcar(vistas, texto)
+  Stdout.print("únicas vía set: #{int_to_string(hashset.size(vistas))}")
+}
+
+fn marcar(s: hashset.HashSet[String], palabras: [String]) : Unit / Mutable = match palabras {
+  []           -> ()
+  [p, ...rest] -> { hashset.add(s, p); marcar(s, rest) }
+}

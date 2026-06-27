@@ -94,13 +94,21 @@ Three details worth pinning down:
 - **`requires` and `ensures` are not comments**. They are
   code the compiler emits as actual verifications. If a
   precondition is violated at runtime, the program aborts
-  with a clear message:
+  with a clear message — including the value that broke the
+  contract and a hint on how to rule it out:
 
   ```
   panic: requires violated in `divide`
   required: b != 0
-  declared at line 9, col 14
+  declared at line 2, col 14
+    = help: narrow `b` to `Int where != 0`
+  argument b was: 0
   ```
+
+  The `argument b was:` line shows you the offending value
+  without reproducing the case, and `help: narrow` points at
+  the refinement that would have turned this runtime abort
+  into a compile-time error.
 
 - **The compiler proves statically what it can**. If you
   call `divide(10, 0)` with literals, the compiler sees `b
@@ -364,10 +372,9 @@ support:
   check it at runtime.
 - **No arbitrary refinements over complex structures**.
   `Real where 0.0 <= self <= 1.0` is legal. `[Int] where
-  list.length(self) > 0` isn't implemented in the initial
-  version. The restriction can be expressed with a sum type
-  (`type NonEmptyList = ...`) or a wrapper, but not with a
-  direct refinement.
+  list.length(self) > 0` is not: direct refinements are scoped
+  to predicates over scalars. The restriction is expressed with
+  a sum type (`type NonEmptyList = ...`) or a wrapper.
 - **No contract inheritance** in Eiffel style. kaikai has no
   classes or inheritance; contracts live in each individual
   function's signature.

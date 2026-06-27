@@ -57,7 +57,7 @@ pub fn procesar(c: dominio.Comando, s: Estado) : (dominio.Respuesta, Estado) = m
     (dominio.CuentaCreada(nueva), s2)
   }
   Registrar(desc, movs) ->
-    if not cuadre.esta_cuadrada(movs) {
+    if not cuadre.cuadra(movs) {
       (dominio.ErrorDescuadre(
         "débitos #{cuadre.total_debitos(movs)}, créditos #{cuadre.total_creditos(movs)}"
       ), s)
@@ -122,11 +122,8 @@ fn aplicar_movs(cs: [dominio.Cuenta], ms: [dominio.Movimiento]) : [dominio.Cuent
   [m, ...rest] -> aplicar_movs(aplicar_uno(cs, m), rest)
 }
 
-# Recursión manual (en vez de `list.map` + lambda) porque
-# kaikai 0.70 todavía tropieza al resolver tipos cualificados
-# de records dentro del spread sugar (`mod.Tipo { ...x, campo: ... }`).
-# Por lo mismo construimos el record actualizado campo por
-# campo, sin spread.
+# Recursión manual sobre la lista de cuentas: por cada cuenta,
+# si su id coincide con el del movimiento, le aplicamos el delta.
 fn aplicar_uno(cs: [dominio.Cuenta], m: dominio.Movimiento) : [dominio.Cuenta] = {
   let (id_buscado, delta) = delta_de(m)
   recorrer_cuentas(cs, id_buscado, delta)
@@ -174,6 +171,56 @@ pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respues
   }
 }
 
-# Los tests viven en `almacen_tests.kai` — kaikai 0.74.0 tiene un
-# bug que rompe la resolución de exports cuando bloques `test "..."`
-# y otro módulo local (`cuadre`) se cargan juntos.
+test "crear cuenta la agrega al estado" {
+  let (r, s2) = procesar(dominio.CrearCuenta("caja"), estado_inicial())
+  let ok = match r {
+    dominio.CuentaCreada(c) -> c.nombre == "caja"
+    _                        -> false
+  }
+  assert ok
+  assert list.length(s2.cuentas) == 1
+}
+
+test "registrar transacción descuadrada falla" {
+  let s = Estado {
+    cuentas:        [dominio.Cuenta { id: 1<CuentaId>, nombre: "a", saldo: 0.0<USD> }],
+    transacciones:  [],
+    proxima_cuenta: 2<CuentaId>,
+    proxima_tx:     1<TransaccionId>,
+  }
+  let movs = [dominio.Debito(1<CuentaId>, 100.0<USD>)]   # solo débito, no cuadra
+  let (r, _) = procesar(dominio.Registrar("test", movs), s)
+  let ok = match r {
+    dominio.ErrorDescuadre(_) -> true
+    _                          -> false
+  }
+  assert ok
+}
+
+test "registrar transacción que cuadra actualiza saldos" {
+  let s = Estado {
+    cuentas: [
+      dominio.Cuenta { id: 1<CuentaId>, nombre: "caja",   saldo: 0.0<USD> },
+      dominio.Cuenta { id: 2<CuentaId>, nombre: "ventas", saldo: 0.0<USD> },
+    ],
+    transacciones:  [],
+    proxima_cuenta: 3<CuentaId>,
+    proxima_tx:     1<TransaccionId>,
+  }
+  let movs = [
+    dominio.Debito(1<CuentaId>, 50.0<USD>),     # +50 a caja
+    dominio.Credito(2<CuentaId>, 50.0<USD>),    # -50 a ventas
+  ]
+  let (r, s2) = procesar(dominio.Registrar("venta", movs), s)
+  let ok = match r {
+    dominio.TransaccionRegistrada(_) -> true
+    _                                 -> false
+  }
+  assert ok
+  let caja = buscar_cuenta(s2.cuentas, 1<CuentaId>)
+  let saldo_caja = match caja {
+    Some(c) -> c.saldo
+    None    -> 0.0<USD>
+  }
+  assert saldo_caja == 50.0<USD>
+}

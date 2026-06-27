@@ -292,24 +292,59 @@ expecting a `Char`, and you can't pass a `String` where
 
 Why? Because in Unicode there is no simple correspondence
 between "character" and "index". An emoji can occupy several
-code points; an accented letter may have one or two
-representations; a grapheme can skip bytes and code points
+codepoints; an accented letter may have one or two
+representations; a grapheme can skip bytes and codepoints
 arbitrarily. Treating a string as a list of chars forces a
 decision about what counts as "a character" — and every
 decision is wrong for some case.
 
-kaikai makes the `String` **opaque**: the operations that
-make sense are exposed in the `string` module of the stdlib
-(`length`, `starts_with`, `ends_with`, `trim`, `repeat`,
-`join`) and we don't conflate text with lists.
-`string.length(s)` counts **bytes**, not characters or
-graphemes. For `"á"` it returns 2 (because "á" in UTF-8 takes
-two bytes); for `"☃"` it returns 3. It's a conscious choice:
-the internal representation of a string is UTF-8, and kaikai
-prefers a predictable and cheap answer over a philosophically
-correct but expensive one. If you need to count graphemes or
-logical characters, you use module functions that explicitly
-decode Unicode with its subtlety.
+Under the hood, a `String` is a UTF-8 buffer. The operations
+that make sense live in the `string` module of the stdlib, and
+there kaikai is deliberate about a distinction many languages
+paper over: the difference between **bytes** and **Unicode
+codepoints**. They are not the same thing the moment you leave
+ASCII, and each function's name tells you which unit it works in.
+
+- `length(s)` (and its explicit synonym `byte_length(s)`) counts
+  **bytes**, in O(1). For `"á"` it returns 2, because "á" takes
+  two bytes in UTF-8; for `"☃"`, 3.
+- `char_count(s)` counts **Unicode codepoints** — the honest
+  length in characters. For `"á"` it returns 1; for `"☃"`, also 1.
+- `chars(s)` decodes the buffer and returns the **codepoints** as
+  `[Char]`. `bytes(s)` returns the **bytes** as `[Char]`, one per
+  byte (a multibyte codepoint is split into its bytes).
+
+```kai
+import core.string
+import core.list
+
+fn main() {
+  let s = "café"
+  println("bytes:      #{string.length(s)}")              # 5
+  println("codepoints: #{string.char_count(s)}")          # 4
+  println("chars:      #{list.length(string.chars(s))}")  # 4
+  println("bytes list: #{list.length(string.bytes(s))}")  # 5
+}
+```
+
+```
+$ kai run examples/ch04/07_strings.kai
+bytes:      5
+codepoints: 4
+chars:      4
+bytes list: 5
+```
+
+The mental rule is short: **`length` and `slice` reason in bytes;
+`char_count` and `chars` reason in codepoints.** That `length` is
+cheap and byte-based is a conscious choice — the representation is
+UTF-8 and the `slice`/`char_at` family indexes by byte, so
+`length` reports the unit those cuts use. When what you care about
+is the character count rather than the byte count, you ask for
+`char_count` or `chars` and kaikai pays the cost of decoding.
+(Graphemes like an "é" built from `e` plus a combining accent are
+yet another layer; there even codepoints fall short, but you rarely
+need them.)
 
 For concatenation, you saw it in chapter 3: use `++`:
 
@@ -318,6 +353,39 @@ let greeting = "Hello, " ++ name
 ```
 
 For interpolation, `#{...}` inside a literal `"..."`.
+
+`++` is fine for joining two or three pieces. But beware of
+building a large string by gluing fragments in a loop: because a
+`String` is immutable, every `++` copies the whole accumulator to
+produce a new one, which lands you in O(n²) — the classic
+quadratic of concatenation. That is what `StringBuilder` is for: a
+text accumulator that holds the fragments as you add them and only
+joins them at the end, in a single pass, with `build`. Appending is
+amortized O(1), and the whole assembly is O(n).
+
+```kai
+import string_builder
+import core.list
+
+fn join(names: [String]) : String = {
+  let sb = list.foldl(names, string_builder.new(),
+                      (b, n) => string_builder.append(b, "#{n}, "))
+  string_builder.build(sb)
+}
+```
+
+```
+$ kai run examples/ch04/09_string_builder.kai
+ana, ben, cleo,
+```
+
+`append` rides the `Mutable` effect — under the hood it writes into
+the builder's fragment array — while `build` is pure: it only reads
+and joins. Notice that `join` declares no `/ Mutable` in its
+signature even though it drives `append`: since the builder is born
+and dies inside, never escaping, kaikai *masks* the effect at the
+function boundary. The rest of the API (`new`, `with_capacity`,
+`append_char`, `len`, `is_empty`) is in `kai doc string_builder`.
 
 ## 4.5 `Option` and `Result`: the daily tools
 
@@ -457,6 +525,97 @@ But as soon as the same aggregate appears more than once, or
 crosses a module boundary, or its shape is something the
 reader can't deduce, prefer a record. An `Employee` is much
 easier to read than a `(String, Int, Bool, String, Int)`.
+
+## 4.7 Hash maps and sets
+
+Everything we've seen so far is immutable: a new record
+doesn't mutate the old one, a list with one more element is a
+new list. For most code that's exactly what you want. But
+sometimes you need a real associative table — insert and look
+up by key in near-constant time — and building a fresh record
+on every insertion won't cut it. For that the stdlib ships two
+**mutable** structures: `HashMap[k, v]`, which maps keys to
+values, and `HashSet[a]`, a set with no duplicates.
+
+That they're mutable shows up in the effect row: their
+operations yield `Mutable`. If you come from Python or Java, a
+dictionary that changes in place feels obvious; what's new here
+is that the language says so in the type. A function that
+touches a `HashMap` carries `/ Mutable` in its signature, and
+the compiler makes you declare it. That's not red tape: it's
+the same honesty as every other effect. Immutability is still
+the default; mutation is there, marked.
+
+Key access uses indexing, `m[key]`, which returns an `Option`
+— `Some(v)` if the key is present, `None` if it isn't — so a
+missing key never blows up in your face:
+
+```kai
+import collections.hashmap as hashmap
+
+let current = match m[w] {
+  Some(n) -> n
+  None    -> 0
+}
+hashmap.put(m, w, current + 1)
+```
+
+A full example: count how often each word in a list appears,
+first with a `HashMap`, and along the way use a `HashSet` to
+count how many distinct words there are.
+
+```kai
+import collections.hashmap as hashmap
+import collections.hashset as hashset
+
+fn word_frequencies(words: [String]) : hashmap.HashMap[String, Int] / Mutable = {
+  let m = hashmap.empty()
+  count(m, words)
+  m
+}
+
+fn count(m: hashmap.HashMap[String, Int], words: [String]) : Unit / Mutable = match words {
+  []           -> ()
+  [w, ...rest] -> {
+    let current = match m[w] { Some(n) -> n  None -> 0 }
+    hashmap.put(m, w, current + 1)
+    count(m, rest)
+  }
+}
+
+fn main() : Unit / Stdout + Mutable = {
+  let text = ["sun", "sea", "sun", "wind", "sea", "sun"]
+  let m = word_frequencies(text)
+  match m["sun"] {
+    Some(n) -> Stdout.print("sun appears #{int_to_string(n)} times")
+    None    -> Stdout.print("sun does not appear")
+  }
+  Stdout.print("distinct words: #{int_to_string(hashmap.size(m))}")
+}
+```
+
+```
+$ kai run examples/ch04/08_maps.kai
+sun appears 3 times
+distinct words: 3
+unique via set: 3
+```
+
+`hashmap.put` inserts or replaces in place; `hashmap.get` is
+the named form of `m[key]`; `size`, `keys`, `values`, `remove`
+and `contains` round out the day-to-day. The `HashSet` is the
+valueless face of the same idea: `add`, `contains`, `size`,
+plus the set operations `union`, `intersection` and
+`difference`. The full list, with signatures, comes out of
+`kai doc collections/hashmap` and `kai doc collections/hashset`
+(ch. 16 covers `kai doc`).
+
+One note on order: neither the `HashMap` nor the `HashSet`
+promises a traversal order. `keys`, `values` and `to_pairs`
+hand you the elements in the internal bucket order, which is
+not insertion order. If you need order, sort at the end or
+reach for the stdlib's ordered structure (`Map`, built on an
+AVL tree).
 
 ## Exercises
 

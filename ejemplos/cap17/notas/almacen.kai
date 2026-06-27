@@ -86,6 +86,40 @@ pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respues
   }
 }
 
-# Los tests viven en `almacen_tests.kai` — kaikai 0.74.0 tiene un
-# bug que rompe la resolución de exports cuando bloques `test "..."`
-# y dos módulos locales del mismo proyecto se cargan juntos.
+test "crear y obtener" {
+  let (r1, n1, id1) = procesar(dominio.Crear("primera"), [], 1)
+  let creado_ok = match r1 {
+    dominio.Creado(_) -> true
+    _                  -> false
+  }
+  assert creado_ok
+  assert id1 == 2
+
+  let (r2, _, _) = procesar(dominio.Obtener(1), n1, id1)
+  let obtener_ok = match r2 {
+    dominio.Guardado(c) -> c == "primera"
+    _                    -> false
+  }
+  assert obtener_ok
+}
+
+test "obtener nota inexistente" {
+  let (r, _, _) = procesar(dominio.Obtener(99), [], 1)
+  let ok = match r {
+    dominio.NoEncontrado -> true
+    _                     -> false
+  }
+  assert ok
+}
+
+test "borrar reduce la lista" {
+  let (_, n1, id1) = procesar(dominio.Crear("a"), [], 1)
+  let (_, n2, id2) = procesar(dominio.Crear("b"), n1, id1)
+  let (r, n3, _)   = procesar(dominio.Borrar(1), n2, id2)
+  let ok = match r {
+    dominio.Guardado(_) -> true
+    _                    -> false
+  }
+  assert ok
+  assert list.length(n3) == 1
+}

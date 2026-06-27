@@ -95,13 +95,21 @@ Tres detalles que vale fijar:
 - **`requires` y `ensures` no son comentarios**. Son código
   que el compilador emite como verificaciones reales. Si una
   precondición se viola en runtime, el programa aborta con
-  un mensaje claro:
+  un mensaje claro que incluye el valor que rompió el
+  contrato y una pista de cómo descartarlo:
 
   ```
   panic: requires violated in `divide`
   required: b != 0
-  declared at line 9, col 14
+  declared at line 2, col 14
+    = help: narrow `b` to `Int where != 0`
+  argument b was: 0
   ```
+
+  La línea `argument b was:` te muestra el valor ofensor sin
+  que tengas que reproducir el caso, y `help: narrow` apunta
+  al refinement que habría convertido este abort de runtime en
+  un error de compilación.
 
 - **El compilador prueba estáticamente lo que puede**. Si
   llamas a `divide(10, 0)` con literales, el compilador ve
@@ -368,10 +376,9 @@ Vale enumerar lo que kaikai **deliberadamente** no implementa:
   en runtime.
 - **No refinements arbitrarios sobre estructuras complejas**.
   `Real where 0.0 <= self <= 1.0` es legal. `[Int] where
-  list.length(self) > 0` no está implementado en la versión
-  inicial. La restricción se puede expresar con un sum type
-  (`type ListaNoVacia = ...`) o un wrapper, pero no con un
-  refinement directo.
+  list.length(self) > 0` no lo es: el refinement directo se
+  acota a predicados sobre escalares. La restricción se expresa
+  con un sum type (`type ListaNoVacia = ...`) o un wrapper.
 - **No herencia de contratos** al estilo Eiffel. kaikai no
   tiene clases ni herencia; los contratos viven en la firma
   de cada función individual.

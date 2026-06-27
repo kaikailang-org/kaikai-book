@@ -3,8 +3,9 @@
 # central de un ledger de doble entrada.
 #
 # La función `cuadra` es pura. La verificamos con tests y la
-# usamos como precondición de `aplicar_si_cuadra` y del
-# `procesar` del actor.
+# usamos como precondición de `aplicar_si_cuadra`. Como su fila
+# de efectos es vacía, los predicados `requires`/`ensures` la
+# pueden llamar sin marcadores extra.
 
 import dominio
 
@@ -22,22 +23,11 @@ pub fn total_creditos(ms: [dominio.Movimiento]) : Real<USD> = match ms {
   [dominio.Debito(_, _), ...rest]  -> total_creditos(rest)
 }
 
-# La invariante: ambas sumas son iguales. Va marcada con el
-# attribute `[<refinement_pure>]` para que `requires` y
-# `ensures` puedan llamarla desde sus predicados (kaikai 0.70
-# solo permite el conjunto cerrado del pure-prelude más fns
-# explícitamente opt-in vía este attribute).
-#
-# Nota: en 0.70 `pub` no convive con `[<refinement_pure>]` —
-# combinar los dos hace que el símbolo no se exporte. Por eso
-# `cuadra` es privada y exponemos `esta_cuadrada` como
-# wrapper público para que el resto del proyecto (almacén,
-# tests) la pueda usar.
-fn cuadra(ms: [dominio.Movimiento]) : Bool
-  [<refinement_pure>]
-  = total_debitos(ms) == total_creditos(ms)
-
-pub fn esta_cuadrada(ms: [dominio.Movimiento]) : Bool = cuadra(ms)
+# La invariante: ambas sumas son iguales. La pureza se deriva
+# de la fila de efectos vacía, así que `requires`/`ensures` la
+# pueden invocar directamente desde sus predicados.
+pub fn cuadra(ms: [dominio.Movimiento]) : Bool =
+  total_debitos(ms) == total_creditos(ms)
 
 # Versión con contrato del cap. 11: si llamas a esta función,
 # garantizas que los movimientos cuadran. El compilador
@@ -47,5 +37,27 @@ pub fn aplicar_si_cuadra(ms: [dominio.Movimiento]) : [dominio.Movimiento]
   ensures  cuadra(result)
 = ms
 
-# Los tests viven en `cuadre_tests.kai` — workaround del bug del
-# typer en kaikai 0.74.0 (ver almacen.kai).
+test "cuadra con una entrada y una salida" {
+  let ms = [
+    dominio.Debito(1<CuentaId>, 100.0<USD>),
+    dominio.Credito(2<CuentaId>, 100.0<USD>),
+  ]
+  assert cuadra(ms)
+}
+
+test "no cuadra cuando los montos difieren" {
+  let ms = [
+    dominio.Debito(1<CuentaId>, 100.0<USD>),
+    dominio.Credito(2<CuentaId>, 90.0<USD>),
+  ]
+  assert not cuadra(ms)
+}
+
+test "cuadra con múltiples líneas" {
+  let ms = [
+    dominio.Debito(1<CuentaId>, 60.0<USD>),
+    dominio.Debito(2<CuentaId>, 40.0<USD>),
+    dominio.Credito(3<CuentaId>, 100.0<USD>),
+  ]
+  assert cuadra(ms)
+}

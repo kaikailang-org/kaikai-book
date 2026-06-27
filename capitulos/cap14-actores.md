@@ -246,6 +246,53 @@ Los `spawn.yield()` al final son para darle al scheduler la
 chance de correr al trabajador. Sin ellos, `main` saldría antes
 de que el trabajador procesara nada.
 
+### `receive_timeout`: recibir con plazo
+
+`Actor.receive()` bloquea: si el mailbox está vacío, la fibra se
+suspende hasta que llegue un mensaje, sin importar cuánto tarde.
+Eso es lo que quieres casi siempre, pero a veces esperar para
+siempre es exactamente lo que no quieres. Un supervisor que hace
+un health check no debería colgarse si el worker dejó de
+responder; un cliente que pide algo por la red quiere reintentar
+si nadie contesta en 50 ms.
+
+Para eso está `receive_timeout(d)`, que recibe del mailbox
+rindiéndose tras una `Duration` y devuelve un `Option`:
+
+```kai
+import actor
+import time
+
+fn main() : Unit / Console + Spawn + Cancel + Clock + Actor[String] {
+  with_mailbox {
+    match receive_timeout(time.millis(10)) {
+      Some(m) -> Stdout.print("recibido: " ++ m)
+      None    -> Stdout.print("timeout: nadie respondió")
+    }
+  }
+}
+```
+
+Salida:
+
+```
+$ kai run ejemplos/cap14/06_receive_timeout.kai
+timeout: nadie respondió
+recibido: pong
+```
+
+`Some(msg)` si llegó un mensaje antes del deadline, `None` si el
+plazo expiró primero. El `Duration` se construye con los
+constructores de `time` (`time.millis`, `time.seconds`,
+`time.minutes`); como el plazo se mide contra el reloj, la firma
+gana el efecto `Clock`. La obligación de hacer `match` sobre el
+`Option` es la gracia: el compilador no te deja olvidar el caso
+en que el tiempo se acabó.
+
+Para el repertorio completo del módulo —`spawn_actor_policy`,
+los wrappers tipados, la op cruda en nanosegundos sobre la que se
+construye `receive_timeout`— `kai doc actor`.
+
 ## 14.4 Policies de mailbox: qué pasa cuando se llena
 
 Por defecto, `with_mailbox` y `spawn_actor` crean un mailbox
@@ -557,9 +604,10 @@ Tres piezas vale comentar:
 cosas:
 
 - **Tiempo máximo por intento.** Hoy si el trabajador se
-  cuelga, el supervisor se cuelga con él. La solución es un
-  `with_timeout` (ejercicio del cap. 13) alrededor del
-  `intento`.
+  cuelga, el supervisor se cuelga con él, porque `intento`
+  termina en un `Actor.receive()` que bloquea sin plazo. Cambiar
+  ese `receive` por `receive_timeout` (§14.3) le da al supervisor
+  un `None` con el que reaccionar en vez de quedarse esperando.
 - **Cancelación del trabajador si el supervisor decide
   rendirse.** Si decimos "me rindo" mientras el trabajador
   sigue procesando, queremos que el trabajador termine
