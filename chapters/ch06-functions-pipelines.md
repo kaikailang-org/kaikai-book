@@ -316,6 +316,46 @@ Each step does one thing. The result reads left to right. No
 intermediate variables, no nested parens. This is the main
 reason kaikai has four operators and not one.
 
+### The same pipes, but lazy: `Stream`
+
+There's a detail about the list pipes worth keeping in mind:
+each step **materializes** a new list. `xs | f` builds the
+full list of results before handing it to the next step. For
+a ten-element list that's nothing; for a ten-million-element
+one, it's ten million intermediate cells per `|` in the
+pipeline.
+
+The `stream` module gives you the same three operators —`|`,
+`|?`, `||`— over a `Stream`: a **lazy** pipeline that runs in
+constant memory. Nothing is computed when you write the `map`
+or the `filter`; the work happens only when a *sink* —`fold`,
+`to_list`, `count`, `each`— walks the stream and forces it.
+And there's no intermediate list between steps: each element
+travels the whole pipeline before the next one starts.
+
+```kai
+import stream
+
+let total = stream.from_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  |  (x) => x * x          # lazy map
+  |? (x) => x % 2 == 0     # lazy filter
+  |> stream.fold(0, (acc, x) => acc + x)
+# total = 220
+```
+
+If you come from Python these are the lazy generators and
+iterators; from Java, `Stream`s; from Rust, iterators. The
+idea is the same: describe the transformation without running
+it, and let the consumer decide how much to pull.
+
+That's what makes `stream.read_lines(path)` shine: it hands
+you a stream of a file's lines, read in constant memory. You
+can filter, map, and fold a gigabyte-sized file without
+loading it whole —each line comes in, travels the pipeline,
+and is discarded before the next is read. A `Stream` isn't a
+cursor that advances once; it's a **re-runnable recipe**. The
+full catalog is in `kai doc stream`.
+
 ## 6.5 Trailing lambdas and other sugars
 
 kaikai has several syntactic sugars you'll see in real code,

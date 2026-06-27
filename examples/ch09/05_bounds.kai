@@ -1,0 +1,25 @@
+protocol Drawable {
+  draw(x: Self) : String
+}
+
+type Circle = { radius: Int }
+
+impl Drawable for Circle {
+  fn draw(c: Circle) : String = "circle of radius #{show(c.radius)}"
+}
+
+fn larger[T: Ord](a: T, b: T) : T = max(a, b)
+
+fn render[T: Drawable](x: T) : String = "[" ++ draw(x) ++ "]"
+
+fn label[T: Show + Eq](a: T, b: T) : String =
+  if eq(a, b) { "equal: #{show(a)}" }
+  else { "#{show(a)} and #{show(b)}" }
+
+fn main() : Unit / Stdout = {
+  Stdout.print(show(larger(3, 7)))
+  Stdout.print(show(larger("a", "b")))
+  Stdout.print(render(Circle { radius: 5 }))
+  Stdout.print(label(1, 1))
+  Stdout.print(label(2, 9))
+}

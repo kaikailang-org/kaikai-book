@@ -1,0 +1,14 @@
+import string_builder
+import core.list
+
+# Concatenar con ++ en un loop es O(n^2): cada ++ copia todo lo
+# acumulado. StringBuilder junta los fragmentos y los une en un
+# solo paso con build. append rinde Mutable; build es puro.
+fn unir(nombres: [String]) : String = {
+  let sb = list.foldl(nombres, string_builder.new(), (b, n) => string_builder.append(b, "#{n}, "))
+  string_builder.build(sb)
+}
+
+fn main() : Unit / Console = {
+  println(unir(["ana", "ben", "cleo"]))
+}

@@ -6,9 +6,8 @@
 # la suma de los créditos. Esa es la invariante central.
 #
 # Las cuentas tienen un id (entero) y un nombre. Los montos
-# llevan unidad de medida (USD por ahora; el cap. 10 cubrió
-# cómo extenderlo a múltiples monedas con conversiones
-# explícitas).
+# llevan unidad de medida USD; el cap. 10 cubrió cómo extenderlo
+# a múltiples monedas con conversiones explícitas.
 
 pub unit USD
 

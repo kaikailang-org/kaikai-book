@@ -10,9 +10,8 @@ import dominio
 pub type ReqHttp = { metodo: String, path: String, cuerpo: String }
 
 # Conversiones bytes ⇄ String para los buffers que devuelve y
-# acepta `NetTcp`. Inline para evitar `import net.http` (que en
-# 0.74.0 colisiona con módulos locales en el typer; ver issue
-# pendiente en kaikailang-org/kaikai).
+# acepta `NetTcp`. Inline para que toda la cadena quepa en la
+# cabeza del lector, sin depender de `net.http`.
 fn string_to_bytes_loop(s: String, i: Int, n: Int, acc: [Int]) : [Int] =
   if i >= n { list_reverse(acc) }
   else { match char_at(s, i) {

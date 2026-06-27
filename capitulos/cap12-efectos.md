@@ -884,20 +884,15 @@ El compilador no conoce a `Stdout` por su nombre. Conoce **bloques
 default igual que para tu `MyLog`: caminando el AST de la
 declaración del efecto, no leyendo una tabla hardcoded.
 
-Esto no fue siempre así. Hasta la versión 0.55, el compilador
-traía tablas internas con los nombres `default_stdout_setup`,
-`default_random_shims`, etc., una entrada por cada efecto del
-stdlib. La trilogía #533 (PRs #551, #559, #561 en `kaikai-org/kaikai`)
-migró los diecisiete efectos builtin a `default { }` blocks
-declarados en stdlib y borró las tablas. El motivo no es estético:
-es que el AST se vuelve la única fuente de verdad, y los efectos
-de usuario obtienen exactamente las mismas garantías que los del
-stdlib. Si tu efecto declara `default { }` con `$extern_handler`,
-el compilador lo instala como builtin.
+El motivo no es estético: el AST se vuelve la única fuente de
+verdad, sin tablas internas que mantener en paralelo, y los
+efectos de usuario obtienen exactamente las mismas garantías
+que los del stdlib. Si tu efecto declara `default { }` con
+`$extern_handler`, el compilador lo instala como builtin.
 
 La consecuencia práctica: **puedes leer cómo está implementado
-`Stdout`**. Está en `stdlib/io/console.kai` (o el archivo análogo
-de la versión que estés usando). Es código kaikai como el tuyo. Si
+`Stdout`**. `kai doc effects.Stdout` te muestra su firma y su
+default; el efecto es código kaikai como el tuyo. Si
 te aparece una duda sobre semántica del default — "¿qué pasa si el
 pipe está cerrado?", "¿quién captura `EPIPE`?" — la respuesta vive
 en la cláusula `print(s, resume) -> ...` o en el símbolo C al que

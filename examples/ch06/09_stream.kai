@@ -1,0 +1,21 @@
+# The same pipes, but over a lazy `Stream`.
+#
+# `|` map, `|?` filter, and `||` flat-map work the same over
+# streams as over lists. The difference is that nothing is
+# computed until a sink (fold, to_list, count, each) forces the
+# pipeline, and the intermediate steps never materialize lists:
+# it runs in constant memory.
+
+import stream
+
+fn main() : Unit / Stdout = {
+  # map and filter are lazy: neither builds an intermediate list.
+  # `stream.fold` is the sink that walks the stream once and
+  # accumulates the result.
+  let total = stream.from_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    |  (x) => x * x          # lazy map: square each element
+    |? (x) => x % 2 == 0     # lazy filter: keep the evens
+    |> stream.fold(0, (acc, x) => acc + x)
+
+  Stdout.print("sum of even squares = #{int_to_string(total)}")
+}

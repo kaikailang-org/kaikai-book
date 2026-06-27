@@ -2,10 +2,6 @@
 # bajo el prefijo `geometria.`. Eso vale tanto para funciones
 # (geometria.distancia) como para constructores de tipos
 # (geometria.Punto { ... }).
-#
-# NOTA: El constructor cualificado por módulo no compila en
-# kai 0.51.0 (issue #456). Ver ejemplos/cap08/02b_selectivo
-# para la forma que sí compila hoy.
 
 import geometria
 

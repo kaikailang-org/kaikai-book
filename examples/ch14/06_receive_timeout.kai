@@ -1,0 +1,28 @@
+# `receive` blocks until a message arrives; `receive_timeout`
+# gives up after a `Duration` and returns `Option`: `Some(msg)`
+# if something arrived in time, `None` if the deadline elapsed
+# first.
+#
+# It keeps you from hanging forever: health checks, supervision,
+# "wait for the reply up to 50 ms and retry otherwise". The time
+# budget rides the `Clock` effect.
+
+import actor
+import time
+
+fn main() : Unit / Console + Spawn + Cancel + Clock + Actor[String] {
+  with_mailbox {
+    # Empty mailbox: the deadline elapses before anything arrives.
+    match receive_timeout(time.millis(10)) {
+      Some(m) -> Stdout.print("unexpected: " ++ m)
+      None    -> Stdout.print("timeout: nobody answered")
+    }
+
+    # Now there's a message on hand: it arrives before the deadline.
+    Actor.send(Actor.self(), "pong")
+    match receive_timeout(time.millis(10)) {
+      Some(m) -> Stdout.print("received: " ++ m)
+      None    -> Stdout.print("unexpected: timeout")
+    }
+  }
+}
