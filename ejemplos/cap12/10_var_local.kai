@@ -4,13 +4,13 @@
 # mismo bloque y la firma de la función queda sin efectos.
 
 fn contar_pares(xs: [Int]) : Int {
-  var n = 0
+  var n := 0
   list.foreach(xs, (x) => {
     if x % 2 == 0 {
-      n := @n + 1
+      n := n + 1
     }
   })
-  @n
+  n
 }
 
 fn main() : Unit / Stdout {

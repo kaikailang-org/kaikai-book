@@ -58,7 +58,7 @@ que conviene tener presentes:
   ```
 
   El `...p` copia todos los campos de `p`, y los inicializadores
-  que vienen después (acá `x: 7`) reemplazan los que se
+  que vienen después (aquí `x: 7`) reemplazan los que se
   repiten. Es la misma idea del spread sobre listas que verás
   en §4.3, aplicada a records.
 
@@ -317,7 +317,7 @@ en qué unidad trabaja.
 - `length(s)` (y su sinónimo explícito `byte_length(s)`) cuenta
   **bytes**, en O(1). Para `"á"` devuelve 2, porque "á" ocupa dos
   bytes en UTF-8; para `"☃"` devuelve 3.
-- `char_count(s)` cuenta **codepoints Unicode** — el largo honesto
+- `char_count(s)` cuenta **codepoints Unicode**: el largo honesto
   en caracteres. Para `"á"` devuelve 1; para `"☃"`, 1 también.
 - `chars(s)` decodifica el buffer y devuelve los **codepoints**
   como `[Char]`. `bytes(s)` devuelve los **bytes** como `[Char]`,
@@ -346,7 +346,7 @@ bytes list: 5
 
 La regla mental es corta: **`length` y `slice` razonan en bytes;
 `char_count` y `chars` razonan en codepoints.** Que `length` sea
-barato y por byte es una elección consciente — la representación
+barato y por byte es una elección consciente. La representación
 es UTF-8 y el indexado de `slice` y `char_at` es por byte, así que
 `length` devuelve la unidad que esos cortes usan. Cuando lo que te
 importa es el conteo de caracteres y no el de bytes, pides
@@ -366,7 +366,7 @@ Y para interpolar, `#{...}` dentro de un literal `"..."`.
 `++` está bien para juntar dos o tres pedazos. Pero cuidado con
 armar un string grande pegando trozos en un loop: como un `String`
 es inmutable, cada `++` copia todo lo acumulado para producir uno
-nuevo, y eso te lleva a O(n²) — el clásico cuadrático de la
+nuevo, y eso te lleva a O(n²), el clásico cuadrático de la
 concatenación. Para eso está `StringBuilder`: un acumulador de
 texto que guarda los fragmentos a medida que los agregas y recién
 al final los une en una sola pasada con `build`. El costo de
@@ -388,8 +388,8 @@ $ kai run ejemplos/cap04/09_string_builder.kai
 ana, ben, cleo,
 ```
 
-`append` rinde el efecto `Mutable` —por dentro escribe en el
-arreglo de fragmentos del builder—, mientras que `build` es puro:
+`append` rinde el efecto `Mutable` (por dentro escribe en el
+arreglo de fragmentos del builder), mientras que `build` es puro:
 solo lee y junta. Fíjate que `unir` no declara `/ Mutable` en su
 firma aunque maneje `append`: como el builder nace y muere adentro,
 sin escapar, kaikai *enmascara* el efecto en el borde de la
@@ -405,7 +405,7 @@ type Option[a] = None | Some(a)
 type Result[e, a] = Err(e) | Ok(a)
 ```
 
-Acá los miramos en uso. Los dos son tipos suma genéricos del
+Aquí los miramos en uso. Los dos son tipos suma genéricos del
 stdlib que vas a usar **constantemente**. La idea, recordando:
 `Option` representa "puede no haber valor"; `Result`,
 "puede no haber valor o haber un error".
@@ -540,11 +540,11 @@ Int)`.
 
 ## 4.7 Mapas y conjuntos hash
 
-Todo lo que vimos hasta acá es inmutable: un record nuevo no
+Todo lo que vimos hasta aquí es inmutable: un record nuevo no
 muta al viejo, una lista con un elemento más es una lista
 nueva. Para la mayoría del código eso es lo que quieres. Pero
-a veces necesitas una tabla asociativa de verdad —insertar
-y buscar por clave en tiempo casi constante— y construir un
+a veces necesitas una tabla asociativa de verdad (insertar
+y buscar por clave en tiempo casi constante) y construir un
 record nuevo en cada inserción no sirve. Para eso el stdlib
 trae dos estructuras **mutables**: `HashMap[k, v]`, que asocia
 claves a valores, y `HashSet[a]`, un conjunto sin duplicados.
@@ -552,14 +552,15 @@ claves a valores, y `HashSet[a]`, un conjunto sin duplicados.
 Que sean mutables se nota en la fila de efectos: sus
 operaciones rinden `Mutable`. Si vienes de Python o Java, un
 diccionario que cambia en el lugar te suena obvio; lo nuevo
-acá es que el lenguaje lo dice en el tipo. Una función que
+aquí es que el lenguaje lo dice en el tipo. Una función que
 toca un `HashMap` lleva `/ Mutable` en su firma, y el
-compilador te obliga a declararlo. No es burocracia: es la
-misma honestidad que el resto de los efectos. La inmutabilidad
-sigue siendo el default; la mutación está, marcada.
+compilador te obliga a declararlo. No es burocracia gratuita;
+es la misma honestidad con la que kaikai trata el resto de los
+efectos. La inmutabilidad sigue siendo el default, y la mutación
+queda marcada donde ocurre.
 
 El acceso por clave usa la indexación `m[clave]`, que devuelve
-un `Option` —`Some(v)` si la clave está, `None` si no—, así
+un `Option` (`Some(v)` si la clave está, `None` si no), así
 que la ausencia nunca te explota en la cara:
 
 ```kai
@@ -603,6 +604,16 @@ fn main() : Unit / Stdout + Mutable = {
     None    -> Stdout.print("sol no aparece")
   }
   Stdout.print("palabras distintas: #{int_to_string(hashmap.size(m))}")
+
+  # Un HashSet descarta duplicados al insertar.
+  let vistas = hashset.empty()
+  marcar(vistas, texto)
+  Stdout.print("únicas vía set: #{int_to_string(hashset.size(vistas))}")
+}
+
+fn marcar(s: hashset.HashSet[String], palabras: [String]) : Unit / Mutable = match palabras {
+  []           -> ()
+  [p, ...rest] -> { hashset.add(s, p); marcar(s, rest) }
 }
 ```
 

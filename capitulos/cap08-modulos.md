@@ -8,8 +8,8 @@ están físicamente revueltos. Hay que partir el código en
 pedazos con nombres.
 
 kaikai resuelve esto con un sistema deliberadamente simple. **Un
-archivo es un módulo.** No hay declaraciones `module Foo`. No
-hay archivos especiales que reabran un módulo desde otro lado.
+archivo es un módulo.** No hay declaraciones `module Foo`, ni
+archivos especiales que reabran un módulo desde otro lado.
 El nombre del módulo se deriva de la ruta del archivo y eso es
 todo. Por encima de los módulos viene una segunda escala: un
 **proyecto**, descrito por un `kai.toml`, que organiza sus
@@ -185,7 +185,7 @@ pub type Cuenta = {
 Desde fuera del módulo que declara `Cuenta`, `c.saldo` no
 compila y un literal `Cuenta { nombre: "x", saldo: 100.0 }`
 tampoco. Solo el módulo declarante puede leer el campo y
-mencionarlo al construir. Los §4.1.1 mostró el detalle del
+mencionarlo al construir. El §4.1.1 mostró el detalle del
 patrón; lo importante para el cap. 8 es que `priv` opera a
 **granularidad de campo**, complementa el `pub` que controla
 visibilidad a nivel de declaración, y juntos cubren un caso
@@ -221,7 +221,7 @@ programa usa.
 
 ## 8.5 Proyectos: `kai.toml`
 
-Hasta acá hablamos de **módulos** dentro de un mismo árbol de
+Hasta aquí hablamos de **módulos** dentro de un mismo árbol de
 archivos. Cuando esos módulos se convierten en una unidad que
 quieres versionar, distribuir, o que depende de otras unidades
 similares, pasas a una segunda escala: el **proyecto**.
@@ -269,7 +269,7 @@ firma del stdlib, API del binario `kai`. Mientras una edición
 esté activa, kaikai garantiza que tu proyecto seguirá
 compilando al subir el compilador, aunque internamente
 cambien cosas. Cuando una edición se cierra y entra una
-nueva, kaikai sigue aceptando la anterior — solo que tienes
+nueva, kaikai sigue aceptando la anterior: solo tienes
 que decir cuál usas.
 
 Si omites el campo, el compilador asume la edición default de
@@ -386,8 +386,8 @@ nadie.
 MVS contrasta con el algoritmo de Cargo o npm, que resuelve
 restricciones complejas y a veces baja a una versión menor
 para satisfacer a alguien. MVS es **predecible**: dado el
-mismo árbol, el resultado es el mismo. No hay "resolver
-fallido", no hay diamond-dependency hell.
+mismo árbol, el resultado es el mismo, sin resolvedor fallido
+ni diamond-dependency hell.
 
 El precio es que la responsabilidad de mantener compatibilidad
 queda en los autores de bibliotecas. Si subes a una versión que
@@ -522,7 +522,8 @@ siguen siendo los mismos.
 
 Esa es la trayectoria completa: de archivo único a módulos, de
 módulos a proyectos, de proyecto local a dependencia
-distribuida. Cada paso es reversible. Cada paso es opcional.
+distribuida. Cada paso es reversible y opcional; ninguno te
+obliga al siguiente.
 
 ## 8.10 Filosofía: simple y previsible
 

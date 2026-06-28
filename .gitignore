@@ -11,6 +11,10 @@ borradores/build-pdf/kaikai-book-en.typ
 borradores/build-pdf/figuras/
 
 # Compiled example binaries and runtime logs (kai build/run output)
+# `kai build <file.kai>` drops a name-stripped Mach-O next to the cwd;
+# when run from the repo root that lands here, so ignore loose ones.
+/[0-9][0-9]_*
+!/[0-9][0-9]_*.kai
 ejemplos/**/main
 examples/**/main
 ejemplos/cap17/notas/notas

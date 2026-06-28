@@ -2,7 +2,7 @@
 
 > Un *kaikai* es un hilo único que dibuja una figura entre las
 > manos. En la cultura rapanui, esto corresponde al arte
-> completo: el hilo, la figura, y el *pata'u ta'u* — el canto
+> completo: el hilo, la figura, y el *pata'u ta'u*, el canto
 > que la acompaña.
 >
 > Este libro toma esa imagen prestada. *Simple* viene del latín
@@ -68,7 +68,7 @@ Y tuve una segunda epifanía.
 
 Fue así como nació la idea de un nuevo lenguaje, que llamé kaikai.
 
-Inicialmente el nombre era por la mítica serpiente de la mitología mapuche, pero descubrí que kai kai en la cultura Rapa Nui, hace referencia a
+Inicialmente el nombre era por la mítica serpiente de la mitología mapuche, pero descubrí que kai kai, en la cultura rapanui, hace referencia a
 un juego en que se hacen figuras con cordel que se tejen con los dedos mientras se canta un *pata'u ta'u*, un verso recitado.
 En el kai kai la estructura y la narración van de la mano, como en un
 programa bien tipado.
@@ -115,8 +115,8 @@ La IA escribió partes, mi
 juicio decidió todo. En *El fin del software artesanal* escribí
 que los telares de Jacquard ya están entre nosotros y
 que la pregunta no es si los usaremos sino cómo. Este libro es
-una respuesta concreta a esa pregunta: lo que la IA permite no es
-prescindir del autor, es escribir libros que antes uno no se
+una respuesta concreta a esa pregunta: la IA no te ahorra ser el
+autor, te permite escribir libros que antes uno no se
 habría atrevido a empezar. Sin ese apoyo este texto probablemente
 seguiría en mi cabeza, como el dibujo de Ogú se quedó en la mía
 durante años.
@@ -214,8 +214,8 @@ llama `kai`: la usas para compilar (`kai run`), correr tests
 Identificadores del lenguaje, palabras clave, mensajes del
 compilador y nombres de archivo se quedan siempre en inglés en
 ambas ediciones. Las palabras técnicas que ya forman parte del
-léxico de la profesión —*handler*, *fiber*, *effect row*,
-*pattern matching*— se usan en inglés sin cursiva. Los
+léxico de la profesión (*handler*, *fiber*, *effect row*,
+*pattern matching*) se usan en inglés sin cursiva. Los
 conceptos con traducción limpia al español (*tipo suma*,
 *unidad de medida*, *contrato*) sí se traducen.
 
