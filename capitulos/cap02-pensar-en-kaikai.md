@@ -154,21 +154,21 @@ que no cambian:
 Una nota sobre vocabulario. La forma habitual de atar un nombre
 es `let`, que es inmutable. Para los casos en que de verdad
 necesitas una celda mutable local (un contador, un acumulador,
-un cursor), kaikai te da `var`, junto a dos azúcares que
-acompañan: `@nombre` para leer la celda y `nombre := v` para
-escribirla.
+un cursor), kaikai te da `var`. El `:=` es la única marca de
+mutabilidad: declara la celda, la escribe, y un nombre desnudo
+la lee.
 
 ```kai
-var n = 0
-n := @n + 1
-println(int_to_string(@n))   # 1
+var n := 0
+n := n + 1
+println(int_to_string(n))   # 1
 ```
 
 Acá está la cosa interesante: `var` no es realmente una
 construcción nueva del lenguaje, es **azúcar sintáctico** sobre
-el efecto `State`. La línea `var n = 0` se reescribe a un
+el efecto `State`. La línea `var n := 0` se reescribe a un
 `handle ... with State[Int](0) as n { ... }` que abarca el
-resto del bloque. `@n` se reescribe a `n.get()`, y `n := v` a
+resto del bloque. Leer `n` se reescribe a `n.get()`, y `n := v` a
 `n.set(v)`. El lenguaje base es el mismo de los efectos
 algebraicos del capítulo 12; lo que cambia es la cara que muestra
 para los casos comunes.
@@ -186,7 +186,7 @@ efectos como `Mutable`, `Actor` o los que correspondan. Esa
 distinción la veremos en el capítulo 13.
 
 La regla práctica es simple: usa `let` por defecto; si
-necesitas una variable local que cambia, `var` con `@` y `:=`;
+necesitas una variable local que cambia, `var` con `:=`;
 si lo que quieres mutar es algo visible desde afuera, ya
 estamos en territorio de efectos y vas a tener que declararlos.
 

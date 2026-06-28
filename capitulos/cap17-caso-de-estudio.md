@@ -140,7 +140,7 @@ pub fn procesar(c: dominio.Comando, notas: [dominio.Nota], next_id: Int)
     : (dominio.Respuesta, [dominio.Nota], Int) {
   match c {
     Listar -> {
-      let cuerpos = list.map(notas, (n) => n.cuerpo)
+      let cuerpos = list.map(notas, .cuerpo)
       (dominio.Ok(serializar_lista(cuerpos)), notas, next_id)
     }
     Obtener(id) ->

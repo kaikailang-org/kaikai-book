@@ -230,9 +230,9 @@ deja de existir cuando el ámbito se cierra. El de afuera nunca
 fue tocado.
 
 Para los casos donde necesitas una celda mutable de verdad,
-kaikai te da `var`, junto con `@nombre` y `nombre := v`. Lo
-viste en §2.2 y volveremos a ello en el capítulo 12 cuando
-hablemos de efectos.
+kaikai te da `var`: `nombre := v` declara y escribe, y un
+nombre desnudo lee. Lo viste en §2.2 y volveremos a ello en el
+capítulo 12 cuando hablemos de efectos.
 
 ## 3.5 `if` como expresión
 

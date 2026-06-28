@@ -455,27 +455,27 @@ La forma corta de una celda local:
 
 ```kai
 fn contar_pares(xs: [Int]) : Int {
-  var n = 0
+  var n := 0
   list.foreach(xs, (x) => {
     if x % 2 == 0 {
-      n := @n + 1
+      n := n + 1
     }
   })
-  @n
+  n
 }
 ```
 
-Tres formas nuevas:
+El `:=` es la única marca de mutabilidad:
 
-- **`var n = 0`** declara la celda con su valor inicial.
-- **`@n`** lee el valor actual.
+- **`var n := 0`** declara la celda con su valor inicial.
 - **`n := v`** escribe `v`.
+- **`n`** lee el valor actual: un nombre desnudo, sin marca.
 
 ¿Cómo funciona por dentro? **`var` es azúcar sintáctico sobre
 `State[T]`.** El compilador reescribe
 
 ```kai
-var n = 0
+var n := 0
 ... resto del bloque ...
 ```
 
@@ -517,10 +517,10 @@ efecto **`Mutable`**.
 ```kai
 fn rellenar(n: Int) : Array[Int] {
   let a = Mutable.array_make(n, 0)
-  var i = 0
+  var i := 0
   list.foreach([0..n], (_) => {
-    a[i] := @i * 2
-    i := @i + 1
+    a[i] := i * 2
+    i := i + 1
   })
   a
 }
@@ -555,10 +555,10 @@ firma:
 ```kai
 fn rellenar_en_sitio(a: Array[Int]) : Unit / Mutable {
   let n = Mutable.array_length(a)
-  var i = 0
+  var i := 0
   list.foreach([0..n], (_) => {
-    a[i] := @i * 2
-    i := @i + 1
+    a[i] := i * 2
+    i := i + 1
   })
 }
 ```
