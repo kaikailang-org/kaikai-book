@@ -1,6 +1,6 @@
 # Capítulo 9 · Protocolos
 
-Hasta acá viste cómo agrupar datos (records, tipos suma) y
+Hasta aquí viste cómo agrupar datos (records, tipos suma) y
 cómo definir funciones que operan sobre esos datos. Lo que
 falta es responder una pregunta concreta: **¿cómo le agregas
 operaciones a un tipo desde fuera de su declaración?**
@@ -23,7 +23,8 @@ no se pueden expresar, y este capítulo cubre las dos caras.
 
 ## 9.1 Por qué hay protocolos
 
-Tres dolores concretos que los protocolos resuelven.
+Los protocolos resuelven tres dolores concretos, y vale la pena
+verlos uno por uno.
 
 **Imprimir tus tipos sin escribir cada vez.** Cuando declaras
 un record, querer imprimirlo en logs, en respuestas, en
@@ -189,7 +190,7 @@ La regla práctica:
   campos, comparación según un campo específico (no el orden
   natural).
 
-Ya viste `#[derive(Show)]` sobre `Punto` en el tour (§1.6); acá
+Ya viste `#[derive(Show)]` sobre `Punto` en el tour (§1.6); aquí
 mostramos también la implementación manual y cuándo conviene
 una sobre la otra.
 
@@ -258,8 +259,8 @@ nada. La constraint viaja escondida, y se **propaga**: si
 `sort` llama a otra función que también pide `Ord`, Haskell
 encadena la búsqueda solo.
 
-kaikai te deja escribir una cota en la firma —lo verás en
-§9.7— pero esa cota es una **declaración de intención**, no
+kaikai te deja escribir una cota en la firma (lo verás en
+§9.7), pero esa cota es una **declaración de intención**, no
 un resolver que viaja escondido. La diferencia se ve cuando
 ordenas una lista. En kaikai la función puede recibir el
 **comparador como un argumento explícito**:
@@ -276,8 +277,8 @@ ordinaria, y la pasas:
 list.sort_by(transacciones, cmp)   # cmp viene de impl Ord for Transaccion
 ```
 
-La diferencia es chica de escribir pero grande conceptualmente:
-en Haskell el `Ord` está implícito, en kaikai está explícito.
+Cuesta poco escribirla, pero la distinción conceptual pesa: lo
+que en Haskell viaja implícito, en kaikai lo escribes tú.
 La función `sort_by` no "exige" que `T` tenga `Ord`: solo
 exige que **alguien le pase una función de comparación**. Que
 esa función venga de un `impl Ord for T` es decisión del que
@@ -317,7 +318,7 @@ en el sistema de tipos.
 
 ## 9.7 Cotas de protocolo en funciones genéricas
 
-Hasta acá los protocolos aparecían en dos lugares: el `impl`
+Hasta aquí los protocolos aparecían en dos lugares: el `impl`
 que los implementa y el call site que llama la operación.
 Falta un tercero. Una función genérica sobre un `T` cualquiera
 puede **exigir que ese `T` implemente un protocolo**, y
@@ -342,9 +343,9 @@ fn main() : Unit / Stdout = {
 
 Si vienes de otro lenguaje con genéricos, esto te suena. En
 Rust es `where T: Trait`; en Java, un genérico acotado
-`<T extends Comparable>`. La idea es la misma —un parámetro
+`<T extends Comparable>`. La idea es la misma (un parámetro
 de tipo que no es "cualquier cosa" sino "cualquier cosa que
-cumpla este contrato"— solo que en kaikai el contrato es un
+cumpla este contrato"), solo que en kaikai el contrato es un
 protocolo.
 
 Las cotas se apilan con `+` cuando el cuerpo usa más de un
@@ -368,14 +369,14 @@ fn mayor[T: Ord](a: T, b: T) : T = max(a, b)
 fn render[T: Dibujable](x: T) : String = "[" ++ dibujar(x) ++ "]"
 ```
 
-Ahora bien, lee con cuidado, porque acá es donde kaikai se
+Ahora bien, lee con cuidado, porque aquí es donde kaikai se
 separa de Haskell aunque la sintaxis se parezca. La cota es
 una **declaración de intención**, no la constraint con
 propagación de §9.6. No es que el compilador resuelva un
 diccionario y lo inyecte: lo que ocurre es que cada llamada
 monomorfiza la función al tipo concreto, y ahí `show`, `eq` o
-`cmp` se resuelven al `impl` que corresponde —el mismo
-despacho estático de siempre—. La cota documenta el contrato
+`cmp` se resuelven al `impl` que corresponde, el mismo
+despacho estático de siempre. La cota documenta el contrato
 en la firma y hace que el error, cuando un tipo no implementa
 el protocolo, sea claro: `no impl of 'Ord' for type 'X'`.
 

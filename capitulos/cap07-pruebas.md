@@ -1,6 +1,6 @@
 # Capítulo 7 · Pruebas, propiedades y benchmarks
 
-Hasta acá estuviste escribiendo funciones y mirando la salida.
+Hasta aquí estuviste escribiendo funciones y mirando la salida.
 Es un ciclo razonable mientras tu programa cabe en la cabeza,
 pero no escala. Apenas tu código pasa de unas decenas de
 líneas (apenas hay más de tres funciones que se llaman entre
@@ -108,7 +108,7 @@ Si estás dentro de un proyecto (un directorio con `kai.toml`),
 `kai test .` corre los tests del paquete principal y también
 descubre automáticamente cualquier `.kai` bajo el directorio
 `tests/`. Cada archivo de `tests/` se compila como una unidad
-aparte — no como parte del paquete, sino como su propio
+aparte: no como parte del paquete, sino como su propio
 programa de prueba. Si necesitas ejercer una función `pub`
 del paquete desde `tests/`, impórtala como cualquier
 dependencia: `import mi_paquete`.
@@ -136,7 +136,7 @@ las pocas semanas:
 
 ## 7.3 `check "..."`: propiedades
 
-Los tests que viste hasta acá comprueban **casos fijos**:
+Los tests que viste hasta aquí comprueban **casos fijos**:
 "para esta entrada, espero esta salida". Es lo que en otros
 lenguajes se conoce como "example-based testing". Es lo más
 común, pero tiene un límite obvio: solo prueba lo que escribes.
@@ -229,8 +229,9 @@ comunes:
 - **Monotonía**: si `a < b`, entonces `f(a) < f(b)`.
 
 Si lo que quieres comprobar es "para la entrada 7, sale 14",
-eso es un `test`. Si es "para cualquier entrada, lo que sale
-duplica el valor", es un `check`.
+eso es un `test`. Cuando lo que te interesa es "para cualquier
+entrada, lo que sale duplica el valor", entonces necesitas un
+`check`.
 
 ## 7.4 `bench "..." { ... }`: medir, no adivinar
 
@@ -277,9 +278,9 @@ candidatas. La regla:
 
 > **Optimizar sin medir es adivinar.**
 
-Si tu código no anda lento, no lo benchees. Si anda lento, no
-lo optimices sin medirlo primero. Los `bench` son la
-herramienta que cierra ese ciclo.
+No tiene sentido medir código que no te molesta; pero cuando
+algo se arrastra, medir antes de tocarlo te ahorra optimizar lo
+que no era el problema. Para eso están los `bench`.
 
 Tres consejos prácticos:
 
@@ -340,7 +341,7 @@ primero.
 Cerramos con un ejemplo integrador: un evaluador chico de
 expresiones aritméticas con manejo de errores, probado con
 las tres herramientas. El código completo está en
-`ejemplos/cap07/05_evaluador_pruebas.kai`; acá lo recorremos
+`ejemplos/cap07/05_evaluador_pruebas.kai`; aquí lo recorremos
 por partes.
 
 ### El AST y el evaluador

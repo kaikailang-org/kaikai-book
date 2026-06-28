@@ -12,7 +12,7 @@ capítulo 18 cubrirá el otro extremo del espectro de la
 industria: **un libro mayor contable**, donde lo que pesa son
 los tipos precisos (monedas con unidades), las invariantes de
 negocio (contratos `requires`/`ensures`), y la inmutabilidad
-estricta. Dos casos, mismo lenguaje, distintos énfasis.
+estricta. Son dos casos del mismo lenguaje, con énfasis distintos.
 
 El programa es un **servidor HTTP de notas**. Tiene una
 interfaz HTTP simple (`GET /notas`, `POST /notas`,
@@ -40,7 +40,8 @@ notas/
 └── web.kai              # parser y serializador HTTP mínimos
 ```
 
-Cinco archivos, cinco preocupaciones distintas:
+Son cinco archivos, y cada uno carga con una preocupación
+distinta:
 
 - **`dominio.kai`** es el centro. Tipos puros, sin efectos, sin
   IO. Lo que el dominio "es": qué es una nota, qué comandos se
@@ -140,7 +141,7 @@ pub fn procesar(c: dominio.Comando, notas: [dominio.Nota], next_id: Int)
     : (dominio.Respuesta, [dominio.Nota], Int) {
   match c {
     Listar -> {
-      let cuerpos = list.map(notas, (n) => n.cuerpo)
+      let cuerpos = list.map(notas, .cuerpo)
       (dominio.Ok(serializar_lista(cuerpos)), notas, next_id)
     }
     Obtener(id) ->
@@ -194,10 +195,10 @@ test "crear y obtener" {
 }
 ```
 
-Cero fibras, cero IO, cero sockets. Solo lógica. Si el día de
+No hay fibras ni IO ni sockets: solo lógica. Si el día de
 mañana queremos paralelizar la creación de notas, agregar
 índices, cambiar el algoritmo de búsqueda, todos los cambios
-pasan por esta función pura y se prueban acá.
+pasan por esta función pura y se prueban aquí.
 
 Encima de `procesar` viene el **bucle del actor**, que la
 conecta a `Actor.receive()`:
@@ -291,7 +292,7 @@ beneficios:
   mismo tiempo.
 
 En un sistema real, este actor tendría un mailbox `Bounded(N,
-DropOldest)` para protegerse de inundación. Acá usamos el
+DropOldest)` para protegerse de inundación. Aquí usamos el
 mailbox predeterminado (Unbounded) por simplicidad del demo. La decisión es
 explícita y vive en una sola línea, fácil de cambiar.
 
@@ -380,7 +381,7 @@ el `main` hiciera más cosas, su fila crecería en consecuencia.
 
 El bucle de aceptación abre un nursery y por cada conexión
 nueva lanza una fibra. Ojo: `n` no es un valor de tipo
-`Nursery` que pueda viajar a otra función — el compilador
+`Nursery` que pueda viajar a otra función: el compilador
 reescribe cada `n.spawn(...)` en `Spawn.spawn(...)`
 etiquetado con el brand de *este* nursery, así que el `spawn`
 tiene que aparecer léxicamente dentro del bloque. Por eso el
@@ -426,7 +427,8 @@ fn manejar_conexion(conn, almacen_pid, log_pid) {
 Lee bytes, parsea HTTP, enruta a un comando, registra en el
 log, consulta al almacén, serializa la respuesta, escribe al
 socket, cierra. Cada paso es una función pura o un mensaje a
-un actor. No hay shared memory, no hay locks.
+un actor. No aparece memoria compartida en ninguna parte, ni
+hace falta un solo lock.
 
 ## 17.7 Lo que está ocurriendo, en términos del libro
 
@@ -440,7 +442,7 @@ Vale enumerar qué piezas del libro se usan, una a una:
   pattern de cabeza y cola.
 - **Cap. 5** (sum types y match): `Comando`, `Respuesta`,
   `Evento` son sum types; los match cubren todas las
-  variantes; el exhaustividad lo verifica el compilador.
+  variantes; la exhaustividad la verifica el compilador.
 - **Cap. 6** (funciones y pipelines): `list.map`,
   `list.filter` sobre la lista de notas; closures pasadas a
   esas funciones.
@@ -512,9 +514,9 @@ Hay un patrón claro en lo que acabamos de armar:
 - **Las fibras paralelizan el trabajo concurrente
   (cooperativamente).** Una fibra por conexión. El nursery
   garantiza que ninguna sobreviva al servidor.
-- **Los módulos separan responsabilidades.** Cinco archivos,
-  cinco temas. Cada uno se puede reemplazar sin tocar los
-  otros tres.
+- **Los módulos separan responsabilidades.** Cinco archivos
+  para cinco temas, y cualquiera se puede reemplazar sin tocar
+  los otros tres.
 
 El cap. 18 va a aplicar exactamente el mismo patrón a un
 dominio muy distinto (contabilidad financiera) y vas a ver

@@ -158,20 +158,20 @@ a real need. When you program with values that don't change:
 A note on vocabulary. The usual way to bind a name is `let`,
 which is immutable. For the cases where you really need a
 local mutable cell — a counter, an accumulator, a cursor —
-kaikai gives you `var`, along with two companion sugars:
-`@name` to read the cell and `name := v` to write it.
+kaikai gives you `var`. `:=` is the single mark of mutability:
+it declares the cell, writes it, and a bare name reads it.
 
 ```kai
-var n = 0
-n := @n + 1
-println(int_to_string(@n))   # 1
+var n := 0
+n := n + 1
+println(int_to_string(n))   # 1
 ```
 
 Here is the interesting part: `var` is not really a new
 construct in the language. It is **syntactic sugar** over the
-`State` effect. The line `var n = 0` rewrites to a
+`State` effect. The line `var n := 0` rewrites to a
 `handle ... with State[Int](0) as n { ... }` covering the rest
-of the block. `@n` rewrites to `n.get()`, and `n := v` to
+of the block. Reading `n` rewrites to `n.get()`, and `n := v` to
 `n.set(v)`. The base language is the same algebraic-effects
 machinery from chapter 11; what changes is the face it shows
 for common cases.
@@ -189,7 +189,7 @@ effects like `Mutable`, `Actor`, or whichever fits. We'll see
 that distinction in chapter 12.
 
 The practical rule is simple: use `let` by default; if you
-need a local variable that changes, `var` with `@` and `:=`;
+need a local variable that changes, `var` with `:=`;
 if what you want to mutate is something visible from outside,
 you are in effects territory and you'll have to declare them.
 

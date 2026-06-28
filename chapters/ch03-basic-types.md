@@ -227,9 +227,9 @@ ceases to exist when the scope closes. The outer one was never
 touched.
 
 For the cases where you need a real mutable cell, kaikai gives
-you `var`, with `@name` and `name := v`. You saw this in §2.2
-and we'll come back to it in chapter 11 when we talk about
-effects.
+you `var`: `name := v` declares and writes, and a bare name
+reads. You saw this in §2.2 and we'll come back to it in
+chapter 11 when we talk about effects.
 
 ## 3.5 `if` as an expression
 

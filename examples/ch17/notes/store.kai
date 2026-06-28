@@ -24,7 +24,7 @@ pub fn process(c: domain.Command, notes: [domain.Note], next_id: Int)
     : (domain.Reply, [domain.Note], Int) = {
   match c {
     List -> {
-      let bodies = list.map(notes, (note) => note.body)
+      let bodies = list.map(notes, .body)
       (domain.Stored(serialize_list(bodies)), notes, next_id)
     }
     Get(target_id) -> match find_note(notes, target_id) {

@@ -23,8 +23,8 @@ hola, kaikai
 y reenvía cualquier argumento adicional al programa. Es el
 ciclo edit-save-run del día a día. Bajo la capa hay un
 compilador (`kaic2`) que por defecto baja a un objeto nativo
-con LLVM enlazado dentro del propio compilador —sin escribir
-texto `.ll`, sin invocar un proceso aparte—, y al final corre
+con LLVM enlazado dentro del propio compilador (sin escribir
+texto `.ll`, sin invocar un proceso aparte), y al final corre
 el ejecutable.
 
 Si quieres el binario sin correrlo, usa `kai build`:
@@ -140,7 +140,7 @@ resultado canónico, lo escribe.
 
 El cap. 8 §8.5-8.8 cubrió el modelo de paquetes (manifest
 `kai.toml`, lockfile `kai.lock`, cache compartido,
-minimum-version selection). Acá listamos los subcomandos
+minimum-version selection). Aquí listamos los subcomandos
 que orquestan ese modelo:
 
 ```
@@ -194,7 +194,7 @@ Emacs, IntelliJ con plugin) puede conectarse y obtener:
   la firma de la función y resalta el parámetro actual.
 - Diagnósticos en vivo: los errores y warnings del compilador
   aparecen en el buffer mientras escribes. Los **holes sin
-  rellenar** salen como warnings — el editor te recuerda lo
+  rellenar** salen como warnings: el editor te recuerda lo
   que queda pendiente sin romperte el flujo.
 
 La configuración exacta del editor varía. Para VS Code, hay
@@ -248,11 +248,11 @@ $ kai info holes
 
 Tres flags útiles:
 
-- `kai info --list` — solo nombres de temas, uno por línea. Útil
+- `kai info --list`: solo nombres de temas, uno por línea. Útil
   para shells y scripts.
-- `kai info -k <keyword>` — busca en todos los temas. Devuelve
+- `kai info -k <keyword>`: busca en todos los temas. Devuelve
   los que mencionan la palabra.
-- `kai info <topic> --json` — la página estructurada en JSON.
+- `kai info <topic> --json`: la página estructurada en JSON.
 
 Esta última forma es deliberada: kaikai trata su propia
 documentación como **datos**, no como prosa estática. Un
@@ -261,21 +261,21 @@ disponer de la doc completa del sistema de efectos sin
 necesidad de scrapear markdown ni de tener el repo del
 lenguaje a mano. Es el otro extremo del puente que el cap. 15
 abre desde el lado de los holes: el lenguaje provee a quien
-escribe código —humano o agente— la información que
+escribe código (humano o agente) la información que
 necesita, en el formato que mejor le sirva.
 
 La misma idea se extiende a `kai build`. Tres flags emiten
 información estructurada en vez de prosa diagnóstica:
 
-- `kai build --diags-json` — todos los errores y warnings del
+- `kai build --diags-json`: todos los errores y warnings del
   compilador como un array JSON, con campos `severity`,
   `file`, `line`, `col`, `message`, `code`. Lo que el editor
   vía LSP consume queda accesible también desde scripts y
   agentes que llaman a `kai build` directamente.
-- `kai build --effects-json` — la fila de efectos inferida
+- `kai build --effects-json`: la fila de efectos inferida
   para cada función `pub` del archivo. Permite que un agente
   responda "¿esta función toca el disco?" sin parsear código.
-- `kai build --library-mode` — compila sin requerir un
+- `kai build --library-mode`: compila sin requerir un
   `fn main`. Útil para analizar paquetes que se van a usar
   como librería.
 
@@ -335,9 +335,8 @@ $ kai doc date.parse
 
 `kai doc` resuelve los nombres contra el paquete actual, no
 solo contra el stdlib: si tu proyecto tiene un módulo con
-`#[doc("...")]`, también lo lee. Eso cierra el círculo —
-documentas tu código con el mismo atributo que el stdlib, y
-la misma herramienta lo muestra.
+`#[doc("...")]`, también lo lee: documentas tu código con el
+mismo atributo que el stdlib, y la misma herramienta lo muestra.
 
 ## 16.9 Dos backends: nativo y C
 
@@ -457,7 +456,7 @@ Línea por línea:
   es implícito: el call site se compila a una llamada
   directa a función C.
 - **`/ Ffi`** es el efecto. Cualquier función que llame a
-  un `extern "C"` — directa o transitivamente — tiene
+  un `extern "C"` (directa o transitivamente) tiene
   `Ffi` en su fila. Misma disciplina que `Stdout` o
   `File`: una función que habla con C lo declara en su
   firma.
@@ -592,7 +591,7 @@ AAPCS) la decide el compilador C, no kaikai.
 ### Handles opacos
 
 Para un recurso que el lado kaikai pasa de mano en mano pero
-nunca inspecciona —una conexión a base de datos, un socket—
+nunca inspecciona (una conexión a base de datos, un socket)
 está `extern "C" opaque`. El valor queda detrás de una caja
 con reference counting que guarda el `void *` de C.
 
@@ -639,7 +638,7 @@ en el compilador C".
 
 Para computación pura, prefiere una implementación kaikai.
 Para IO y facilidades del SO, prefiere los efectos del
-stdlib (`Stdout`, `File`, `NetTcp`, etc.) — esos ya están
+stdlib (`Stdout`, `File`, `NetTcp`, etc.): esos ya están
 conectados a C por dentro pero en una forma que los
 diseñadores del lenguaje controlan. FFI es la herramienta
 correcta para atar ecosistemas C existentes que no quieres
@@ -658,13 +657,13 @@ proyecto.
 Hay una decisión que el resto del libro asume sin
 explicarla del todo: kaikai usa **ediciones** para separar
 *qué prometemos que no cambia* de *qué nos reservamos el
-derecho de mover*. La idea no es nueva — Rust la formalizó
-en 2014 — pero kaikai la toma en serio desde temprano.
+derecho de mover*. La idea no es nueva (Rust la formalizó
+en 2014), pero kaikai la toma en serio desde temprano.
 
 ### Qué es una edición
 
-Una edición es un nombre — `tongariki`, `hanga-roa`,
-`orongo` — que fija una versión del **contrato del
+Una edición es un nombre (`tongariki`, `hanga-roa`,
+`orongo`) que fija una versión del **contrato del
 lenguaje** entre kaikai y tu código. Dentro de una edición,
 estas cosas no cambian de manera incompatible:
 
@@ -674,8 +673,8 @@ estas cosas no cambian de manera incompatible:
 - los flags y el comportamiento del binario `kai`;
 - el esquema de `kai.toml`.
 
-Fuera del contrato — y por lo tanto libre de cambiar entre
-versiones — está todo lo que no toca tu código fuente:
+Fuera del contrato, y por lo tanto libre de cambiar entre
+versiones, está todo lo que no toca tu código fuente:
 representación interna de variantes, layout de stacks de
 fibras, formato del caché en disco, texto exacto de los
 diagnósticos, fases del typer, internals del Perceus,
@@ -685,7 +684,8 @@ El compromiso para ti es simple: **subir el compilador es
 indoloro**. Lees las notas de release, instalas la versión
 nueva, recompilas. El compromiso para el equipo de kaikai
 es también simple: podemos iterar fuerte por dentro mientras
-no rompamos lo de afuera. Las dos partes ganan.
+no rompamos lo de afuera, sin que ninguno de los dos lados
+ceda de más.
 
 ### Cómo se declara
 
@@ -761,7 +761,7 @@ Al cierre de este libro, kaikai conoce tres:
 |---|---|---|
 | `tongariki` | cerrada | Fase de iteración rápida pre-2026. Solo paquetes que aún no migraron. |
 | `hanga-roa` | activa (default) | La primera edición pública. El libro está escrito contra esta. |
-| `orongo` | futura | Próxima edición. Lo que se difiera de Hanga Roa aterriza acá. |
+| `orongo` | futura | Próxima edición. Lo que se difiera de Hanga Roa aterriza aquí. |
 
 Los nombres siguen la cantera rapanui del resto del
 ecosistema: lugares de Rapa Nui en orden cronológico.

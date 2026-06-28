@@ -220,21 +220,29 @@ fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
-  nursery { n ->
-    let a = n.spawn(() => worker("A", 3))
-    let b = n.spawn(() => worker("B", 3))
-    n.await(a)
-    n.await(b)
+  let _ = nursery { n ->
+    n.spawn(() => worker("A", 3))
+    n.spawn(() => worker("B", 3))
   }
 }
 ```
 
+The `let _` wraps the whole `nursery`: the block returns the
+value of its last expression (here a `Fiber[Unit]` we don't
+want), and `let _` discards it. It is not what makes the fibers
+get waited on; the nursery does that on its own. It just throws
+away a value we don't use.
+
 `nursery { n -> ... }` opens a scope. Inside, `n` is the
-capability to create and await fibers:
+capability to create fibers:
 
 - `n.spawn(f)` creates a child fiber. Returns a `Fiber[T]`
-  where `T` is what `f` returns.
-- `n.await(f)` waits for that fiber and returns its value.
+  where `T` is what `f` returns. Here we don't even bind it:
+  we don't need the value, and the nursery waits for the fibers
+  anyway.
+- `n.await(f)` waits for that fiber and returns its value. You
+  only need it when you want the result; to just wait, you
+  don't.
 - `n.select([a, b, ...])` waits for any one to finish and
   cancels the others.
 - `n.cancel(f)` cancels a specific fiber.
@@ -242,11 +250,16 @@ capability to create and await fibers:
 
 What the nursery guarantees:
 
-- **By block exit, all children have finished.** No leaks: a
-  fiber doesn't outlive the `nursery` that created it.
-- **If a child fails with an unhandled effect, the others
-  are canceled.** The nursery collects the cause and
-  re-raises it.
+- **By block exit, all children have finished.** The nursery
+  *joins* every child automatically at the closing brace, with
+  no `await` required. No leaks: a fiber doesn't outlive the
+  `nursery` that created it.
+- **If a child fails on its own, the others are canceled.**
+  When a child raises `Cancel` without anyone requesting it (a
+  crash), the nursery cancels the siblings still alive and
+  re-raises the cause out of the scope. A child you cancel on
+  purpose with `n.cancel`, by contrast, finishes as an expected
+  outcome and does not spread to the others.
 - **If the nursery is canceled from outside, the
   cancellation propagates to all children.**
 

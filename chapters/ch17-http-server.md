@@ -141,7 +141,7 @@ pub fn process(c: domain.Command, notes: [domain.Note], next_id: Int)
     : (domain.Response, [domain.Note], Int) {
   match c {
     List -> {
-      let bodies = list.map(notes, (n) => n.body)
+      let bodies = list.map(notes, .body)
       (domain.Ok(serialize_list(bodies)), notes, next_id)
     }
     Get(id) ->
