@@ -23,15 +23,21 @@ measuring per-operation cost.
 The simplest form is a test with a name and a body:
 
 ```kai
-fn square(n: Int) : Int = n * n
+fn factorial(n: Int) : Int =
+  if n <= 1 { 1 } else { n * factorial(n - 1) }
 
-test "square of zero" {
-  assert square(0) == 0
+test "base case" {
+  assert factorial(0) == 1
+  assert factorial(1) == 1
 }
 
 test "small cases" {
-  assert square(3) == 9
-  assert square(7) == 49
+  assert factorial(3) == 6
+  assert factorial(5) == 120
+}
+
+test "significant case" {
+  assert factorial(10) == 3628800
 }
 ```
 
@@ -44,7 +50,7 @@ If **one** fails, the test fails and the runner moves on to
 the next.
 
 The test name should say **what is being tested**, not how.
-"square of zero" is good; "test 1" isn't.
+"base case" is good; "test 1" isn't.
 
 `assert` also accepts an optional message with a comma:
 
@@ -157,6 +163,10 @@ check "double is even" with n: Int {
 
 check "addition is commutative" with a: Int, b: Int {
   a + b == b + a
+}
+
+check "addition is associative" with a: Int, b: Int, c: Int {
+  (a + b) + c == a + (b + c)
 }
 
 check "reverse of reverse" with xs: [Int] {
@@ -278,9 +288,10 @@ rule:
 
 > **Optimizing without measuring is guessing.**
 
-If your code isn't slow, don't bench it. If it is slow,
-don't optimize without measuring first. `bench` is the tool
-that closes that cycle.
+There's no point benchmarking code that doesn't bother you; but
+when something drags, measuring before you touch it keeps you
+from optimizing what wasn't the problem. That's what `bench` is
+for.
 
 Three practical pieces of advice:
 
@@ -333,7 +344,7 @@ Not the other way around. Starting with a `check` when you
 don't yet know what properties you'll preserve leads to
 vague properties that pass by accident. Starting with a
 `bench` before performance matters is premature
-optimization. Tests first.
+optimization, so start with tests.
 
 ## 7.6 Case study: tests for a mini-evaluator
 

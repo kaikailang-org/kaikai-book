@@ -673,7 +673,7 @@ open several fibers in a nursery or group replies with a
 correlation id.
 
 **14.4.** In the §14.7 case study, the supervisor retries
-twice. Generalise: write a function `with_retries[T,
+twice. Generalize: write a function `with_retries[T,
 e](n: Int, attempt: () -> BatchResult / e) : BatchResult /
 e` that retries `n` times before giving up.
 

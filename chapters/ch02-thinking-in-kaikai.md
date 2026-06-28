@@ -59,7 +59,7 @@ let s = if x > 0 { "positive" } else { "non-positive" }
 println(s)
 ```
 
-The difference is not in line count. It's in how you think about
+The difference isn't in line count but in how you think about
 the code. The imperative version forces you to **declare `s`
 first**, because the `if` cannot return anything; then it
 **assigns to `s` in each branch**. In kaikai, the `if` *is* the
@@ -73,8 +73,8 @@ The practical consequences show up quickly:
   decide, assign) collapse into one.
 - **Fewer temporaries.** If you only need a value to pass into
   the next call, you build it inline.
-- **Fewer "forgot to initialise" bugs.** No
-  declared-but-uninitialised variables.
+- **Fewer "forgot to initialize" bugs.** No
+  declared-but-uninitialized variables.
 - **Smoother refactoring.** An expression can be lifted into a
   function or replaced by another expression without disturbing
   the surrounding context; a statement, less so.
@@ -167,13 +167,13 @@ n := n + 1
 println(int_to_string(n))   # 1
 ```
 
-Here is the interesting part: `var` is not really a new
+What's worth noticing: `var` is not really a new
 construct in the language. It is **syntactic sugar** over the
 `State` effect. The line `var n := 0` rewrites to a
 `handle ... with State[Int](0) as n { ... }` covering the rest
 of the block. Reading `n` rewrites to `n.get()`, and `n := v` to
 `n.set(v)`. The base language is the same algebraic-effects
-machinery from chapter 11; what changes is the face it shows
+machinery from chapter 12; what changes is the face it shows
 for common cases.
 
 What matters for your mental model is that this rewrite happens
@@ -256,7 +256,7 @@ of what Python leaves to your memory.
 
 What about exceptions? kaikai has an equivalent mechanism — the
 `Fail` effect, and more generally the algebraic effects from
-chapter 11 — but there too, what can fail appears in the type.
+chapter 12 — but there too, what can fail appears in the type.
 The "invisible exceptions" that in Java or Python can spring
 out of any call do not exist in kaikai. If a function can jump
 elsewhere, its signature says so.

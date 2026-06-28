@@ -10,8 +10,8 @@ pipe operators kaikai uses to chain transformations.
 
 We will also look in detail at something kaikai promises and
 very few languages guarantee seriously: **tail-call
-elimination**. That guarantee is what lets you write loops
-without `for` or `while` and sleep at night.
+elimination**. That guarantee is what lets you replace `for`
+and `while` with recursion without fear of overflowing the stack.
 
 ## 6.1 Declaration
 
@@ -97,7 +97,7 @@ Three notes worth pinning down:
   reported at the right place. Annotate.
 - **Functions with effects: the effect goes after `/`.** A
   function that writes to stdout is `: Unit / Stdout`, and
-  chapter 12 covers it carefully. For now, knowing that if
+  chapter 12 covers it carefully. For now, just know that if
   your function calls `println`, its signature says so.
 
 `main` is the only function where the return type is
@@ -162,7 +162,7 @@ type Person = { name: String, addr: Addr }
 let people = [Person { name: "ana", addr: Addr { city: "Hanga Roa" } }]
 let names  = people | .name           # (p) => p.name
 let cities = people | .addr.city       # (p) => p.addr.city
-let lens   = names  | .length()        # (s) => s.length()
+let lengths = names | .length()        # (s) => s.length()
 ```
 
 The section reads as the projection itself, with no parameter
@@ -249,8 +249,8 @@ Higher-order functions are the main tool to abstract **over
 the what-to-do**. Instead of writing `for each element, do X`
 and `for each element, do Y`, you write `for each element, do
 F`, where `F` is a parameter. That's how `list.map`,
-`list.filter`, `list.fold` are born — all the functional
-workhorses.
+`list.filter`, `list.fold` are born — the staples of functional
+list processing.
 
 ## 6.4 Pipes: `|>`, `|`, `||`, `|?`
 
@@ -357,9 +357,9 @@ let total =
   |> list.sum
 ```
 
-Each step does one thing. The result reads left to right. No
-intermediate variables, no nested parens. This is the main
-reason kaikai has four operators and not one.
+Each step does one thing and the result reads left to right,
+with no intermediate variables or nested parens. That
+readability is the reason kaikai has four operators and not one.
 
 ### The same pipes, but lazy: `Stream`
 
@@ -510,8 +510,9 @@ Why does this matter, really?
   take the leap to programming with recursion.
 - **It's a language guarantee, not an opportunistic
   optimization.** Some languages optimize TCO when they
-  remember; kaikai promises it. If a recursive call is in
-  tail, the compiler converts it. Period.
+  remember; kaikai promises it. If a recursive call is in tail
+  position, the compiler converts it — there's no heuristic
+  deciding whether to bother.
 - **The compiler warns you if you think you wrote TCO but
   didn't.** There's a flag for that, so you don't find out by
   surprise when your program dies in production.
@@ -595,8 +596,8 @@ let total =
   |> list.sum
 ```
 
-One more line, zero coupling. That's the point of functional
-style: **small functions composed in linear-reading
+That's one more line and no new coupling. That's the point of
+functional style: **small functions composed in linear-reading
 pipelines**. The complexity lives in each individual
 function; composition is trivial.
 
