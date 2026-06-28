@@ -23,15 +23,21 @@ miden cuánto cuesta cada operación.
 La forma más simple es un test con un nombre y un cuerpo:
 
 ```kai
-fn cuadrado(n: Int) : Int = n * n
+fn factorial(n: Int) : Int =
+  if n <= 1 { 1 } else { n * factorial(n - 1) }
 
-test "cuadrado de cero" {
-  assert cuadrado(0) == 0
+test "caso base" {
+  assert factorial(0) == 1
+  assert factorial(1) == 1
 }
 
 test "casos pequeños" {
-  assert cuadrado(3) == 9
-  assert cuadrado(7) == 49
+  assert factorial(3) == 6
+  assert factorial(5) == 120
+}
+
+test "caso significativo" {
+  assert factorial(10) == 3628800
 }
 ```
 
@@ -44,7 +50,7 @@ test pasa. Si **una** falla, el test falla y el runner sigue
 con los siguientes.
 
 El nombre del test debería decir **qué se está probando**, no
-cómo. "cuadrado de cero" es bueno; "test 1" no.
+cómo. "caso base" es bueno; "test 1" no.
 
 `assert` también acepta un mensaje opcional con coma:
 
@@ -157,6 +163,10 @@ check "doble es par" with n: Int {
 
 check "suma conmutativa" with a: Int, b: Int {
   a + b == b + a
+}
+
+check "suma asociativa" with a: Int, b: Int, c: Int {
+  (a + b) + c == a + (b + c)
 }
 
 check "reverse de reverse" with xs: [Int] {

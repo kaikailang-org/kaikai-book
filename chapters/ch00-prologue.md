@@ -121,14 +121,14 @@ edited again. We validated the examples against the compiler.
 We checked technical claims against the language documentation.
 We calibrated the book's voice against my blog.
 
-I'm saying this not as an apology but as an acknowledgment of
-the reality software engineers live in in 2026. The AI wrote
-parts of it; my judgment decided everything. In *The End of
+I'm saying this to acknowledge the reality software engineers
+face in 2026, not to apologize for it. The AI wrote parts of
+it, but every decision was mine. In *The End of
 Artisanal Software* I wrote that Jacquard looms are already
 among us and that the question is not whether we'll use them
 but how. This book is one concrete answer to that question:
-what AI enables is not doing without the author, it's writing
-books one wouldn't have dared start. Without that support this
+AI doesn't let you do without the author; it lets you write
+books you wouldn't have dared start. Without that support this
 text would still be in my head, the way the sketch of Ogú
 stayed in my head for years.
 

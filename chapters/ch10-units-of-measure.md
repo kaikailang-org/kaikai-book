@@ -41,8 +41,8 @@ unit sec
 unit kg
 ```
 
-That's all. `unit USD` introduces a symbol `USD` the type
-system can use as an annotation. There's no implementation,
+That's the whole declaration: `unit USD` introduces a symbol
+`USD` the type system can use as an annotation. There's no implementation,
 no runtime value — `unit` only declares the existence of the
 symbol.
 
@@ -89,8 +89,8 @@ let mix = price + 1.20<EUR>     # type error
 ```
 
 the compiler rejects with an error saying "expected `USD`,
-got `EUR`". The program never runs with mixed values — the
-bug is detected before existing.
+got `EUR`". The program never runs with mixed values; the bug
+is caught at compile time, before it can do anything.
 
 The broader rule:
 
@@ -184,7 +184,7 @@ But this is a type error:
 let mix = average(10.0<USD>, 70.0<kg>)   # u can't be USD and kg
 ```
 
-The compiler instances `u = USD` for the first argument, and
+The compiler instantiates `u = USD` for the first argument, and
 demands the second use `u = USD` too. `kg` doesn't fit, and
 the program doesn't compile.
 
@@ -239,7 +239,7 @@ to a more everyday and more frequent case:
 **distinguishing values that have the same underlying type
 but mean different things**.
 
-The classic example are identifiers. A `UserId` is an
+The classic example is identifiers. A `UserId` is an
 integer. An `OrderId` too. Without units, the compiler
 cannot tell them apart:
 
@@ -269,7 +269,8 @@ let order_id : Int<OrderId> = 99<OrderId>
 cancel_order(user_id)   # type ERROR: UserId ≠ OrderId
 ```
 
-The compiler detects the bug before it exists. The technique
+Here the compiler catches the mix-up at compile time, where a
+plain `Int` signature would have waved it through. The technique
 of using a unit as a **label** over a numeric type is called
 **branded type**, and it's one of the uses that pays off most
 in everyday code. Typical cases:
@@ -401,5 +402,5 @@ or `None` if empty. What unit does the result have?
 **two** places where two distinct integers mean different
 things (identifiers, indices, counters, timeouts). Write
 in pseudo-kaikai how the affected function signatures would
-look using branded types. How many historic bugs could
+look using branded types. How many historical bugs could
 have been avoided?

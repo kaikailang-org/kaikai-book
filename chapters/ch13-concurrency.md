@@ -11,13 +11,13 @@ per-fiber memory + Perceus**. The structure has three
 consequences worth naming before the syntax:
 
 - **No shared memory between fibers.** Each fiber has its own
-  heap. What one passes to another is copied or moved.
-  Goodbye data races by construction.
+  heap. What one passes to another is copied or moved, so
+  data races can't arise by construction.
 - **No GC, no borrow checker.** Perceus frees memory when
   the last use of each value ends, without an asynchronous
   collector and without asking the programmer to annotate
   lifetimes. The compiler figures out where to put the
-  `free`s by analysing the program.
+  `free`s by analyzing the program.
 - **Concurrency is an effect.** `spawn` is an operation of a
   `Spawn` effect, not a keyword. Creating and awaiting
   fibers composes with the rest of the system (`State`,
@@ -317,8 +317,8 @@ cancellation are a library built on two stdlib effects
 (`Spawn` and `Cancel`). Chapter 14 will do the same for
 actors (effect `Actor[Msg]`), and the pattern repeats:
 what's distinctive about kaikai isn't the list of
-constructs, but that **all of them are the same construct**
-(algebraic effects) under different names.
+constructs but that all of them are the same construct —
+algebraic effects — under different names.
 
 ## 13.5 Cooperative cancellation
 

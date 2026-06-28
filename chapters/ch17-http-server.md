@@ -11,8 +11,8 @@ the separation between domain logic and IO. Chapter 18
 will cover the other end of the industry spectrum: **a
 ledger**, where what matters is precise types (currencies
 with units), business invariants (`requires`/`ensures`
-contracts), and strict immutability. Two cases, same
-language, different emphases.
+contracts), and strict immutability. Two cases of the same
+language, with very different things to worry about in each.
 
 The program: a notes server with a simple HTTP interface
 (`GET /notes`, `POST /notes`, `GET /notes/<id>`, `DELETE
@@ -39,7 +39,7 @@ notes/
 └── web.kai              # minimal HTTP parser and serializer
 ```
 
-Five files, five distinct concerns:
+The five files split the work into five concerns:
 
 - **`domain.kai`** is the center. Pure types, no effects, no
   IO. What the domain "is": what a note is, what commands
@@ -55,7 +55,7 @@ Five files, five distinct concerns:
   responding even if the write is slow.
 - **`web.kai`** is pure functions: parsing HTTP bytes into
   a `HttpReq` structure, translating requests into domain
-  commands, serialising responses to bytes. No actors, no
+  commands, serializing responses to bytes. No actors, no
   IO.
 - **`main.kai`** wires it all: starts the actors, opens the
   TCP socket, opens a nursery, and spawns a fiber for each
@@ -195,10 +195,10 @@ test "create and get" {
 }
 ```
 
-No fibers, no IO, no sockets. Just logic. If tomorrow we
-want to parallelize note creation, add indexes, change the
-search algorithm, all those changes go through this pure
-function and get tested here.
+There are no fibers, no IO, no sockets in sight: it's just
+logic. If tomorrow we want to parallelize note creation, add
+indexes, or change the search algorithm, all those changes go
+through this pure function and get tested here.
 
 On top of `process` sits the **actor loop** that connects it
 to `Actor.receive()`:
@@ -423,8 +423,8 @@ fn handle_connection(conn, store_pid, log_pid) {
 
 Read bytes, parse HTTP, route to a command, log it, ask
 the store, serialize the response, write to the socket,
-close. Each step is a pure function or a message to an
-actor. No shared memory, no locks.
+close. Each step is either a pure function or a message to an
+actor, so there's no shared memory and nothing to lock.
 
 ## 17.7 How this maps to the book
 
@@ -512,8 +512,8 @@ There's a clear pattern in what we've just put together:
 - **Fibers handle concurrent work cooperatively.** One
   fiber per connection. The nursery guarantees that none
   survives the server.
-- **Modules separate responsibilities.** Five files, five
-  topics. Each one can be swapped without touching the
+- **Modules separate responsibilities.** Five files, each
+  owning one topic, so each can be swapped without touching the
   other three.
 
 Chapter 18 will apply exactly the same pattern to a very

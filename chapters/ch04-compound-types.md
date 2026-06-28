@@ -2,8 +2,8 @@
 
 The seven primitives from chapter 3 give you raw pieces. To
 build real programs, you glue them into structures: aggregates
-with named fields, lists, tuples, and the two stdlib gems you
-will see more than any other type, `Option` and `Result`.
+with named fields, lists, tuples, and the two stdlib types you'll
+reach for more than any other, `Option` and `Result`.
 
 This chapter covers all of that. **Sum types** (`type Tag =
 Foo | Bar(Int)`) you saw in the tour deserve their own chapter
@@ -298,7 +298,7 @@ arbitrarily. Treating a string as a list of chars forces a
 decision about what counts as "a character" — and every
 decision is wrong for some case.
 
-Under the hood, a `String` is a UTF-8 buffer. The operations
+Internally, a `String` is a UTF-8 buffer. The operations
 that make sense live in the `string` module of the stdlib, and
 there kaikai is deliberate about a distinction many languages
 paper over: the difference between **bytes** and **Unicode
@@ -379,7 +379,7 @@ $ kai run examples/ch04/09_string_builder.kai
 ana, ben, cleo,
 ```
 
-`append` rides the `Mutable` effect — under the hood it writes into
+`append` rides the `Mutable` effect — internally it writes into
 the builder's fragment array — while `build` is pure: it only reads
 and joins. Notice that `join` declares no `/ Mutable` in its
 signature even though it drives `append`: since the builder is born
@@ -591,6 +591,16 @@ fn main() : Unit / Stdout + Mutable = {
     None    -> Stdout.print("sun does not appear")
   }
   Stdout.print("distinct words: #{int_to_string(hashmap.size(m))}")
+
+  # A HashSet drops duplicates on insertion.
+  let seen = hashset.empty()
+  mark(seen, text)
+  Stdout.print("unique via set: #{int_to_string(hashset.size(seen))}")
+}
+
+fn mark(s: hashset.HashSet[String], words: [String]) : Unit / Mutable = match words {
+  []           -> ()
+  [w, ...rest] -> { hashset.add(s, w); mark(s, rest) }
 }
 ```
 
