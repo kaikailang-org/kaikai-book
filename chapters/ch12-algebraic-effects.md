@@ -20,7 +20,7 @@ If that sounds like *dependency injection*, hold the thought.
 If it sounds like exceptions, hold that too. If it sounds
 like generators, also yes. The reason one mechanism resembles
 so many things is that, in the theory underneath, all those
-things are the same. Algebraic effects are the generalisation.
+things are the same. Algebraic effects are the generalization.
 
 We'll move slowly. This chapter rewards patience more than
 speed: the first reading is for each idea to register; solid
@@ -77,10 +77,9 @@ red one inside, you have to repaint the blue. And the one
 that called it. All the way up. It's an infection that won't
 stay local.
 
-The essay's point isn't that `async` is bad. It's that this
-kind of marker in the signature, when it's specific to one
-type of effect, creates two parallel systems that don't
-compose. `async` doesn't compose with generators: you need
+The essay's point isn't that `async` is bad, but that this
+kind of marker in the signature — specific to one type of
+effect — creates two parallel systems that don't compose. `async` doesn't compose with generators: you need
 `async function*`. It doesn't compose cleanly with exceptions
 (exceptions in async functions become rejected promises).
 Each new combination needs its own syntax.
@@ -298,7 +297,7 @@ into a list, one that ships them over the network. The
 function `greet` is **handler-agnostic**.
 
 This is what replaces dependency injection. No constructor to
-pass around, no service to mock: the handler IS the
+pass around, no service to mock; the handler is the
 implementation.
 
 ## 12.5 `resume`: the handler decides what happens next

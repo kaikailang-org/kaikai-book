@@ -135,11 +135,11 @@ recursive call in tail position does not consume stack.
 `loop(1, 1_000_000)` works without blowing up.
 
 One thing that will look strange and that we leave for chapter
-9: the signature of `loop` says `: Unit / Stdout`. The part
+12: the signature of `loop` says `: Unit / Stdout`. The part
 after the slash is the set of **effects** the function uses.
 `Stdout` means "this function writes to the terminal". Without
 it, the compiler would not let you call `println` inside. Don't
-worry about the details yet — the full story is in chapter 11.
+worry about the details yet — the full story is in chapter 12.
 
 ## 1.3 A calculator with a recursive AST
 
@@ -243,7 +243,7 @@ What is going on:
   string and returning nothing.
 - `greet` uses that operation. Its signature — `: Unit / Log` —
   declares that the function has the `Log` effect, without
-  saying *how* the effect is realised. `greet` is agnostic: it
+  saying *how* the effect is realized. `greet` is agnostic: it
   doesn't know whether messages go to the terminal, to a file,
   or nowhere at all.
 - The decision happens at `handle ... with Log { ... }`. There,
@@ -252,10 +252,9 @@ What is going on:
   message with an `[INFO]` prefix and hands control back via
   `resume(())`, which continues the program where it left off.
 
-This looks like try/catch, like a dependency-injection
-container, like middleware, like callbacks. But **it is one
-idea** that subsumes all four. If it confuses you the first
-time around, that's fine. Chapter 11 returns to it with time
+It resembles try/catch, dependency injection, middleware, and
+callbacks at once — and it's a single idea underlying all four. If it confuses you the first
+time around, that's fine. Chapter 12 returns to it with time
 and several examples before asking you to write a handler of
 your own.
 
@@ -434,8 +433,8 @@ seconds were expected.
 
 The best part of the scheme is that **units are erased at
 compile time**. The binary `kai build` produces operates on
-plain `Real`, no overhead. Same promise as effects:
-information in the type, zero cost at runtime.
+plain `Real`, no overhead. It's the same promise effects make:
+the information lives in the type and costs nothing at runtime.
 
 There is much more to say — generic units, unit algebra
 (`m/s^2`, `kg * m / s^2`), explicit conversions, and a very
@@ -446,9 +445,9 @@ For now, knowing it exists is enough.
 
 ## 1.8 Inline tests
 
-kaikai treats tests as first-class citizens: they live in the
-same file as the code they exercise, with their own syntax
-beside the functions.
+kaikai treats tests as part of the language proper: they live
+in the same file as the code they exercise, with their own
+syntax beside the functions.
 
 ```kai
 fn square(n: Int) : Int = n * n

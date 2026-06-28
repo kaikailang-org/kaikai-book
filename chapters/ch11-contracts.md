@@ -1,10 +1,9 @@
 # Chapter 11 · Programming by contract and refinement types
 
 This chapter closes Part II and completes the thread
-"information in the type, zero cost at runtime" started by
-algebraic effects (chapter 12), continued by units of measure
-(chapter 10), and finished here with two mechanisms that come
-from Eiffel (1986) and Ada 2012: **contracts** —
+"information in the type, zero cost at runtime" opened by units
+of measure (chapter 10) and finished here by two mechanisms that
+come from Eiffel (1986) and Ada 2012: **contracts** —
 preconditions and postconditions that live in a function's
 signature — and **refinement types** — restrictions on the
 values a type accepts.
@@ -228,7 +227,7 @@ The program doesn't even produce a binary. The strongest
 guarantee.
 
 **Compile time, partially proved.** When ranges can be
-inferred via bounded analysis, kaikai proves the prudent
+inferred via bounded analysis, kaikai proves what it safely can
 without invoking a heavy SMT solver. The scope is limited:
 literal-comparators over `Int`, `Bool`. If the predicate
 crosses complex arithmetic or functions the compiler can't
@@ -263,21 +262,21 @@ right thing" spread across three chapters:
 | **Sum types + `match`** | 5 | Cover every possible case of the type | Compile time |
 | **Contracts + refinements** | 11 | Restrictions on input/output and valid values | Compile time when possible, runtime when not |
 
-The three are distinct tools with overlapping areas. A
+The four are distinct tools with overlapping areas. A
 well-written function probably uses all four:
 
 - **Types** as narrow as possible for the domain (sum
   types, refinements, units of measure).
 - **Contracts** documenting what the function demands and
   guarantees, in relational terms.
-- **Tests** covering the punctual contractual cases the
+- **Tests** covering the specific contractual cases the
   client asks for.
 - **Checks** verifying algebraic invariants ("inverting
   twice is identity", "sorting preserves length").
 
 They aren't redundant: each catches a distinct class of
-bugs and the four together form a much denser safety net
-than any of them individually. And all four have zero
+bugs and the four together catch a much wider range than any
+of them individually. And all four have zero
 runtime cost when they don't fail: a passing `test` doesn't
 run in production; a contract that proves statically
 generates no assert; a legal refinement generates no dynamic
@@ -385,8 +384,8 @@ system that invokes a solver is opaque — the programmer
 doesn't know why their program compiles or doesn't, and
 error messages become unintelligible. A bounded system, that
 proves the obvious and defers the rest, gives weaker
-guarantees but **understandable ones**, and leaves the
-program's runtime as a healthy safety net.
+guarantees but **understandable ones**, and leaves the runtime
+checks to catch what static analysis couldn't.
 
 ## 11.9 Case study: bank account
 
@@ -436,8 +435,9 @@ What if someone — you, in six months, in a hurry —
 writes `withdraw(account, 0 - 50)` (passing a negative)? The
 contract `requires amount > 0` is violated and the program
 aborts with a message pointing at the exact `requires` line.
-No silence, no weird behavior, no inconsistent balance:
-immediate abort and diagnostic.
+Instead of failing silently or leaving an inconsistent balance,
+the program aborts on entry and tells you which `requires` line
+it tripped.
 
 And if `withdraw`'s body had a bug — someone changes
 `c.balance - amount` to `c.balance + amount` accidentally —

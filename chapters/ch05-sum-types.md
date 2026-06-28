@@ -26,7 +26,8 @@ type Color = Red | Green | Blue
 `Color` is a type. `Red`, `Green`, `Blue` are its three
 **constructors**. A value of type `Color` is exactly one of
 the three. There is no fourth hidden value, no `null`, no
-"unknown color". The type says it all.
+"unknown color": the type enumerates its inhabitants and stops
+there.
 
 If you come from a language with `enum`, this looks similar —
 with two differences: constructors **can carry data**, and
@@ -129,8 +130,8 @@ order, use a record.
 
 ## 5.3 Recursion in types
 
-This is where it gets powerful. A constructor of a sum type
-can mention the type itself in its fields. That gives you
+Now the construction earns its keep: a constructor of a sum
+type can mention the type itself in its fields. That gives you
 trees, lists, small graphs, and the representation of any
 nested structure.
 
@@ -260,7 +261,7 @@ error: non-exhaustive match on Expr: missing Neg
  12 |   match e {
     |   ^
   = note: missing variant: `Neg`
-  = note: covered: Lit, Suma, Mul
+  = note: covered: Lit, Add, Mul
   = help: add an arm `Neg -> ...` or a wildcard `_ -> ...`
 ```
 
@@ -456,7 +457,7 @@ exceptions to expect. In kaikai the signature tells them.
 ## 5.7 Case study: evaluator with typed errors
 
 We close the chapter with an integrative case. We'll build an
-evaluator of arithmetic expressions with three categories of
+evaluator of arithmetic expressions with two categories of
 error:
 
 - **Arithmetic**: division by zero, square root of a negative.
@@ -573,7 +574,7 @@ carefully. `eval(env, a)!` means: if `eval(env, a)` returns
 `Ok(v)`, bind `va` to `v`; if it returns `Err(e)`, **exit
 immediately** from the current function returning that `Err`.
 
-### Lo que `!` does internally
+### What `!` does internally
 
 `!` is a **return** in disguise. The line
 

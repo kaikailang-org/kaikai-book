@@ -60,9 +60,9 @@ cache (chapter 8 §8.8 covers the package cache; the per-file
 compilation cache is another story).
 
 To put it in perspective: a Rust program of comparable
-size can take 30 seconds to compile. A kaikai program of
-the same size takes less than a second. The difference
-shows.
+size can take 30 seconds to compile, where a kaikai program
+of the same size takes less than a second — an order of
+magnitude you feel on every save.
 
 ## 16.2 Tests, properties and benchmarks
 
@@ -115,7 +115,7 @@ The three commands share two important properties:
 
 `kai fmt` is the canonical formatter. `gofmt` style:
 
-- One single correct way to print any file.
+- One correct way to print any file.
 - No configuration options. The project doesn't want style
   wars.
 - Idempotent: formatting an already-formatted file doesn't
@@ -304,7 +304,7 @@ Modules:
   core/string          core.string — byte-indexed string helpers over the runtime string
   date                 Civil calendar dates (proleptic Gregorian).
   encoding/json        stdlib/encoding/json.kai — JSON encoder + decoder.
-  string_builder       Amortised text accumulator.
+  string_builder       Amortized text accumulator.
   ...
 ```
 
@@ -343,9 +343,8 @@ $ kai doc date.parse
 
 `kai doc` resolves names against the current package, not just
 the stdlib: if your project has a module carrying `#[doc("...")]`
-attributes, it reads those too. That closes the loop — you
-document your code with the same attribute the stdlib uses, and
-the same tool surfaces it.
+attributes, it reads those too: you document your code with the
+same attribute the stdlib uses, and the same tool surfaces it.
 
 ## 16.9 Two backends: native and C
 
@@ -504,7 +503,7 @@ extern "C"("strlen") fn c_strlen(s: String) : Int / Ffi
 
 The kaikai-side name is `c_strlen`; the linker resolves
 against `strlen`. Useful when the C name is a kaikai
-keyword, when you want a kaikai-flavoured name on top of a
+keyword, when you want a kaikai-flavored name on top of a
 generic C one, or when you need two kaikai bindings that
 target the same C symbol with different signatures.
 
@@ -568,7 +567,7 @@ value**, both ways, by declaring it with `extern "C" type`.
 Each field carries an exact width (a fixed-width type or a
 nested `extern "C" type`); `Int`, `Real`, and `String` are
 rejected as struct fields, because they'd break the layout the
-C compiler lays out for small structs.
+C compiler expects for small structs.
 
 ```kai
 extern "C" type Color   = { r: U8, g: U8, b: U8, a: U8 }
@@ -675,7 +674,7 @@ don't change in incompatible ways:
 - syntax and reserved keywords;
 - type and effect system semantics;
 - `pub` signatures in stdlib;
-- the `kai` CLI flags and behaviour;
+- the `kai` CLI flags and behavior;
 - the `kai.toml` schema.
 
 Outside the contract — and therefore free to change between
@@ -688,7 +687,8 @@ The commitment to you is simple: **upgrading the compiler
 is painless**. Read the release notes, install the new
 version, recompile. The commitment to the kaikai team is
 also simple: we can iterate hard on internals as long as we
-don't break what's outside. Both sides win.
+don't break what's outside — which is the whole point of the
+bargain.
 
 ### How you declare it
 
