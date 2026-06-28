@@ -42,7 +42,7 @@ Cuatro cosas que mirar antes de seguir:
   vas a escribirla mucho.
 - Las llaves `{ ... }` agrupan un bloque de instrucciones, pero
   un bloque también es una expresión: el último valor que produce
-  es el valor del bloque. Acá no nos interesa, pero lo vas a usar.
+  es el valor del bloque. Aquí no nos interesa, pero lo vas a usar.
 - `println` no requiere `import`. Está disponible en todos los
   programas porque escribe a la salida estándar mediante un
   efecto que kaikai trae por defecto. En el capítulo 12 vamos a
@@ -94,9 +94,9 @@ fn main() {
 }
 ```
 
-Lo interesante de esta versión no es que imprima `1, 2, Fizz,
-4, Buzz, ...`. Eso lo hace cualquier lenguaje. Lo interesante es
-qué hicimos para llegar ahí.
+Lo interesante de esta versión no es la salida (`1, 2, Fizz,
+4, Buzz, ...` la produce cualquier lenguaje), sino lo que
+hicimos para llegar ahí.
 
 Definimos un **tipo suma**: `Tag` es uno de cuatro
 constructores. Tres son nombres pelados (`Both`, `Fizz`, `Buzz`)
@@ -437,8 +437,9 @@ en milisegundos donde se esperaban segundos.
 
 Lo más bonito del esquema es que **las unidades se borran en
 tiempo de compilación**. El binario que produce `kai build`
-opera con `Real` plano, sin overhead. Es la misma promesa de
-los efectos: información en el tipo, costo cero en runtime.
+opera con `Real` plano, sin overhead. Es la misma promesa que
+hacen los efectos: la información vive en el tipo y no cuesta
+nada cuando el programa corre.
 
 El tema da para mucho más: unidades genéricas, álgebra de
 unidades (`m/s^2`, `kg * m / s^2`), conversiones explícitas, y
@@ -600,8 +601,8 @@ programa de arriba termina bien.
   alcance. Conversas con el compilador antes de escribir el
   cuerpo.
 - **Avanzar con un programa parcial.** Tienes diez funciones
-  por escribir, pero quieres que el programa compile y
-  correr la primera para ver si la idea va. Las otras nueve
+  por escribir, pero quieres que el programa compile para
+  correr la primera y ver si la idea va. Las otras nueve
   quedan en `?`; el código compila; pruebas la primera; el
   resto espera.
 - **Trabajar con un agente IA.** Le pasas la firma con holes
@@ -619,7 +620,7 @@ capítulo 15 entra en esa apuesta con tiempo.
 
 ## 1.11 Dependencias y proyectos: `kai.toml`
 
-Hasta acá los ejemplos del tour fueron archivos sueltos. La
+Hasta aquí los ejemplos del tour fueron archivos sueltos. La
 realidad de un proyecto es distinta: vas a tener varios
 archivos, vas a depender de bibliotecas que otros publicaron,
 y vas a querer que tu colega clone el repo y obtenga
@@ -694,8 +695,8 @@ $ kai build archivo.kai -o nombre   # produce un binario nativo
 $ kai test archivo.kai    # ejecuta los bloques `test "..." { ... }` del archivo
 ```
 
-`kai run` es el caballo de batalla mientras lees el libro.
-Edita un archivo, córrelo, mira la salida, vuelve a editar.
+`kai run` es el comando que más vas a teclear mientras lees el
+libro. Edita un archivo, córrelo, mira la salida, vuelve a editar.
 
 El capítulo 16 cubre el resto del tooling: `fmt`, `lsp`,
 integración con editores, y los comandos de paquetes (`init`,

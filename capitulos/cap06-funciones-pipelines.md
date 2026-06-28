@@ -1,6 +1,6 @@
 # Capítulo 6 · Funciones y pipelines
 
-Hasta acá fuiste viendo funciones a medida que las
+Hasta aquí fuiste viendo funciones a medida que las
 necesitábamos: las primeras en el tour, las del cap. 3 con
 sus dos formas de cuerpo, las recursivas del cap. 5 que
 descomponen tipos suma. Este capítulo pone todo junto y
@@ -213,8 +213,8 @@ de orden superior sean naturales.
 ## 6.3 Funciones de orden superior
 
 Una **función de orden superior** es una que recibe o
-devuelve otra función. Esa es toda la definición. Lo
-interesante no es el nombre: es lo que te deja hacer.
+devuelve otra función. Esa es toda la definición, y lo
+interesante no es el nombre sino lo que te deja hacer.
 
 El caso más simple es una función que aplica otra dos veces:
 
@@ -265,8 +265,8 @@ para abstraer **lo que hay que hacer**. En vez de escribir
 `para cada elemento, hacer X` y `para cada elemento, hacer
 Y`, escribes `para cada elemento, hacer F`, donde `F` es un
 parámetro. Así nacen `list.map`, `list.filter`,
-`list.fold`, todos los caballos de batalla de la programación
-funcional.
+`list.fold`, las tres funciones que más vas a usar en
+programación funcional.
 
 ## 6.4 Pipes: `|>`, `|`, `||`
 
@@ -432,11 +432,11 @@ paso siguiente. Para una lista de diez elementos da igual;
 para una de diez millones, son diez millones de celdas
 intermedias por cada `|` del pipeline.
 
-El módulo `stream` te da los mismos tres operadores —`|`,
-`|?`, `||`— sobre un `Stream`: un pipeline **lazy** que corre
+El módulo `stream` te da los mismos tres operadores (`|`,
+`|?`, `||`) sobre un `Stream`: un pipeline **lazy** que corre
 en memoria constante. Nada se computa cuando escribes el
 `map` o el `filter`; el trabajo ocurre recién cuando un
-*sink* —`fold`, `to_list`, `count`, `each`— recorre el stream
+*sink* (`fold`, `to_list`, `count`, `each`) recorre el stream
 y lo fuerza. Y entre paso y paso no hay lista intermedia: cada
 elemento atraviesa todo el pipeline antes de que el siguiente
 empiece.
@@ -459,7 +459,7 @@ dejar que el consumidor decida cuánto material pedir.
 Eso es lo que hace brillar a `stream.read_lines(path)`: te
 entrega un stream de las líneas de un archivo leído en memoria
 constante. Puedes filtrar, mapear y plegar un archivo de
-gigabytes sin cargarlo entero —cada línea entra, atraviesa el
+gigabytes sin cargarlo entero: cada línea entra, atraviesa el
 pipeline y se descarta antes de leer la siguiente. Un `Stream`
 no es un cursor que avanza una vez; es una **receta
 re-ejecutable**. El catálogo completo está en `kai doc
@@ -554,7 +554,7 @@ fn suma_naive(xs: [Int]) : Int {
 }
 ```
 
-Acá, después de que `suma_naive(t)` devuelve, todavía hay que
+Aquí, después de que `suma_naive(t)` devuelve, todavía hay que
 sumar `h`. La llamada **no** es lo último; queda una operación
 pendiente. Cada llamada consume un frame del stack.
 
@@ -569,7 +569,7 @@ fn suma_tco_loop(xs: [Int], acc: Int) : Int {
 fn suma(xs: [Int]) : Int = suma_tco_loop(xs, 0)
 ```
 
-Acá, en cada rama recursiva, `suma_tco_loop(t, acc + h)` es
+Aquí, en cada rama recursiva, `suma_tco_loop(t, acc + h)` es
 **lo último**. La suma `acc + h` se evalúa primero, se pasa
 como argumento, y entonces la llamada ocurre. Cuando la
 llamada devuelve, la función actual también devuelve

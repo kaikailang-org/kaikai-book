@@ -13,7 +13,7 @@ sintaxis:
 
 - **No hay shared memory entre fibras.** Cada fibra tiene su
   propio heap. Lo que una pasa a otra se copia o se mueve.
-  Adiós a las data races por construcción.
+  Las data races desaparecen por construcción.
 - **No hay GC ni borrow checker.** Perceus libera la memoria
   cuando el último uso de cada valor termina, sin un colector
   asincrónico y sin pedirle al programador que anote lifetimes.
@@ -49,7 +49,7 @@ entera de bugs: no hay carrera sobre datos que toques entre dos
 yields porque nadie te va a interrumpir.
 
 A cambio, una fibra que nunca cede el control bloquea a todas las
-demás. Es responsabilidad del programador poner yields donde haga
+demás. Es responsabilidad del programador poner yields donde tenga
 sentido. En la práctica, las llamadas a IO ya los traen, y el
 único caso donde hay que pensar en yields manuales es en bucles
 puros de CPU intenso.
@@ -72,7 +72,7 @@ Lo importante es la garantía: **no hay manera de que dos fibras
 tengan un puntero al mismo objeto**. Las data races, los
 problemas de visibility de memoria, los bugs de cache coherence:
 todo lo que en threads tradicionales necesita lectura/escritura
-con `Atomic` o locks no existe acá. La concurrencia es por
+con `Atomic` o locks no existe aquí. La concurrencia es por
 mensajes, no por memoria compartida.
 
 ## 13.2 Perceus en una página
@@ -227,7 +227,7 @@ fn main() : Unit / Stdout + Spawn + Cancel {
 ```
 
 El `let _` envuelve al `nursery` entero: el bloque devuelve el
-valor de su última expresión (acá un `Fiber[Unit]` que no nos
+valor de su última expresión (aquí un `Fiber[Unit]` que no nos
 sirve), y `let _` lo descarta. No es lo que hace que las fibras
 se esperen, de eso se encarga el nursery solo; solo tira un
 valor que no usamos.
@@ -353,7 +353,7 @@ fn contar(tag: String, n: Int) : Unit / Stdout + Spawn + Cancel {
 
 `trabajador_largo` cuenta indefinidamente. Si el nursery la
 cancela, el handler de `Cancel` imprime el mensaje y la fibra
-sale. No se queda colgada, no aborta el proceso.
+sale, sin quedarse colgada ni abortar el proceso.
 
 La clave conceptual: `Cancel.raise()` es la **operación**, y
 `handle ... with Cancel { ... }` es el handler. Mismo patrón
@@ -374,7 +374,7 @@ Vale distinguir dos nombres parecidos:
 Cuando llamas `n.spawn(...)` con un binding `n` y obtienes una
 fibra hija, `Spawn.cancel(hija)` no la mata: agenda la entrega.
 La hija, en su próximo yield, recibe `Cancel.raise()` y su
-propio handler de `Cancel` corre — exactamente el que la fibra
+propio handler de `Cancel` corre: exactamente el que la fibra
 hija instaló con `with Cancel { ... }`. Si no instaló ninguno,
 la fibra se desenrolla limpiamente y los handlers más arriba
 en la pila (típicamente del nursery) toman el control.
@@ -383,7 +383,7 @@ La única excepción es el **trap-exit** del modelo de actores
 (cap. 14): una fibra puede marcarse para que los crashes de
 sus pares se conviertan en mensajes en su mailbox en vez de
 gatillar cancelación, pero esa es una opción explícita y
-local — el default sigue siendo la cancelación cooperativa
+local; el default sigue siendo la cancelación cooperativa
 descrita aquí.
 
 ## 13.6 Memoria mutable por fibra

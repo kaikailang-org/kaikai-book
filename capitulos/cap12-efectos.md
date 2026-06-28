@@ -68,15 +68,15 @@ async function procesar(path) {
 
 Bob Nystrom le puso nombre a esto en 2015 en un ensayo famoso:
 **"What Color is Your Function?"**. La idea es que `async` divide
-las funciones en dos colores. Las rojas (`async`) y las azules
+las funciones en dos colores: las rojas (`async`) y las azules
 (no-async). Una roja puede llamar a una azul, pero una azul no
 puede llamar a una roja. Si tienes una función azul y necesitas
-usar una roja adentro, tienes que repintar la azul. Y la que la
-llamaba. Y así hasta arriba. Es una infección que no se queda
+usar una roja adentro, tienes que repintar la azul, y la que la
+llamaba, y así hasta arriba. Es una infección que no se queda
 local.
 
-El punto del ensayo no es que `async` sea malo. Es que esta clase
-de marcadores en la firma, cuando son específicos a un solo tipo
+El punto del ensayo no es que `async` sea malo, sino que esta
+clase de marcadores en la firma, cuando son específicos a un solo tipo
 de efecto, crean dos sistemas paralelos que no componen. `async`
 no compone con generadores: necesitas `async function*`. No
 compone con excepciones de la misma manera (las excepciones en
@@ -287,7 +287,7 @@ lista, uno que los manda por red. La función `greet` es **agnóstica
 al handler**.
 
 Esto es lo que reemplaza la inyección de dependencias. No hay
-constructor que pasar, no hay servicio que mockear: el handler ES
+constructor que pasar ni servicio que mockear; el handler es
 la implementación.
 
 ## 12.5 `resume`: el handler decide qué pasa después
@@ -366,7 +366,7 @@ fn dividir(a: Int, b: Int) : Int / Fail {
 fn main() : Unit / Stdout {
   let r = handle {
     let x = dividir(10, 2)
-    let y = dividir(20, 0)    # acá se invoca Fail.fail
+    let y = dividir(20, 0)    # aquí se invoca Fail.fail
     x + y                      # nunca llega
   } with Fail {
     fail(motivo, resume) -> {
@@ -392,7 +392,7 @@ hay `handle` y un efecto cuya operación devuelve `Nothing`.
 
 ## 12.6 Handlers con estado: el patrón `State`
 
-Hasta acá los handlers fueron sin estado: solo decidían qué hacer
+Hasta aquí los handlers fueron sin estado: solo decidían qué hacer
 y reanudaban. Pero un handler puede llevar **su propio estado**
 sin que el body se entere. Esto reemplaza la mutación global.
 
@@ -630,7 +630,7 @@ sobrevive a una falla (Fail externo) o se descarta (Fail interno).
 Cada combinación tiene una semántica explícita y verificable.
 
 Esa es una diferencia profunda con `try/catch + variables
-globales`: ahí el orden es implícito y depende del runtime. Acá es
+globales`: ahí el orden es implícito y depende del runtime. Aquí es
 explícito y lo decides en la firma de los `handle`.
 
 ## 12.9 Alias de filas de efectos
@@ -802,11 +802,11 @@ fn main() : Unit / Stdout {
 
 Adentro del `handle ... with MyLog`, las cláusulas explícitas
 ganan: el `info` queda silenciado. Si en otro `main` no hubiera
-ese `handle`, el default disparía e imprimiría vía el runtime de C.
+ese `handle`, el default dispararía e imprimiría vía el runtime de C.
 La función `greet` no se entera: para ella, `MyLog` es lo que sea
 que el contexto haya decidido.
 
-### Cuándo no hay default — el efecto sin red
+### Cuándo no hay default: el efecto sin red
 
 No todos los efectos traen `default`. `Fail` es el contraejemplo
 claro: si una operación puede abortar el programa, no quieres que
@@ -818,7 +818,7 @@ antes de `main`, o el compilador rechaza con un mensaje claro.
 Lo mismo vale para `State[T]`, `Reader[T]`, `Writer[W]`: efectos
 genéricos en los que **no existe** una implementación razonable
 sin contexto, así que pedirle al usuario que la escriba no es
-ceremonia, es disciplina.
+ceremonia sino disciplina.
 
 La regla mental: un efecto trae `default` cuando hay **una sola**
 implementación obvia (escribir a `stdout`, leer del reloj del
@@ -893,8 +893,8 @@ que los del stdlib. Si tu efecto declara `default { }` con
 La consecuencia práctica: **puedes leer cómo está implementado
 `Stdout`**. `kai doc effects.Stdout` te muestra su firma y su
 default; el efecto es código kaikai como el tuyo. Si
-te aparece una duda sobre semántica del default — "¿qué pasa si el
-pipe está cerrado?", "¿quién captura `EPIPE`?" — la respuesta vive
+te aparece una duda sobre la semántica del default (¿qué pasa si el
+pipe está cerrado?, ¿quién captura `EPIPE`?), la respuesta vive
 en la cláusula `print(s, resume) -> ...` o en el símbolo C al que
 puentea. No hay un comportamiento secreto del runtime separado del
 código que puedes leer.
@@ -911,8 +911,8 @@ una cuarta categoría; son instancias de (2).
 un sistema, no una sola operación. La trilogía #533 introdujo `$`
 como prefijo para una **familia** de intrinsics; `$extern_handler`
 es el primero. Si más adelante kaikai necesita exponer otros
-puentes al runtime — pedir el `errno` actual, llamar a un símbolo
-de plataforma específica — vivirán bajo el mismo sigil con nombres
+puentes al runtime (pedir el `errno` actual, llamar a un símbolo
+de plataforma específica), vivirán bajo el mismo sigil con nombres
 descriptivos: `$os_name`, `$panic_with_trace`, lo que sea. Reservar
 `$<ident>(args)` deja la puerta abierta sin reabrir el debate
 sintáctico cada vez.
@@ -1094,7 +1094,7 @@ original sobrevive sin cambios?
 
 **12.7.** Investiga la diferencia entre `resume` (one-shot) y
 `resume_multishot` en la doc del lenguaje. ¿Por qué kaikai hace
-que el caso common sea cheap y obliga a marcar explícitamente el
+que el caso común sea barato y obliga a marcar explícitamente el
 caso caro?
 
 **12.8.** Declara un efecto `MyLog` con una operación `info(msg:

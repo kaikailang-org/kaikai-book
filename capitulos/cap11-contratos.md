@@ -1,9 +1,8 @@
 # Capítulo 11 · Programación por contrato y refinement types
 
 Este capítulo cierra la Parte II y completa el hilo
-"información en el tipo, costo cero en runtime" que arrancan
-los efectos algebraicos (cap. 12), continúan las unidades de
-medida (cap. 10) y rematan acá con dos mecanismos que
+"información en el tipo, costo cero en runtime" que abren las
+unidades de medida (cap. 10) y rematan aquí dos mecanismos que
 provienen de Eiffel (1986) y Ada 2012: los **contratos**
 (precondiciones y postcondiciones que viven en la firma de
 una función) y los **refinement types** (restricciones
@@ -65,11 +64,12 @@ fn divide(a: Int, b: Int) : Int
 Tres componentes:
 
 - **`requires <expr>`**: una **precondición**. La expresión
-  tiene que ser `true` al **entrar** a la función. Quien
-  llama es responsable. Si se viola, el bug es de quien llama.
+  tiene que ser `true` al **entrar** a la función. La
+  responsabilidad es de quien llama: si se viola, el bug está
+  afuera, no adentro de la función.
 - **`ensures <expr>`**: una **postcondición**. La expresión
-  tiene que ser `true` al **salir** de la función. Tu cuerpo
-  es responsable. Si se viola, el bug es interno.
+  tiene que ser `true` al **salir** de la función. Aquí la
+  responsabilidad es del cuerpo: si se viola, el bug es interno.
 - **`result`**: un nombre reservado dentro del `ensures`
   que se refiere al valor de retorno.
 
@@ -144,7 +144,7 @@ fn ordenar(xs: [Int]) : [Int]
 
 La primera dice "la salida es el doble de la entrada". La
 segunda dice "la lista resultante tiene el mismo largo que
-la entrada": un invariante razonable de cualquier
+la entrada": una invariante razonable de cualquier
 ordenamiento. Fíjate que **no** estamos diciendo que `result`
 está ordenado, solo que conserva el largo. Las
 postcondiciones documentan lo que vale la pena documentar; no
@@ -186,7 +186,7 @@ let x : NoNeg = 16        # OK: 16 >= 0
 let y : NoNeg = 0 - 5     # ERROR: -5 no satisface self >= 0
 ```
 
-Si lo cumples con un valor dinámico, el compilador inserta un
+Si lo cumples con un valor dinámico, el compilador inserta una
 verificación en runtime: igual que con un `requires` cuyo argumento
 no se puede deducir estáticamente.
 
@@ -227,8 +227,8 @@ divide(10, 0)              # ERROR de compilación: 0 != 0 es falso
 let x : NoNeg = 0 - 5      # ERROR de compilación: -5 < 0
 ```
 
-El programa no llega a generar binario. Es la garantía más
-fuerte que existe.
+El programa ni siquiera llega a generar binario, que es la
+garantía más fuerte que puedes pedir.
 
 **Compile time, parcialmente probado.** Cuando los rangos se
 pueden inferir de un análisis acotado, kaikai prueba lo
@@ -267,7 +267,7 @@ lo correcto" repartidos en tres capítulos:
 | **Tipos suma + `match`** | 5 | Cubrir todos los casos posibles del tipo | Compile time |
 | **Contratos + refinements** | 11 | Restricciones sobre entrada/salida y valores válidos | Compile time cuando se puede, runtime cuando no |
 
-Las tres son herramientas distintas con áreas que se solapan.
+Las cuatro son herramientas distintas con áreas que se solapan.
 Una función bien escrita probablemente las use todas:
 
 - **Tipos** que son lo más estrechos posibles para el dominio
@@ -281,7 +281,7 @@ Una función bien escrita probablemente las use todas:
   el largo").
 
 No son redundantes: cada uno atrapa una clase distinta de
-bugs y los tres juntos forman una red de seguridad mucho más
+bugs y los cuatro juntos forman una protección mucho más
 densa que cualquiera por separado. Y los cuatro tienen costo
 cero en runtime cuando no fallan: un `test` que pasa no se
 ejecuta en producción; un contrato que se puede probar
@@ -439,8 +439,9 @@ Lectura humana:
 escribe `retirar(cuenta, 0 - 50)` (pasando un negativo)? El
 contrato `requires monto > 0` se viola y el programa aborta
 con un mensaje que apunta a la línea exacta del `requires`.
-No silencio, no comportamiento extraño, no saldo
-inconsistente: aborto inmediato y diagnóstico.
+Nada de fallar en silencio ni de arrastrar un saldo
+inconsistente: el programa se detiene de inmediato y te dice
+por qué.
 
 ¿Y si el cuerpo de `retirar` tuviera un bug (alguien cambia
 `c.saldo - monto` por `c.saldo + monto` accidentalmente)? El

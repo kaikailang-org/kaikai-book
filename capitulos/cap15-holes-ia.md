@@ -43,8 +43,8 @@ $ kai run ejemplos/cap15/01_hole_basico.kai
 panic: unfilled hole: ?formula at line 1 col 27, expected Real
 ```
 
-No es un error de compilación. Es una **promesa diferida**: te
-dejaste un agujero que vas a llenar después, y el sistema te
+No es un error de compilación, sino una **promesa diferida**:
+te dejaste un agujero que vas a llenar después, y el sistema te
 acompaña hasta entonces. El mensaje del panic trae todo lo
 que el agente (humano o IA) necesita para rellenarlo: el
 nombre del hole, su posición exacta, y el tipo que el
@@ -296,11 +296,10 @@ Cada hole es un objeto. El array contiene tantos elementos
 como holes haya en el archivo. Los campos son los mismos del
 reporte humano del §15.2, pero como datos estructurados.
 
-Para un humano, esto es ruidoso. Para un agente, es exacto. Y
-exacto importa: la diferencia entre "el agente acertó al
-tercer intento" y "el agente acertó al primero" es la
-diferencia entre una herramienta práctica y una que se siente
-mágica.
+Para un humano esto es ruidoso; para un agente es exactamente
+lo que necesita. Y esa exactitud cambia el resultado práctico:
+que el agente acierte al primer intento en vez de al tercero es
+lo que separa una herramienta usable de una que solo estorba.
 
 ## 15.8 Más allá de holes: información rica como interfaz
 
@@ -327,7 +326,7 @@ información llega ya estructurada.
 ## 15.9 Un loop de trabajo con un agente
 
 Cuando un programador trabaja con un agente IA sobre kaikai,
-el flujo razonable es éste:
+el flujo razonable es este:
 
 1. **El humano escribe la firma y los tests.** Define qué se
    espera del programa. Pone holes en los cuerpos.
@@ -353,7 +352,7 @@ Tres cosas vale fijar de este flujo:
   dicho que pasa.
 
 Es lo opuesto al patrón "el LLM escribe el código y el humano
-revisa". Acá el humano escribe **la especificación** (firma +
+revisa". Aquí el humano escribe **la especificación** (firma +
 tests), el agente escribe **el código**, el compilador
 **verifica** que el código satisface la especificación.
 

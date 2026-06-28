@@ -289,9 +289,9 @@ gana el efecto `Clock`. La obligación de hacer `match` sobre el
 `Option` es la gracia: el compilador no te deja olvidar el caso
 en que el tiempo se acabó.
 
-Para el repertorio completo del módulo —`spawn_actor_policy`,
+Para el repertorio completo del módulo (`spawn_actor_policy`,
 los wrappers tipados, la op cruda en nanosegundos sobre la que se
-construye `receive_timeout`— `kai doc actor`.
+construye `receive_timeout`), corre `kai doc actor`.
 
 ## 14.4 Policies de mailbox: qué pasa cuando se llena
 
@@ -398,8 +398,8 @@ fn main() : Unit / Console + Spawn + Cancel + Actor[Reply] {
 
 Figura 14.1 · *Request/reply entre dos actores. El cliente
 tiene un mailbox `Pid[Reply]`; el servidor tiene un mailbox
-`Pid[Request]`. La flecha (1) lleva la `Query` — que incluye
-el PID del cliente — hasta el mailbox del servidor; la
+`Pid[Request]`. La flecha (1) lleva la `Query`, que incluye
+el PID del cliente, hasta el mailbox del servidor; la
 flecha (2) devuelve el `Answer` al mailbox del cliente. Dos
 mailboxes tipados, dos mensajes, una ida y vuelta.*
 
@@ -622,7 +622,7 @@ cosas:
 
 Cada uno es un capítulo aparte. Pero la base está: tres
 actores, dos tipos de mensaje, un sistema de tipos que
-garantiza que las mailboxes se respetan.
+garantiza que los mailboxes se respetan.
 
 ## 14.8 Filosofía: actores son una biblioteca
 
