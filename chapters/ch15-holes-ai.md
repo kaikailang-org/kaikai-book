@@ -22,7 +22,7 @@ calls it Tier 3): a new language, without a large training
 corpus, can be writable by an agent if the tooling is
 designed well.
 
-We'll take it in order. Humans first.
+We'll take it in order, humans first.
 
 ## 15.1 Typed holes: `?` and `?name`
 
@@ -44,7 +44,7 @@ $ kai run examples/ch15/01_basic_hole.kai
 panic: unfilled hole: ?formula at line 1 col 27, expected Real
 ```
 
-It's not a compile-time error. It's a **deferred promise**:
+It isn't a compile-time error but a **deferred promise**:
 you left a gap that you'll fill later, and the system stays
 with you until you do. The panic carries everything an agent
 (human or AI) needs in order to fill it: the hole's name, its
@@ -71,7 +71,7 @@ other is too. That reduces the temptation to write
 inconsistent implementations across branches of an `if` or
 a `match`.
 
-Anonymous (`?` with no name) are each independent.
+Anonymous holes (`?` with no name) are each independent.
 
 ## 15.2 The conversation with the compiler
 
@@ -298,11 +298,10 @@ Each hole is an object. The array has as many elements as
 there are holes in the file. The fields are the same as the
 human report in §15.2, but as structured data.
 
-For a human, this is noisy. For an agent, it's exact. And
-exact matters: the difference between "the agent got it on
-the third try" and "the agent got it on the first" is the
-difference between a tool that's practical and one that
-feels magical.
+For a human this is noisy; for an agent it's exact. And that
+exactness changes the practical outcome: an agent that gets it
+on the first try instead of the third is what separates a tool
+you actually reach for from one that gets in your way.
 
 ## 15.8 Beyond holes: rich information as interface
 
@@ -354,11 +353,9 @@ Three things worth noting about this flow:
   properties. The agent never accepts anything without the
   compiler having said it passes.
 
-It's the opposite of the "LLM writes the code and the human
-reviews" pattern. Here the human writes **the
-specification** (signature + tests), the agent writes **the
-code**, the compiler **verifies** the code satisfies the
-specification.
+This inverts the usual "LLM writes, human reviews"
+arrangement: the specification is human, the body is the
+agent's, and the compiler is what reconciles the two.
 
 ## 15.10 What the language doesn't automate
 

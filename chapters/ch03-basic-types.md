@@ -194,8 +194,8 @@ let y : Real = 3.14
 
 The annotation is more than decoration. It's there for two
 reasons: to document intent when the type isn't obvious, and
-to guide the inferer in the few cases where local inference
-isn't enough. The practical rule is **annotate the arguments
+to guide the type inferrer in the few cases where local
+inference isn't enough. The practical rule is **annotate the arguments
 and return type of public functions, and leave local `let`s
 unannotated**. Types travel through the signatures and the
 body stays clean.
@@ -229,7 +229,7 @@ touched.
 For the cases where you need a real mutable cell, kaikai gives
 you `var`: `name := v` declares and writes, and a bare name
 reads. You saw this in §2.2 and we'll come back to it in
-chapter 11 when we talk about effects.
+chapter 12 when we talk about effects.
 
 ## 3.5 `if` as an expression
 

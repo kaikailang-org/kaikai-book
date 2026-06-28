@@ -352,9 +352,8 @@ Tres cosas vale fijar de este flujo:
   dicho que pasa.
 
 Es lo opuesto al patrón "el LLM escribe el código y el humano
-revisa". Aquí el humano escribe **la especificación** (firma +
-tests), el agente escribe **el código**, el compilador
-**verifica** que el código satisface la especificación.
+revisa": la especificación es del humano, el cuerpo es del
+agente, y el compilador es quien concilia a los dos.
 
 ## 15.10 Lo que el lenguaje no automatiza
 

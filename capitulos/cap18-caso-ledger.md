@@ -24,12 +24,12 @@ las descubras en producción.
 El programa: un ledger de doble entrada que mantiene cuentas
 con saldo, registra transacciones (cada una con débitos y
 créditos), valida que las transacciones cuadren, y persiste
-un log de auditoría inmutable. Tamaño: unas 280 líneas en cuatro
+un log de auditoría inmutable. Tamaño: unas 280 líneas en cinco
 módulos.
 
 ## 18.1 La forma del programa
 
-Cuatro archivos:
+Cinco archivos:
 
 ```
 ledger/

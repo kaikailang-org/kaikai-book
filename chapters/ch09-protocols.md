@@ -40,7 +40,7 @@ file. With `Eq`, the operation is called `eq` for all of
 them.
 
 **Comparison, hashing, serialization.** Same argument as the
-previous, multiplied by the three standard operations almost
+previous one, multiplied by the three standard operations almost
 every type needs eventually.
 
 Without protocols, each of the three is solved with naming
@@ -184,7 +184,7 @@ debugging and logs. If you want a different format (say,
 the classic `(3, 4)` for a point), you write the `impl` by
 hand, like §9.1.
 
-`#derive` works for the five stdlib protocols, as long as
+`#[derive(...)]` works for the five stdlib protocols, as long as
 **every field of the record also implements** the protocol
 you're deriving. If your record has a field whose type
 doesn't have `Show`, `#[derive(Show)]` fails compilation with
@@ -192,7 +192,7 @@ a message pointing at the offending field.
 
 The practical rule:
 
-- **Start with `#derive`** — the fastest way and almost
+- **Start with `#[derive(...)]`** — the fastest way and almost
   always correct for records.
 - **Switch to `impl` by hand** when the derived
   implementation isn't useful: different format, equality

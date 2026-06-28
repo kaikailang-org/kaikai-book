@@ -5,31 +5,30 @@ per connection, actors for state encapsulation. That's the
 family of problems where concurrency dominates.
 
 This chapter closes the book with a very different case:
-**a double-entry accounting ledger**. Where precision
-matters, not concurrency. Where a debit that doesn't match
-its credit is a bug your auditor will find before you do.
-Where "it works and the tests pass" isn't enough: you have
-to show **why** it works, and the type system has a lot to
-say about that.
+**a double-entry accounting ledger**, where precision matters
+more than concurrency. A debit that doesn't match its credit is
+a bug your auditor finds before you do, and here "it works and
+the tests pass" isn't enough — you have to show **why** it
+works, and the type system has a lot to say about that.
 
 Why fintech deserves its own chapter: it's one of the
 domains where getting it wrong is most expensive and where
-having guarantees in the type pays off most. Mixing USD
-with EUR costs money. Adding debits with credits costs
-money. Allowing a withdrawal without checking the balance
-costs money. The language's tools (units of measure,
+having guarantees in the type pays off most. Mixing USD with
+EUR, adding debits to credits, allowing a withdrawal without
+checking the balance — each of these costs real money. The
+language's tools (units of measure,
 contracts, branding) are designed so that these mistakes
 don't compile, not so that you discover them in production.
 
 The program: a double-entry ledger that holds accounts with
 balances, records transactions (each with debits and
 credits), validates that transactions balance, and persists
-an immutable audit log. Size: about 280 lines across four
+an immutable audit log. Size: about 280 lines across five
 modules.
 
 ## 18.1 The shape of the program
 
-Four files:
+Five files:
 
 ```
 ledger/
@@ -111,7 +110,7 @@ Three type-system decisions worth listing:
   the type system tells you first.
 - **`Movement` as a sum type.** A debit and a credit have
   the same physical fields (account + amount) but mean
-  different things. Modelling them as two constructors of
+  different things. Modeling them as two constructors of
   the same sum type has two effects: the exhaustive pattern
   match ensures every operation handles them explicitly,
   and the type system won't let us add "debit amount" with
@@ -161,9 +160,9 @@ test "doesn't balance when amounts differ" { ... }
 test "balances with multiple lines" { ... }
 ```
 
-No actors, no IO, no sockets. Just logic. If six months
-from now we change how movements are represented, these
-tests ensure the invariant still holds.
+Again, no actors or IO involved: just the logic, tested
+directly. If six months from now we change how movements are
+represented, these tests ensure the invariant still holds.
 
 And where chapter 11 pays off: we also declare a **version
 with a contract**:
@@ -453,7 +452,7 @@ replaced without touching the rest.
 
 This isn't exclusive to kaikai. It's described, in
 different words, in Brooks's *No Silver Bullet*, Hickey's
-*Simple Made Easy*, Marlow and Goldsmith's *Out of the Tar
+*Simple Made Easy*, Moseley and Marks's *Out of the Tar
 Pit*. What kaikai does is offer a syntax and a type system
 that **make this style natural**. Signatures that hide
 nothing are free because effects are in the type. Pure

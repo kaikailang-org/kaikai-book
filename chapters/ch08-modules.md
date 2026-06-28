@@ -377,7 +377,7 @@ chain, the **maximum** wins.
 If your app declares `manutara@v0.1.0` and one of its
 dependencies declares `manutara@v0.2.0`, the whole project
 uses `v0.2.0`. The underlying assumption is that versions are
-backwards-compatible within a major: if everyone respects
+backward-compatible within a major: if everyone respects
 semver, bumping to the higher number should not break anyone.
 
 MVS contrasts with Cargo's or npm's algorithm, which solves
@@ -517,7 +517,8 @@ doesn't change: the imports remain the same.
 
 That's the full trajectory: from one file to modules, from
 modules to a project, from a local project to a distributed
-dependency. Every step is reversible. Every step is optional.
+dependency. Every step is reversible and optional; none of them
+forces you to the next.
 
 ## 8.10 Philosophy: simple and predictable
 
