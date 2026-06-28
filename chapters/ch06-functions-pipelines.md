@@ -135,8 +135,6 @@ The placeholder rules:
 - Multiple `.` occurrences in the same expression refer to
   the **same value**. For example, `xs |> list.map(. * .)`
   squares.
-- Field access works: `people |> list.map(.name)` projects
-  the `name` field of each element.
 
 When to use which? My suggestion:
 
@@ -146,6 +144,53 @@ When to use which? My suggestion:
   argument appears in non-obvious places.
 - **Named function** when the lambda is used more than once,
   or when the name documents the intent.
+
+### Point-free sections: when the lambda only projects
+
+There is a case even more common than the placeholder: the
+lambda that does nothing but **reach into the element** to pull
+out a field or call a method. `(p) => p.name`, `(s) =>
+s.length()`. No computation, no operator, just a projection.
+For that kaikai has an even shorter form, the **point-free
+section**: a leading `.` followed by the field, the field path,
+or the method call.
+
+```kai
+type Addr = { city: String }
+type Person = { name: String, addr: Addr }
+
+let people = [Person { name: "ana", addr: Addr { city: "Hanga Roa" } }]
+let names  = people | .name           # (p) => p.name
+let cities = people | .addr.city       # (p) => p.addr.city
+let lens   = names  | .length()        # (s) => s.length()
+```
+
+The section reads as the projection itself, with no parameter
+name to invent. The receiver is supplied implicitly (the first
+argument by UFCS), so `.starts_with("a")` reads its written
+argument *after* the receiver. It works as the function of `|`,
+`||`, `|?` and as a combinator argument (`.map`, `.and_then`,
+`.filter`):
+
+```kai
+let starts = names |? .starts_with("a")  # (s) => s.starts_with("a")
+let n      = Some("hi").map(.length())   # in argument position
+```
+
+One limit to keep clear from the start: a point-free section
+**only projects**. The moment the body does anything more (an
+operator, a comparison, two uses of the parameter), it stops
+being point-free and you go back to the arrow. This does **not**
+compile:
+
+```kai
+let adults = people |? .age > 18         # ERROR: mixes projection with `>`
+```
+
+What you want there is the explicit arrow, `(p) => p.age > 18`.
+The practical rule: if the lambda *only* pulls out a field or
+calls a method, write it point-free; if it does anything else,
+arrow.
 
 Lambdas are **first-class values**: you bind them with `let`,
 pass them as arguments, return them from functions, store
@@ -395,7 +440,7 @@ If the **two** last arguments are lambdas, both go in braces:
 ```kai
 fn while_loop(cond: () -> Bool, body: () -> Unit) : Unit / e = ...
 
-while_loop { @i < 10 } { i := @i + 1 }
+while_loop { i < 10 } { i := i + 1 }
 ```
 
 This gives kaikai user-defined control flow. `while_loop` is

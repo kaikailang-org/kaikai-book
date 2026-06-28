@@ -25,7 +25,7 @@ pub fn procesar(c: dominio.Comando, notas: [dominio.Nota], next_id: Int)
     : (dominio.Respuesta, [dominio.Nota], Int) = {
   match c {
     Listar -> {
-      let cuerpos = list.map(notas, (nota) => nota.cuerpo)
+      let cuerpos = list.map(notas, .cuerpo)
       (dominio.Guardado(serializar_lista(cuerpos)), notas, next_id)
     }
     Obtener(id_buscado) -> match buscar_nota(notas, id_buscado) {

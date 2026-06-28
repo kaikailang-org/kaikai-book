@@ -3,9 +3,9 @@
 # espera a que terminen antes de salir".
 #
 # `nursery { n -> ... }` abre el scope. `n` es la capacidad para
-# crear y esperar fibras. Cualquier fibra creada con `n.spawn`
-# es hija del nursery; al salir del bloque, el nursery espera a
-# todas. Si una falla, las demás se cancelan.
+# crear fibras. Cualquier fibra creada con `n.spawn` es hija del
+# nursery; al salir del bloque, el nursery espera a todas sin que
+# tengas que pedirlo. Si una falla, las demás se cancelan.
 
 import spawn
 
@@ -18,10 +18,8 @@ fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
-  nursery { n ->
-    let a = n.spawn(() => worker("A", 3))
-    let b = n.spawn(() => worker("B", 3))
-    n.await(a)
-    n.await(b)
+  let _ = nursery { n ->
+    n.spawn(() => worker("A", 3))
+    n.spawn(() => worker("B", 3))
   }
 }

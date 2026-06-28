@@ -3,9 +3,9 @@
 # for them to finish before exiting".
 #
 # `nursery { n -> ... }` opens the scope. `n` is the capacity
-# for creating and awaiting fibers. Any fiber created with
-# `n.spawn` is a child of the nursery; on block exit, the
-# nursery waits for them all. If one fails, the others are
+# for creating fibers. Any fiber created with `n.spawn` is a
+# child of the nursery; on block exit, the nursery waits for
+# them all without being asked. If one fails, the others are
 # canceled.
 
 import spawn
@@ -19,10 +19,8 @@ fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
-  nursery { n ->
-    let a = n.spawn(() => worker("A", 3))
-    let b = n.spawn(() => worker("B", 3))
-    n.await(a)
-    n.await(b)
+  let _ = nursery { n ->
+    n.spawn(() => worker("A", 3))
+    n.spawn(() => worker("B", 3))
   }
 }

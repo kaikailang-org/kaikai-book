@@ -472,27 +472,27 @@ The short form for a local cell:
 
 ```kai
 fn count_evens(xs: [Int]) : Int {
-  var n = 0
+  var n := 0
   list.foreach(xs, (x) => {
     if x % 2 == 0 {
-      n := @n + 1
+      n := n + 1
     }
   })
-  @n
+  n
 }
 ```
 
-Three new forms:
+`:=` is the single mark of mutability:
 
-- **`var n = 0`** declares the cell with its initial value.
-- **`@n`** reads the current value.
+- **`var n := 0`** declares the cell with its initial value.
 - **`n := v`** writes `v`.
+- **`n`** reads the current value: a bare name, no marker.
 
 How does it work? **`var` is syntactic sugar over `State[T]`.**
 The compiler rewrites
 
 ```kai
-var n = 0
+var n := 0
 ... rest of the block ...
 ```
 
@@ -534,10 +534,10 @@ effect.
 ```kai
 fn fill(n: Int) : Array[Int] {
   let a = Mutable.array_make(n, 0)
-  var i = 0
+  var i := 0
   list.foreach([0..n], (_) => {
-    a[i] := @i * 2
-    i := @i + 1
+    a[i] := i * 2
+    i := i + 1
   })
   a
 }
@@ -572,10 +572,10 @@ If the mutation is **observable**, the effect appears:
 ```kai
 fn fill_in_place(a: Array[Int]) : Unit / Mutable {
   let n = Mutable.array_length(a)
-  var i = 0
+  var i := 0
   list.foreach([0..n], (_) => {
-    a[i] := @i * 2
-    i := @i + 1
+    a[i] := i * 2
+    i := i + 1
   })
 }
 ```

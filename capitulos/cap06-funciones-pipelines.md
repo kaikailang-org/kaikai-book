@@ -137,7 +137,7 @@ contexto **espera una función**: el segundo argumento de
 `list.filter`, por ejemplo, es de tipo `(Int) -> Bool`, y el
 compilador convierte `. > 0` en `(n) => n > 0`.
 
-Las reglas del placeholder son cuatro:
+Las reglas del placeholder son tres:
 
 - `.` solo funciona en posición donde se espera una función.
   Fuera de ahí es un error de compilación.
@@ -146,8 +146,6 @@ Las reglas del placeholder son cuatro:
 - Múltiples ocurrencias del mismo `.` se refieren al **mismo
   valor**. Por ejemplo, `xs |> list.map(. * .)` eleva al
   cuadrado.
-- El acceso a campo funciona: `personas |> list.map(.nombre)`
-  proyecta el campo `nombre` de cada elemento.
 
 ¿Cuándo usar cuál? Mi sugerencia:
 
@@ -160,6 +158,52 @@ Las reglas del placeholder son cuatro:
 - **Función con nombre** cuando la lambda se usa más de una
   vez, o cuando el nombre documenta la intención. Si la misma
   lambda aparece en tres lugares, dale un nombre.
+
+### Secciones point-free: cuando la lambda solo proyecta
+
+Hay un caso todavía más común que el placeholder: la lambda que
+no hace más que **alcanzar dentro del elemento** para sacarle un
+campo o llamarle un método. `(p) => p.nombre`, `(s) =>
+s.length()`. No hay cómputo, no hay operador, solo una
+proyección. Para eso kaikai tiene una forma aún más corta, la
+**sección point-free**: un `.` inicial seguido del campo, la
+ruta de campos o la llamada al método.
+
+```kai
+type Dir = { ciudad: String }
+type Persona = { nombre: String, dir: Dir }
+
+let personas = [Persona { nombre: "ana", dir: Dir { ciudad: "Hanga Roa" } }]
+let nombres  = personas | .nombre          # (p) => p.nombre
+let ciudades = personas | .dir.ciudad      # (p) => p.dir.ciudad
+let largos   = nombres   | .length()       # (s) => s.length()
+```
+
+La sección se lee como la proyección misma, sin tener que
+inventar un nombre para el parámetro. El receptor se entrega de
+forma implícita (es el primer argumento por UFCS), así que
+`.starts_with("a")` lee su argumento escrito *después* del
+receptor. Funciona como la función de `|`, `||`, `|?` y como
+argumento de un combinador (`.map`, `.and_then`, `.filter`):
+
+```kai
+let inicia = nombres |? .starts_with("a")  # (s) => s.starts_with("a")
+let n      = Some("hi").map(.length())     # en posición de argumento
+```
+
+Hay un límite que conviene tener claro desde el principio: la
+sección point-free **solo proyecta**. En cuanto el cuerpo hace
+algo más (un operador, una comparación, dos usos del
+parámetro), deja de ser point-free y vuelves a la flecha. Esto
+**no** compila:
+
+```kai
+let mayores = personas |? .edad > 18       # ERROR: mezcla proyección con `>`
+```
+
+Lo que ahí quieres es la flecha explícita, `(p) => p.edad > 18`.
+La regla práctica: si la lambda *solo* saca un campo o llama un
+método, escríbela point-free; si hace cualquier otra cosa, flecha.
 
 Las lambdas son **valores de primera clase**: las atas a
 `let`, las pasas como argumento, las devuelves de funciones,
@@ -464,7 +508,7 @@ llaves:
 ```kai
 fn while(cond: () -> Bool, body: () -> Unit) : Unit / e = ...
 
-while { @i < 10 } { i := @i + 1 }
+while { i < 10 } { i := i + 1 }
 ```
 
 Esto le da a kaikai control de flujo definible por el

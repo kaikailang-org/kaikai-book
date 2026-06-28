@@ -219,21 +219,29 @@ fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
-  nursery { n ->
-    let a = n.spawn(() => worker("A", 3))
-    let b = n.spawn(() => worker("B", 3))
-    n.await(a)
-    n.await(b)
+  let _ = nursery { n ->
+    n.spawn(() => worker("A", 3))
+    n.spawn(() => worker("B", 3))
   }
 }
 ```
 
+El `let _` envuelve al `nursery` entero: el bloque devuelve el
+valor de su última expresión (acá un `Fiber[Unit]` que no nos
+sirve), y `let _` lo descarta. No es lo que hace que las fibras
+se esperen, de eso se encarga el nursery solo; solo tira un
+valor que no usamos.
+
 `nursery { n -> ... }` abre un scope. Adentro, `n` es la
-capacidad para crear y esperar fibras:
+capacidad para crear fibras:
 
 - `n.spawn(f)` crea una fibra hija. Devuelve un `Fiber[T]`
-  donde `T` es el tipo que `f` devuelve.
-- `n.await(f)` espera a esa fibra y devuelve su valor.
+  donde `T` es el tipo que `f` devuelve. Aquí ni lo atamos: no
+  necesitamos el valor, y el nursery espera a las fibras de
+  todos modos.
+- `n.await(f)` espera a esa fibra y devuelve su valor. Solo lo
+  necesitas cuando quieres el resultado; para esperar a secas
+  no hace falta.
 - `n.select([a, b, ...])` espera a que cualquiera termine y
   cancela las demás.
 - `n.cancel(f)` cancela una fibra específica.
@@ -241,10 +249,16 @@ capacidad para crear y esperar fibras:
 
 Lo que el nursery garantiza:
 
-- **Al salir del bloque, todas las hijas terminaron.** No hay
-  fugas: una fibra no sobrevive al `nursery` que la creó.
-- **Si una hija falla con un efecto no manejado, las demás se
-  cancelan.** El nursery acumula la causa y la re-lanza.
+- **Al salir del bloque, todas las hijas terminaron.** El
+  nursery hace *join* automático de cada hija al cerrar la
+  llave, sin que tengas que pedir un `await`. No hay fugas: una
+  fibra no sobrevive al `nursery` que la creó.
+- **Si una hija falla por su cuenta, las demás se cancelan.**
+  Cuando una hija lanza `Cancel` sin que nadie se lo haya
+  pedido (un crash), el nursery cancela a las hermanas que
+  siguen vivas y re-lanza la causa fuera del scope. En cambio,
+  una hija que cancelas a pedido con `n.cancel` termina como
+  resultado esperado y no contagia a las demás.
 - **Si el nursery se cancela desde afuera, propaga la
   cancelación a todas sus hijas.**
 
