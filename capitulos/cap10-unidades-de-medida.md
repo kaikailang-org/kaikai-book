@@ -158,7 +158,7 @@ comunica derivación.
 
 ## 10.4 Unidades genéricas
 
-Hasta acá, cada función opera sobre una unidad concreta. Pero
+Hasta aquí, cada función opera sobre una unidad concreta. Pero
 muchas operaciones son **agnósticas a la unidad**: promediar,
 sumar, ordenar, encontrar el máximo. Esas funciones se
 escriben **genéricas sobre la unidad**, igual que una función
@@ -282,7 +282,7 @@ en código del día a día. Casos típicos:
 - `Int<Cents>` vs `Int<Quantity>`: un dinero en centavos vs
   una cantidad de unidades.
 - `Int<Seconds>` vs `Int<Milliseconds>`: los timeouts mal
-  expresados son responsable de un porcentaje no menor de
+  expresados son responsables de un porcentaje no menor de
   bugs intermitentes.
 - `String<Email>` vs `String<Username>`: strings que pasaron
   por validaciones distintas.

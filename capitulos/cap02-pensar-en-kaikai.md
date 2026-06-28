@@ -9,7 +9,7 @@ Este es el capítulo más corto del libro, y se puede saltar. Si
 ya programaste en Haskell, OCaml, Elixir o Scala, esto te va a
 sonar familiar; pasa a la Parte II y nos vemos en el capítulo
 3. Si vienes de un mundo imperativo, dedícale los veinte minutos
-que pide. Te van a ahorrar incomodidades en los siguientes
+que pide. Te van a ahorrar incomodidades en las siguientes
 ciento cincuenta páginas.
 
 No vamos a abrir la teoría de cada idea: eso es trabajo de los
@@ -55,12 +55,12 @@ let s = if x > 0 { "positivo" } else { "no positivo" }
 println(s)
 ```
 
-La diferencia no es de líneas. Es de pensamiento. En la versión
+La diferencia no es de líneas sino de pensamiento. En la versión
 imperativa hay que **declarar `s` primero**, porque el `if` no
 sabe devolver nada; después hay que **mutar `s` en cada rama**.
 En kaikai, el `if` *es* el valor, y `s` se ata directo al
-resultado. No hay declaración separada de la asignación. No hay
-asignación en absoluto: `s` se ata una vez y no cambia.
+resultado: no hay una declaración separada de la asignación,
+no hay asignación en absoluto. `s` se ata una vez y no cambia.
 
 Esto tiene consecuencias prácticas que vas a notar pronto:
 
@@ -164,7 +164,7 @@ n := n + 1
 println(int_to_string(n))   # 1
 ```
 
-Acá está la cosa interesante: `var` no es realmente una
+Aquí está la cosa interesante: `var` no es realmente una
 construcción nueva del lenguaje, es **azúcar sintáctico** sobre
 el efecto `State`. La línea `var n := 0` se reescribe a un
 `handle ... with State[Int](0) as n { ... }` que abarca el
@@ -374,7 +374,7 @@ capítulo 1: una función que escribe a stdout dice
 dice nada después del `/`. Su firma es `fn f(x: Int) : Int`,
 sin más.
 
-El efecto del lado derecho del `/` no es decoración. Es una
+El efecto del lado derecho del `/` no es decoración sino una
 restricción: el compilador no te deja llamar a una función con
 efectos desde un contexto donde esos efectos no estén siendo
 manejados. Un handler en algún lado de la pila tiene que tomarse
@@ -443,7 +443,7 @@ compila rápido a código nativo y que un programador con
 experiencia puede leer sin un curso previo.
 
 El resto del libro entra en detalle en cada una de esas
-decisiones. Si llegaste hasta acá, ya tienes el mapa.
+decisiones. Si llegaste hasta aquí, ya tienes el mapa.
 
 ## Ejercicios
 
@@ -462,6 +462,6 @@ falta que compile) usando `if` como expresión.
 
 **2.3.** Encuentra en el código de tu trabajo una función que
 devuelva `null` o lance una excepción para señalar "no hay
-resultado". Escríbe en un comentario cuál sería su firma en
+resultado". Escribe en un comentario cuál sería su firma en
 kaikai usando `Option` o `Result`. ¿Qué información ganas? ¿Qué
 información pierdes?

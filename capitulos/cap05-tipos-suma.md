@@ -26,8 +26,9 @@ type Color = Rojo | Verde | Azul
 
 `Color` es un tipo. `Rojo`, `Verde`, `Azul` son sus tres
 **constructores**. Un valor de tipo `Color` es exactamente uno
-de los tres. No hay un cuarto valor escondido, no hay `null`,
-no hay "color desconocido". El tipo lo dice todo.
+de los tres. No hay un cuarto valor escondido ni un `null`
+acechando ni un "color desconocido": el tipo enumera sus
+habitantes y ahí se acaba la historia.
 
 Si vienes de un lenguaje con `enum`, esto se le parece, pero
 con dos diferencias: los constructores **pueden cargar datos**,
@@ -135,7 +136,7 @@ lector recuerde el orden, conviene un record.
 
 ## 5.3 Recursión en tipos
 
-Acá empieza lo poderoso. Un constructor de un tipo suma puede
+Aquí empieza lo poderoso. Un constructor de un tipo suma puede
 mencionar al tipo en sus campos. Eso te da árboles, listas,
 grafos pequeños y la representación de cualquier estructura
 con anidamiento.
@@ -203,7 +204,7 @@ compilador no te ayuda a no olvidar ninguno.
 
 ## 5.4 `match`: patrones, guardas, exhaustividad
 
-Ya viste `match` en acción. Acá lo formalizamos.
+Ya viste `match` en acción. Aquí lo formalizamos.
 
 Un `match` toma una **expresión escrutinio** (lo que se está
 inspeccionando) y una serie de **arms**, cada uno con un
@@ -249,7 +250,7 @@ si no, sigue. La rama final con `_` no tiene guarda y calza
 con todo lo restante: los enteros que no son cero ni
 positivos.
 
-Las guardas son convenientes pero no participan en el
+Las guardas son convenientes pero no participan en la
 verificación de exhaustividad: el compilador no puede saber que
 `k > 0` y `k < 0` se complementan, así que necesita un patrón
 final sin guarda que cubra el caso "todo lo demás". Si lo
@@ -373,7 +374,7 @@ quieres extraer un caso específico y delegar el resto:
 
 ```kai
 match e {
-  CuentaNoExiste      -> "id: específicamente, cuenta missing"
+  CuentaNoExiste      -> "id: específicamente, cuenta no existe"
   ie : ErrorIdentidad -> "id: " ++ id_str(ie)        # KycVencido, Congelada
   ae : ErrorAuth      -> "auth: " ++ auth_str(ae)
 }
@@ -524,7 +525,7 @@ error:
 
 Los dos forman una unión, `ErrorEval`, y el evaluador devuelve
 `Result[ErrorEval, Real]`. El código completo está en
-`ejemplos/cap05/05_evaluador.kai`; acá vamos paso a paso por
+`ejemplos/cap05/05_evaluador.kai`; aquí vamos paso a paso por
 las partes interesantes.
 
 ### El AST
@@ -575,7 +576,7 @@ fn lookup(env: Env, nombre: String) : Result[ErrorEval, Real] {
 `Env` es un alias para una lista de pares: recorrido lineal,
 suficiente para un evaluador de juguete. `lookup` está escrito
 en la **forma multi-clause** del cap. 6: cada `case` lista un
-patrón por argumento separado por coma (acá `env` y `nombre`),
+patrón por argumento separado por coma (aquí `env` y `nombre`),
 con un `when` opcional para guardas. Tres casos:
 
 - Lista vacía: la variable no estaba; devolvemos un error.
@@ -657,7 +658,7 @@ fn imprimir(r: Result[ErrorEval, Real]) : Unit =
 ```
 
 `describir` consume un `ErrorEval` enumerando sus tres
-constructores. Acá el `match` enumera porque queremos
+constructores. Aquí el `match` enumera porque queremos
 mensajes específicos por constructor; en otros casos,
 cuando la lógica para cada categoría difiere, usaríamos
 narrowing.

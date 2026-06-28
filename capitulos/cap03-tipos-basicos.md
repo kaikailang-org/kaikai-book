@@ -34,7 +34,7 @@ valor de verdad, que se puede pasar como argumento o guardar en
 una variable. Un `println(...)` devuelve `Unit`. Un bloque que
 termina sin un valor explícito devuelve `Unit`.
 
-`Nothing` es el opuesto. **Cero habitantes.** Ninguna expresión
+`Nothing` es el opuesto: cero habitantes. Ninguna expresión
 produce un `Nothing` que el programa pueda usar. ¿Para qué
 sirve, entonces? Para describir el tipo de retorno de cosas que
 **nunca terminan normalmente**: un `panic(...)` que aborta el
@@ -87,7 +87,7 @@ let saludo = "Hola, " ++ nombre
 ```
 
 El operador es `++`, no `+`, para no confundirlo con suma. Es
-un detalle pequeño que evita un bug clásico.
+un detalle pequeño que evita un bug habitual.
 
 Para mensajes que ocupan varias líneas, kaikai tiene **strings
 con triple comilla**:
@@ -108,8 +108,8 @@ normales.
 
 Los `Char` se escriben con comilla simple: `'a'`, `'\n'`,
 `'\u{2603}'`. Un `Char` no es un `String` de longitud uno, son
-tipos distintos. Eso evita una colección de bugs típicos de
-lenguajes que confunden los dos.
+tipos distintos. Eso evita una familia de errores propios de
+los lenguajes que confunden ambos.
 
 ## 3.3 Operadores aritméticos, lógicos y de comparación
 
@@ -324,7 +324,7 @@ valores.
 ## 3.7 Tres formas de cuerpo de función
 
 El cuerpo de una función puede tomar **tres formas**. Lo viste
-en el capítulo 1 y lo fijamos acá; el cap. 6 vuelve sobre ellas
+en el capítulo 1 y lo fijamos aquí; el cap. 6 vuelve sobre ellas
 con más profundidad.
 
 Forma corta, con `=` y una sola expresión:

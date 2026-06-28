@@ -4,19 +4,19 @@ El capítulo 17 mostró un servidor HTTP: muchos clientes, una
 fibra por conexión, actores para encapsular estado. Es la
 familia de problemas donde lo que pesa es la concurrencia.
 
-Este capítulo cierra el libro con un caso muy distinto:
-**un libro mayor contable**. Donde pesa la precisión, no la
-concurrencia. Donde un débito que no calza con su crédito es
-un bug que tu auditor va a encontrar antes que tú. Donde
-"funciona y pasa los tests" no es suficiente: hay que poder
-mostrar **por qué** funciona, y el sistema de tipos tiene
-mucho que decir al respecto.
+Este capítulo cierra el libro con un caso muy distinto: **un
+libro mayor contable**, donde lo que pesa es la precisión y no
+la concurrencia. Un débito que no calza con su crédito es un
+bug que tu auditor va a encontrar antes que tú, y aquí
+"funciona y pasa los tests" no alcanza: hay que poder mostrar
+**por qué** funciona, y el sistema de tipos tiene mucho que
+decir al respecto.
 
 Por qué fintech merece su propio capítulo: es uno de los
 dominios donde más caro sale equivocarse y donde más rinde
-tener garantías en el tipo. Mezclar USD con EUR cuesta plata.
-Sumar débitos con créditos cuesta plata. Permitir un retiro
-sin verificar saldo cuesta plata. Las herramientas del
+tener garantías en el tipo. Mezclar USD con EUR cuesta plata;
+también sumar débitos con créditos, o permitir un retiro
+sin verificar saldo. Las herramientas del
 lenguaje (unidades de medida, contratos, branding) están
 hechas para que estas equivocaciones no compilen, no para que
 las descubras en producción.
@@ -145,8 +145,8 @@ pub fn cuadra(ms: [dominio.Movimiento]) : Bool =
   total_debitos(ms) == total_creditos(ms)
 ```
 
-Tres funciones puras, una invariante boolean. Los tests
-verifican el contrato pieza por pieza:
+Son tres funciones puras que definen una sola invariante
+booleana. Los tests verifican el contrato pieza por pieza:
 
 ```kai
 test "cuadra con una entrada y una salida" {
@@ -161,7 +161,7 @@ test "no cuadra cuando los montos difieren" { ... }
 test "cuadra con múltiples líneas" { ... }
 ```
 
-Sin actores, sin IO, sin sockets. Solo lógica. Si en seis
+No hay actores, ni IO, ni sockets: pura lógica. Si en seis
 meses cambiamos cómo se representan los movimientos, estos
 tests aseguran que la invariante sigue cumpliéndose.
 
@@ -180,7 +180,7 @@ un grupo de movimientos que no cuadran es un error**. Si el
 compilador puede probarlo estáticamente, rechaza la llamada
 en compile time; si no, inserta un assert en runtime. El
 `ensures cuadra(result)` declara que **el resultado de la
-función también cuadra** (trivial acá: devuelve la misma
+función también cuadra** (trivial aquí: devuelve la misma
 lista). Esos dos contratos juntos forman la firma legal de la
 función: las precondiciones que exige y la postcondición que
 garantiza.
@@ -335,8 +335,8 @@ por cada cuenta y transacción.
 
 ## 18.7 Lo que hace este caso distinto del cap. 17
 
-Mismo patrón general, distinto énfasis. Lo que aparece en
-este capítulo y no aparecía en el anterior:
+El patrón general es el mismo; lo que cambia es el énfasis. Lo
+que aparece en este capítulo y no aparecía en el anterior:
 
 - **Unidades de medida.** `Real<USD>` en cada monto. El sistema
   de tipos rechaza mezclar monedas sin conversión explícita
@@ -446,7 +446,7 @@ tocar el resto.
 
 Esto no es exclusivo de kaikai. Lo describen, con palabras
 distintas, *No Silver Bullet* de Brooks, *Simple Made Easy*
-de Hickey, *Out of the Tar Pit* de Marlow y Goldsmith. Lo que
+de Hickey, *Out of the Tar Pit* de Moseley y Marks. Lo que
 kaikai hace es ofrecer una sintaxis y un sistema de tipos
 que **vuelven natural** este estilo. Las firmas que no
 esconden nada salen gratis porque los efectos están en el tipo. Las funciones
@@ -464,7 +464,7 @@ escribe menos código equivocado y más código que merece
 estar en producción. Si la apuesta funciona para ti, este
 libro cumplió su propósito.
 
-Gracias por leer hasta acá. El compilador, el stdlib, los
+Gracias por leer hasta aquí. El compilador, el stdlib, los
 documentos de diseño y los ejemplos viven en
 `github.com/kaikailang-org/kaikai`. Hay una comunidad emergente, hay
 issues que cerrar, hay piezas del lenguaje que están todavía
