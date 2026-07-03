@@ -446,6 +446,30 @@ while_loop { i < 10 } { i := i + 1 }
 This gives kaikai user-defined control flow. `while_loop` is
 an ordinary stdlib function; it just looks like a keyword.
 
+### Tuple patterns as the parameter
+
+A block lambda's parameter may be a **tuple pattern**. If what
+flows through the pipe is pairs — the result of `list.zip` or
+`list.enumerate`, say — you destructure on the spot, with no
+intermediate `let`:
+
+```kai
+let pairs = list.zip(xs, ys)
+let sums = pairs | { (a, b) -> a + b }
+
+list.foreach(list.enumerate(rows)) { (i, row) ->
+  println("#{i}: #{row}")
+}
+```
+
+The pattern must be **irrefutable**: `(a, b)` over a pair always
+matches. A pattern that can fail — `(Some(n))`, say — is
+rejected with a non-exhaustive-match diagnostic; that's what
+`match` is for. And note a deliberate asymmetry: the
+destructuring is block-lambda only. The arrow form
+`(a, b) => ...` remains a **two-parameter** lambda, not one that
+takes a pair.
+
 None of these sugars introduce new semantics. They are
 alternative ways to write lambdas that the compiler desugars
 before type inference. Use them when the reading improves;

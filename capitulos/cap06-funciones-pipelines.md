@@ -530,6 +530,30 @@ xs | { n ->
 Es lo mismo que `(n) => { let cuadrado = n * n; cuadrado + 1
 }` pero menos cargado visualmente.
 
+### Patrones de tupla como parámetro
+
+El parámetro de un bloque-lambda puede ser un **patrón de
+tupla**. Si lo que fluye por el pipe son pares — el resultado de
+`list.zip` o `list.enumerate`, por ejemplo —, destructuras en el
+acto, sin un `let` intermedio:
+
+```kai
+let pares = list.zip(xs, ys)
+let sumas = pares | { (a, b) -> a + b }
+
+list.foreach(list.enumerate(filas)) { (i, fila) ->
+  println("#{i}: #{fila}")
+}
+```
+
+El patrón tiene que ser **irrefutable**: `(a, b)` sobre un par
+siempre calza. Un patrón que puede fallar — `(Some(n))`, digamos
+— se rechaza con un diagnóstico de match no exhaustivo; para
+esos casos está `match`. Y ojo con una asimetría deliberada: la
+destructuración es exclusiva del bloque-lambda. La forma con
+flecha `(a, b) => ...` sigue siendo una lambda de **dos
+parámetros**, no una que recibe un par.
+
 Ninguno de estos azúcares introduce semántica nueva. Son
 formas alternativas de escribir lambdas que el compilador
 desazucara antes de la inferencia de tipos. Úsalos cuando la
