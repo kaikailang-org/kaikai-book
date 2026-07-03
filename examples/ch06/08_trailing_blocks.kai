@@ -26,4 +26,10 @@ fn main() {
     square + 1
   }
   println("d sum=#{list.sum(d)}")
+
+  # 4. The parameter may be a tuple pattern: it destructures
+  #    the pair on the spot, no intermediate `let`.
+  let pairs = list.zip(xs, [10, 20, 30, 40, 50])
+  let e = pairs | { (a, b) -> a + b }
+  println("e sum=#{list.sum(e)}")
 }

@@ -12,7 +12,7 @@ imperativo, vuelve. Te ahorra fricción.
 
 ## 3.1 Los siete tipos primitivos
 
-kaikai tiene exactamente siete tipos primitivos:
+El día a día de kaikai se apoya en siete tipos básicos:
 
 | Tipo | Para qué sirve | Literal de ejemplo |
 |---|---|---|
@@ -44,6 +44,11 @@ sistema de tipos que cualquier código después de llamarla es
 inalcanzable, y por eso una expresión de tipo `Nothing` calza en
 cualquier contexto donde se espere otro tipo. Te vas a topar con
 `Nothing` rara vez, pero conviene tener el nombre.
+
+Estos siete no son los únicos números del lenguaje — hay enteros
+de ancho fijo y tipos de precisión arbitraria, que veremos en la
+sección 3.4 —, pero sí son los que vas a teclear el 95% del
+tiempo.
 
 ## 3.2 Literales e interpolación de strings
 
@@ -177,7 +182,106 @@ los protocolos `Eq` (para `==`/`!=`) y `Ord` (para los demás).
 Eso lo veremos en el capítulo 9; por ahora, todos los tipos
 primitivos los implementan.
 
-## 3.4 `let` y la propagación local de tipos
+## 3.4 Más números: anchos fijos y precisión arbitraria
+
+`Int` y `Real` cubren casi todo el código que vas a escribir. El
+resto tiene requisitos duros: hablar con C usando el ancho exacto
+que la ABI espera, contar más allá de 2⁶³, o llevar cantidades
+donde un redondeo binario es inaceptable. Para esos casos kaikai
+trae dos familias más. No las vas a necesitar pronto, pero
+conviene saber que existen y dónde terminan las garantías de
+cada una.
+
+### Enteros de ancho fijo
+
+Cuatro tipos con ancho exacto: `Int32`, `UInt32`, `UInt64` e
+`Int128`. El literal los nombra con un sufijo pegado a los
+dígitos:
+
+```kai
+let w = 42i32 + 7i32
+let grande : Int128 = 9223372036854775808i128   # 2⁶³: fuera del
+                                                # alcance de Int
+```
+
+Dos reglas los gobiernan. La primera: **no se mezclan con
+`Int`**. Un `Int32` no unifica con un `Int`; sumarlos es error de
+tipos, igual que mezclar `Int` con `Real`. Se convierte con
+nombre y apellido — `int_to_int32(...)`, `int32_to_int(...)` y
+los análogos para `u32`, `u64` e `i128`. Nada de coerciones
+silenciosas, tampoco aquí.
+
+La segunda: **la aritmética envuelve**. Sumar `1i32` al máximo
+de `Int32` no promueve ni lanza excepción: da la vuelta en
+complemento a dos, como en C.
+
+```kai
+let tope = 2147483647i32 + 1i32   # -2147483648
+```
+
+El ejemplo `ejemplos/cap03/05_ancho_fijo.kai` recorre las dos
+reglas:
+
+```
+$ kai run ejemplos/cap03/05_ancho_fijo.kai
+w = 49
+tope = -2147483648
+grande = 9223372036854775808
+n32 + 1 = 11
+de vuelta = 11
+```
+
+¿Cuándo los usas? Sobre todo en la frontera con C: en una firma
+`extern "C"`, un `Int32` cruza como `int32_t`, un `UInt64` como
+`uint64_t` — el ancho que declaras es el ancho que viaja
+(capítulo 16). `Int128` además sirve solo: alcanza ~38 dígitos
+donde `Int` se queda en ~19, con la misma aritmética de siempre.
+
+### Precisión arbitraria: `BigInt`, `DecimalBig`, `Rational`
+
+Cuando ningún ancho fijo basta, el stdlib ofrece tres tipos que
+crecen lo que haga falta. Son opt-in — se importan, no vienen
+cargados por defecto — porque su costo es real: valores en heap,
+aritmética por software. kaikai te lo cobra solo cuando lo pides.
+
+- **`BigInt`** (`import math.bigint`): entero de precisión
+  arbitraria, nunca desborda. El sufijo `n` construye uno desde
+  un literal: `99n`. El sufijo solo alcanza para literales que
+  caben en `Int`; para valores más grandes se parte de un string
+  con `bigint.from_string("…")`.
+- **`DecimalBig`** (`import decimal_big`): punto fijo sobre
+  `BigInt`, pensado para cantidades decimales exactas. `add`,
+  `sub` y `mul` son totales; `div` pide la escala destino de
+  forma explícita, porque truncar es una decisión, no un
+  accidente. Comparar `1.5` con `1.50` da igualdad: la escala no
+  es parte del valor. Su hermano `Decimal` (`import decimal`)
+  usa `Int128` como soporte — más liviano, con techo cerca de
+  los 38 dígitos.
+- **`Rational`** (`import rational`): fracción exacta, un par
+  `num/den` sobre `BigInt` siempre reducido a términos mínimos.
+  `1/2 + 1/3` es exactamente `5/6`, sin redondeo en ninguna
+  parte.
+
+El ejemplo `ejemplos/cap03/06_numeros_grandes.kai` muestra los
+tres en acción:
+
+```
+$ kai run ejemplos/cap03/06_numeros_grandes.kai
+a² = 1000000014000000049
+d × 2 = 246913578024691357802469135780.246913578
+1/2 + 1/3 = 5/6
+```
+
+Si vienes de Python, `BigInt` es lo que allá llaman simplemente
+`int`: la diferencia es que en kaikai el entero de 64 bits es el
+caso común y rápido, y la precisión arbitraria es la excepción
+que se pide por su nombre. Y si tu problema es dinero, la
+respuesta completa combina estos tipos con las unidades de
+medida del capítulo 10 — los decimales exactos ponen la
+aritmética; las unidades, la disciplina de no sumar pesos con
+dólares.
+
+## 3.5 `let` y la propagación local de tipos
 
 `let` ata un nombre a un valor. El tipo se infiere del lado
 derecho:
@@ -234,7 +338,7 @@ kaikai te da `var`: `nombre := v` declara y escribe, y un
 nombre desnudo lee. Lo viste en §2.2 y volveremos a ello en el
 capítulo 12 cuando hablemos de efectos.
 
-## 3.5 `if` como expresión
+## 3.6 `if` como expresión
 
 Un `if` en kaikai produce un valor:
 
@@ -298,7 +402,7 @@ La regla práctica es simple: si **te interesa el valor**, escribe
 un `if/else` exhaustivo; si **te interesa el efecto**, escribe
 un `if` solo, sin atarlo a nada.
 
-## 3.6 Bloques y el valor de un bloque
+## 3.7 Bloques y el valor de un bloque
 
 Un bloque `{ ... }` es una **expresión** cuyo valor es el de la
 última expresión adentro. Las líneas anteriores se ejecutan en
@@ -321,7 +425,7 @@ bloque, una rama de `match` también, el cuerpo de una lambda
 también. Todo el lenguaje se reduce a expresiones que devuelven
 valores.
 
-## 3.7 Tres formas de cuerpo de función
+## 3.8 Tres formas de cuerpo de función
 
 El cuerpo de una función puede tomar **tres formas**. Lo viste
 en el capítulo 1 y lo fijamos aquí; el cap. 6 vuelve sobre ellas

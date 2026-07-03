@@ -59,6 +59,8 @@ build|ejemplos/cap03/01_aritmetica.kai|ok
 build|ejemplos/cap03/02_strings.kai|ok
 build|ejemplos/cap03/03_let_if.kai|ok
 build|ejemplos/cap03/04_bloques.kai|ok
+build|ejemplos/cap03/05_ancho_fijo.kai|ok
+build|ejemplos/cap03/06_numeros_grandes.kai|ok
 
 # Capítulo 4 — tipos compuestos
 build|ejemplos/cap04/01_records.kai|ok
@@ -132,6 +134,7 @@ build|ejemplos/cap12/07_alias.kai|ok
 build|ejemplos/cap12/08_parser_config.kai|ok
 build|ejemplos/cap12/09_wrapper_default.kai|ok
 build|ejemplos/cap12/10_var_local.kai|ok
+build|ejemplos/cap12/11_instancias.kai|ok
 
 # Capítulo 13 — fibras
 build|ejemplos/cap13/01_dos_fibras.kai|ok
@@ -185,6 +188,8 @@ build|examples/ch03/01_arithmetic.kai|ok
 build|examples/ch03/02_strings.kai|ok
 build|examples/ch03/03_let_if.kai|ok
 build|examples/ch03/04_blocks.kai|ok
+build|examples/ch03/05_fixed_width.kai|ok
+build|examples/ch03/06_big_numbers.kai|ok
 
 # Chapter 4
 build|examples/ch04/01_records.kai|ok
@@ -258,6 +263,7 @@ build|examples/ch12/07_alias.kai|ok
 build|examples/ch12/08_config_parser.kai|ok
 build|examples/ch12/09_wrapper_default.kai|ok
 build|examples/ch12/10_local_var.kai|ok
+build|examples/ch12/11_instances.kai|ok
 
 # Chapter 13
 build|examples/ch13/01_two_fibers.kai|ok

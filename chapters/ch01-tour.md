@@ -496,20 +496,43 @@ treats each one in detail.
 ## 1.9 Installing and running `kai`
 
 To run any of the programs above you need the `kai` binary.
-The project lives at
-[github.com/kaikailang-org/kaikai](https://github.com/kaikailang-org/kaikai).
-
-From a fresh checkout, all you need is a C compiler:
+The short path is the installer:
 
 ```
-$ make all
-$ make test
+$ curl -fsSL https://raw.githubusercontent.com/kaikailang-org/kaikai/main/install.sh | sh
 ```
 
-`make all` builds stage 0 (written in C), stage 1 (written in
-kaikai-minimal and compiled by stage 0), and the `kai` binary
-in the repo root. `make test` runs the stage 0, stage 1, and
-phase 4 test suites to confirm the build is healthy.
+It downloads the latest release, verifies its SHA-256, unpacks
+it under `~/.kaikai/`, and adds `~/.kaikai/bin` to your shell's
+`PATH`. If you'd rather use Homebrew,
+`brew install kaikailang-org/kaikai/kaikai` lands in the same
+place. The binary is self-contained — it carries its own LLVM,
+no separate toolchain needed — though for now the prebuilt
+releases cover macOS on Apple Silicon.
+
+On other platforms you build from source, which lives at
+[github.com/kaikailang-org/kaikai](https://github.com/kaikailang-org/kaikai)
+and asks only for a C compiler:
+
+```
+$ make tier0
+$ ./bin/kai run examples/minimal/hello.kai
+```
+
+`make tier0` builds the full bootstrap chain — stage 0 (written
+in C), stage 1 (kaikai-minimal), and stage 2, the self-hosted
+compiler you use day to day — and runs the fast test batteries
+to confirm the build is healthy.
+
+Once installed, the compiler updates itself:
+
+```
+$ kai upgrade
+```
+
+It queries the latest release and, if it is newer than the one
+you have, downloads it, verifies it, and swaps it in place. If
+you are already current, it says so and touches nothing.
 
 From there, the three commands you'll use throughout the book
 are:

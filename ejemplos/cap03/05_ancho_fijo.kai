@@ -1,0 +1,25 @@
+# Enteros de ancho fijo: Int32, UInt32, UInt64, Int128.
+#
+# El sufijo del literal fija el tipo: 42i32, 42u32, 42u64, 42i128.
+# Son tipos distintos de Int: no se mezclan sin conversión
+# explícita. La aritmética envuelve (two's complement) en el
+# ancho del tipo.
+
+fn main() {
+  let w = 42i32 + 7i32
+  println("w = #{w}")
+
+  # En el borde del ancho, la suma envuelve: no hay promoción.
+  let tope = 2147483647i32 + 1i32
+  println("tope = #{tope}")               # -2147483648
+
+  # Int128 alcanza donde Int (64 bits) ya no llega.
+  let grande : Int128 = 9223372036854775808i128
+  println("grande = #{grande}")
+
+  # Entre Int y los anchos fijos se convierte con nombre y apellido.
+  let n : Int = 10
+  let n32 = int_to_int32(n)
+  println("n32 + 1 = #{n32 + 1i32}")
+  println("de vuelta = #{int32_to_int(n32) + 1}")
+}

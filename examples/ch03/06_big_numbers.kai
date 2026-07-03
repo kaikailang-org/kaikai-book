@@ -1,0 +1,29 @@
+# Arbitrary precision in the stdlib: BigInt, DecimalBig, Rational.
+#
+# BigInt never overflows; the `n` suffix builds one from a
+# literal. DecimalBig is fixed-point over BigInt. Rational is an
+# exact fraction, always in lowest terms.
+
+import math.bigint
+import math.bigint_proto
+import decimal_big as db
+import decimal_big_proto
+import rational as rat
+import rational_proto
+
+fn main() {
+  # BigInt: exact even past 2^64.
+  let a = 1000000007n
+  println("a² = #{show(bigint.mul(a, a))}")
+
+  # DecimalBig: no width or scale ceiling.
+  match db.parse("123456789012345678901234567890.123456789") {
+    Some(d) -> println("d × 2 = #{show(db.mul(d, db.from_int(2)))}")
+    None    -> println("parse error")
+  }
+
+  # Rational: 1/2 + 1/3 = 5/6, no rounding.
+  let half  = rat.make(bigint.from_int(1), bigint.from_int(2))
+  let third = rat.make(bigint.from_int(1), bigint.from_int(3))
+  println("1/2 + 1/3 = #{show(rat.add(half, third))}")
+}

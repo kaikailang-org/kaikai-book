@@ -651,7 +651,94 @@ variables`: there, the order is implicit and runtime-
 dependent. Here it's explicit and you decide it in the
 signature of the `handle`s.
 
-## 12.9 Effect row aliases
+## 12.9 Named instances: the handler as a value
+
+So far, every operation finds its handler by the effect's name:
+`Log.log(...)` climbs to the nearest `handle ... with Log`. That
+leaves one question unanswered: what if you need **two** handlers
+of the same effect, alive at the same time, and you want to
+choose which one you're talking to?
+
+The answer is to give each instance a name:
+
+```kai
+handle {
+  ...
+} with Cell(10) as a {
+  get(resume)    -> resume(state)
+  set(v, resume) -> resume((), v)
+  return(x)      -> x
+}
+```
+
+The `as a` binds `a` as a **capability value**: a value whose
+type is the effect itself (`Cell`, `State[Int]`). Inside the
+body, `a.get()` performs against *that* instance — not against
+"the nearest `Cell`", but against the handler named `a`.
+
+The interesting part starts when the capability travels. A named
+instance **can be passed as an argument**:
+
+```kai
+fn add(c1: Cell, c2: Cell, dst: Cell) : Unit =
+  dst.set(c1.get() + c2.get())
+```
+
+Look at that signature carefully, because it holds a subtlety.
+`Cell` appears as a **parameter type**, not in the effect row.
+They are two distinct ways of asking for the same thing:
+
+- **In the row** (`fn f() : T / Cell`): the effect is
+  *demanded* — satisfied by a `handle` wrapping the call, or by
+  a default.
+- **As a parameter** (`fn f(c: Cell) : T`): the capability is
+  *provided* by the caller, passed explicitly. It doesn't go in
+  the row, because the function asks nothing of its context: it
+  already holds its evidence in hand.
+
+With that, three instances of the same effect coexist without
+stepping on each other (`examples/ch12/11_instances.kai`):
+
+```kai
+handle {
+  handle {
+    handle {
+      add(a, b, target)
+      println("target = #{target.get()}")
+    } with Cell(0) as target { ... }
+  } with Cell(20) as b { ... }
+} with Cell(10) as a { ... }
+```
+
+```
+$ kai run examples/ch12/11_instances.kai
+target = 30
+```
+
+`add` sums whatever cells it is given, without knowing which is
+which. Before named instances, the only way out was declaring
+three identical effects — `CellA`, `CellB`, `CellDst` — and
+handling each one separately. Pure ceremony, and it doesn't
+scale.
+
+One important restriction: the capability is **second-class**.
+It can travel down the stack — as a call argument, as the
+receiver of operations — but it cannot *escape*: stored in a
+record, returned from a function, captured by a closure that
+outlives the `handle`, or carried into a fiber with `spawn`. A
+handler is a promise with lexical scope; a value that needs to
+outlive its `handle` is not a capability, it's a `Ref[T]` under
+`Mutable` (§12.7) or an actor (chapter 14).
+
+If you come from dependency injection, this section should ring
+a bell: passing the capability as a parameter **is** injecting
+the dependency, with the difference that here the type tracks it
+and the compiler rejects the uses that would make it outlive its
+lifetime. And if the explicit wiring gets in your way, the
+effect row is still there: they are the two ends of the same
+mechanism, and you choose per call.
+
+## 12.10 Effect row aliases
 
 When a combination appears many times, name it with `type`:
 
@@ -679,7 +766,7 @@ One restriction: aliases must be **closed**. You can't write
 restriction sidesteps unification complications the compiler
 doesn't need to pay for.
 
-## 12.10 Default handlers: the effect carries its own
+## 12.11 Default handlers: the effect carries its own
 
 Every `handle` we've seen so far was written by hand. But there
 are effects where one of the implementations is so obvious that
@@ -875,7 +962,7 @@ different one for tests, expose both as wrapper functions
 (`with_test_log`, `with_quiet_log`) and let `main` use the
 default. Whoever writes tests calls the wrapper.
 
-## 12.11 The stdlib handlers are kaikai code
+## 12.12 The stdlib handlers are kaikai code
 
 When a program runs `println("hi")` and it just works, it's easy
 to imagine the compiler ships a special case for `Stdout`. It
@@ -938,7 +1025,7 @@ never write `$extern_handler`. But when you see it in stdlib you
 know what it is: a clause that hands its body off to a runtime
 symbol, declared with the same syntax as any other handler.
 
-## 12.12 Case study: configuration processor
+## 12.13 Case study: configuration processor
 
 We close with an example that mixes the three patterns we
 saw: logging, state, failure. The program processes a list of
@@ -1034,7 +1121,7 @@ different implementations: `Log` accumulates messages into a
 list instead of printing, `Fail` propagates inside a
 `Result`, `State` starts from whatever value the test wants.
 
-## 12.13 Philosophy: three ideas worth remembering
+## 12.14 Philosophy: three ideas worth remembering
 
 If this feels like a lot of pieces, three ideas underpin
 everything else:
@@ -1084,7 +1171,7 @@ What is the second one for?
 and the number of elements summed, without adding parameters.
 Hint: change `return(x) -> x`.
 
-**12.3.** The case study in §12.12 prints `[LOG]` for each
+**12.3.** The case study in §12.13 prints `[LOG]` for each
 entry. Change the `Log` handler so that instead of printing,
 it accumulates the messages into a list and returns them as
 part of the final result, along with `n`. Hint: you'll need

@@ -58,7 +58,13 @@ fiber can install a handler to clean up before unwinding.
 gives the body to invoke the effect's operations. By
 default, the capability's name is the effect's name: inside
 a `Log` handler, you call `Log.log(...)`. The `with X as
-name` syntax lets you rename it.
+name` syntax binds the instance as a **capability value**: a
+value whose type is the effect itself, which can be passed
+down as an argument (`fn f(c: X)`) but cannot escape its
+`handle`. Chapter 12 §12.9.
+
+**Capability value.** See *Capability* and *Named
+instance*.
 
 **Closure.** A function value that captures variables from
 the scope where it was created.
@@ -108,6 +114,14 @@ covered. Chapter 5.
 
 ## F
 
+**Fixed-width integers.** The types `Int32`, `UInt32`,
+`UInt64`, and `Int128`, written with a literal suffix
+(`42i32`, `42u64`). They are distinct from `Int`: no mixing
+without an explicit conversion, and their arithmetic wraps
+in two's complement at the type's width. In an `extern "C"`
+signature they cross with the exact width they declare.
+Chapter 3 §3.4.
+
 **Fiber.** A unit of cooperative execution. In kaikai a
 fiber is lightweight (hundreds of bytes), has its own heap,
 shares no memory with other fibers, and yields control
@@ -151,6 +165,10 @@ place.
 if one falls, the other receives `Cancel.raise()`.
 Chapter 14.
 
+**Lint.** The `kai lint` command: a Clippy-style linter
+that flags valid-but-suspect code. Opt-in, warnings only,
+aware of types and effect rows. Chapter 16 §16.4.
+
 ## M
 
 **Mailbox.** The message queue associated with an actor.
@@ -174,6 +192,12 @@ declares `manutara@v0.1.0` and another declares
 declared versions. Chapter 8.
 
 ## N
+
+**Named instance.** A handler bound to a name with
+`with Eff(init) as x`. Lets several handlers of the same
+effect coexist, each addressable through its capability
+value, which can be passed as an argument. Chapter 12
+§12.9.
 
 **Nothing.** See *Bottom type*.
 
