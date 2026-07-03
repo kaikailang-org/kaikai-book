@@ -63,7 +63,13 @@ hacer limpieza antes de desenrollarse.
 with Effect` le da al body para invocar las operaciones del
 efecto. Por defecto, el nombre de la capacidad es el del
 efecto: dentro de un handler de `Log`, se llama `Log.log(...)`.
-La sintaxis `with X as nombre` permite renombrarla.
+La sintaxis `with X as nombre` liga la instancia como un
+**capability value**: un valor cuyo tipo es el efecto mismo,
+que puede pasarse hacia abajo como argumento (`fn f(c: X)`)
+pero no escapar de su `handle`. Cap. 12 §12.9.
+
+**Capability value** *(valor de capacidad)*. Ver *Capability*
+e *Instancia nombrada*.
 
 **Closure** *(clausura)*. Un valor de función que captura
 variables del scope donde se creó.
@@ -113,6 +119,14 @@ tipo del escrutinio estén cubiertos. Cap. 5.
 
 ## F
 
+**Fixed-width integers** *(enteros de ancho fijo)*. Los tipos
+`Int32`, `UInt32`, `UInt64` e `Int128`, escritos con sufijo de
+literal (`42i32`, `42u64`). Son distintos de `Int`: no se
+mezclan sin conversión explícita, y su aritmética envuelve en
+complemento a dos en el ancho del tipo. En una firma
+`extern "C"` cruzan con el ancho exacto que declaran. Cap. 3
+§3.4.
+
 **Fiber** *(fibra)*. Unidad de ejecución cooperativa. En
 kaikai una fibra es liviana (cientos de bytes), tiene su
 propio heap, no comparte memoria con otras fibras, y solo cede
@@ -144,6 +158,12 @@ inmutables por construcción: `let x = ...` declara un binding
 que no cambia. Las construcciones mutables (`var`, `Ref[T]`,
 `Array[T]`) son la excepción explícita.
 
+**Instancia nombrada** *(named instance)*. Un handler ligado a
+un nombre con `with Eff(init) as x`. Permite que varios
+handlers del mismo efecto convivan, cada uno direccionable por
+su capability value, que puede pasarse como argumento. Cap. 12
+§12.9.
+
 ## L
 
 **Last-use analysis** *(análisis de último uso)*. La fase del
@@ -154,6 +174,10 @@ análisis para insertar `drop`s en el lugar correcto.
 **Linked** *(enlazado, en actores)*. Dos actores enlazados con
 `Link.link(pid)` se enteran mutuamente cuando uno termina:
 si uno cae, el otro recibe `Cancel.raise()`. Cap. 14.
+
+**Lint.** El comando `kai lint`: un linter estilo Clippy que
+señala código válido pero sospechoso. Opt-in, solo warnings,
+consciente de tipos y filas de efectos. Cap. 16 §16.4.
 
 ## M
 

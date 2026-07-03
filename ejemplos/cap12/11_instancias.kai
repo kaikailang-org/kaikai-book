@@ -1,0 +1,37 @@
+# Instancias nombradas: `with Eff(init) as nombre` liga un
+# capability value. Tres handlers del MISMO efecto conviven, y
+# cada instancia se pasa como argumento: `add` opera sobre las
+# celdas que le den, sin saber cuál es cuál.
+
+effect Cell {
+  get() : Int
+  set(n: Int) : Unit
+}
+
+# Las celdas llegan como parámetros: capability provisto por
+# quien llama, no demandado en la fila de efectos.
+fn add(c1: Cell, c2: Cell, dst: Cell) : Unit =
+  dst.set(c1.get() + c2.get())
+
+fn main() {
+  handle {
+    handle {
+      handle {
+        add(a, b, destino)
+        println("destino = #{destino.get()}")
+      } with Cell(0) as destino {
+        get(resume)    -> resume(state)
+        set(v, resume) -> resume((), v)
+        return(x)      -> x
+      }
+    } with Cell(20) as b {
+      get(resume)    -> resume(state)
+      set(v, resume) -> resume((), v)
+      return(x)      -> x
+    }
+  } with Cell(10) as a {
+    get(resume)    -> resume(state)
+    set(v, resume) -> resume((), v)
+    return(x)      -> x
+  }
+}

@@ -46,6 +46,21 @@ compiler, only on the system's libc. You can copy it to
 another machine with the same OS and architecture and it
 will run.
 
+For the binary you'll ship or debug, there are two profiles:
+
+```
+$ kai build --release app.kai    # -O2, symbols stripped:
+                                 # smaller, ready to ship
+$ kai build --debug app.kai      # -O0 with DWARF tables
+```
+
+With `--debug`, `lldb` or `gdb` set breakpoints on `.kai`
+lines, and a panic prints the stack trace as
+`file.kai:line`. It's the native backend that builds the
+DWARF tables; on `--backend=c` the flag is a no-op. With no
+flag you get the usual middle ground: fast compilation,
+symbols kept.
+
 ### Fast compilation
 
 `kai run` and `kai build` are designed to feel immediate. A
@@ -137,7 +152,54 @@ The `--stdin` form is for editors: your editor pipes the
 buffer to the formatter before saving, gets the canonical
 result back, and writes it.
 
-## 16.4 Package management: `init`, `add`, `install`, `update`
+## 16.4 The linter: `kai lint`
+
+Where `kai fmt` is dictatorial, `kai lint` is opinionated.
+It flags code that **compiles but reads like a mistake**,
+the way Rust's Clippy sits beside `rustc`: the compiler
+stays strict about correctness and silent about style; the
+opinions live in the linter.
+
+```
+$ kai lint file.kai           # human-readable warnings
+$ kai lint --json file.kai    # findings as JSON
+```
+
+Two properties define its character:
+
+- **Opt-in and non-blocking.** Warnings only, always exits
+  0, never changes what compiles. You run it when you want a
+  second look, not as a toll.
+- **Type- and effect-aware.** It's not a grep with
+  delusions: it reuses the typed AST and the effect rows the
+  compiler already produced, so it can tell apart what a
+  text scanner can't.
+
+The clearest example of that awareness is the
+`discard_pure_value` rule. A block drops the value of every
+statement that isn't its tail; if that dropped value is
+**pure and non-Unit**, it's dead code or a forgotten use:
+
+```kai
+fn run() : Int {
+  area(3, 4)        # warning: the Int is dropped
+  0
+}
+```
+
+But if the discarded call **carries effects**, the discard
+is legitimate — you called for the effect, not the value —
+and the rule stays quiet. That distinction requires the
+effect row; a textual linter doesn't have it.
+
+Other rules in the catalog nudge toward idiomatic kaikai:
+`point_free_nudge` suggests the point-free section (§6.2)
+when a unary lambda only projects on its parameter, and
+`and_then_to_map_nudge` warns when an `and_then` is really a
+`map`. The catalog grows in phases; `kai info lint` lists
+the current state.
+
+## 16.5 Package management: `init`, `add`, `install`, `update`
 
 Chapter 8 §8.5-8.8 covered the package model (`kai.toml`
 manifest, `kai.lock` lockfile, shared cache,
@@ -161,7 +223,15 @@ resolved in `kai.lock`. In practice, after cloning a kaikai
 project, `kai run` is enough to download whatever's
 missing.
 
-## 16.5 Development mode: `kai watch`
+Don't confuse `kai update` with `kai upgrade`: `update`
+refreshes your package's **dependencies**; `upgrade` updates
+the **compiler itself** to the latest release (downloads,
+verifies the SHA-256, and swaps the binary in place, as you
+saw in chapter 1). On a Homebrew install, `upgrade` doesn't
+touch the Cellar: it points you to `brew upgrade kaikai` and
+exits.
+
+## 16.6 Development mode: `kai watch`
 
 `kai watch` is useful when you're iterating intensely on a
 program:
@@ -177,7 +247,7 @@ visible without going back to the terminal to type `kai
 run`. It's the fastest way to explore a change in a demo or
 a script.
 
-## 16.6 Editor integration: `kai lsp`
+## 16.7 Editor integration: `kai lsp`
 
 `kai lsp` is the Language Server that kaikai exposes for
 editors. It implements the standard Language Server Protocol,
@@ -208,7 +278,7 @@ comparable, in everyday ergonomics, to Rust or TypeScript:
 feedback is instantaneous, no need to go to the terminal to
 discover an error.
 
-## 16.7 Interactive documentation: `kai info`
+## 16.8 Interactive documentation: `kai info`
 
 Alongside `kai lsp`, which serves the editor, sits `kai info`:
 language reference pages, organized by topic, accessible from
@@ -227,6 +297,10 @@ Topics:
   ffi          Foreign function interface — calling C via `Ffi`.
   fibers       Structured concurrency via nursery, spawn, await, cancel
   holes        Typed holes for incremental development.
+  idiomatic    How to write kaikai the way kaikai wants to be written.
+  install      Install and self-update the kaikai compiler.
+  lint         A Clippy-style linter for suspect-but-valid code.
+  llm          Bootstrap guide for an agentic AI pointed at a kaikai repo.
   loop         Control flow — `if`, `while`, `until`, and iteration via pipes.
   lsp          The kaikai Language Server (`kai lsp`).
   match        Pattern matching with exhaustiveness checking.
@@ -283,7 +357,7 @@ The three share a purpose: making the information the
 compiler already has live outside the binary, in a format
 any consumer can process without reimplementing the typer.
 
-## 16.8 The stdlib reference: `kai doc`
+## 16.9 The stdlib reference: `kai doc`
 
 `kai info` documents the **language**, by topic. Its sibling
 `kai doc` documents the **stdlib**, by module: it reads the
@@ -346,7 +420,7 @@ the stdlib: if your project has a module carrying `#[doc("...")]`
 attributes, it reads those too: you document your code with the
 same attribute the stdlib uses, and the same tool surfaces it.
 
-## 16.9 Two backends: native and C
+## 16.10 Two backends: native and C
 
 `kai build` and `kai run` have two codegen backends. The default
 is **`native`**: it lowers to LLVM linked into the compiler, in
@@ -390,7 +464,7 @@ behavior for special cases:
 For normal use you don't need to touch any of this. The binary
 comes preconfigured to find its own things.
 
-## 16.10 Typical project structure
+## 16.11 Typical project structure
 
 A standard kaikai project looks like this:
 
@@ -429,7 +503,7 @@ None of this is required. `kai run file.kai` runs any
 `.kai` file regardless of where it lives. But when the
 project grows, this structure pays off.
 
-## 16.11 Talking to C: `extern "C"` and the `Ffi` effect
+## 16.12 Talking to C: `extern "C"` and the `Ffi` effect
 
 Sooner or later you need a library that already exists in
 C: a database driver, a graphics framework, a numeric
@@ -498,14 +572,23 @@ identifier or just reads badly inline. Use the optional
 parenthesised override:
 
 ```kai
-extern "C"("strlen") fn c_strlen(s: String) : Int / Ffi
+extern "C"("abs") fn c_abs(n: I32) : I32 / Ffi
 ```
 
-The kaikai-side name is `c_strlen`; the linker resolves
-against `strlen`. Useful when the C name is a kaikai
+The kaikai-side name is `c_abs`; the linker resolves
+against `abs`. Useful when the C name is a kaikai
 keyword, when you want a kaikai-flavored name on top of a
 generic C one, or when you need two kaikai bindings that
 target the same C symbol with different signatures.
+
+Note the `I32`. The declaration the compiler emits **is**
+the binding contract, and for a symbol the system headers
+already declare (all of libc) it must match the exact C
+type: `abs` is `int abs(int)`, so the binding says `I32`,
+not `Int` — otherwise `cc` rejects the conflicting
+redeclaration. And a symbol whose C type has no kaikai
+mapping (`size_t`, a libc struct) isn't bound directly: you
+wrap it in a small `.c`, as we'll see next.
 
 ### Linking against your own C code
 
@@ -543,7 +626,7 @@ fn main() : Unit / Console + Ffi {
 Building:
 
 ```
-$ CFLAGS="-include shim.h shim.c" kai build --backend=c app.kai -o app
+$ CFLAGS="-include shim.h shim.c" kai build app.kai -o app
 $ ./app
 double(21) = 42
 ```
@@ -556,9 +639,9 @@ against installed libraries, `pkg-config --cflags --libs
 the whole thing in a `Makefile` when it grows beyond one
 line.
 
-The `--backend=c` flag here is required because the native
-backend (§16.1, §16.9) doesn't expose the same `CFLAGS`
-plumbing.
+It works the same on both backends: the native backend also
+links the final object with `cc`, so your extra C sources
+come in through the same door.
 
 ### Structs by value
 
@@ -590,11 +673,13 @@ field-for-field. The canonical, compiling example lives in
 `examples/ffi/v2_struct_by_value.kai` with its `v2_shim.c`; `kai
 info ffi` carries the exact reference.
 
-> Struct-by-value compiles on the C backend (`--backend=c`); the
-> native backend routes struct FFI through the C backend and, on
-> a native build, reports the gap along with the fix
-> (`--backend=c`). Native struct marshalling is a planned
-> follow-up.
+Struct-by-value works on **both backends**. On native, the
+emitter classifies the struct per the C ABI (registers vs.
+memory) directly; on the C backend that classification is
+inherited from `cc`. The usual caveat applies: if the struct
+you bind is one the system headers already declare (libc's
+`div_t`), the kaikai type name won't match C's, and you're
+better off wrapping the call in your own shim.
 
 ### Opaque handles
 
@@ -655,7 +740,7 @@ has a stable C API, that's a candidate to package as a
 reusable kaikai binding the rest of the ecosystem can import,
 instead of repeating the declarations in every project.
 
-## 16.12 Editions: stability without stagnation
+## 16.13 Editions: stability without stagnation
 
 There's one decision the rest of the book takes for granted
 without quite explaining it: kaikai uses **editions** to
@@ -706,7 +791,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.91.2 - hanga-roa (stage 2, self-hosted)
+kaikai 0.98.0 - hanga-roa (stage 2, self-hosted)
 ```
 
 If `kai.toml` omits the field, the compiler assumes the
@@ -773,7 +858,7 @@ migration guide, and `kai migrate` to automate the
 mechanical changes. Until then, what you wrote against
 hanga-roa keeps compiling.
 
-## 16.13 Philosophy: three principles of the tooling
+## 16.14 Philosophy: three principles of the tooling
 
 If you want to keep the overall feel of the tooling, three
 ideas:

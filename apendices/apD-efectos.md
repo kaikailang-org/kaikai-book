@@ -308,7 +308,7 @@ effect Ffi
 El efecto que cargan todas las funciones declaradas con
 `extern "C" fn`. Sin operaciones propias: es un marcador
 para que el sistema de tipos sepa qué funciones tocan
-código no auditado por kaikai. El capítulo 16 §16.9
+código no auditado por kaikai. El capítulo 16 §16.12
 cubre la sintaxis de declaración, el mapeo de tipos en el
 borde, el enlazado con shims C, y qué soporta y qué no
 FFI v1.

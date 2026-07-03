@@ -26,4 +26,10 @@ fn main() {
     cuadrado + 1
   }
   println("d sum=#{list.sum(d)}")
+
+  # 4. El parámetro puede ser un patrón de tupla: destructura
+  #    el par en el acto, sin `let` intermedio.
+  let pares = list.zip(xs, [10, 20, 30, 40, 50])
+  let e = pares | { (a, b) -> a + b }
+  println("e sum=#{list.sum(e)}")
 }

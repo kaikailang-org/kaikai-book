@@ -633,7 +633,93 @@ Esa es una diferencia profunda con `try/catch + variables
 globales`: ahí el orden es implícito y depende del runtime. Aquí es
 explícito y lo decides en la firma de los `handle`.
 
-## 12.9 Alias de filas de efectos
+## 12.9 Instancias nombradas: el handler como valor
+
+Hasta aquí, cada operación encuentra su handler por el nombre del
+efecto: `Log.log(...)` sube hasta el `handle ... with Log` más
+cercano. Eso deja una pregunta sin respuesta: ¿y si necesitas
+**dos** handlers del mismo efecto, vivos a la vez, y quieres
+elegir a cuál le hablas?
+
+La respuesta es darle un nombre a cada instancia:
+
+```kai
+handle {
+  ...
+} with Cell(10) as a {
+  get(resume)    -> resume(state)
+  set(v, resume) -> resume((), v)
+  return(x)      -> x
+}
+```
+
+El `as a` liga `a` como un **capability value**: un valor cuyo
+tipo es el efecto mismo (`Cell`, `State[Int]`). Dentro del cuerpo,
+`a.get()` opera contra *esa* instancia — no contra "el `Cell` más
+cercano", sino contra el handler que tiene nombre `a`.
+
+Lo interesante empieza cuando el capability viaja. Una instancia
+nombrada **se puede pasar como argumento**:
+
+```kai
+fn add(c1: Cell, c2: Cell, dst: Cell) : Unit =
+  dst.set(c1.get() + c2.get())
+```
+
+Mira esa firma con calma, porque tiene una sutileza. `Cell`
+aparece como **tipo de parámetro**, no en la fila de efectos.
+Son dos modos distintos de pedir lo mismo:
+
+- **En la fila** (`fn f() : T / Cell`): el efecto se *demanda* —
+  lo satisface un `handle` que envuelva la llamada, o un default.
+- **Como parámetro** (`fn f(c: Cell) : T`): el capability lo
+  *provee* quien llama, pasándolo explícito. No va en la fila,
+  porque la función no le pide nada al contexto: ya tiene su
+  evidencia en la mano.
+
+Con eso, tres instancias del mismo efecto conviven sin pisarse
+(`ejemplos/cap12/11_instancias.kai`):
+
+```kai
+handle {
+  handle {
+    handle {
+      add(a, b, destino)
+      println("destino = #{destino.get()}")
+    } with Cell(0) as destino { ... }
+  } with Cell(20) as b { ... }
+} with Cell(10) as a { ... }
+```
+
+```
+$ kai run ejemplos/cap12/11_instancias.kai
+destino = 30
+```
+
+`add` suma las celdas que le den, sin saber cuál es cuál. Antes
+de las instancias nombradas, la única salida era declarar tres
+efectos idénticos — `CellA`, `CellB`, `CellDst` — y manejar cada
+uno por separado. Ceremonia pura, y no escala.
+
+Una restricción importante: el capability es **de segunda
+clase**. Puede bajar por la pila — como argumento de llamada,
+como receptor de operaciones — pero no puede *escapar*:
+guardarlo en un record, devolverlo desde la función, capturarlo
+en una closure que sobreviva al `handle`, o cruzarlo a una fibra
+con `spawn`. Un handler es una promesa con alcance léxico; un
+valor que necesita vivir más que su `handle` no es un
+capability, es un `Ref[T]` bajo `Mutable` (§12.7) o un actor
+(capítulo 14).
+
+Si vienes de la inyección de dependencias, esta sección te
+debería sonar: pasar el capability como parámetro **es**
+inyectar la dependencia, con la diferencia de que aquí el tipo
+la rastrea y el compilador rechaza los usos que la harían
+escapar de su vida útil. Y si el wiring explícito te estorba,
+la fila de efectos sigue ahí: son los dos extremos del mismo
+mecanismo, y eliges por llamada.
+
+## 12.10 Alias de filas de efectos
 
 Cuando una combinación aparece muchas veces, le das un nombre con
 `type`:
@@ -662,7 +748,7 @@ escribir `type WithIo[e] = Io + e` (con variable de fila). Esa
 restricción evita complicaciones en la unificación que el
 compilador no necesita pagar.
 
-## 12.10 Default handlers: el efecto trae el suyo
+## 12.11 Default handlers: el efecto trae el suyo
 
 Hasta aquí cada `handle` que vimos lo escribimos a mano. Pero hay
 efectos donde una de las implementaciones es tan obvia que pedirle
@@ -859,7 +945,7 @@ distinto para tests, expón los dos como funciones envoltorio
 (`with_test_log`, `with_quiet_log`) y deja que `main` use el
 default. Quien escribe tests llama a la envoltorio.
 
-## 12.11 Los handlers del stdlib son código kaikai
+## 12.12 Los handlers del stdlib son código kaikai
 
 Cuando un programa `println("hola")` simplemente funciona, es fácil
 imaginar que el compilador trae un caso especial para `Stdout`. No
@@ -922,7 +1008,7 @@ escribir `$extern_handler`. Pero cuando lo veas en stdlib sabes
 qué es: una cláusula que cede el cuerpo a un símbolo del runtime,
 declarada con la misma sintaxis que cualquier otro handler.
 
-## 12.12 Caso de estudio: procesador de configuración
+## 12.13 Caso de estudio: procesador de configuración
 
 Cerramos con un ejemplo que mezcla los tres patrones que vimos:
 logueo, estado, fallo. El programa procesa una lista de líneas
@@ -1018,7 +1104,7 @@ test, los tres handlers tienen otras implementaciones: el `Log`
 acumula en una lista en vez de imprimir, el `Fail` propaga en un
 `Result`, el `State` parte del valor que el test quiera.
 
-## 12.13 Filosofía: tres ideas que vale recordar
+## 12.14 Filosofía: tres ideas que vale recordar
 
 Si esto te parece muchas piezas, vale fijar las tres ideas que
 todo lo demás sostiene:
@@ -1068,7 +1154,7 @@ segundo?
 total como la cantidad de elementos sumados, sin agregar
 parámetros. Pista: cambia `return(x) -> x`.
 
-**12.3.** El caso de estudio §12.12 imprime con `[LOG]` cada
+**12.3.** El caso de estudio §12.13 imprime con `[LOG]` cada
 entrada. Cambia el handler de `Log` para que en vez de imprimir,
 acumule los mensajes en una lista y los devuelva como parte del
 resultado final, junto con `n`. Pista: necesitas otro `State`.

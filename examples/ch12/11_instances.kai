@@ -1,0 +1,37 @@
+# Named instances: `with Eff(init) as name` binds a capability
+# value. Three handlers of the SAME effect coexist, and each
+# instance is passed as an argument: `add` operates on whatever
+# cells it is given, without knowing which is which.
+
+effect Cell {
+  get() : Int
+  set(n: Int) : Unit
+}
+
+# The cells arrive as parameters: a capability provided by the
+# caller, not demanded in the effect row.
+fn add(c1: Cell, c2: Cell, dst: Cell) : Unit =
+  dst.set(c1.get() + c2.get())
+
+fn main() {
+  handle {
+    handle {
+      handle {
+        add(a, b, target)
+        println("target = #{target.get()}")
+      } with Cell(0) as target {
+        get(resume)    -> resume(state)
+        set(v, resume) -> resume((), v)
+        return(x)      -> x
+      }
+    } with Cell(20) as b {
+      get(resume)    -> resume(state)
+      set(v, resume) -> resume((), v)
+      return(x)      -> x
+    }
+  } with Cell(10) as a {
+    get(resume)    -> resume(state)
+    set(v, resume) -> resume((), v)
+    return(x)      -> x
+  }
+}
