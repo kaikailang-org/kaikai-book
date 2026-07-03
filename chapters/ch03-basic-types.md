@@ -12,7 +12,7 @@ background, go back. It will save you friction.
 
 ## 3.1 The seven primitive types
 
-kaikai has exactly seven primitive types:
+Day-to-day kaikai rests on seven basic types:
 
 | Type | What it's for | Example literal |
 |---|---|---|
@@ -44,6 +44,11 @@ code after calling it is unreachable, which is why an expression
 of type `Nothing` fits any context where another type is
 expected. You'll bump into `Nothing` rarely, but it helps to
 know the name.
+
+These seven aren't the language's only numbers — there are
+fixed-width integers and arbitrary-precision types, covered in
+section 3.4 — but they are what you'll be typing 95% of the
+time.
 
 ## 3.2 Literals and string interpolation
 
@@ -174,7 +179,104 @@ They return `Bool`. They work over any type that implements the
 see those in chapter 9; for now, every primitive type
 implements them.
 
-## 3.4 `let` and local type propagation
+## 3.4 More numbers: fixed widths and arbitrary precision
+
+`Int` and `Real` cover nearly all the code you'll write. The
+rest has hard requirements: talking to C with the exact width
+the ABI expects, counting past 2⁶³, or carrying quantities where
+binary rounding is unacceptable. For those cases kaikai brings
+two more families. You won't need them soon, but it pays to know
+they exist and where each one's guarantees end.
+
+### Fixed-width integers
+
+Four types with an exact width: `Int32`, `UInt32`, `UInt64`, and
+`Int128`. The literal names them with a suffix attached to the
+digits:
+
+```kai
+let w = 42i32 + 7i32
+let big : Int128 = 9223372036854775808i128   # 2⁶³: out of
+                                             # Int's reach
+```
+
+Two rules govern them. First: **they don't mix with `Int`**. An
+`Int32` does not unify with an `Int`; adding them is a type
+error, just like mixing `Int` with `Real`. You convert by full
+name — `int_to_int32(...)`, `int32_to_int(...)`, and the
+analogues for `u32`, `u64`, and `i128`. No silent coercions here
+either.
+
+Second: **arithmetic wraps**. Adding `1i32` to `Int32`'s maximum
+doesn't promote and doesn't throw: it wraps around in two's
+complement, like C.
+
+```kai
+let edge = 2147483647i32 + 1i32   # -2147483648
+```
+
+The example `examples/ch03/05_fixed_width.kai` walks through
+both rules:
+
+```
+$ kai run examples/ch03/05_fixed_width.kai
+w = 49
+edge = -2147483648
+big = 9223372036854775808
+n32 + 1 = 11
+back = 11
+```
+
+When do you use them? Mostly at the C boundary: in an
+`extern "C"` signature, an `Int32` crosses as `int32_t`, a
+`UInt64` as `uint64_t` — the width you declare is the width that
+travels (chapter 16). `Int128` also stands on its own: it
+reaches ~38 digits where `Int` stops at ~19, with the same
+arithmetic as always.
+
+### Arbitrary precision: `BigInt`, `DecimalBig`, `Rational`
+
+When no fixed width is enough, the stdlib offers three types
+that grow as needed. They are opt-in — you import them, they
+don't come preloaded — because their cost is real: heap values,
+software arithmetic. kaikai charges you only when you ask.
+
+- **`BigInt`** (`import math.bigint`): an arbitrary-precision
+  integer that never overflows. The `n` suffix builds one from a
+  literal: `99n`. The suffix only reaches literals that fit in
+  `Int`; for larger values you start from a string with
+  `bigint.from_string("…")`.
+- **`DecimalBig`** (`import decimal_big`): fixed-point over
+  `BigInt`, meant for exact decimal quantities. `add`, `sub`,
+  and `mul` are total; `div` asks for the target scale
+  explicitly, because truncating is a decision, not an accident.
+  Comparing `1.5` with `1.50` yields equality: scale is not part
+  of the value. Its sibling `Decimal` (`import decimal`) uses
+  `Int128` as the carrier — lighter, with a ceiling near 38
+  digits.
+- **`Rational`** (`import rational`): an exact fraction, a
+  `num/den` pair over `BigInt` always reduced to lowest terms.
+  `1/2 + 1/3` is exactly `5/6`, with no rounding anywhere.
+
+The example `examples/ch03/06_big_numbers.kai` shows all three
+in action:
+
+```
+$ kai run examples/ch03/06_big_numbers.kai
+a² = 1000000014000000049
+d × 2 = 246913578024691357802469135780.246913578
+1/2 + 1/3 = 5/6
+```
+
+If you come from Python, `BigInt` is what they simply call `int`
+over there: the difference is that in kaikai the 64-bit integer
+is the common, fast case, and arbitrary precision is the
+exception you ask for by name. And if your problem is money, the
+full answer combines these types with the units of measure of
+chapter 10 — exact decimals supply the arithmetic; units, the
+discipline of not adding pesos to dollars.
+
+## 3.5 `let` and local type propagation
 
 `let` binds a name to a value. The type is inferred from the
 right-hand side:
@@ -231,7 +333,7 @@ you `var`: `name := v` declares and writes, and a bare name
 reads. You saw this in §2.2 and we'll come back to it in
 chapter 12 when we talk about effects.
 
-## 3.5 `if` as an expression
+## 3.6 `if` as an expression
 
 An `if` in kaikai produces a value:
 
@@ -296,7 +398,7 @@ The practical rule is simple: if **you care about the value**,
 write a full `if/else`; if **you care about the side effect**,
 write a bare `if` and don't bind it to anything.
 
-## 3.6 Blocks and the value of a block
+## 3.7 Blocks and the value of a block
 
 A block `{ ... }` is an **expression** whose value is the value
 of the last expression inside. The earlier lines run in order,
@@ -319,7 +421,7 @@ block, a `match` arm can be a block, a lambda body can be a
 block. The whole language reduces to expressions returning
 values.
 
-## 3.7 The difference between `=` and `{ ... }` in a function body
+## 3.8 The difference between `=` and `{ ... }` in a function body
 
 A function body can take two shapes. You saw this in chapter
 1; we pin it down here.

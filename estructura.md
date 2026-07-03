@@ -122,10 +122,12 @@ necesita ablandar algunas asunciones antes de seguir.
 - 3.1 `Int`, `Real`, `Bool`, `Char`, `String`, `Unit`
 - 3.2 Literales e interpolación de strings
 - 3.3 Operadores aritméticos, lógicos, de comparación
-- 3.4 `let` y la propagación local de tipos
-- 3.5 `if` como expresión
-- 3.6 Bloques y el valor de un bloque
-- 3.7 La diferencia entre `=` y `{ ... }` en el cuerpo de una
+- 3.4 Más números: anchos fijos (`Int32`…`Int128`) y precisión
+      arbitraria (`BigInt`, `DecimalBig`, `Rational`)
+- 3.5 `let` y la propagación local de tipos
+- 3.6 `if` como expresión
+- 3.7 Bloques y el valor de un bloque
+- 3.8 La diferencia entre `=` y `{ ... }` en el cuerpo de una
       función
 - *5 ejercicios*
 
@@ -288,12 +290,14 @@ concepto a la vez. Pero sin diluir.
 - 12.7 `var`, `Ref[T]` y `Array[T]`: azúcar sobre `State`, y el
        efecto `Mutable` para mutación observable
 - 12.8 Componer efectos: handlers anidados
-- 12.9 Alias de filas de efectos
-- 12.10 Tu propio handler por defecto: el patrón envoltorio
-- 12.11 Handlers por defecto del runtime
-- 12.12 Caso de estudio: procesador de configuración con
+- 12.9 Instancias nombradas: `with Eff as x`, capability
+       values, varias instancias del mismo efecto
+- 12.10 Alias de filas de efectos
+- 12.11 Tu propio handler por defecto: el patrón envoltorio
+- 12.12 Handlers por defecto del runtime
+- 12.13 Caso de estudio: procesador de configuración con
         `Log + State + Fail`
-- 12.13 Filosofía: tres ideas que cargan el sistema
+- 12.14 Filosofía: tres ideas que cargan el sistema
 - *9 ejercicios*
 
 #### Capítulo 13 · Concurrencia y memoria
@@ -371,19 +375,24 @@ un experimento en esa dirección.
 
 #### Capítulo 16 · Tooling: el binario `kai`
 
-- 16.1 `kai run`, `kai build`, `kai test`, `kai check`, `kai bench`
-- 16.2 `kai fmt`
-- 16.3 `kai init`, `kai add`, `kai install`, `kai update`:
-       gestión de paquetes (extiende lo del cap. 8)
-- 16.4 `kai watch` para el ciclo edit-save-run
-- 16.5 `kai lsp` e integración con editores
-- 16.6 `kai info`: documentación interactiva en línea de
+- 16.1 `kai run`, `kai build` (perfiles `--release` / `--debug`)
+- 16.2 `kai test`, `kai check`, `kai bench`
+- 16.3 `kai fmt`
+- 16.4 `kai lint`: linter estilo Clippy, consciente de tipos
+       y efectos
+- 16.5 `kai init`, `kai add`, `kai install`, `kai update` (y
+       `kai upgrade` para el compilador mismo)
+- 16.6 `kai watch` para el ciclo edit-save-run
+- 16.7 `kai lsp` e integración con editores
+- 16.8 `kai info`: documentación interactiva en línea de
        comandos, con salida JSON para agentes.
-- 16.7 Variables de entorno: `KAI_NO_STDLIB`, `KAI_STDLIB`,
-       `CC`, `CFLAGS`
-- 16.8 Estructura típica de un proyecto kaikai
-- 16.9 Ediciones: estabilidad sin estancamiento. `edition`
-       en `kai.toml`, multi-edición, `#[unstable]`.
+- 16.9 `kai doc`: la referencia del stdlib
+- 16.10 Dos backends: nativo y C
+- 16.11 Estructura típica de un proyecto kaikai
+- 16.12 Hablar con C: `extern "C"` y el efecto `Ffi`
+- 16.13 Ediciones: estabilidad sin estancamiento. `edition`
+        en `kai.toml`, multi-edición, `#[unstable]`.
+- 16.14 Filosofía: tres principios del tooling
 - *Sin ejercicios*: capítulo de referencia.
 
 #### Capítulo 17 · Caso de estudio: servidor HTTP

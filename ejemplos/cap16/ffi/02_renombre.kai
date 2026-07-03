@@ -1,10 +1,11 @@
 ## Renombrar el símbolo de C con `extern "C"("nombre")`. El
-## lado kaikai llama a la función `c_strlen`; el linker
-## resuelve contra `strlen` de libc.
+## lado kaikai llama a la función `c_abs`; el linker resuelve
+## contra `abs` de libc. Como `abs` ya viene declarado por los
+## headers del sistema (int abs(int)), el binding usa el tipo C
+## exacto: I32, no Int.
 
-extern "C"("strlen") fn c_strlen(s: String) : Int / Ffi
+extern "C"("abs") fn c_abs(n: I32) : I32 / Ffi
 
 fn main() : Unit / Console + Ffi {
-  let s = "hola, kaikai"
-  print("largo = #{c_strlen(s)}")
+  print("|-7| = #{c_abs(0 - 7)}")
 }

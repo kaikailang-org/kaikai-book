@@ -1,0 +1,25 @@
+# Fixed-width integers: Int32, UInt32, UInt64, Int128.
+#
+# The literal suffix picks the type: 42i32, 42u32, 42u64, 42i128.
+# They are distinct from Int: no mixing without an explicit
+# conversion. Arithmetic wraps (two's complement) at the type's
+# width.
+
+fn main() {
+  let w = 42i32 + 7i32
+  println("w = #{w}")
+
+  # At the width's edge, addition wraps: there is no promotion.
+  let edge = 2147483647i32 + 1i32
+  println("edge = #{edge}")               # -2147483648
+
+  # Int128 reaches where Int (64 bits) cannot.
+  let big : Int128 = 9223372036854775808i128
+  println("big = #{big}")
+
+  # Between Int and the fixed widths you convert by full name.
+  let n : Int = 10
+  let n32 = int_to_int32(n)
+  println("n32 + 1 = #{n32 + 1i32}")
+  println("back = #{int32_to_int(n32) + 1}")
+}
