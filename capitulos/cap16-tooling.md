@@ -787,7 +787,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.98.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.99.0 - hanga-roa (stage 2, self-hosted)
 ```
 
 Si el `kai.toml` omite el campo, el compilador asume la
