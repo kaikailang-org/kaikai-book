@@ -256,11 +256,22 @@ aritmética por software. kaikai te lo cobra solo cuando lo pides.
   accidente. Comparar `1.5` con `1.50` da igualdad: la escala no
   es parte del valor. Su hermano `Decimal` (`import decimal`)
   usa `Int128` como soporte — más liviano, con techo cerca de
-  los 38 dígitos.
+  los 38 dígitos. También tiene sufijo: `12.0d` es un `Decimal`.
 - **`Rational`** (`import rational`): fracción exacta, un par
   `num/den` sobre `BigInt` siempre reducido a términos mínimos.
   `1/2 + 1/3` es exactamente `5/6`, sin redondeo en ninguna
   parte.
+
+Estos tipos son records con invariantes — un `Rational` siempre
+está reducido, un `Decimal` lleva su escala — así que no se
+construyen con el literal de record crudo, que se saltaría esa
+lógica. La forma corta es el **constructor posicional**: un tipo
+marcado con el atributo `#[constructor]` deja que `Tipo(args)`
+llame a la función que lo construye de verdad. `Rational(1, 2)`
+es `rational.make(1, 2)`, con la reducción incluida; `Complex(1.5,
+2.0)` es `complex.mk(...)`. Es azúcar, no magia: la aridad tiene
+que calzar con la función marcada — `Rational(5)`, con un solo
+argumento, no existe (para eso está `rational.from_int(5)`).
 
 El ejemplo `ejemplos/cap03/06_numeros_grandes.kai` muestra los
 tres en acción:

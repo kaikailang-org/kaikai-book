@@ -2,7 +2,8 @@
 #
 # BigInt nunca desborda; el sufijo `n` construye uno desde un
 # literal. DecimalBig es punto fijo sobre BigInt. Rational es una
-# fracción exacta, siempre reducida.
+# fracción exacta, siempre reducida — y `Rational(a, b)` la
+# construye directo gracias al atributo `#[constructor]`.
 
 import math.bigint
 import math.bigint_proto
@@ -22,8 +23,9 @@ fn main() {
     None    -> println("error de parseo")
   }
 
-  # Rational: 1/2 + 1/3 = 5/6, sin redondeo.
-  let mitad  = rat.make(bigint.from_int(1), bigint.from_int(2))
-  let tercio = rat.make(bigint.from_int(1), bigint.from_int(3))
+  # Rational: 1/2 + 1/3 = 5/6, sin redondeo. `Rational(a, b)`
+  # pasa por `make`, que reduce a términos mínimos.
+  let mitad  = Rational(1, 2)
+  let tercio = Rational(1, 3)
   println("1/2 + 1/3 = #{show(rat.add(mitad, tercio))}")
 }
