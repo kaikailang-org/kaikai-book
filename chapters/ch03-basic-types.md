@@ -253,10 +253,21 @@ software arithmetic. kaikai charges you only when you ask.
   Comparing `1.5` with `1.50` yields equality: scale is not part
   of the value. Its sibling `Decimal` (`import decimal`) uses
   `Int128` as the carrier — lighter, with a ceiling near 38
-  digits.
+  digits. It has a suffix too: `12.0d` is a `Decimal`.
 - **`Rational`** (`import rational`): an exact fraction, a
   `num/den` pair over `BigInt` always reduced to lowest terms.
   `1/2 + 1/3` is exactly `5/6`, with no rounding anywhere.
+
+These types are records with invariants — a `Rational` is always
+reduced, a `Decimal` carries its scale — so you don't build them
+with the raw record literal, which would skip that logic. The
+short form is the **positional constructor**: a type marked with
+the `#[constructor]` attribute lets `Type(args)` call the
+function that actually builds it. `Rational(1, 2)` is
+`rational.make(1, 2)`, reduction included; `Complex(1.5, 2.0)` is
+`complex.mk(...)`. It's sugar, not magic: the arity must match
+the marked function — `Rational(5)`, with a single argument,
+doesn't exist (that's what `rational.from_int(5)` is for).
 
 The example `examples/ch03/06_big_numbers.kai` shows all three
 in action:
