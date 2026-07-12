@@ -101,7 +101,10 @@ Tres decisiones del sistema de tipos vale enumerar:
   programa a múltiples monedas, declaras `unit EUR`, defines
   una tasa de cambio como `Real<USD / EUR>`, y el sistema de
   tipos te lleva de la mano. Sin UoM, lo descubres cuando un
-  cliente reclama.
+  cliente reclama. (El stdlib trae además `money`, con
+  `Money[c: Currency]` sobre `Decimal` y las monedas ISO
+  declaradas; el capítulo 19 lo cubre. Aquí seguimos con
+  `Real<USD>` porque el punto es la técnica de UoM.)
 - **`Int<CuentaId>` vs `Int<TransaccionId>`.** El cap. 10
   cubrió también los branded types. Tener `Int` puro como id
   significa que pasar un id de transacción donde se espera un

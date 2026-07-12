@@ -63,6 +63,14 @@ language keywords and kaikai stdlib APIs stay in their original
 form (English). Figures live once under `figuras/` when they are
 language-neutral.
 
+A note on the word: the kaikai *language* also has editions —
+Tongariki, Hanga Roa, Orongo, and Anakena on the horizon — as
+its stability mechanism (chapter 16 covers it). This book is
+written and validated against the **Hanga Roa** edition. The
+language's milestones are defined per edition, never by a
+version number: Orongo will ship as 0.100.x, and there is no
+"1.0" milestone on the map.
+
 ## Repository layout
 
 ```

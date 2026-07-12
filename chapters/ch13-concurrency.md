@@ -121,6 +121,13 @@ same shape is needed immediately after, the same memory is
 reused without touching the counter). In practice the cost
 is low and predictable.
 
+For the extreme case — a computation that builds mountains
+of throwaway structure only to fold it down to a scalar —
+there is an opt-in escape: the `region` block, which
+allocates in an arena and frees it wholesale, no counters
+involved. It belongs to the same kind catalog as chapter
+10's units, and we cover it in chapter 19.
+
 Why this matters for concurrency: Perceus works per fiber.
 Each fiber has its own counters, its own frees. There's no
 synchronization between fibers for any counter: no two

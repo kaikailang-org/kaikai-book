@@ -172,7 +172,11 @@ fn promedio[u: Measure](a: Real<u>, b: Real<u>) : Real<u> =
 
 `u : Measure` declara `u` como un parámetro de tipo en el
 **kind** `Measure`. Lo único que `u` admite es ser una
-unidad. La función `promedio` acepta dos `Real<u>` y devuelve
+unidad. `Measure` no es un caso aislado: es una entrada del
+catálogo de kinds del lenguaje (`stdlib/core/kinds.kai`), el
+mismo mecanismo que clasifica tipos, efectos, monedas y
+regiones de memoria — el capítulo 19 lo recorre completo. La
+función `promedio` acepta dos `Real<u>` y devuelve
 un `Real<u>`: el "para cualquier u" es lo que permite usarla
 con `USD`, `kg`, `m/sec`, lo que sea, **siempre y cuando los
 dos argumentos tengan la misma unidad**.
@@ -379,6 +383,15 @@ Funciona, devuelve un número, y produce un total que **no
 significa nada**. En kaikai con unidades, ese mismo programa
 no compila. El bug que en otros lenguajes se descubre en
 producción (o nunca, según la suerte) aquí no existe.
+
+Una nota para código de producción: el stdlib trae un módulo
+`money` con las monedas ISO ya declaradas y un tipo
+`Money[c: Currency]` montado sobre `Decimal` (aritmética
+exacta, no punto flotante). Usa un kind propio, `Currency`,
+más restrictivo que `Measure`: permite sumar y escalar, pero
+`USD^2` o `USD*EUR` ni siquiera se pueden escribir. El
+capítulo 19 explica esa diferencia; para aprender la mecánica
+de unidades, el `Real<USD>` de este capítulo es el camino.
 
 ## Ejercicios
 

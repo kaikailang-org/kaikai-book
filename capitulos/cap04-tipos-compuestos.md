@@ -194,14 +194,21 @@ let primos = [2, 3, 5, 7, 11]
 let vacia : [Int] = []
 ```
 
-kaikai trae también **literales de rango**, que son azúcar
-sintáctica que produce una lista:
+kaikai trae también **literales de rango**, que para el sistema
+de tipos son una lista más:
 
 ```kai
 let r1 = [1..10]        # [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 let r2 = [1..10..2]     # [1, 3, 5, 7, 9]
 let r3 = [10..1..-1]    # [10, 9, 8, ..., 1]
 ```
+
+Un detalle de costo que conviene saber: el rango es **lazy**. El
+runtime lo guarda como tres números (inicio, fin, paso), no como
+diez celdas, y los elementos se generan recién cuando algo los
+consume. `[1..1_000_000] |> list.sum` no materializa un millón
+de celdas; para tu código es indistinguible de la lista escrita
+a mano.
 
 Para extender una lista existente, usas `...` (spread):
 

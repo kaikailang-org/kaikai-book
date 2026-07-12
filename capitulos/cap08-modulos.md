@@ -206,13 +206,15 @@ core, y vive bajo `stdlib/core/` en el árbol del compilador.
 
 Lo que vive en core es deliberadamente pequeño: los tipos
 primitivos, las operaciones aritméticas, los `Option` y `Result`,
-algunas funciones de lista, IO básica con `println`. El resto del
-stdlib (encoding, redes, archivos, criptografía) vive en módulos
-separados que se importan como cualquier otro:
+los módulos `list` y `string` (por eso escribes `list.map(xs, f)`
+sin importar nada), y builtins como `println`, `length` y
+`reduce`. El resto del stdlib (encoding, redes, archivos,
+criptografía) vive en módulos separados que se importan como
+cualquier otro:
 
 ```kai
-import list                  # operaciones de lista fuera de core
-import string                # operaciones de string
+import stream                # pipelines lazy sobre streams
+import fs.path               # manipulación de rutas
 import encoding.json         # parseo de JSON
 ```
 

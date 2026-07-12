@@ -168,7 +168,11 @@ fn average[u: Measure](a: Real<u>, b: Real<u>) : Real<u> =
 
 `u : Measure` declares `u` as a type parameter in the
 **kind** `Measure`. The only thing `u` admits is being a
-unit. The function `average` takes two `Real<u>` and returns
+unit. And `Measure` is not a one-off: it is one entry in the
+language's kind catalog (`stdlib/core/kinds.kai`), the same
+mechanism that classifies types, effects, currencies and
+memory regions — chapter 19 walks through all of it. The
+function `average` takes two `Real<u>` and returns
 a `Real<u>` — the "for any u" lets you use it with `USD`,
 `kg`, `m/sec`, anything, **as long as the two arguments
 have the same unit**.
@@ -375,6 +379,15 @@ It works, returns a number, and produces a total that
 doesn't compile. The bug that in other languages is
 discovered in production — or never, depending on luck —
 doesn't exist here.
+
+A note for production code: the stdlib ships a `money`
+module with the ISO currencies already declared and a
+`Money[c: Currency]` type built on `Decimal` (exact
+arithmetic, not floating point). It uses its own kind,
+`Currency`, stricter than `Measure`: adding and scaling are
+allowed, but `USD^2` or `USD*EUR` cannot even be written.
+Chapter 19 explains that difference; for learning the
+mechanics of units, this chapter's `Real<USD>` is the way.
 
 ## Exercises
 

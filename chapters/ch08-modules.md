@@ -205,14 +205,16 @@ the *prelude* (Haskell) or *built-ins* (Python); kaikai calls
 it core, and it lives under `stdlib/core/` in the compiler tree.
 
 What lives in core is deliberately small: primitive types,
-arithmetic operators, `Option` and `Result`, a handful of list
-functions, basic IO via `println`. The rest of the stdlib
-(encoding, networking, files, cryptography) lives in separate
-modules imported like any other:
+arithmetic operators, `Option` and `Result`, the `list` and
+`string` modules (which is why you write `list.map(xs, f)`
+without importing anything), and builtins like `println`,
+`length` and `reduce`. The rest of the stdlib (encoding,
+networking, files, cryptography) lives in separate modules
+imported like any other:
 
 ```kai
-import list                  # list operations outside core
-import string                # string operations
+import stream                # lazy pipelines over streams
+import fs.path               # path manipulation
 import encoding.json         # JSON parsing
 ```
 

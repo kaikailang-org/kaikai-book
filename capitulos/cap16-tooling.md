@@ -787,7 +787,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.99.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.99.6 - hanga-roa (stage 2, self-hosted)
 ```
 
 Si el `kai.toml` omite el campo, el compilador asume la
@@ -845,13 +845,19 @@ Al cierre de este libro, kaikai conoce tres:
 |---|---|---|
 | `tongariki` | cerrada | Fase de iteración rápida pre-2026. Solo paquetes que aún no migraron. |
 | `hanga-roa` | activa (default) | La primera edición pública. El libro está escrito contra esta. |
-| `orongo` | futura | Próxima edición. Lo que se difiera de Hanga Roa aterriza aquí. |
+| `orongo` | futura | La edición de estabilización. Se publicará como 0.100.x: el rótulo "1.0" quedó postergado indefinidamente, porque el compromiso de estabilidad vive en la edición, no en un número. |
 
 Los nombres siguen la cantera rapanui del resto del
-ecosistema: lugares de Rapa Nui en orden cronológico.
-Cuando se cierre `hanga-roa`, llegará un anuncio, una
-guía de migración, y `kai migrate` para automatizar los
-cambios mecánicos. Mientras tanto, el código que escribiste
+ecosistema: lugares de Rapa Nui en orden cronológico —
+Tongariki, Hanga Roa, Orongo, y Anakena como el horizonte
+que viene después. Los hitos del lenguaje se definen por
+edición, nunca por un número de versión con aura.
+Cuando se cierre `hanga-roa`, llegará un anuncio, una guía
+de migración, y `kai migrate` automatizará los cambios
+mecánicos — la herramienta ya existe: reescribe el AST de
+un archivo entre ediciones, por defecto en modo dry-run
+(imprime sin tocar nada) y con `--write` aplica, de forma
+idempotente. Mientras tanto, el código que escribiste
 contra hanga-roa va a seguir compilando.
 
 ## 16.14 Filosofía: tres principios del tooling
