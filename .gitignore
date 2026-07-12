@@ -8,7 +8,9 @@ borradores/build-pdf/body*.md
 borradores/build-pdf/body*.typ
 borradores/build-pdf/kaikai-libro-es.typ
 borradores/build-pdf/kaikai-book-en.typ
-borradores/build-pdf/figuras/
+# sin barra final: es un symlink creado por build.sh y la regla
+# con "/" solo matchea directorios reales
+borradores/build-pdf/figuras
 
 # Compiled example binaries and runtime logs (kai build/run output)
 # `kai build <file.kai>` drops a name-stripped Mach-O next to the cwd;
