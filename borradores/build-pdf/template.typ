@@ -46,7 +46,7 @@
   v(1fr)
   align(left)[
     Copyright © #year · #author \
-    Borrador del libro #emph[kaikai]. Distribución limitada. \
+    Borrador de #emph[Programación efectiva con kaikai]. Distribución limitada. \
     El lenguaje #emph[kaikai] y su documentación viven en
     #link("https://github.com/kaikailang-org/kaikai")[github.com/kaikailang-org/kaikai].
 
@@ -66,7 +66,7 @@
 }
 
 #let book(
-  title: "Programación simple con kaikai",
+  title: "Programación efectiva con kaikai",
   subtitle: "Un lenguaje para humanos y agentes",
   author: "Eduardo Díaz",
   year: 2026,

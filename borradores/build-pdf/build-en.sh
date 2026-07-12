@@ -53,7 +53,7 @@ perl -i -pe 's|^#horizontalrule$|#v(0.5em) #line(length: 30%, stroke: 0.5pt) #v(
 cat > kaikai-book-en.typ <<'EOF'
 #import "template-en.typ": book
 #show: book.with(
-  title: "Simple programming with kaikai",
+  title: "Effective Programming with kaikai",
   subtitle: "A language for humans and agents",
   author: "Eduardo Díaz",
   year: 2026,

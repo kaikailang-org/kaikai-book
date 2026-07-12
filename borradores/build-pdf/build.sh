@@ -61,7 +61,7 @@ perl -i -pe 's|^#horizontalrule$|#v(0.5em) #line(length: 30%, stroke: 0.5pt) #v(
 cat > kaikai-libro-es.typ <<'EOF'
 #import "template.typ": book
 #show: book.with(
-  title: "Programación simple con kaikai",
+  title: "Programación efectiva con kaikai",
   subtitle: "Un lenguaje para humanos y agentes",
   author: "Eduardo Díaz",
   year: 2026,
