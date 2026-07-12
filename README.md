@@ -66,7 +66,8 @@ language-neutral.
 A note on the word: the kaikai *language* also has editions —
 Tongariki, Hanga Roa, Orongo, and Anakena on the horizon — as
 its stability mechanism (chapter 16 covers it). This book is
-written and validated against the **Hanga Roa** edition. The
+written and validated against the **Hanga Roa** edition,
+currently **kaikai 0.99.6**. The
 language's milestones are defined per edition, never by a
 version number: Orongo will ship as 0.100.x, and there is no
 "1.0" milestone on the map.
