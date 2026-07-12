@@ -1,12 +1,14 @@
 # Capítulo 19 · Kinds: un catálogo de álgebras
 
-Este capítulo le pone nombre a algo que llevas usando desde la
-mitad del libro sin saberlo. Cuando en el capítulo 10 escribiste
+Este capítulo paga una promesa que el §2.6 dejó abierta: en
+kaikai el tipo no es la única etiqueta, y las familias de
+etiquetas — los **kinds** — tienen un mecanismo común que
+alguien te debía mostrar completo. Lo has venido tocando por
+partes. Cuando en el capítulo 10 escribiste
 `fn promedio[u: Measure](...)`, esa anotación `u: Measure` no era
-un parámetro de tipo común. `u` no podía ser `Int` ni `String` ni
-ningún tipo: solo podía ser una *unidad*. Estabas cuantificando
-sobre otra familia de cosas, con otras reglas. Esa familia tiene
-un nombre: un **kind**.
+un parámetro de tipo común: `u` no podía ser `Int` ni `String` ni
+ningún tipo, solo podía ser una *unidad*. Estabas cuantificando
+sobre otra familia de cosas, con otras reglas.
 
 Y no hay uno solo. Los tipos que unifica el inferidor, las filas
 de efectos que se componen en cada firma, las unidades que

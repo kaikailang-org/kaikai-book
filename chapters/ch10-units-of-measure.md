@@ -23,6 +23,14 @@ mixes incompatible units. The unit **lives in the type**,
 **is erased at runtime**, and is documented in every
 signature it touches.
 
+And if §2.6 left you with the idea that in kaikai the type is
+not the only label, this chapter is where that idea becomes
+tangible: units are your first full-body encounter with a
+**kind** — a family of labels with its own algebra, distinct
+from types. You have already used another one without looking
+at it head-on (the effect row); this is the first one you will
+declare and manipulate yourself.
+
 This chapter covers classical units (physics, finance, time)
 and their less obvious but more frequent use in day-to-day
 code: **branded types**, where the unit is just a label

@@ -215,6 +215,14 @@ fila es un conjunto, no una secuencia. `Log + Fail` y `Fail + Log`
 son la misma fila para el compilador. El operador `+` es solo
 sintaxis para construirla.
 
+Si esto te suena al capítulo 10 — donde `m * s` y `s * m` eran
+la misma unidad — no es coincidencia. Los efectos son otra de
+las familias de etiquetas del §2.6: habitan su propio kind, con
+su propia álgebra (la fila, donde el orden no cuenta y los
+duplicados colapsan), y el compilador la aplica al unificar
+firmas igual que aplica el álgebra de unidades. El capítulo 19
+muestra las dos como entradas del mismo catálogo.
+
 ## 12.4 Manejar un efecto con `handle ... with`
 
 La parte interesante: **decidir qué significa un efecto** en un
