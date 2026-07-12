@@ -1,0 +1,31 @@
+# A linked tree built in an arena across function boundaries:
+# `r` is a habitant of the Region kind, `Tree<r>` carries it in
+# the type, and no node pays reference counting.
+
+type Tree = Leaf | Node(Tree, Int, Tree)
+
+fn insert[r: Region](t: Tree<r>, k: Int) : Tree<r> =
+  match t {
+    Leaf -> Node(Leaf, k, Leaf)
+    Node(l, v, rr) ->
+      if k < v { Node(insert(l, k), v, rr) }
+      else if k > v { Node(l, v, insert(rr, k)) }
+      else { Node(l, v, rr) }
+  }
+
+fn tree_sum[r: Region](t: Tree<r>) : Int =
+  match t {
+    Leaf -> 0
+    Node(l, v, rr) -> tree_sum(l) + v + tree_sum(rr)
+  }
+
+fn build[r: Region](t: Tree<r>, n: Int) : Tree<r> =
+  if n == 0 { t } else { build(insert(t, n), n - 1) }
+
+fn main() : Unit / Stdout = {
+  let total = region { r ->
+    let tree = build(Leaf, 100)
+    tree_sum(tree)
+  }                                # 100 nodes freed in one shot
+  println("#{total}")
+}

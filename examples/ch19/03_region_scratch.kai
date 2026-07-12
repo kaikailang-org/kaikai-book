@@ -1,0 +1,17 @@
+# A `region` block: lists built lexically inside it live in an
+# arena freed wholesale at the closing brace. The scalar result
+# crosses out for free; nothing else escapes.
+
+fn sum(xs: [Int]) : Int = match xs {
+  []        -> 0
+  [h, ...t] -> h + sum(t)
+}
+
+fn main() : Unit / Stdout = {
+  let total = region {
+    let a = [1, 2, 3, 4, 5]        # built in the arena
+    let b = [10, 20, 30]           # built in the arena
+    sum(a) + sum(b)                # scalar result
+  }                                # arena freed here, in one shot
+  println("#{total}")
+}

@@ -11,7 +11,7 @@ OUT="kaikai-book-en.pdf"
 
 # --- 1. Assemble markdown -------------------------------------------------
 {
-  # Prologue + numbered chapters (ch00-prologue.md + ch01..ch18)
+  # Prologue + numbered chapters, in file-name order
   for f in "$ROOT"/chapters/ch*.md; do
     echo
     cat "$f"

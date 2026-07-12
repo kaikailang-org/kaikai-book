@@ -75,7 +75,7 @@ version number: Orongo will ship as 0.100.x, and there is no
 
 ```
 CLAUDE.md             — instructions for the agent assisting the writing
-estructura.md         — full table of contents (18 chapters + 6 appendices)
+estructura.md         — full table of contents (19 chapters + 6 appendices)
 capitulos/            — Spanish chapters, capNN-*.md
 chapters/             — English chapters, chNN-*.md
 ejemplos/capNN/       — sources cited by the Spanish edition

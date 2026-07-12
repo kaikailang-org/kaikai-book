@@ -1,0 +1,31 @@
+# Un árbol enlazado construido en una arena a través de fronteras
+# de función: `r` es un habitante del kind Region, `Arbol<r>` lo
+# carga en el tipo, y ningún nodo paga reference counting.
+
+type Arbol = Hoja | Nodo(Arbol, Int, Arbol)
+
+fn insertar[r: Region](t: Arbol<r>, k: Int) : Arbol<r> =
+  match t {
+    Hoja -> Nodo(Hoja, k, Hoja)
+    Nodo(izq, v, der) ->
+      if k < v { Nodo(insertar(izq, k), v, der) }
+      else if k > v { Nodo(izq, v, insertar(der, k)) }
+      else { Nodo(izq, v, der) }
+  }
+
+fn sumar[r: Region](t: Arbol<r>) : Int =
+  match t {
+    Hoja -> 0
+    Nodo(izq, v, der) -> sumar(izq) + v + sumar(der)
+  }
+
+fn construir[r: Region](t: Arbol<r>, n: Int) : Arbol<r> =
+  if n == 0 { t } else { construir(insertar(t, n), n - 1) }
+
+fn main() : Unit / Stdout = {
+  let total = region { r ->
+    let arbol = construir(Hoja, 100)
+    sumar(arbol)
+  }                                # 100 nodos liberados de un golpe
+  println("#{total}")
+}

@@ -1,0 +1,22 @@
+# El kind Currency en uso: sumar la misma moneda, escalar por un
+# número, convertir por una puerta explícita. Decimal exacto abajo.
+
+import money
+import decimal as dec
+import decimal_proto
+
+fn main() : Unit / Stdout = {
+  let a: Money[USD] = 10.50<USD>
+  let b: Money[USD] = 4.50<USD>
+  let total = a + b                       # misma moneda: Money[USD]
+
+  let k: dec.Decimal = 3
+  let triple = total * k                  # escalar: sigue en USD
+
+  let tasa: dec.Decimal = 0.92
+  let en_euros: Money[EUR] = money.convert(total, tasa)
+
+  println("total  = #{money.to_string(total)} USD")
+  println("triple = #{money.to_string(triple)} USD")
+  println("euros  = #{money.to_string(en_euros)} EUR")
+}

@@ -1,0 +1,14 @@
+# This file does NOT compile, on purpose: the Currency kind has
+# no habitant product, so "dollars times euros" is a type that
+# cannot be formed.
+
+import money
+import decimal as dec
+import decimal_proto
+
+fn main() : Unit / Stdout = {
+  let u: Money[USD] = 10.00<USD>
+  let e: Money[EUR] = 5.00<EUR>
+  let nonsense = u * e            # error: `EUR USD` does not exist
+  println(money.to_string(nonsense))
+}
