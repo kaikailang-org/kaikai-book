@@ -1,4 +1,4 @@
-# El Lenguaje de Programación kaikai
+# Programación efectiva con kaikai
 
 Un libro sobre [kaikai](https://github.com/kaikailang-org/kaikai), un
 lenguaje de programación funcional, con tipado estático, efectos

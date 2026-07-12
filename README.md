@@ -1,4 +1,4 @@
-# The kaikai Programming Language
+# Effective Programming with kaikai
 
 A book about [kaikai](https://github.com/kaikailang-org/kaikai), a functional,
 statically typed programming language with algebraic effects as a

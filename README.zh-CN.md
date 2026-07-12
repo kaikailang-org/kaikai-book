@@ -1,4 +1,10 @@
-# kaikai 程序设计语言
+# kaikai 高效编程
+
+(书名原文:*Programación efectiva con kaikai* / *Effective
+Programming with kaikai*。"效"字在这里一语双关:既指**高效**
+(effective)的编程,也指语言核心的代数**效应**(effects)——
+原文里 efectiva/efectos、effective/effects 的双关,中文借同一个
+"效"字保留。)
 
 一本关于 [kaikai](https://github.com/kaikailang-org/kaikai)
 的书。kaikai 是一门函数式、静态类型的程序设计语言,把代数效应
