@@ -1,12 +1,14 @@
 # Chapter 19 · Kinds: a catalog of algebras
 
-This chapter puts a name on something you have been using since
-the middle of the book without knowing it. When you wrote
+This chapter pays a promise §2.6 left open: in kaikai the type
+is not the only label, and the families of labels — the
+**kinds** — share one mechanism that someone owed you in full.
+You have been touching it in pieces. When you wrote
 `fn average[u: Measure](...)` in chapter 10, that `u: Measure`
-annotation was not an ordinary type parameter. `u` could not be
-`Int` or `String` or any type at all: it could only be a *unit*.
-You were quantifying over a different family of things, with
-different rules. That family has a name: a **kind**.
+annotation was not an ordinary type parameter: `u` could not be
+`Int` or `String` or any type at all, only a *unit*. You were
+quantifying over a different family of things, with different
+rules.
 
 And there isn't just one. The types the inferencer unifies, the
 effect rows composed in every signature, the units that multiply

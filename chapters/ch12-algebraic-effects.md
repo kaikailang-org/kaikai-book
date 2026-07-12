@@ -221,6 +221,14 @@ the row is a set, not a sequence. `Log + Fail` and
 `Fail + Log` are the same row to the compiler. The `+`
 operator is just syntax for building it.
 
+If this reminds you of chapter 10 — where `m * s` and `s * m`
+were the same unit — that is no coincidence. Effects are
+another of §2.6's families of labels: they inhabit their own
+kind, with their own algebra (the row, where order doesn't
+count and duplicates collapse), and the compiler applies it
+when unifying signatures just as it applies the unit algebra.
+Chapter 19 shows both as entries in the same catalog.
+
 ## 12.4 Handling an effect with `handle ... with`
 
 The interesting part: **deciding what an effect means** at a

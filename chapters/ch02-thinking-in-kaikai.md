@@ -398,12 +398,45 @@ old itches:
   the caller.
 
 If you've never seen this before, it sounds too ambitious to be
-true. It is and it isn't. Chapter 11 gives it the space it
+true. It is and it isn't. Chapter 12 gives it the space it
 deserves. For now, it is enough to know that the signatures you
 see with `/ something` are not noise: they are information
 about what that function can do to your program.
 
-## 2.6 A short genealogy
+## 2.6 The type is not the only label
+
+One last habit worth installing early, because it reorders how
+you read everything that follows. In the languages you come
+from, the compiler reasons about a single class of label: the
+type. Everything else that matters about a value — what unit
+it is in, what can fail while computing it, who owns its
+memory — lives in comments, in naming conventions, or in your
+head.
+
+In kaikai, the type is one label among several. The previous
+section just showed you the second: **effects**, which live in
+the signature after the `/` and which the compiler combines
+and checks with rules of their own. Further on you will meet
+others: **units of measure** that multiply and cancel the way
+they do in physics (ch. 10), **currencies** that add but
+refuse to multiply with each other, **memory regions** that
+are never mistaken for one another (ch. 13). Each family has
+its own algebra — its own rules for what combines with what —
+and the compiler enforces it with the same rigor it applies to
+types. Each of these families is what the language calls a
+**kind**.
+
+You don't need the mechanism yet; chapter 19 walks through all
+of it, names included. What is worth taking from here is the
+reading habit: when kaikai rejects a program that "looked
+fine", the question is not just *what type it expected* but
+*which family of labels is in play*. Half the time the
+compiler is not correcting a type: it is telling you that you
+mixed meters with seconds, dollars with euros, or one region's
+memory with another's. That is information that in other
+languages existed nowhere at all.
+
+## 2.7 A short genealogy
 
 kaikai did not appear from nowhere. It inherits decisions from
 several language families, and it helps to know which ones to

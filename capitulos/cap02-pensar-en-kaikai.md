@@ -400,7 +400,41 @@ espacio que merece. Por ahora basta con saber que las firmas que
 ves con `/ algo` no son ruido: son información sobre lo que esa
 función puede hacerle a tu programa.
 
-## 2.6 Una breve genealogía
+## 2.6 El tipo no es la única etiqueta
+
+Hay un último hábito que conviene instalar temprano, porque
+reordena cómo lees todo lo que viene. En los lenguajes que
+traes, el compilador razona sobre una sola clase de etiqueta:
+el tipo. Todo lo demás que importa de un valor — en qué unidad
+está, qué puede fallar al calcularlo, quién es dueño de su
+memoria — vive en comentarios, en convenciones de nombres, o
+en tu cabeza.
+
+En kaikai, el tipo es una etiqueta entre varias. La sección
+anterior te acaba de mostrar la segunda: los **efectos**, que
+viven en la firma después del `/` y que el compilador combina
+y verifica con reglas propias. Más adelante vas a encontrar
+otras: **unidades de medida** que multiplican y se cancelan
+como en física (cap. 10), **monedas** que se suman pero se
+niegan a multiplicarse entre sí, **regiones de memoria** que
+nunca se confunden una con otra (cap. 13). Cada familia tiene
+su propia álgebra — sus propias reglas de qué combina con qué
+— y el compilador la aplica con el mismo rigor con que
+verifica tipos. A cada una de estas familias el lenguaje la
+llama un **kind**.
+
+No necesitas el mecanismo todavía; el capítulo 19 lo recorre
+completo, con nombre y apellido. Lo que sí conviene llevarse
+de aquí es el hábito de lectura: cuando kaikai rechace un
+programa que "se veía bien", la pregunta no es solo *qué tipo
+esperaba*, sino *qué familia de etiquetas está en juego*. La
+mitad de las veces el compilador no te está corrigiendo un
+tipo: te está diciendo que mezclaste metros con segundos,
+dólares con euros, o memoria de una región con otra. Esa es
+información que en otros lenguajes no existía en ninguna
+parte.
+
+## 2.7 Una breve genealogía
 
 kaikai no salió de la nada. Hereda decisiones de varias familias
 de lenguajes, y conviene saber cuáles para entender por qué se

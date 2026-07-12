@@ -111,7 +111,10 @@ necesita ablandar algunas asunciones antes de seguir.
 - 2.3 `Option` y `Result` en vez de `null` y excepciones
 - 2.4 Funciones puras y efectos visibles en el tipo
 - 2.5 Pattern matching como herramienta de control de flujo
-- 2.6 Una breve genealogía: ML, Haskell, Erlang, Elixir, Koka,
+- 2.6 El tipo no es la única etiqueta: efectos, unidades,
+      monedas y regiones como familias con álgebra propia
+      (anticipa los kinds del cap. 19)
+- 2.7 Una breve genealogía: ML, Haskell, Erlang, Elixir, Koka,
       Effekt; qué tomó kaikai de cada uno
 - *3 ejercicios* de comprensión, no de código.
 

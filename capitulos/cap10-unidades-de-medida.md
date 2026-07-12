@@ -24,6 +24,14 @@ cualquier operación que mezcle unidades incompatibles. La
 unidad **vive en el tipo**, **se borra en runtime**, y queda
 documentada en cada firma que la toca.
 
+Y si el §2.6 te dejó la idea de que en kaikai el tipo no es
+la única etiqueta, este capítulo es donde esa idea se vuelve
+tangible: las unidades son tu primer encuentro de cuerpo
+entero con un **kind** — una familia de etiquetas con su
+propia álgebra, distinta de los tipos. Ya usaste otra sin
+mirarla de frente (la fila de efectos); esta es la primera
+que vas a declarar y manipular tú.
+
 Este capítulo cubre las unidades clásicas (física, finanzas,
 tiempo) y su uso menos obvio pero más frecuente en código del
 día a día: los **branded types**, donde la unidad es solo
