@@ -11,7 +11,7 @@ OUT="kaikai-libro-es.pdf"
 
 # --- 1. Ensamblar markdown -------------------------------------------------
 {
-  # Prólogo + capítulos numerados (cap00-prologo.md + cap01..cap18)
+  # Prólogo + capítulos numerados, en orden de nombre de archivo
   for f in "$ROOT"/capitulos/cap*.md; do
     echo
     cat "$f"

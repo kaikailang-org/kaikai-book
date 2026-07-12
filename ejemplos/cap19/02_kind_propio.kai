@@ -1,0 +1,19 @@
+# Un kind propio por sistema de unidades: dos habitantes de kinds
+# distintos jamás unifican, aunque ambos midan longitud.
+
+kind Metrica  : AbelianGroup with metrica
+kind Imperial : AbelianGroup with imperial
+
+metrica m
+metrica s
+imperial ft
+
+fn velocidad(d: Real<m>, t: Real<s>) : Real<m/s> = d / t
+
+fn main() : Unit / Stdout = {
+  let v = velocidad(100.0<m>, 9.58<s>)
+  println("#{v}")
+
+  # Esto no compila: m vive en Metrica, ft vive en Imperial.
+  #   fn mala(a: Real<m>, b: Real<ft>) : Real<m> = a + b
+}

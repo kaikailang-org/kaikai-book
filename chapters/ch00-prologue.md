@@ -145,7 +145,7 @@ it. None of this is hard, but knowing it upfront saves friction.
 
 ### Structure
 
-The book is organized into four parts, eighteen chapters and
+The book is organized into four parts, nineteen chapters and
 six appendices.
 
 - **Part I (chs. 1–2)** is the landing strip: a tour of the
@@ -157,8 +157,8 @@ six appendices.
 - **Part III (chs. 12–15)** gets into what's distinctive:
   algebraic effects, fiber-based concurrency, actors, typed
   holes with AI assistance.
-- **Part IV (chs. 16–18)** closes with tooling and two case
-  studies.
+- **Part IV (chs. 16–19)** closes with tooling, two case
+  studies, and an advanced chapter on the kind catalog.
 - **Appendices A–F** stand as reference: compiler bootstrap,
   Perceus, operators, stdlib effect catalog, glossary, further
   reading.

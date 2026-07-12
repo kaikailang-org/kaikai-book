@@ -428,6 +428,29 @@ Tamaño objetivo: similar al cap. 17. Mismo patrón general
 (dominio puro, actores con estado, persistencia) aplicado a
 fintech.
 
+#### Capítulo 19 · Kinds: un catálogo de álgebras
+
+Capítulo final, avanzado. Nombra el mecanismo general que el
+lector ya usó sin saberlo: los kinds y sus theories de
+unificación. No se necesita para escribir kaikai productivo;
+cierra el libro mostrando que unidades, efectos, monedas y
+regiones son cinco entradas del mismo catálogo.
+
+- 19.1 Qué es un kind: una familia de habitantes con su álgebra
+- 19.2 Las theories: álgebras de unificación decidibles, de
+       catálogo cerrado
+- 19.3 El catálogo completo: Type, Effect, Measure, Currency,
+       Region (`stdlib/core/kinds.kai`)
+- 19.4 La misma forma, tres kinds: genéricas sobre unidades,
+       regiones y monedas
+- 19.5 Kinds propios: `kind ... : AbelianGroup | Module`
+- 19.6 Region en profundidad: arenas, `region { r -> }`,
+       deep-copy-out, cuándo no usarlo
+- 19.7 Money/Currency: por qué `USD*EUR` no compila
+- 19.8 Filosofía: theory cerrada, modelos abiertos; sin HKT ni
+       typeclasses
+- *5 ejercicios*
+
 ### Apéndices
 
 - **A. Bootstrap de tres etapas.** Cómo se construye el compilador
@@ -449,7 +472,7 @@ fintech.
 
 ## Cuenta gruesa
 
-- 18 capítulos + 6 apéndices.
+- 19 capítulos + 6 apéndices.
 - ≈ 400 páginas en la edición impresa estimada (asumiendo 18–22
   páginas promedio por capítulo principal; el cap. 15 es algo
   más largo que la versión "solo holes").

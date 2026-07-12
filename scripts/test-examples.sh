@@ -173,6 +173,14 @@ project|ejemplos/cap17/notas|ok
 # Capítulo 18 — caso ledger
 project|ejemplos/cap18/ledger|ok
 
+# Capítulo 19 — kinds (06 no compila a propósito: Currency sin producto)
+build|ejemplos/cap19/01_generica_sobre_unidades.kai|ok
+build|ejemplos/cap19/02_kind_propio.kai|ok
+build|ejemplos/cap19/03_region_scratch.kai|ok
+build|ejemplos/cap19/04_arbol_en_arena.kai|ok
+build|ejemplos/cap19/05_dinero.kai|ok
+build|ejemplos/cap19/06_usd_por_eur.kai|fail
+
 # ===== Edición inglés =====
 
 # Chapter 1
@@ -305,6 +313,14 @@ project|examples/ch17/notes|ok
 
 # Chapter 18
 project|examples/ch18/ledger|ok
+
+# Chapter 19 — kinds (06 fails on purpose: Currency has no product)
+build|examples/ch19/01_generic_over_units.kai|ok
+build|examples/ch19/02_own_kind.kai|ok
+build|examples/ch19/03_region_scratch.kai|ok
+build|examples/ch19/04_tree_in_arena.kai|ok
+build|examples/ch19/05_money.kai|ok
+build|examples/ch19/06_usd_times_eur.kai|fail
 EOF
 
 # ============================================================

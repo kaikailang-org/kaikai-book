@@ -1,0 +1,19 @@
+# One kind per unit system: habitants of different kinds never
+# unify, even when both measure length.
+
+kind Metric   : AbelianGroup with metric
+kind Imperial : AbelianGroup with imperial
+
+metric m
+metric s
+imperial ft
+
+fn speed(d: Real<m>, t: Real<s>) : Real<m/s> = d / t
+
+fn main() : Unit / Stdout = {
+  let v = speed(100.0<m>, 9.58<s>)
+  println("#{v}")
+
+  # This does not compile: m lives in Metric, ft lives in Imperial.
+  #   fn bad(a: Real<m>, b: Real<ft>) : Real<m> = a + b
+}

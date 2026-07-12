@@ -106,7 +106,7 @@ Tongariki、Hanga Roa、Orongo,以及地平线上的 Anakena——这是它的
 
 ```
 CLAUDE.md             — 协作智能体的工作说明
-estructura.md         — 完整目录(18 章 + 6 个附录)
+estructura.md         — 完整目录(19 章 + 6 个附录)
 capitulos/            — 西班牙语版章节,文件名格式 capNN-*.md
 chapters/             — 英语版章节,文件名格式 chNN-*.md
 ejemplos/capNN/       — 西班牙语版引用的示例源码

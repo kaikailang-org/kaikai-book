@@ -135,8 +135,8 @@ ahorra tropiezos.
 
 ### Estructura
 
-El libro está organizado en cuatro partes, dieciocho capítulos
-y seis apéndices.
+El libro está organizado en cuatro partes, diecinueve
+capítulos y seis apéndices.
 
 - **Parte I (caps. 1–2)** es el aterrizaje: un tour del lenguaje
   con programas ejecutables y un capítulo corto sobre cómo
@@ -147,8 +147,8 @@ y seis apéndices.
 - **Parte III (caps. 12–15)** entra en lo distintivo: efectos
   algebraicos, concurrencia por fibras, actores, holes tipados
   con asistencia de IA.
-- **Parte IV (caps. 16–18)** cierra con tooling y dos casos de
-  estudio.
+- **Parte IV (caps. 16–19)** cierra con tooling, dos casos de
+  estudio, y un capítulo avanzado sobre el catálogo de kinds.
 - **Apéndices A–F** quedan como referencia: bootstrap del
   compilador, Perceus, operadores, catálogo de efectos del
   stdlib, glosario, lecturas adicionales.

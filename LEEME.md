@@ -78,7 +78,7 @@ como 0.100.x, y no hay ningún hito "1.0" en el mapa.
 
 ```
 CLAUDE.md             instrucciones para el agente que asiste la escritura
-estructura.md         tabla de contenidos completa (18 capítulos + 6 apéndices)
+estructura.md         tabla de contenidos completa (19 capítulos + 6 apéndices)
 capitulos/            capítulos en español, capNN-*.md
 chapters/             capítulos en inglés, chNN-*.md
 ejemplos/capNN/       fuentes citadas por la edición en español

@@ -1,0 +1,15 @@
+# A function generic over the Measure kind: `u` is not a type,
+# it is a unit, and the result carries u^2.
+
+unit m
+unit s
+
+fn area_of[u: Measure](width: Real<u>, height: Real<u>) : Real<u^2> =
+  width * height
+
+fn main() : Unit / Stdout = {
+  let a1 = area_of(3.0<m>, 4.0<m>)      # Real<m^2>
+  let a2 = area_of(3.0<s>, 4.0<s>)      # Real<s^2>
+  println("#{a1}")
+  println("#{a2}")
+}
