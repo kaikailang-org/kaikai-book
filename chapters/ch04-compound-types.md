@@ -187,14 +187,21 @@ let primes = [2, 3, 5, 7, 11]
 let empty : [Int] = []
 ```
 
-kaikai also has **range literals**, sugar that produces a
-list:
+kaikai also has **range literals**, which the type system
+treats as just another list:
 
 ```kai
 let r1 = [1..10]        # [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 let r2 = [1..10..2]     # [1, 3, 5, 7, 9]
 let r3 = [10..1..-1]    # [10, 9, 8, ..., 1]
 ```
+
+One cost detail worth knowing: the range is **lazy**. The
+runtime stores it as three numbers (start, end, step), not ten
+cells, and elements are generated only when something consumes
+them. `[1..1_000_000] |> list.sum` never materializes a million
+cells; to your code it is indistinguishable from the handwritten
+list.
 
 To extend an existing list, use `...` (spread):
 

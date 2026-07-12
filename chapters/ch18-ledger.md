@@ -101,7 +101,11 @@ Three type-system decisions worth listing:
   the program to multiple currencies, you declare
   `unit EUR`, define an exchange rate as `Real<USD / EUR>`,
   and the type system walks you through it. Without UoM,
-  you discover the bug when a customer complains.
+  you discover the bug when a customer complains. (The
+  stdlib also ships `money`, with `Money[c: Currency]` on
+  `Decimal` and the ISO currencies declared; chapter 19
+  covers it. Here we stay with `Real<USD>` because the
+  point is the UoM technique.)
 - **`Int<AccountId>` vs `Int<TransactionId>`.** Chapter 10
   also covered branded types. Having raw `Int` as ids
   means passing a transaction id where an account id is

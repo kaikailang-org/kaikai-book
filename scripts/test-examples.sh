@@ -69,6 +69,9 @@ build|ejemplos/cap04/03_listas.kai|ok
 build|ejemplos/cap04/04_option_result.kai|ok
 build|ejemplos/cap04/05_tuplas.kai|ok
 build|ejemplos/cap04/06_priv.kai|ok
+build|ejemplos/cap04/07_strings.kai|ok
+build|ejemplos/cap04/08_mapas.kai|ok
+build|ejemplos/cap04/09_string_builder.kai|ok
 
 # Capítulo 5 — pattern matching
 build|ejemplos/cap05/01_sumas_basicas.kai|ok
@@ -86,6 +89,7 @@ build|ejemplos/cap06/05_recursion_tco.kai|ok
 build|ejemplos/cap06/06_pipeline.kai|ok
 build|ejemplos/cap06/07_pipe_underscore.kai|ok
 build|ejemplos/cap06/08_trailing_y_bloques.kai|ok
+build|ejemplos/cap06/09_stream.kai|ok
 
 # Capítulo 7 — tests / bench / check
 test|ejemplos/cap07/01_test_basico.kai|ok
@@ -198,6 +202,9 @@ build|examples/ch04/03_lists.kai|ok
 build|examples/ch04/04_option_result.kai|ok
 build|examples/ch04/05_tuples.kai|ok
 build|examples/ch04/06_priv.kai|ok
+build|examples/ch04/07_strings.kai|ok
+build|examples/ch04/08_maps.kai|ok
+build|examples/ch04/09_string_builder.kai|ok
 
 # Chapter 5
 build|examples/ch05/01_basic_sums.kai|ok
@@ -215,6 +222,7 @@ build|examples/ch06/05_recursion_tco.kai|ok
 build|examples/ch06/06_pipeline.kai|ok
 build|examples/ch06/07_pipe_underscore.kai|ok
 build|examples/ch06/08_trailing_blocks.kai|ok
+build|examples/ch06/09_stream.kai|ok
 
 # Chapter 7
 test|examples/ch07/01_basic_test.kai|ok

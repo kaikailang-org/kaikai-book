@@ -249,7 +249,7 @@ Higher-order functions are the main tool to abstract **over
 the what-to-do**. Instead of writing `for each element, do X`
 and `for each element, do Y`, you write `for each element, do
 F`, where `F` is a parameter. That's how `list.map`,
-`list.filter`, `list.fold` are born — the staples of functional
+`list.filter`, `list.foldl` are born — the staples of functional
 list processing.
 
 ## 6.4 Pipes: `|>`, `|`, `||`, `|?`
@@ -373,7 +373,7 @@ pipeline.
 The `stream` module gives you the same three operators —`|`,
 `|?`, `||`— over a `Stream`: a **lazy** pipeline that runs in
 constant memory. Nothing is computed when you write the `map`
-or the `filter`; the work happens only when a *sink* —`fold`,
+or the `filter`; the work happens only when a *sink* —`foldl`,
 `to_list`, `count`, `each`— walks the stream and forces it.
 And there's no intermediate list between steps: each element
 travels the whole pipeline before the next one starts.
@@ -384,7 +384,7 @@ import stream
 let total = stream.from_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
   |  (x) => x * x          # lazy map
   |? (x) => x % 2 == 0     # lazy filter
-  |> stream.fold(0, (acc, x) => acc + x)
+  |> stream.foldl(0, (acc, x) => acc + x)
 # total = 220
 ```
 
@@ -546,7 +546,7 @@ lists or trees will have the shape `match xs { [] -> base;
 [h, ...t] -> recursion }`. The naive version (with pending
 operation) is the first you write; the accumulator version
 is the one you keep. For more complex operations, the
-higher-order functions (`list.fold`, `list.reduce`) are
+higher-order functions (`list.foldl`, `reduce`) are
 already TCO-written and are almost always what you wanted.
 
 ## 6.7 Case study: transformation pipeline
@@ -672,7 +672,7 @@ readability change?
 Multiply(Int) | Negate`. Write `fn apply_op(op: Operation,
 x: Int) : Int` that runs the operation on `x`, and
 `fn run_all(ops: [Operation], x: Int) : Int` that runs a
-sequence of operations starting with `x`. Hint: `list.fold`
+sequence of operations starting with `x`. Hint: `list.foldl`
 with `apply_op` flipped is a good path.
 
 **6.5.** You have a list of strings with numbers: `["10",

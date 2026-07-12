@@ -2,7 +2,7 @@
 #
 # `|` map, `|?` filter y `||` flat-map funcionan igual sobre
 # streams que sobre listas. La diferencia es que nada se
-# computa hasta que un sink (fold, to_list, count, each) fuerza
+# computa hasta que un sink (foldl, to_list, count, each) fuerza
 # el pipeline, y los pasos intermedios no materializan listas:
 # corre en memoria constante.
 
@@ -10,12 +10,12 @@ import stream
 
 fn main() : Unit / Stdout = {
   # map y filter son lazy: ninguno produce una lista intermedia.
-  # `stream.fold` es el sink que recorre el stream una vez y
+  # `stream.foldl` es el sink que recorre el stream una vez y
   # acumula el resultado.
   let total = stream.from_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     |  (x) => x * x          # map lazy: eleva al cuadrado
     |? (x) => x % 2 == 0     # filter lazy: deja los pares
-    |> stream.fold(0, (acc, x) => acc + x)
+    |> stream.foldl(0, (acc, x) => acc + x)
 
   Stdout.print("suma de cuadrados pares = #{int_to_string(total)}")
 }

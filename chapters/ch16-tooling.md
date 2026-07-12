@@ -791,7 +791,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.99.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.99.6 - hanga-roa (stage 2, self-hosted)
 ```
 
 If `kai.toml` omits the field, the compiler assumes the
@@ -849,14 +849,20 @@ At the time this book ships, kaikai knows three:
 |---|---|---|
 | `tongariki` | closed | Fast-iteration phase before 2026. Only packages that haven't migrated. |
 | `hanga-roa` | active (default) | The first public edition. This book is written against it. |
-| `orongo` | future | Next edition. Items deferred from Hanga Roa land here. |
+| `orongo` | future | The stabilization edition. It ships as 0.100.x: the "1.0" label is postponed indefinitely, because the stability commitment lives in the edition, not in a number. |
 
 The names follow the Rapa Nui geography used across the
-ecosystem: places on Rapa Nui in chronological order. When
+ecosystem: places on Rapa Nui in chronological order —
+Tongariki, Hanga Roa, Orongo, and Anakena as the horizon
+after that. The language's milestones are defined per
+edition, never by a version number with an aura. When
 `hanga-roa` is sunset, you'll get an announcement, a
 migration guide, and `kai migrate` to automate the
-mechanical changes. Until then, what you wrote against
-hanga-roa keeps compiling.
+mechanical changes — the tool already exists: it rewrites a
+file's AST between editions, dry-run by default (prints
+without touching anything), applying with `--write`,
+idempotently. Until then, what you wrote against hanga-roa
+keeps compiling.
 
 ## 16.14 Philosophy: three principles of the tooling
 

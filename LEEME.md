@@ -66,6 +66,14 @@ lenguaje y APIs del stdlib de kaikai se quedan en su forma
 original (inglés). Las figuras viven una sola vez bajo
 `figuras/` cuando son neutrales al idioma.
 
+Una nota sobre la palabra: el *lenguaje* kaikai también tiene
+ediciones — Tongariki, Hanga Roa, Orongo, y Anakena en el
+horizonte — como su mecanismo de estabilidad (el capítulo 16
+lo cubre). Este libro está escrito y validado contra la
+edición **Hanga Roa**. Los hitos del lenguaje se definen por
+edición, nunca por un número de versión: Orongo se publicará
+como 0.100.x, y no hay ningún hito "1.0" en el mapa.
+
 ## Estructura del repositorio
 
 ```

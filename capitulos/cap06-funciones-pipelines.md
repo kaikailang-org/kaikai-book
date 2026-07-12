@@ -265,7 +265,7 @@ para abstraer **lo que hay que hacer**. En vez de escribir
 `para cada elemento, hacer X` y `para cada elemento, hacer
 Y`, escribes `para cada elemento, hacer F`, donde `F` es un
 parámetro. Así nacen `list.map`, `list.filter`,
-`list.fold`, las tres funciones que más vas a usar en
+`list.foldl`, las tres funciones que más vas a usar en
 programación funcional.
 
 ## 6.4 Pipes: `|>`, `|`, `||`
@@ -436,7 +436,7 @@ El módulo `stream` te da los mismos tres operadores (`|`,
 `|?`, `||`) sobre un `Stream`: un pipeline **lazy** que corre
 en memoria constante. Nada se computa cuando escribes el
 `map` o el `filter`; el trabajo ocurre recién cuando un
-*sink* (`fold`, `to_list`, `count`, `each`) recorre el stream
+*sink* (`foldl`, `to_list`, `count`, `each`) recorre el stream
 y lo fuerza. Y entre paso y paso no hay lista intermedia: cada
 elemento atraviesa todo el pipeline antes de que el siguiente
 empiece.
@@ -447,7 +447,7 @@ import stream
 let total = stream.from_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
   |  (x) => x * x          # map lazy
   |? (x) => x % 2 == 0     # filter lazy
-  |> stream.fold(0, (acc, x) => acc + x)
+  |> stream.foldl(0, (acc, x) => acc + x)
 # total = 220
 ```
 
@@ -631,7 +631,7 @@ forma `match xs { [] -> base; [h, ...t] -> recursión }`. La
 versión naive (con operación pendiente) es la primera que
 escribes; la versión con acumulador es la que dejas. Para
 operaciones más complejas, las funciones de orden superior
-(`list.fold`, `list.reduce`) ya están escritas con TCO y son
+(`list.foldl`, `reduce`) ya están escritas con TCO y son
 casi siempre lo que querías.
 
 ## 6.7 Caso de estudio: pipeline de transformación
@@ -762,7 +762,7 @@ Multiplicar(Int) | Negar`. Escribe una función `fn aplicar(op:
 Operacion, x: Int) : Int` que ejecute la operación sobre `x`,
 y una función `fn ejecutar_todas(ops: [Operacion], x: Int) :
 Int` que ejecute una secuencia de operaciones empezando con
-`x`. Pista: `list.fold` con `aplicar` invertido es un buen
+`x`. Pista: `list.foldl` con `aplicar` invertido es un buen
 camino.
 
 **6.5.** Tienes una lista de strings con números:

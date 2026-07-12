@@ -119,6 +119,13 @@ se necesita uno del mismo shape inmediatamente después, se
 reusa la misma memoria sin tocar el contador). En la práctica
 el costo es bajo y predecible.
 
+Para el caso extremo — un cálculo que arma montañas de
+estructura descartable solo para plegarla a un escalar —
+existe un escape opt-in: el bloque `region`, que asigna en
+una arena y la libera entera de un golpe, sin contadores de
+por medio. Es parte del mismo catálogo de kinds que las
+unidades del capítulo 10, y lo vemos en el capítulo 19.
+
 Por qué esto importa para concurrencia: Perceus funciona por
 fibra. Cada fibra tiene sus propios contadores, sus propios
 liberados. No hay sincronización entre fibras para ningún
