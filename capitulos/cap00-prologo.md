@@ -4,23 +4,26 @@
 > manos. En la cultura rapanui, esto corresponde al arte
 > completo: el hilo, la figura, y el *pata'u ta'u*, el canto
 > que la acompaña.
->
-> Este libro toma esa imagen prestada. *Simple* viene del latín
-> *simplex*: "un solo pliegue, un solo hilo". *Complex* viene de
-> *complectere*: "trenzado junto". El argumento del libro, y la
-> apuesta del lenguaje, es que la simplicidad no es lo opuesto
-> de lo difícil, es lo opuesto de lo entrelazado.
->
-> La etimología y la distinción entre *simple* y *easy*
-> las desarrolla Rich Hickey en su charla *Simple Made Easy*
-> (Strange Loop, 2011), disponible en
-> [InfoQ](https://www.infoq.com/presentations/Simple-Made-Easy/).
->
-> La tesis de Hickey atraviesa todo este libro: simple es una
-> propiedad objetiva de las cosas (cuántos hilos las componen);
-> easy es una propiedad relativa al observador (cuán cerca está
-> de lo que ya sabe). Kaikai apuesta por lo primero aunque le
-> cueste lo segundo.
+
+Este libro toma esa imagen de la cultura rapanui prestada.
+
+El concepto de efectividad que aparece en el título de este
+libro tiene dos explicaciones. La primera: el lenguaje
+implementa efectos, una forma de programación que hasta ahora
+ha vivido en lenguajes experimentales o de investigación.
+kaikai quiere llevar este concepto al mainstream.
+
+La segunda viene de una famosa frase atribuida a Peter
+Drucker: "La eficiencia es hacer las cosas bien; la
+efectividad es hacer las cosas correctas."
+
+kaikai apunta a ayudarte a escribir código correcto, que
+resuelva acertadamente el dominio que tienes entre manos.
+Muchas de las construcciones que aporta (los efectos, las
+kind theories) buscan simplificar el modelamiento de
+problemas de la manera más efectiva posible.
+
+## Sobre el compilador
 
 Cuando aprendí a construir compiladores en la universidad quedé fascinado con el diseño de lenguajes de programación. Luego en mi vida laboral resolví varios problemas creando pequeños lenguajes (hoy en día se conocen como lenguajes de dominio específico, o DSL por sus siglas en inglés).  
 

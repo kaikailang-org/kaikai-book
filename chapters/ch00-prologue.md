@@ -4,23 +4,24 @@
 > hands. In Rapa Nui culture, this corresponds to the whole
 > practice: the thread, the figure, and the *pata'u ta'u* — the
 > chant that goes with it.
->
-> This book borrows that image. *Simple* comes from Latin
-> *simplex*: "one fold, one thread." *Complex* comes from
-> *complectere*: "braided together." The book's argument, and
-> the language's bet, is that simplicity is not the opposite of
-> hard, it is the opposite of entangled.
->
-> The etymology and the simple/easy distinction come from
-> Rich Hickey in his talk *Simple Made Easy* (Strange Loop, 2011),
-> available at
-> [InfoQ](https://www.infoq.com/presentations/Simple-Made-Easy/).
->
-> Hickey's thesis runs through this whole book: simple is an
-> objective property of things (how many threads compose them);
-> easy is a property relative to the observer (how close it is to
-> what they already know). Kaikai bets on the first even when it
-> costs the second.
+
+This book borrows that image from Rapa Nui culture.
+
+The word *effective* in this book's title carries two
+explanations. The first: the language implements effects, a
+style of programming that has so far lived in experimental
+and research languages. kaikai wants to take it mainstream.
+
+The second comes from a famous line attributed to Peter
+Drucker: "Efficiency is doing things right; effectiveness is
+doing the right things."
+
+kaikai aims to help you write correct code that solves the
+domain you actually have in your hands. Many of the
+constructions it brings — effects, the kind theories — are
+there to make modeling a problem as effective as possible.
+
+## About the compiler
 
 I've wanted to write a programming language since I learned how
 to build compilers in college. Once I got into industry I ended
