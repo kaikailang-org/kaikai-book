@@ -450,7 +450,7 @@ numbers.
 `show` and `eq` work without you writing anything else.
 
 **9.4.** Declare your own protocol `Validable` with an
-operation `validate(x: Self) : Result[String, Self]`
+operation `validate(x: Self) : Result[Self, String]`
 returning `Ok(x)` if the value is valid or `Err("reason")`
 otherwise. Implement `Validable` for `type Age = { years:
 Int }` so it rejects negative ages or those above 130.

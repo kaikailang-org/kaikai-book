@@ -65,7 +65,7 @@ solo que sin el `match` envoltorio. Cuando la función tiene
 comas, uno por argumento:
 
 ```kai
-fn divide(a: Real, b: Real) : Result[Error, Real] {
+fn divide(a: Real, b: Real) : Result[Real, Error] {
   case _, 0.0 -> Err(DivCero)
   case a, b   -> Ok(a / b)
 }

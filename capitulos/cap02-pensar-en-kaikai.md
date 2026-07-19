@@ -215,13 +215,13 @@ en el tipo de retorno**.
 
 ```kai
 type Option[a] = None | Some(a)
-type Result[e, a] = Err(e) | Ok(a)
+type Result[a, e] = Ok(a) | Err(e)
 ```
 
 Una función que puede no encontrar el resultado devuelve
 `Option[Usuario]`: o `Some(usr)` cuando lo encuentra, o `None`
 cuando no. Una función que puede fallar de varias maneras
-devuelve `Result[Error, Usuario]`: o `Ok(usr)`, o
+devuelve `Result[Usuario, Error]`: o `Ok(usr)`, o
 `Err(razón)`. En ambos casos, el tipo te obliga a considerar
 las dos posibilidades.
 
@@ -271,7 +271,7 @@ En kaikai, el operador postfix `!` aplica a un `Option` o un
 devolviendo ese `Err` o `None` a quien llama.
 
 ```kai
-fn cargar() : Result[Error, Usuario] {
+fn cargar() : Result[Usuario, Error] {
   let id = parsear_id(input)!        # si falla, propaga
   let datos = leer_archivo(id)!      # idem
   Ok(armar_usuario(id, datos))
@@ -317,7 +317,7 @@ patrón produce. `Lit(n)` no solo dice "esto fue construido con
 listo para usarse a la derecha. Comprobar, desempacar y nombrar
 en una sola pieza.
 
-Los patrones se anidan. Si tienes una `Option[Result[Error, Int]]`
+Los patrones se anidan. Si tienes una `Option[Result[Int, Error]]`
 y quieres distinguir las tres formas posibles, lo escribes así:
 
 ```kai

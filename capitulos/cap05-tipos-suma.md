@@ -432,15 +432,15 @@ claras, el patrón natural es:
 
 1. Cada categoría es un sum type pequeño.
 2. El error compuesto es la unión de las categorías.
-3. Cada función devuelve `Result[ErrorCompuesto, T]`.
+3. Cada función devuelve `Result[T, ErrorCompuesto]`.
 4. El operador `!` propaga el error de cualquier capa hasta
    el `Result` compuesto, vía el upcast implícito.
 
 ```kai
-fn check_identidad(req: Req) : Result[ErrorIdentidad, Cuenta] = ...
-fn check_auth(c: Cuenta) : Result[ErrorAuth, Aprobado] = ...
+fn check_identidad(req: Req) : Result[Cuenta, ErrorIdentidad] = ...
+fn check_auth(c: Cuenta) : Result[Aprobado, ErrorAuth] = ...
 
-fn consultar_saldo(req: Req) : Result[ErrorConsulta, Saldo] = {
+fn consultar_saldo(req: Req) : Result[Saldo, ErrorConsulta] = {
   let cuenta = check_identidad(req)!     # ErrorIdentidad <: ErrorConsulta
   let app    = check_auth(cuenta)!       # ErrorAuth     <: ErrorConsulta
   Ok(cargar_saldo(app))
@@ -448,7 +448,7 @@ fn consultar_saldo(req: Req) : Result[ErrorConsulta, Saldo] = {
 ```
 
 Cada `!` desempaca el `Ok` y propaga el `Err` con el upcast
-correcto al `Result[ErrorConsulta, _]` que devuelve la función
+correcto al `Result[_, ErrorConsulta]` que devuelve la función
 externa. Cero wrappers, cero `map_err`, cero `From`. La firma
 de `consultar_saldo` documenta exactamente qué errores puede
 emitir, y el compilador se asegura de que todos estén
@@ -487,8 +487,8 @@ Tres cosas que conviene fijar:
   `!` sobre un `Result` adentro: el `return Err(e)` no
   tendría dónde aterrizar. El compilador te lo dice claro.
 - **El upcast sucede en el `return`.** Cuando
-  `check_identidad(req)` devuelve `Result[ErrorIdentidad, _]`
-  pero `consultar_saldo` declara `Result[ErrorConsulta, _]`,
+  `check_identidad(req)` devuelve `Result[_, ErrorIdentidad]`
+  pero `consultar_saldo` declara `Result[_, ErrorConsulta]`,
   el `return Err(e)` aplica el upcast `ErrorIdentidad <:
   ErrorConsulta` al pasar. Por eso `!` y las uniones de
   errores se llevan tan bien: cada nivel de la cascada absorbe
@@ -524,7 +524,7 @@ error:
 - **De ambiente**: variable no definida.
 
 Los dos forman una unión, `ErrorEval`, y el evaluador devuelve
-`Result[ErrorEval, Real]`. El código completo está en
+`Result[Real, ErrorEval]`. El código completo está en
 `ejemplos/cap05/05_evaluador.kai`; aquí vamos paso a paso por
 las partes interesantes.
 
@@ -566,7 +566,7 @@ de la variable que faltaba.
 ```kai
 type Env = [(String, Real)]
 
-fn lookup(env: Env, nombre: String) : Result[ErrorEval, Real] {
+fn lookup(env: Env, nombre: String) : Result[Real, ErrorEval] {
   case [], _                          -> Err(NoDefinida(nombre))
   case [(k, v), ...], n when k == n   -> Ok(v)
   case [_, ...resto], n               -> lookup(resto, n)
@@ -597,7 +597,7 @@ formas conviven en el mismo archivo sin tensión.
 ### El evaluador
 
 ```kai
-fn eval(env: Env, e: Expr) : Result[ErrorEval, Real] =
+fn eval(env: Env, e: Expr) : Result[Real, ErrorEval] =
   match e {
     Lit(n)      -> Ok(n)
     Var(nombre) -> lookup(env, nombre)
@@ -635,7 +635,7 @@ calma. `eval(env, a)!` significa: si `eval(env, a)` devuelve
 `Ok(v)`, ata `va` a `v`; si devuelve `Err(e)`, **sale
 inmediatamente** de la función actual devolviendo ese `Err`.
 En este caso particular, el `Err` que se propaga es
-`Result[ErrorEval, _]`, y como `eval` devuelve exactamente
+`Result[_, ErrorEval]`, y como `eval` devuelve exactamente
 ese tipo, el upcast es trivial. Pero la misma forma funciona
 cuando los tipos de error de las llamadas internas son
 componentes distintos de la unión.
@@ -650,7 +650,7 @@ fn describir(e: ErrorEval) : String =
     NoDefinida(nombre) -> "variable no definida: " ++ nombre
   }
 
-fn imprimir(r: Result[ErrorEval, Real]) : Unit =
+fn imprimir(r: Result[Real, ErrorEval]) : Unit =
   match r {
     Ok(v)  -> println("ok: " ++ real_to_string(v))
     Err(e) -> println("error: " ++ describir(e))

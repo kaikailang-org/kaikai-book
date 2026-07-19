@@ -365,7 +365,7 @@ type Expr
 
 type ErrorEval = DivCero(Int)
 
-fn eval(e: Expr) : Result[ErrorEval, Int] =
+fn eval(e: Expr) : Result[Int, ErrorEval] =
   match e {
     Lit(n)     -> Ok(n)
     Suma(a, b) -> {

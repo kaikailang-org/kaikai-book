@@ -3,7 +3,7 @@
 # `Expr` is the AST. The evaluator can fail in three distinct
 # ways — division by zero, square root of a negative, references
 # to undefined variables. Each error is its own type; the
-# evaluator returns `Result[EvalError, Real]`.
+# evaluator returns `Result[Real, EvalError]`.
 #
 # The union `EvalError = ArithError | EnvError` requires no
 # wrappers or explicit conversions.
@@ -28,7 +28,7 @@ type EvalError = ArithError | EnvError
 # Environment: name -> value pairs. Recursive lookup.
 type Env = [(String, Real)]
 
-fn lookup(env: Env, name: String) : Result[EvalError, Real] {
+fn lookup(env: Env, name: String) : Result[Real, EvalError] {
   case [], _                          -> Err(Undefined(name))
   case [(k, v), ...], n when k == n   -> Ok(v)
   case [_, ...rest], n                -> lookup(rest, n)
@@ -44,7 +44,7 @@ fn sqrt_loop(x: Real, guess: Real, fuel: Int) : Real =
   if fuel <= 0 { guess }
   else { sqrt_loop(x, (guess + x / guess) / 2.0, fuel - 1) }
 
-fn eval(env: Env, e: Expr) : Result[EvalError, Real] =
+fn eval(env: Env, e: Expr) : Result[Real, EvalError] =
   match e {
     Lit(n)     -> Ok(n)
     Var(name)  -> lookup(env, name)
@@ -76,7 +76,7 @@ fn describe(e: EvalError) : String =
     Undefined(name)  -> "undefined variable: " ++ name
   }
 
-fn print_result(r: Result[EvalError, Real]) : Unit / Stdout =
+fn print_result(r: Result[Real, EvalError]) : Unit / Stdout =
   match r {
     Ok(v)  -> println("ok: " ++ real_to_string(v))
     Err(e) -> println("error: " ++ describe(e))

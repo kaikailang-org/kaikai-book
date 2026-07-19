@@ -303,7 +303,7 @@ central es `enrutar`, que traduce un request HTTP en un
 comando del dominio:
 
 ```kai
-pub fn enrutar(req: ReqHttp) : Result[dominio.Respuesta, dominio.Comando] {
+pub fn enrutar(req: ReqHttp) : Result[dominio.Comando, dominio.Respuesta] {
   if req.metodo == "GET" {
     if req.path == "/notas" {
       Ok(dominio.Listar)

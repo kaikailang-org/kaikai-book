@@ -64,7 +64,7 @@ just without the `match` wrapper. When the function has
 comma-separated, one per argument:
 
 ```kai
-fn divide(a: Real, b: Real) : Result[Error, Real] {
+fn divide(a: Real, b: Real) : Result[Real, Error] {
   case _, 0.0 -> Err(DivByZero)
   case a, b   -> Ok(a / b)
 }

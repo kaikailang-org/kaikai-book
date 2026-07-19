@@ -8,7 +8,7 @@ fn first_even(xs: [Int]) : Option[Int] =
     [h, ...t] -> if h % 2 == 0 { Some(h) } else { first_even(t) }
   }
 
-fn parse_age(s: String) : Result[AgeError, Int] =
+fn parse_age(s: String) : Result[Int, AgeError] =
   match string_to_int(s) {
     None -> Err(NotNumeric)
     Some(n) ->

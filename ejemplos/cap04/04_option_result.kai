@@ -8,7 +8,7 @@ fn primer_par(xs: [Int]) : Option[Int] =
     [h, ...t] -> if h % 2 == 0 { Some(h) } else { primer_par(t) }
   }
 
-fn parsear_edad(s: String) : Result[ErrorEdad, Int] =
+fn parsear_edad(s: String) : Result[Int, ErrorEdad] =
   match string_to_int(s) {
     None -> Err(NoNumerica)
     Some(n) ->

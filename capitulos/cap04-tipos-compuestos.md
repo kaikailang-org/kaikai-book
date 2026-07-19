@@ -409,7 +409,7 @@ Ya viste estos dos en el capítulo 2:
 
 ```kai
 type Option[a] = None | Some(a)
-type Result[e, a] = Err(e) | Ok(a)
+type Result[a, e] = Ok(a) | Err(e)
 ```
 
 Aquí los miramos en uso. Los dos son tipos suma genéricos del
@@ -444,7 +444,7 @@ dos formas distintas, y eso es exactamente para lo que sirve
 ```kai
 type ErrorEdad = NoNumerica | FueraDeRango
 
-fn parsear_edad(s: String) : Result[ErrorEdad, Int] =
+fn parsear_edad(s: String) : Result[Int, ErrorEdad] =
   match string_to_int(s) {
     None -> Err(NoNumerica)
     Some(n) ->
@@ -453,23 +453,22 @@ fn parsear_edad(s: String) : Result[ErrorEdad, Int] =
   }
 ```
 
-`Result[ErrorEdad, Int]` se lee como "un `Int` o un error de
-tipo `ErrorEdad`". El error está en el primer parámetro y el
-valor exitoso en el segundo, al revés de la convención que
-usan algunos lenguajes; kaikai sigue la tradición de Haskell
-en este punto.
+`Result[Int, ErrorEdad]` se lee como "un `Int` o un error de
+tipo `ErrorEdad`". El valor exitoso está en el primer parámetro
+y el error en el segundo, como en Rust y la mayoría de los
+lenguajes modernos.
 
 Tres patrones que vas a ver mucho:
 
 - **Encadenar una falla con `!`.** Si tienes una expresión que
-  devuelve `Result[E, A]` y quieres "si falla, propaga el
+  devuelve `Result[A, E]` y quieres "si falla, propaga el
   error; si no, sigue con el valor", escribes `expr!`. Esto
   lo viste en §2.3.
 - **Funciones de orden superior**: `option.map`, `option.and_then`,
   `result.map_err`. Las cubrimos en el capítulo 6.
 - **Convertir entre los dos**: `option.ok_or(error)` toma un
   `Option[a]` y un error de tipo `e` y devuelve un
-  `Result[e, a]`. Útil cuando la pérdida de información del
+  `Result[a, e]`. Útil cuando la pérdida de información del
   `None` ya no te alcanza.
 
 `Option` y `Result` son tipos suma como cualquier otro. Los
