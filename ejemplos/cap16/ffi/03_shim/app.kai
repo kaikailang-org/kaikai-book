@@ -1,7 +1,6 @@
 ## Un shim C que vive en este directorio. Compila con:
 ##
-##   $ CFLAGS="-include shim.h shim.c" \
-##       kai build --backend=c app.kai -o app
+##   $ CFLAGS="shim.c" kai build app.kai -o app
 ##   $ ./app
 ##   doble(21) = 42
 

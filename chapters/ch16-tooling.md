@@ -626,7 +626,7 @@ fn main() : Unit / Console + Ffi {
 Building:
 
 ```
-$ CFLAGS="-include shim.h shim.c" kai build app.kai -o app
+$ CFLAGS="shim.c" kai build app.kai -o app
 $ ./app
 double(21) = 42
 ```

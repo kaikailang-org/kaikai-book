@@ -623,7 +623,7 @@ fn main() : Unit / Console + Ffi {
 Compilando:
 
 ```
-$ CFLAGS="-include shim.h shim.c" kai build app.kai -o app
+$ CFLAGS="shim.c" kai build app.kai -o app
 $ ./app
 doble(21) = 42
 ```
