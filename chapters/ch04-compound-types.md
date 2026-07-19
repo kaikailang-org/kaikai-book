@@ -400,7 +400,7 @@ You saw these two in chapter 2:
 
 ```kai
 type Option[a] = None | Some(a)
-type Result[e, a] = Err(e) | Ok(a)
+type Result[a, e] = Ok(a) | Err(e)
 ```
 
 Here we look at them in use. They are two generic sum types
@@ -433,7 +433,7 @@ distinct ways — and that's exactly what `Result` is for:
 ```kai
 type AgeError = NotNumeric | OutOfRange
 
-fn parse_age(s: String) : Result[AgeError, Int] =
+fn parse_age(s: String) : Result[Int, AgeError] =
   match string_to_int(s) {
     None -> Err(NotNumeric)
     Some(n) ->
@@ -442,22 +442,22 @@ fn parse_age(s: String) : Result[AgeError, Int] =
   }
 ```
 
-`Result[AgeError, Int]` reads as "an `Int` or an error of
-type `AgeError`". The error is in the first parameter and the
-successful value in the second, the opposite of the convention
-some languages use — kaikai follows Haskell on this point.
+`Result[Int, AgeError]` reads as "an `Int` or an error of
+type `AgeError`". The successful value is in the first parameter
+and the error in the second, as in Rust and most modern
+languages.
 
 Three patterns you'll see often:
 
 - **Chain a failure with `!`.** If you have an expression that
-  returns `Result[E, A]` and you want "if it fails, propagate
+  returns `Result[A, E]` and you want "if it fails, propagate
   the error; otherwise continue with the value", you write
   `expr!`. You saw this in §2.3.
 - **Higher-order functions**: `option.map`, `option.and_then`,
   `result.map_err`. We cover them in chapter 6.
 - **Convert between the two**: `option.ok_or(error)` takes an
   `Option[a]` and an error of type `e` and returns a
-  `Result[e, a]`. Useful when the information lost by `None`
+  `Result[a, e]`. Useful when the information lost by `None`
   isn't enough.
 
 `Option` and `Result` are sum types like any other. We've

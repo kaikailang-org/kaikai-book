@@ -301,7 +301,7 @@ is `route`, which translates an HTTP request into a domain
 command:
 
 ```kai
-pub fn route(req: HttpReq) : Result[domain.Response, domain.Command] {
+pub fn route(req: HttpReq) : Result[domain.Command, domain.Response] {
   if req.method == "GET" {
     if req.path == "/notes" {
       Ok(domain.List)

@@ -443,7 +443,7 @@ declaración. Verifica que `show` y `eq` funcionan sin que
 hayas escrito nada más.
 
 **9.4.** Declara un protocolo propio `Validable` con una
-operación `validar(x: Self) : Result[String, Self]` que
+operación `validar(x: Self) : Result[Self, String]` que
 devuelva `Ok(x)` si el valor es válido o `Err("razón")` si
 no. Implementa `Validable` para `type Edad = { años: Int }`
 de manera que rechace edades negativas o mayores a 130.

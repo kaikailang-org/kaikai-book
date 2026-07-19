@@ -418,15 +418,15 @@ is:
 
 1. Each category is a small sum type.
 2. The composite error is the union of the categories.
-3. Each function returns `Result[CompositeError, T]`.
+3. Each function returns `Result[T, CompositeError]`.
 4. The `!` operator propagates the error of any layer up to
    the composite `Result`, via the implicit upcast.
 
 ```kai
-fn check_identity(req: Req) : Result[IdentityError, Account] = ...
-fn check_auth(c: Account) : Result[AuthError, Approved] = ...
+fn check_identity(req: Req) : Result[Account, IdentityError] = ...
+fn check_auth(c: Account) : Result[Approved, AuthError] = ...
 
-fn query_balance(req: Req) : Result[QueryError, Balance] = {
+fn query_balance(req: Req) : Result[Balance, QueryError] = {
   let acc = check_identity(req)!     # IdentityError <: QueryError
   let app = check_auth(acc)!         # AuthError <: QueryError
   Ok(load_balance(app))
@@ -434,7 +434,7 @@ fn query_balance(req: Req) : Result[QueryError, Balance] = {
 ```
 
 Each `!` unpacks the `Ok` and propagates the `Err` with the
-correct upcast to the outer `Result[QueryError, _]`. Zero
+correct upcast to the outer `Result[_, QueryError]`. Zero
 wrappers, zero `map_err`, zero `From`. The signature of
 `query_balance` documents exactly which errors it can emit,
 and the compiler ensures every one of them is covered when
@@ -464,7 +464,7 @@ error:
 - **Environment**: undefined variable.
 
 The two form a union, `EvalError`, and the evaluator returns
-`Result[EvalError, Real]`. Full code in
+`Result[Real, EvalError]`. Full code in
 `examples/ch05/05_evaluator.kai`; here we walk through the
 interesting parts.
 
@@ -506,7 +506,7 @@ variable.
 ```kai
 type Env = [(String, Real)]
 
-fn lookup(env: Env, name: String) : Result[EvalError, Real] {
+fn lookup(env: Env, name: String) : Result[Real, EvalError] {
   case [], _                          -> Err(Undefined(name))
   case [(k, v), ...], n when k == n   -> Ok(v)
   case [_, ...rest], n                -> lookup(rest, n)
@@ -537,7 +537,7 @@ same file without tension.
 ### The evaluator
 
 ```kai
-fn eval(env: Env, e: Expr) : Result[EvalError, Real] =
+fn eval(env: Env, e: Expr) : Result[Real, EvalError] =
   match e {
     Lit(n)    -> Ok(n)
     Var(name) -> lookup(env, name)
@@ -605,8 +605,8 @@ Three things to pin down:
   can't use `!` on a `Result` inside — the `return Err(e)`
   has nowhere to land. The compiler tells you so clearly.
 - **The upcast happens at the `return`.** When
-  `check_identity(req)` returns `Result[IdentityError, _]`
-  but `query_balance` declares `Result[QueryError, _]`, the
+  `check_identity(req)` returns `Result[_, IdentityError]`
+  but `query_balance` declares `Result[_, QueryError]`, the
   `return Err(e)` applies the upcast `IdentityError <:
   QueryError` on the way out. That's why `!` and union
   errors compose so well: each level of the cascade absorbs
@@ -627,7 +627,7 @@ fn describe(e: EvalError) : String =
     Undefined(name)  -> "undefined variable: " ++ name
   }
 
-fn print_result(r: Result[EvalError, Real]) : Unit =
+fn print_result(r: Result[Real, EvalError]) : Unit =
   match r {
     Ok(v)  -> println("ok: " ++ real_to_string(v))
     Err(e) -> println("error: " ++ describe(e))

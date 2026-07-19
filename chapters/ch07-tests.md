@@ -365,7 +365,7 @@ type Expr
 
 type EvalError = DivByZero(Int)
 
-fn eval(e: Expr) : Result[EvalError, Int] = match e {
+fn eval(e: Expr) : Result[Int, EvalError] = match e {
   Lit(n)    -> Ok(n)
   Add(a, b) -> { ... }
   Mul(a, b) -> { ... }

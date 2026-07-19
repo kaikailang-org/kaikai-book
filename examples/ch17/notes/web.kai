@@ -26,7 +26,7 @@ fn byte_to_str(b: Int) : String = "#{int_to_char(b)}"
 pub fn bytes_to_string(bs: [Int]) : String =
   string_concat_all(list.map(bs, byte_to_str))
 
-pub fn parse_request(raw: String) : Result[String, HttpReq] = {
+pub fn parse_request(raw: String) : Result[HttpReq, String] = {
   match string.split(raw, "\r\n\r\n") {
     [head, ...body_parts] -> {
       let body = string.join(body_parts, "\r\n\r\n")
@@ -39,7 +39,7 @@ pub fn parse_request(raw: String) : Result[String, HttpReq] = {
   }
 }
 
-fn parse_first_line(line: String, body: String) : Result[String, HttpReq] = {
+fn parse_first_line(line: String, body: String) : Result[HttpReq, String] = {
   match string.split(line, " ") {
     [method, path, ..._] -> Ok(HttpReq { method: method, path: path, body: body })
     _                     -> Err("malformed first line: '#{line}'")
@@ -48,7 +48,7 @@ fn parse_first_line(line: String, body: String) : Result[String, HttpReq] = {
 
 # Translate an HttpReq into a domain Command.  If the URL
 # doesn't match any route, return an immediate Reply.
-pub fn route(req: HttpReq) : Result[domain.Reply, domain.Command] = {
+pub fn route(req: HttpReq) : Result[domain.Command, domain.Reply] = {
   if req.method == "GET" {
     if req.path == "/notes" {
       Ok(domain.List)
@@ -73,7 +73,7 @@ fn drop_prefix(s: String, prefix: String) : String = {
   string.slice(s, n, string.length(s) - n)
 }
 
-fn route_id(path: String, f: (Int) -> domain.Command) : Result[domain.Reply, domain.Command] = {
+fn route_id(path: String, f: (Int) -> domain.Command) : Result[domain.Command, domain.Reply] = {
   if string.starts_with(path, "/notes/") {
     let suffix = drop_prefix(path, "/notes/")
     match string.to_int(suffix) {

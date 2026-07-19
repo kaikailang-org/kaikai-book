@@ -27,7 +27,7 @@ fn byte_to_str(b: Int) : String = "#{int_to_char(b)}"
 pub fn bytes_to_string(bs: [Int]) : String =
   string_concat_all(list.map(bs, byte_to_str))
 
-pub fn parsear_request(raw: String) : Result[String, ReqHttp] = {
+pub fn parsear_request(raw: String) : Result[ReqHttp, String] = {
   match string.split(raw, "\r\n\r\n") {
     [head, ...cuerpo_partes] -> {
       let cuerpo = string.join(cuerpo_partes, "\r\n\r\n")
@@ -40,7 +40,7 @@ pub fn parsear_request(raw: String) : Result[String, ReqHttp] = {
   }
 }
 
-fn parsear_primera_linea(linea: String, cuerpo: String) : Result[String, ReqHttp] = {
+fn parsear_primera_linea(linea: String, cuerpo: String) : Result[ReqHttp, String] = {
   match string.split(linea, " ") {
     [metodo, path, ..._] -> Ok(ReqHttp { metodo: metodo, path: path, cuerpo: cuerpo })
     _                     -> Err("primera línea mal formada: '#{linea}'")
@@ -49,7 +49,7 @@ fn parsear_primera_linea(linea: String, cuerpo: String) : Result[String, ReqHttp
 
 # Traduce un ReqHttp a un Comando de dominio. Si la URL no
 # matchea ninguna ruta, devuelve una respuesta inmediata.
-pub fn enrutar(req: ReqHttp) : Result[dominio.Respuesta, dominio.Comando] = {
+pub fn enrutar(req: ReqHttp) : Result[dominio.Comando, dominio.Respuesta] = {
   if req.metodo == "GET" {
     if req.path == "/notas" {
       Ok(dominio.Listar)
@@ -74,7 +74,7 @@ fn drop_prefix(s: String, prefix: String) : String = {
   string.slice(s, n, string.length(s) - n)
 }
 
-fn enrutar_id(path: String, f: (Int) -> dominio.Comando) : Result[dominio.Respuesta, dominio.Comando] = {
+fn enrutar_id(path: String, f: (Int) -> dominio.Comando) : Result[dominio.Comando, dominio.Respuesta] = {
   if string.starts_with(path, "/notas/") {
     let sufijo = drop_prefix(path, "/notas/")
     match string.to_int(sufijo) {

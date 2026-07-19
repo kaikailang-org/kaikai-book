@@ -218,13 +218,13 @@ the return type**.
 
 ```kai
 type Option[a] = None | Some(a)
-type Result[e, a] = Err(e) | Ok(a)
+type Result[a, e] = Ok(a) | Err(e)
 ```
 
 A function that may not find its result returns
 `Option[User]`: either `Some(usr)` when found, or `None`
 otherwise. A function that may fail in several ways returns
-`Result[Error, User]`: either `Ok(usr)`, or `Err(reason)`. In
+`Result[User, Error]`: either `Ok(usr)`, or `Err(reason)`. In
 both cases, the type forces you to consider both
 possibilities.
 
@@ -275,7 +275,7 @@ function returns right there with that `Err` or `None`,
 handing it to the caller.
 
 ```kai
-fn load() : Result[Error, User] {
+fn load() : Result[User, Error] {
   let id = parse_id(input)!        # if it fails, propagate
   let data = read_file(id)!        # likewise
   Ok(build_user(id, data))
@@ -321,7 +321,7 @@ with `Lit`"; it also declares that `n` is the `Int` carried
 inside, ready to use on the right-hand side. Check, unpack,
 bind — in one move.
 
-Patterns nest. If you have an `Option[Result[Error, Int]]` and
+Patterns nest. If you have an `Option[Result[Int, Error]]` and
 you want to distinguish the three possible shapes, you write:
 
 ```kai

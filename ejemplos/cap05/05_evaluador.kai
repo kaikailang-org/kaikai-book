@@ -5,7 +5,7 @@
 # distintas — divisiones por cero, raíces de negativos, y
 # referencias a variables no definidas. Cada error se
 # representa como un tipo aparte; el resultado del evaluador
-# devuelve `Result[ErrorEval, Real]`.
+# devuelve `Result[Real, ErrorEval]`.
 #
 # La unión `ErrorEval = ErrorAritmetico | ErrorAmbiente` no
 # requiere wrappers ni conversiones explícitas.
@@ -30,7 +30,7 @@ type ErrorEval = ErrorAritmetico | ErrorAmbiente
 # Ambiente: par nombre -> valor. Lookup recursivo.
 type Env = [(String, Real)]
 
-fn lookup(env: Env, nombre: String) : Result[ErrorEval, Real] {
+fn lookup(env: Env, nombre: String) : Result[Real, ErrorEval] {
   case [], _                          -> Err(NoDefinida(nombre))
   case [(k, v), ...], n when k == n   -> Ok(v)
   case [_, ...resto], n               -> lookup(resto, n)
@@ -46,7 +46,7 @@ fn raiz_loop(x: Real, guess: Real, fuel: Int) : Real =
   if fuel <= 0 { guess }
   else { raiz_loop(x, (guess + x / guess) / 2.0, fuel - 1) }
 
-fn eval(env: Env, e: Expr) : Result[ErrorEval, Real] =
+fn eval(env: Env, e: Expr) : Result[Real, ErrorEval] =
   match e {
     Lit(n)      -> Ok(n)
     Var(nombre) -> lookup(env, nombre)
@@ -78,7 +78,7 @@ fn describir(e: ErrorEval) : String =
     NoDefinida(nombre) -> "variable no definida: " ++ nombre
   }
 
-fn imprimir(r: Result[ErrorEval, Real]) : Unit / Stdout =
+fn imprimir(r: Result[Real, ErrorEval]) : Unit / Stdout =
   match r {
     Ok(v)  -> println("ok: " ++ real_to_string(v))
     Err(e) -> println("error: " ++ describir(e))

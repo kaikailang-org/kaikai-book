@@ -22,7 +22,7 @@ type Expr
 
 type ErrorEval = DivCero(Int)    # carga el numerador en cuestión
 
-fn eval(e: Expr) : Result[ErrorEval, Int] =
+fn eval(e: Expr) : Result[Int, ErrorEval] =
   match e {
     Lit(n)     -> Ok(n)
     Suma(a, b) -> {
