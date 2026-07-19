@@ -39,7 +39,7 @@ treat as the same.
 
 ## 10.1 `unit` and annotated literals
 
-A unit is declared with the keyword `unit`:
+A unit is declared by writing `unit` before a name:
 
 ```kai
 unit USD

@@ -40,7 +40,7 @@ trataría como iguales.
 
 ## 10.1 `unit` y literales anotados
 
-Una unidad se declara con la palabra clave `unit`:
+Una unidad se declara anteponiendo `unit` a un nombre:
 
 ```kai
 unit USD

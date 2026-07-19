@@ -175,6 +175,16 @@
     </dict>
 
     <dict>
+      <key>name</key><string>Kind habitants (USD, EUR, m, s — minted by unit/currency)</string>
+      <key>scope</key><string>entity.name.kind</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key><string>#A3155E</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+
+    <dict>
       <key>name</key><string>Compiler intrinsics ($extern_handler, …)</string>
       <key>scope</key><string>support.function.intrinsic</string>
       <key>settings</key>
