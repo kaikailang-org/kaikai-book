@@ -15,6 +15,7 @@ contexts:
     - include: comments
     - include: strings
     - include: numbers
+    - include: kind-introducers
     - include: keywords
     - include: types
     - include: effect-row
@@ -66,12 +67,22 @@ contexts:
     - match: '\b0x[0-9A-Fa-f_]+\b'
       scope: constant.numeric.hex.kai
 
+  kind-introducers:
+    # `unit`/`currency` acuñan un habitante de kind. Se resaltan solo en
+    # posición de introductor (inicio de declaración, seguidas del nombre
+    # del habitante); como identificador suelto no matchean y quedan como
+    # texto normal — no son palabras reservadas.
+    - match: '^\s*(unit|currency)\s+({{ident}})'
+      captures:
+        1: keyword.declaration.kind.kai
+        2: entity.name.kind.kai
+
   keywords:
     - match: '\b(fn|let|var|if|else|match|case|when|where|return|do|then|in|as|of)\b'
       scope: keyword.control.kai
     - match: '\b(effect|handle|with|resume|default)\b'
       scope: keyword.effect.kai
-    - match: '\b(type|unit|protocol|impl|axiom|const|extern|import|use|pub)\b'
+    - match: '\b(type|protocol|impl|axiom|const|extern|import|use|pub)\b'
       scope: keyword.declaration.kai
     - match: '\b(test|check|bench|assert|requires|ensures|result|todo)\b'
       scope: keyword.contract.kai
