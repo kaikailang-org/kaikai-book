@@ -92,7 +92,7 @@ pub type Comando
   | Borrar(Int)
 
 pub type Respuesta
-  = Ok(String)
+  = Guardado(String)
   | Creado(Nota)
   | NoEncontrado
   | ErrorCliente(String)
@@ -125,7 +125,7 @@ import actor
 import dominio
 
 pub type AlmacenMsg = Pregunta(dominio.Comando, Pid[AlmacenResp])
-pub type AlmacenResp = Respuesta(dominio.Respuesta)
+pub type AlmacenResp = Respondido(dominio.Respuesta)
 ```
 
 `AlmacenMsg` es lo que el almacén recibe; `AlmacenResp` es lo
@@ -142,11 +142,11 @@ pub fn procesar(c: dominio.Comando, notas: [dominio.Nota], next_id: Int)
   match c {
     Listar -> {
       let cuerpos = list.map(notas, .cuerpo)
-      (dominio.Ok(serializar_lista(cuerpos)), notas, next_id)
+      (dominio.Guardado(serializar_lista(cuerpos)), notas, next_id)
     }
     Obtener(id) ->
       match buscar(notas, id) {
-        Some(n) -> (dominio.Ok(n.cuerpo), notas, next_id)
+        Some(n) -> (dominio.Guardado(n.cuerpo), notas, next_id)
         None    -> (dominio.NoEncontrado, notas, next_id)
       }
     Crear(cuerpo) -> {
@@ -157,7 +157,7 @@ pub fn procesar(c: dominio.Comando, notas: [dominio.Nota], next_id: Int)
       match buscar(notas, id) {
         Some(_) -> {
           let restantes = list.filter(notas, (n) => n.id != id)
-          (dominio.Ok("borrada"), restantes, next_id)
+          (dominio.Guardado("borrada"), restantes, next_id)
         }
         None -> (dominio.NoEncontrado, notas, next_id)
       }
@@ -188,7 +188,7 @@ test "crear y obtener" {
 
   let (r2, _, _) = procesar(dominio.Obtener(1), n1, id1)
   let obtener_ok = match r2 {
-    dominio.Ok(c) -> c == "primera"
+    dominio.Guardado(c) -> c == "primera"
     _              -> false
   }
   assert obtener_ok
@@ -210,7 +210,7 @@ fn bucle(notas: [dominio.Nota], proximo_id: Int)
     Pregunta(comando, cliente) -> {
       let (resp, notas_nuevas, id_nuevo) =
         procesar(comando, notas, proximo_id)
-      Actor.send(cliente, Respuesta(resp))
+      Actor.send(cliente, Respondido(resp))
       bucle(notas_nuevas, id_nuevo)
     }
   }
@@ -243,7 +243,7 @@ pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando)
     : dominio.Respuesta / Actor[AlmacenMsg] + Actor[AlmacenResp] + Cancel {
   Actor.send(almacen, Pregunta(c, Actor.self()))
   match Actor.receive() {
-    Respuesta(r) -> r
+    Respondido(r) -> r
   }
 }
 ```

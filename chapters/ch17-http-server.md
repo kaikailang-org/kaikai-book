@@ -33,7 +33,7 @@ Before the code, the pieces and their responsibilities:
 notes/
 ├── kai.toml             # project manifest
 ├── main.kai             # entry point and accept loop
-├── domain.kai           # types: Note, Command, Response
+├── domain.kai           # types: Note, Command, Reply
 ├── store.kai            # actor that holds the notes
 ├── persistence.kai      # actor that writes the log
 └── web.kai              # minimal HTTP parser and serializer
@@ -90,8 +90,8 @@ pub type Command
   | Create(String)
   | Delete(Int)
 
-pub type Response
-  = Ok(String)
+pub type Reply
+  = Stored(String)
   | Created(Note)
   | NotFound
   | ClientError(String)
@@ -124,7 +124,7 @@ import actor
 import domain
 
 pub type StoreMsg = Ask(domain.Command, Pid[StoreResp])
-pub type StoreResp = Reply(domain.Response)
+pub type StoreResp = Replied(domain.Reply)
 ```
 
 `StoreMsg` is what the store receives; `StoreResp` is what
@@ -138,15 +138,15 @@ processing:
 
 ```kai
 pub fn process(c: domain.Command, notes: [domain.Note], next_id: Int)
-    : (domain.Response, [domain.Note], Int) {
+    : (domain.Reply, [domain.Note], Int) {
   match c {
     List -> {
       let bodies = list.map(notes, .body)
-      (domain.Ok(serialize_list(bodies)), notes, next_id)
+      (domain.Stored(serialize_list(bodies)), notes, next_id)
     }
     Get(id) ->
       match find(notes, id) {
-        Some(n) -> (domain.Ok(n.body), notes, next_id)
+        Some(n) -> (domain.Stored(n.body), notes, next_id)
         None    -> (domain.NotFound, notes, next_id)
       }
     Create(body) -> {
@@ -157,7 +157,7 @@ pub fn process(c: domain.Command, notes: [domain.Note], next_id: Int)
       match find(notes, id) {
         Some(_) -> {
           let remaining = list.filter(notes, (n) => n.id != id)
-          (domain.Ok("deleted"), remaining, next_id)
+          (domain.Stored("deleted"), remaining, next_id)
         }
         None -> (domain.NotFound, notes, next_id)
       }
@@ -188,7 +188,7 @@ test "create and get" {
 
   let (r2, _, _) = process(domain.Get(1), n1, id1)
   let get_ok = match r2 {
-    domain.Ok(c) -> c == "first"
+    domain.Stored(c) -> c == "first"
     _             -> false
   }
   assert get_ok
@@ -209,7 +209,7 @@ fn loop(notes: [domain.Note], next_id: Int)
   match Actor.receive() {
     Ask(command, client) -> {
       let (resp, new_notes, new_id) = process(command, notes, next_id)
-      Actor.send(client, Reply(resp))
+      Actor.send(client, Replied(resp))
       loop(new_notes, new_id)
     }
   }
@@ -239,10 +239,10 @@ And a synchronous wrapper for clients:
 
 ```kai
 pub fn ask(store: Pid[StoreMsg], c: domain.Command)
-    : domain.Response / Actor[StoreMsg] + Actor[StoreResp] + Cancel {
+    : domain.Reply / Actor[StoreMsg] + Actor[StoreResp] + Cancel {
   Actor.send(store, Ask(c, Actor.self()))
   match Actor.receive() {
-    Reply(r) -> r
+    Replied(r) -> r
   }
 }
 ```
@@ -301,7 +301,7 @@ is `route`, which translates an HTTP request into a domain
 command:
 
 ```kai
-pub fn route(req: HttpReq) : Result[domain.Command, domain.Response] {
+pub fn route(req: HttpReq) : Result[domain.Command, domain.Reply] {
   if req.method == "GET" {
     if req.path == "/notes" {
       Ok(domain.List)
@@ -433,10 +433,10 @@ one by one:
 
 - **Ch. 2** (thinking in kaikai): functions are
   expressions; `process` returns a tuple in one expression.
-- **Ch. 4** (compound types): return tuples (`(Response,
+- **Ch. 4** (compound types): return tuples (`(Reply,
   [Note], Int)`), records (`Note`), lists with head/tail
   patterns.
-- **Ch. 5** (sum types and match): `Command`, `Response`,
+- **Ch. 5** (sum types and match): `Command`, `Reply`,
   `Event` are sum types; matches cover all variants;
   exhaustiveness is verified by the compiler.
 - **Ch. 6** (functions and pipelines): `list.map`,
@@ -502,7 +502,7 @@ for concurrency, modules for separation.
 
 There's a clear pattern in what we've just put together:
 
-- **The domain is pure.** `Command`, `Response`, `process`:
+- **The domain is pure.** `Command`, `Reply`, `process`:
   types and functions with no effects. They're tested with
   inputs and outputs, without starting anything.
 - **Actors encapsulate the mutable state.** The store holds
