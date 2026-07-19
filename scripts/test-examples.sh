@@ -165,7 +165,7 @@ build|ejemplos/cap15/05_diseno_top_down.kai|ok
 # Capítulo 16 — FFI
 build|ejemplos/cap16/ffi/01_libc_abs.kai|ok
 build|ejemplos/cap16/ffi/02_renombre.kai|ok
-project|ejemplos/cap16/ffi/03_shim|ok|app.kai|-include shim.h shim.c
+project|ejemplos/cap16/ffi/03_shim|ok|app.kai|shim.c|native
 
 # Capítulo 17 — caso notas
 project|ejemplos/cap17/notas|ok
@@ -306,7 +306,7 @@ build|examples/ch15/05_top_down_design.kai|ok
 # Chapter 16
 build|examples/ch16/ffi/01_libc_abs.kai|ok
 build|examples/ch16/ffi/02_rename.kai|ok
-project|examples/ch16/ffi/03_shim|ok|app.kai|-include shim.h shim.c
+project|examples/ch16/ffi/03_shim|ok|app.kai|shim.c|native
 
 # Chapter 17
 project|examples/ch17/notes|ok
@@ -332,7 +332,7 @@ FAILED_LINES=""
 XPASS_LINES=""
 
 run_case() {
-  local mode="$1" path="$2" expect="$3" entry="${4:-main.kai}" cflags="${5:-}"
+  local mode="$1" path="$2" expect="$3" entry="${4:-main.kai}" cflags="${5:-}" backend="${6:-}"
   local cwd target out rc
   local key="$path"
 
@@ -355,7 +355,7 @@ run_case() {
 
   case "$mode" in
     build|project)
-      out=$(cd "$cwd" && CFLAGS="$cflags" kai build "$target" -o "$TMP/bin" 2>&1); rc=$?
+      out=$(cd "$cwd" && KAI_BACKEND="${backend:-$KAI_BACKEND}" CFLAGS="$cflags" kai build "$target" -o "$TMP/bin" 2>&1); rc=$?
       ;;
     run)
       out=$(cd "$cwd" && kai run "$target" 2>&1); rc=$?
@@ -414,8 +414,8 @@ while IFS= read -r line; do
   if [ -n "$FILTER" ] && ! echo "$line" | grep -q "|$FILTER/"; then
     continue
   fi
-  IFS='|' read -r mode path expect entry cflags <<< "$line"
-  run_case "$mode" "$path" "$expect" "$entry" "$cflags"
+  IFS='|' read -r mode path expect entry cflags backend <<< "$line"
+  run_case "$mode" "$path" "$expect" "$entry" "$cflags" "$backend"
 done <<< "$MANIFEST"
 
 echo ""
