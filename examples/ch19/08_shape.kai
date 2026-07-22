@@ -1,0 +1,24 @@
+# Listing 19.8 — examples/ch19/08_shape.kai
+protocol Container[s: Shape] {
+  peek(xs: s[Int]) : Int
+}
+
+type Box[a] = Box(a)
+
+impl Container for Box {
+  fn peek(xs: Box[Int]) : Int = match xs {
+    Box(v) -> v
+  }
+}
+
+impl Container for List {
+  fn peek(xs: [Int]) : Int = match xs {
+    []         -> 0
+    [h, ..._t] -> h
+  }
+}
+
+fn main() : Unit / Stdout = {
+  println("box:  #{peek(Box(7))}")
+  println("list: #{peek([3, 4, 5])}")
+}
