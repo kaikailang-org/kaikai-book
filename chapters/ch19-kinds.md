@@ -69,7 +69,7 @@ a kind. Three things define one:
   (`unit parsec`) and even new kinds (§19.5), but you cannot
   declare a new theory. Try, and the compiler answers
   `unknown theory`. That is a design decision, not a temporary
-  limitation; §19.8 defends it.
+  limitation; §19.10 defends it.
 
 ## 19.3 The full catalog
 
@@ -78,25 +78,31 @@ Here is an excerpt (the real file carries a comment per entry):
 
 ```kai
 # excerpt of stdlib/core/kinds.kai
-theory HindleyMilner = builtin
-theory EffectRow     = builtin
-theory AbelianGroup  = { assoc, commut, inverse, identity }
-theory Module        = { assoc, commut, inverse, identity }
-theory Structural    = builtin
+theory HindleyMilner  = builtin
+theory EffectRow      = builtin
+theory AbelianGroup   = { assoc, commut, inverse, identity }
+theory Module         = { assoc, commut, inverse, identity }
+theory Nominal        = builtin
+theory ConstructorApp = builtin
+theory Composition    = { assoc, measure }
 
-kind Type     : HindleyMilner with type
-kind Effect   : EffectRow     with effect
-kind Measure  : AbelianGroup  with unit
-kind Currency : Module        with currency
-kind Region   : Structural    with region
+kind Type     : HindleyMilner  with type
+kind Effect   : EffectRow      with effect
+kind Measure  : AbelianGroup   with unit
+kind Currency : Module         with currency
+kind Region   : Nominal        with region
+kind Layout   : Composition over Int with layout
+kind Shape    : ConstructorApp
 ```
 
 Each `kind` names its theory and, after the `with`, its
 **introducer word**: the declaration that mints habitants. `type`
 mints habitants of `Type`. `effect` mints habitants of `Effect`.
-`unit` mints habitants of `Measure`. You have been minting kind
-habitants for the whole book; all that was missing was the org
-chart:
+`unit` mints habitants of `Measure`. `Shape` is the exception: it
+takes no `with`, because its habitants are not declared but
+*derived* — every `type T[a]` of one parameter already is one. You
+have been minting kind habitants for the whole book; all that was
+missing was the org chart:
 
 | Kind | Theory | Introducer | Habitants | What the theory decides |
 |---|---|---|---|---|
@@ -104,25 +110,29 @@ chart:
 | `Effect` | `EffectRow` | `effect` | `Stdout`, `Fail`, yours | rows: order irrelevant, duplicates collapse |
 | `Measure` | `AbelianGroup` | `unit` | `m`, `s`, `USD` if you like | product, quotient and power of units |
 | `Currency` | `Module` | `currency` | `USD`, `EUR`, … (`stdlib/money.kai`) | addition and scaling; **no** product |
-| `Region` | `Structural` | `region` | one fresh per `region` block | identity: each arena is only itself |
+| `Region` | `Nominal` | `region` | one fresh per `region` block | identity: each arena is only itself |
+| `Layout` | `Composition` | `layout` | `be`, `le` | byte order; associative, **not** commutative |
+| `Shape` | `ConstructorApp` | — (derived) | `List`, `Vec`, `Option`, `Tree[a]` | arity-1: `List ~ List`, never `List ~ Vec` |
 
-Three theories say `builtin`: their engine is the compiler
-itself. `HindleyMilner` is the type inferencer that has been with
-you since chapter 3; `EffectRow` is chapter 12's row unification;
-`Structural` is symbol equality, which the core already knew how
-to do. The other two are described by algebraic properties
-(associative, commutative, with inverse, with identity), and the
-difference between them — identical at first glance — is *which
-operation* those properties govern. In `AbelianGroup`, the
-habitants themselves form a group under product: `m * s`, `m^2`,
-`1/s` are new, derived habitants. In `Module`, the structure is
-additive only: *quantities* of a habitant add up and scale by a
-number, but habitants never multiply each other. `USD^2` is not a
-habitant of `Currency`; it does not exist. That asymmetry is
-deliberate, and §19.7 exploits it.
+Four theories say `builtin`: their engine is the compiler itself.
+`HindleyMilner` is the type inferencer that has been with you since
+chapter 3; `EffectRow` is chapter 12's row unification; `Nominal`
+is symbol equality, which the core already knew how to do;
+`ConstructorApp` binds one-argument constructors, and we see it in
+§19.9. The other three are described by algebraic properties. Two
+look nearly identical — `AbelianGroup` and `Module` — and the
+difference is *which operation* their properties govern. In
+`AbelianGroup`, the habitants themselves form a group under
+product: `m * s`, `m^2`, `1/s` are new, derived habitants. In
+`Module`, the structure is additive only: *quantities* of a
+habitant add up and scale by a number, but habitants never multiply
+each other. `USD^2` is not a habitant of `Currency`; it does not
+exist. That asymmetry is deliberate, and §19.7 exploits it. The
+third, `Composition`, is associative but **not** commutative —order
+carries meaning— and sums a per-element measure (§19.8).
 
 Note what is **not** in the table: anything of yours. The
-language's complete catalog fits on one screen. Five kinds, five
+language's complete catalog fits on one screen. Seven kinds, seven
 theories, and every chapter you have read so far is built on
 them.
 
@@ -145,7 +155,7 @@ all three, the compiler applies the kind's theory when checking
 the body: in `area_of` it can form `u^2` because `AbelianGroup`
 has a product; in `insert` it demands that the tree coming in and
 the tree going out live in the *same* region, because
-`Structural` never unifies distinct regions; in `convert` it lets
+`Nominal` never unifies distinct regions; in `convert` it lets
 `a` and `b` differ because they are two parameters — chapter 10's
 explicit door between currencies, now with its mechanism in
 plain view.
@@ -182,7 +192,7 @@ world's physics, but the algebra holds no opinions about physics
 ## 19.5 Your own kinds
 
 `Measure` is not special. The `kind` declaration is available to
-you, with the two non-builtin theories as options. One case where
+you, with the three non-builtin theories as options. One case where
 it pays: separating unit systems that must never mix, not even
 through an accidental conversion.
 
@@ -223,12 +233,12 @@ closed not by a naming convention but by a kind boundary.
 Additive kinds can be declared too
 (`kind Points : Module with points`): they fit quantities that
 add and scale but where "points squared" would be nonsense — game
-points, frequent-flyer miles, academic credits. The two remaining
+points, frequent-flyer miles, academic credits. The four remaining
 `builtin` theories accept no user kinds: write
-`kind Zone : Structural` and the compiler tells you a builtin
-theory cannot classify a user-declared kind. Regions, types and
-effects have exactly one kind each, and it belongs to the
-language.
+`kind Zone : Nominal` and the compiler tells you a builtin
+theory cannot classify a user-declared kind. Regions, types,
+effects and shapes have exactly one kind each, and it belongs to
+the language.
 
 ## 19.6 Region: memory as a habitant
 
@@ -318,7 +328,7 @@ type is declared once, knowing nothing about regions, and any
 function becomes region-polymorphic by annotating `[r: Region]`.
 A hundred nodes, zero counter operations, one free.
 
-`Structural` is the simplest theory in the catalog, and here is
+`Nominal` is the simplest theory in the catalog, and here is
 why: each `region { r -> }` block mints a *fresh* habitant,
 distinct from every other. Two regions never unify. That is what
 keeps a `Tree<r1>` out of an arena `r2` that is freed at a
@@ -428,7 +438,115 @@ kind is your tool. If you are writing the accounting system,
 `Currency` removes a whole family of meaningless types from your
 program and throws in `Decimal` for free.
 
-## 19.8 Closed theories, open models
+## 19.8 Layout: the order of bytes
+
+When you serialize an integer to bytes —for a network protocol, a
+file format, a binary record— you have to pick an order: most
+significant byte first (*big-endian*, network order) or the other
+way (*little-endian*)? Getting it wrong is not a type error in most
+languages: it is a corrupted number you find three layers down. The
+`Layout` kind lifts that decision into the type.
+
+A fixed-width field carries two things: its width, which comes from
+the base type (`U32` is four bytes, `U16` two), and its order,
+which is the habitant. `U32<be>` and `U32<le>` are the same `U32`
+in distinct representations, so they **never unify**: passing one
+where the other is expected does not compile. The two habitants,
+`be` and `le`, ship in the stdlib —`layout be`, `layout le`— and
+are a closed set; there is no third order to declare.
+
+The `#[derive(Layout)]` annotation on a record generates its
+`to_bytes` plus a `<type>_from_bytes` shim that rebuilds the value
+from a buffer:
+
+```kai
+# Listing 19.7 — examples/ch19/07_layout.kai
+#[derive(Layout)]
+type Packet = { magic: U32<be>, port: U16<be> }
+
+fn main() : Unit / Stdout = {
+  let bytes = Packet { magic: 0<be>, port: 0<be> }.to_bytes()
+  match packet_from_bytes(bytes, 0) {
+    Ok(p)  -> println("port #{p.value.port}")
+    Err(m) -> println(m)
+  }
+}
+```
+
+```
+$ kai run examples/ch19/07_layout.kai
+port 0
+```
+
+Here is where the theory comes in. `Composition` composes the
+fields **in the order you wrote them** —that is why it is
+associative but not commutative: moving a field changes the
+layout— and sums each one's measure, its byte size, to give the
+record's size. That `over Int` you saw in the catalog
+(`kind Layout : Composition over Int`) names exactly that measure:
+a size is an integer and the sum has to be exact. The result is a
+positional, byte-exact binary format, its order checked at compile
+time and —like every kind— erased from the binary.
+
+## 19.9 Shape: the container as a habitant
+
+The other six kinds mint habitants with a word: `unit m`,
+`currency USD`. `Shape` has no word, and that is the point: its
+habitants already exist. Every `type T[a]` of a single parameter
+—`List`, `Vec`, `Option`, your `Box[a]`— is automatically a `Shape`
+habitant, its bare constructor `T`, exactly as every `type` is a
+`Type` habitant. You declare nothing new; you name what you already
+have.
+
+With that you can quantify over the container, not just the
+content. A `[s: Shape]` parameter accepts any one-argument
+constructor, and `s[Int]` applies it to a type:
+
+```kai
+# Listing 19.8 — examples/ch19/08_shape.kai
+protocol Container[s: Shape] {
+  peek(xs: s[Int]) : Int
+}
+
+type Box[a] = Box(a)
+
+impl Container for Box {
+  fn peek(xs: Box[Int]) : Int = match xs {
+    Box(v) -> v
+  }
+}
+
+impl Container for List {
+  fn peek(xs: [Int]) : Int = match xs {
+    []         -> 0
+    [h, ..._t] -> h
+  }
+}
+
+fn main() : Unit / Stdout = {
+  println("box:  #{peek(Box(7))}")
+  println("list: #{peek([3, 4, 5])}")
+}
+```
+
+```
+$ kai run examples/ch19/08_shape.kai
+box:  7
+list: 3
+```
+
+`peek` works over `Box[Int]` and over `[Int]` with a single
+signature, `s[Int] -> Int`. The `ConstructorApp` theory is what
+allows it: unifying `s[Int]` with `Box[Int]` binds `s` to `Box`,
+and with `[Int]` binds `s` to `List`; two shapes unify only if they
+are the same constructor —`List` with `List`, never `List` with
+`Vec`—. A shape is atomic: it does not compose or partially apply,
+so `s[t[Int]]` is a formation error, not a type. It is the
+expressiveness of a functor —abstracting over the container—
+without the higher-kinded types that bring it in Haskell: after
+monomorphization, every call is a direct static dispatch.
+
+## 19.10 Closed theories, open models
 
 I close with the design question, because I know the reader
 coming from Haskell has it loaded: why a closed catalog? Why not
@@ -437,7 +555,7 @@ letting everyone build their own algebra?
 
 Because each catalog entry buys its decidability separately.
 `AbelianGroup` unification is exponent arithmetic; `Module`'s, a
-habitant-and-exponent-1 check; `Structural`'s, symbol equality.
+habitant-and-exponent-1 check; `Nominal`'s, symbol equality.
 Each is a small, fast algorithm with no pathological cases. An
 arbitrary user-defined theory would be an arbitrary unification
 problem — and the history of type systems is littered with

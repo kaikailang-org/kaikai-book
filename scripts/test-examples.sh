@@ -180,6 +180,8 @@ build|ejemplos/cap19/03_region_scratch.kai|ok
 build|ejemplos/cap19/04_arbol_en_arena.kai|ok
 build|ejemplos/cap19/05_dinero.kai|ok
 build|ejemplos/cap19/06_usd_por_eur.kai|fail
+run|ejemplos/cap19/07_layout.kai|ok
+run|ejemplos/cap19/08_shape.kai|ok
 
 # ===== Edición inglés =====
 
@@ -321,6 +323,8 @@ build|examples/ch19/03_region_scratch.kai|ok
 build|examples/ch19/04_tree_in_arena.kai|ok
 build|examples/ch19/05_money.kai|ok
 build|examples/ch19/06_usd_times_eur.kai|fail
+run|examples/ch19/07_layout.kai|ok
+run|examples/ch19/08_shape.kai|ok
 EOF
 
 # ============================================================

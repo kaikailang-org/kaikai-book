@@ -67,7 +67,7 @@ unificar habitantes de un kind. Tres cosas la definen:
   (`unit parsec`) y hasta kinds nuevos (§19.5), pero no puedes
   declarar una theory nueva. Si lo intentas, el compilador
   responde `unknown theory`. Esta es una decisión de diseño, no
-  una limitación transitoria; el §19.8 la defiende.
+  una limitación transitoria; el §19.10 la defiende.
 
 ## 19.3 El catálogo completo
 
@@ -76,24 +76,30 @@ un extracto (el archivo real trae un comentario por entrada):
 
 ```kai
 # fragmento de stdlib/core/kinds.kai
-theory HindleyMilner = builtin
-theory EffectRow     = builtin
-theory AbelianGroup  = { assoc, commut, inverse, identity }
-theory Module        = { assoc, commut, inverse, identity }
-theory Structural    = builtin
+theory HindleyMilner  = builtin
+theory EffectRow      = builtin
+theory AbelianGroup   = { assoc, commut, inverse, identity }
+theory Module         = { assoc, commut, inverse, identity }
+theory Nominal        = builtin
+theory ConstructorApp = builtin
+theory Composition    = { assoc, measure }
 
-kind Type     : HindleyMilner with type
-kind Effect   : EffectRow     with effect
-kind Measure  : AbelianGroup  with unit
-kind Currency : Module        with currency
-kind Region   : Structural    with region
+kind Type     : HindleyMilner  with type
+kind Effect   : EffectRow      with effect
+kind Measure  : AbelianGroup   with unit
+kind Currency : Module         with currency
+kind Region   : Nominal        with region
+kind Layout   : Composition over Int with layout
+kind Shape    : ConstructorApp
 ```
 
 Cada `kind` nombra su theory y, tras el `with`, su **palabra
 introductora**: la declaración que acuña habitantes. `type` acuña
 habitantes de `Type`. `effect` acuña habitantes de `Effect`.
-`unit` acuña habitantes de `Measure`. Llevas todo el libro
-acuñando habitantes de kinds; solo faltaba el organigrama:
+`unit` acuña habitantes de `Measure`. `Shape` es la excepción: no
+lleva `with`, porque sus habitantes no se declaran, se *derivan* —
+cada `type T[a]` de un solo parámetro ya es uno. Llevas todo el
+libro acuñando habitantes de kinds; solo faltaba el organigrama:
 
 | Kind | Theory | Introductor | Habitantes | Qué decide la theory |
 |---|---|---|---|---|
@@ -101,26 +107,29 @@ acuñando habitantes de kinds; solo faltaba el organigrama:
 | `Effect` | `EffectRow` | `effect` | `Stdout`, `Fail`, los tuyos | filas: orden irrelevante, duplicados colapsan |
 | `Measure` | `AbelianGroup` | `unit` | `m`, `s`, `USD` si quieres | producto, cociente y potencia de unidades |
 | `Currency` | `Module` | `currency` | `USD`, `EUR`, … (`stdlib/money.kai`) | suma y escala; **sin** producto |
-| `Region` | `Structural` | `region` | uno fresco por bloque `region` | identidad: cada arena es solo ella misma |
+| `Region` | `Nominal` | `region` | uno fresco por bloque `region` | identidad: cada arena es solo ella misma |
+| `Layout` | `Composition` | `layout` | `be`, `le` | orden de bytes; asociativa, **no** conmutativa |
+| `Shape` | `ConstructorApp` | — (derivados) | `List`, `Vec`, `Option`, `Tree[a]` | aridad-1: `List ~ List`, nunca `List ~ Vec` |
 
-Tres theories dicen `builtin`: su motor es el compilador mismo.
+Cuatro theories dicen `builtin`: su motor es el compilador mismo.
 `HindleyMilner` es el inferidor de tipos que te acompaña desde el
 capítulo 3; `EffectRow` es la unificación de filas del capítulo
-12; `Structural` es igualdad de símbolo, que el núcleo ya sabía
-hacer. Las otras dos se describen por propiedades algebraicas
-(asociativa, conmutativa, con inverso, con identidad), y la
-diferencia entre ambas — que a primera vista se ven idénticas —
-es *sobre qué operación* rigen esas propiedades. En
-`AbelianGroup`, los habitantes mismos forman un grupo bajo el
-producto: `m * s`, `m^2`, `1/s` son habitantes nuevos derivados.
-En `Module`, la estructura es solo aditiva: las *cantidades* de
-un habitante se suman y se escalan por un número, pero los
-habitantes no se multiplican entre sí. `USD^2` no es un habitante
-de `Currency`; no existe. Esa asimetría es deliberada y el §19.7
-la explota.
+12; `Nominal` es igualdad de símbolo, que el núcleo ya sabía hacer;
+`ConstructorApp` liga constructores de un argumento, y lo vemos en
+§19.9. Las otras tres se describen por propiedades algebraicas. Dos
+se ven casi idénticas — `AbelianGroup` y `Module` — y la diferencia
+es *sobre qué operación* rigen sus propiedades. En `AbelianGroup`,
+los habitantes mismos forman un grupo bajo el producto: `m * s`,
+`m^2`, `1/s` son habitantes nuevos derivados. En `Module`, la
+estructura es solo aditiva: las *cantidades* de un habitante se
+suman y se escalan por un número, pero los habitantes no se
+multiplican entre sí. `USD^2` no es un habitante de `Currency`; no
+existe. Esa asimetría es deliberada y el §19.7 la explota. La
+tercera, `Composition`, es asociativa pero **no** conmutativa —el
+orden carga significado— y suma una medida por elemento (§19.8).
 
 Nota lo que **no** está en la tabla: nada tuyo. El catálogo
-completo del lenguaje cabe en una pantalla. Cinco kinds, cinco
+completo del lenguaje cabe en una pantalla. Siete kinds, siete
 theories, y todo el libro que llevas leído está construido sobre
 ellos.
 
@@ -143,7 +152,7 @@ Y en las tres, el compilador aplica la theory del kind al
 verificar el cuerpo: en `area_de` puede formar `u^2` porque
 `AbelianGroup` tiene producto; en `insertar` exige que el árbol
 que entra y el que sale vivan en la *misma* región porque
-`Structural` no unifica regiones distintas; en `convert` permite
+`Nominal` no unifica regiones distintas; en `convert` permite
 que `a` y `b` difieran porque son dos parámetros — la puerta
 explícita entre monedas del capítulo 10, ahora con su mecanismo a
 la vista.
@@ -180,7 +189,7 @@ física: opina de consistencia.
 ## 19.5 Kinds propios
 
 `Measure` no es especial. La declaración `kind` está disponible
-para ti, con las dos theories no-builtin como opciones. Un caso
+para ti, con las tres theories no-builtin como opciones. Un caso
 donde esto paga: separar sistemas de unidades que jamás deben
 mezclarse, ni siquiera con una conversión accidental.
 
@@ -223,11 +232,11 @@ Los kinds aditivos también se pueden declarar
 (`kind Puntos : Module with puntos`): sirven para cantidades que
 se suman y escalan pero donde "puntos al cuadrado" sería un
 sinsentido — puntos de un juego, millas de viajero, créditos
-académicos. Las dos theories `builtin` restantes no aceptan kinds
-de usuario: si escribes `kind Zona : Structural`, el compilador
+académicos. Las cuatro theories `builtin` restantes no aceptan
+kinds de usuario: si escribes `kind Zona : Nominal`, el compilador
 te dirá que una theory builtin no puede clasificar un kind tuyo.
-Las regiones, los tipos y los efectos tienen exactamente un kind
-cada uno, y es del lenguaje.
+Las regiones, los tipos, los efectos y las formas tienen
+exactamente un kind cada uno, y es del lenguaje.
 
 ## 19.6 Region: memoria como habitante
 
@@ -319,7 +328,7 @@ nada de regiones, y cualquier función puede volverse
 region-polimórfica anotando `[r: Region]`. Cien nodos, cero
 operaciones de contador, una liberación.
 
-La theory `Structural` es la más simple del catálogo y aquí está
+La theory `Nominal` es la más simple del catálogo y aquí está
 el porqué: cada bloque `region { r -> }` acuña un habitante
 *fresco*, distinto de todos los demás. Dos regiones no unifican
 jamás. Eso es lo que impide que un `Arbol<r1>` se cuele en una
@@ -430,7 +439,116 @@ el kind `Measure` es tu herramienta. Si estás escribiendo el
 sistema contable, `Currency` te quita de encima una familia de
 tipos sin sentido y te regala `Decimal` de paso.
 
-## 19.8 Theory cerrada, modelos abiertos
+## 19.8 Layout: el orden de los bytes
+
+Cuando serializas un entero a bytes —para un protocolo de red, un
+formato de archivo, un registro binario— tienes que decidir el
+orden: ¿el byte más significativo primero (*big-endian*, el orden
+de red) o al revés (*little-endian*)? Elegir mal no da un error de
+tipos en la mayoría de los lenguajes: da un número corrupto que
+descubres tres capas más abajo. El kind `Layout` sube esa decisión
+al tipo.
+
+Un campo de ancho fijo lleva dos cosas: su ancho, que viene del
+tipo base (`U32` mide cuatro bytes, `U16` dos), y su orden, que es
+el habitante. `U32<be>` y `U32<le>` son el mismo `U32` con
+representaciones distintas, así que **nunca unifican**: pasar uno
+donde se espera el otro no compila. Los dos habitantes, `be` y
+`le`, los trae el stdlib —`layout be`, `layout le`— y son un set
+cerrado; no hay un tercer orden que declarar.
+
+La anotación `#[derive(Layout)]` sobre un record genera su
+`to_bytes` y un shim `<tipo>_from_bytes` que reconstruye el valor
+desde un buffer:
+
+```kai
+# Listado 19.7 — ejemplos/cap19/07_layout.kai
+#[derive(Layout)]
+type Paquete = { magia: U32<be>, puerto: U16<be> }
+
+fn main() : Unit / Stdout = {
+  let bytes = Paquete { magia: 0<be>, puerto: 0<be> }.to_bytes()
+  match paquete_from_bytes(bytes, 0) {
+    Ok(p)  -> println("puerto #{p.value.puerto}")
+    Err(m) -> println(m)
+  }
+}
+```
+
+```
+$ kai run ejemplos/cap19/07_layout.kai
+puerto 0
+```
+
+Aquí entra la theory. `Composition` compone los campos **en el
+orden en que los escribiste** —por eso es asociativa pero no
+conmutativa: mover un campo cambia el layout— y suma la medida de
+cada uno, su byte size, para dar el tamaño del record. Ese `over
+Int` que viste en el catálogo (`kind Layout : Composition over
+Int`) nombra justamente esa medida: un tamaño es un entero y la
+suma tiene que ser exacta. El resultado es un formato binario
+posicional y byte-exacto, con el orden verificado en compilación y
+—como todo kind— borrado del binario.
+
+## 19.9 Shape: el contenedor como habitante
+
+Los otros seis kinds acuñan habitantes con una palabra: `unit m`,
+`currency USD`. `Shape` no tiene palabra, y esa es su gracia: sus
+habitantes ya existen. Cada `type T[a]` de un solo parámetro
+—`List`, `Vec`, `Option`, tu `Caja[a]`— es automáticamente un
+habitante de `Shape`, su constructor pelado `T`, igual que cada
+`type` es un habitante de `Type`. No declaras nada nuevo; nombras
+lo que ya tienes.
+
+Con eso puedes cuantificar sobre el contenedor, no solo sobre el
+contenido. Un parámetro `[s: Shape]` acepta cualquier constructor
+de un argumento, y `s[Int]` lo aplica a un tipo:
+
+```kai
+# Listado 19.8 — ejemplos/cap19/08_shape.kai
+protocol Contenedor[s: Shape] {
+  primero(xs: s[Int]) : Int
+}
+
+type Caja[a] = Caja(a)
+
+impl Contenedor for Caja {
+  fn primero(xs: Caja[Int]) : Int = match xs {
+    Caja(v) -> v
+  }
+}
+
+impl Contenedor for List {
+  fn primero(xs: [Int]) : Int = match xs {
+    []         -> 0
+    [h, ..._t] -> h
+  }
+}
+
+fn main() : Unit / Stdout = {
+  println("caja:  #{primero(Caja(7))}")
+  println("lista: #{primero([3, 4, 5])}")
+}
+```
+
+```
+$ kai run ejemplos/cap19/08_shape.kai
+caja:  7
+lista: 3
+```
+
+`primero` sirve sobre `Caja[Int]` y sobre `[Int]` con una sola
+firma, `s[Int] -> Int`. La theory `ConstructorApp` es la que lo
+permite: al unificar `s[Int]` con `Caja[Int]` liga `s` a `Caja`, y
+con `[Int]` liga `s` a `List`; dos shapes unifican solo si son el
+mismo constructor —`List` con `List`, jamás `List` con `Vec`—. Un
+shape es atómico: no se compone ni se aplica a medias, así que
+`s[t[Int]]` es un error de formación, no un tipo. Es la
+expresividad de un functor —abstraer sobre el contenedor— sin los
+tipos de orden superior que la traen en Haskell: después de
+monomorfizar, cada llamada es un despacho estático y directo.
+
+## 19.10 Theory cerrada, modelos abiertos
 
 Cierro con la pregunta de diseño, porque sé que el lector que
 viene de Haskell la trae cargada: ¿por qué un catálogo cerrado?
@@ -440,7 +558,7 @@ definibles por el usuario, y que cada quien arme su álgebra?
 Porque cada entrada del catálogo compra su decidibilidad por
 separado. La unificación de `AbelianGroup` es aritmética de
 exponentes; la de `Module`, un chequeo de habitante y exponente
-1; la de `Structural`, igualdad de símbolo. Cada una es un
+1; la de `Nominal`, igualdad de símbolo. Cada una es un
 algoritmo pequeño, rápido, sin casos patológicos. Una theory
 arbitraria definida por el usuario sería un problema de
 unificación arbitrario — y la historia de los sistemas de tipos

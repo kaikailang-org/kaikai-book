@@ -1,0 +1,24 @@
+# Listado 19.8 — ejemplos/cap19/08_shape.kai
+protocol Contenedor[s: Shape] {
+  primero(xs: s[Int]) : Int
+}
+
+type Caja[a] = Caja(a)
+
+impl Contenedor for Caja {
+  fn primero(xs: Caja[Int]) : Int = match xs {
+    Caja(v) -> v
+  }
+}
+
+impl Contenedor for List {
+  fn primero(xs: [Int]) : Int = match xs {
+    []         -> 0
+    [h, ..._t] -> h
+  }
+}
+
+fn main() : Unit / Stdout = {
+  println("caja:  #{primero(Caja(7))}")
+  println("lista: #{primero([3, 4, 5])}")
+}
