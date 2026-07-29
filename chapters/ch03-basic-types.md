@@ -152,6 +152,27 @@ If you come from Python 3 there's a habit change. Over there,
 is `Int`, and if you want the fractional part you convert
 explicitly or work with `Real` from the start.
 
+Negatives bring a second habit change, a sneakier one because
+nothing errors out: **`/` truncates toward zero, and the
+remainder from `%` carries the sign of the dividend.**
+
+```kai
+println("#{-17 / 5}")      # -3, not -4
+println("#{-17 % 5}")      # -2, not 3
+println("#{17 % -5}")      #  2 — the 17 sets the sign
+```
+
+Python decides the other way — it floors, so `-17 // 5` is
+`-4` and `-17 % 5` is `3`. If you come from C, Go, Java or
+Rust, kaikai does what you already expected. The identity that
+holds in every case is `(a / b) * b + a % b == a`.
+
+The practical consequence: if you use `%` to test for
+evenness, to wrap an index into a ring buffer, or to bucket
+values, and the input can go negative, you'll get a negative
+remainder back. `x % 2 == 1` is false for every negative odd
+`x`; the question you meant to ask is `x % 2 != 0`.
+
 Logical operators are words, not symbols:
 
 ```
