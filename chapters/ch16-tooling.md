@@ -852,7 +852,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.99.6 - hanga-roa (stage 2, self-hosted)
+kaikai 0.105.1 - hanga-roa (stage 2, self-hosted)
 ```
 
 If `kai.toml` omits the field, the compiler assumes the
@@ -910,7 +910,7 @@ At the time this book ships, kaikai knows three:
 |---|---|---|
 | `tongariki` | closed | Fast-iteration phase before 2026. Only packages that haven't migrated. |
 | `hanga-roa` | active (default) | The first public edition. This book is written against it. |
-| `orongo` | future | The stabilization edition. It ships as 0.100.x: the "1.0" label is postponed indefinitely, because the stability commitment lives in the edition, not in a number. |
+| `orongo` | future | The stabilization edition. No version number is pinned to it yet — `hanga-roa` has already crossed the 0.100.x series without an edition change, which is exactly the demonstration that the commitment lives in the edition, not in a number. The "1.0" label is postponed indefinitely. |
 
 The names follow the Rapa Nui geography used across the
 ecosystem: places on Rapa Nui in chronological order —

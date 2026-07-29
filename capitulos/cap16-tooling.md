@@ -849,7 +849,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.99.6 - hanga-roa (stage 2, self-hosted)
+kaikai 0.105.1 - hanga-roa (stage 2, self-hosted)
 ```
 
 Si el `kai.toml` omite el campo, el compilador asume la
@@ -907,7 +907,7 @@ Al cierre de este libro, kaikai conoce tres:
 |---|---|---|
 | `tongariki` | cerrada | Fase de iteración rápida pre-2026. Solo paquetes que aún no migraron. |
 | `hanga-roa` | activa (default) | La primera edición pública. El libro está escrito contra esta. |
-| `orongo` | futura | La edición de estabilización. Se publicará como 0.100.x: el rótulo "1.0" quedó postergado indefinidamente, porque el compromiso de estabilidad vive en la edición, no en un número. |
+| `orongo` | futura | La edición de estabilización. Todavía no tiene número de versión asignado — `hanga-roa` ya cruzó la serie 0.100.x sin cambiar de edición, que es justo la demostración de que el compromiso vive en la edición y no en un número. El rótulo "1.0" está postergado indefinidamente. |
 
 Los nombres siguen la cantera rapanui del resto del
 ecosistema: lugares de Rapa Nui en orden cronológico —
