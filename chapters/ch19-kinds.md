@@ -69,7 +69,7 @@ a kind. Three things define one:
   (`unit parsec`) and even new kinds (§19.5), but you cannot
   declare a new theory. Try, and the compiler answers
   `unknown theory`. That is a design decision, not a temporary
-  limitation; §19.10 defends it.
+  limitation; §19.12 defends it.
 
 ## 19.3 The full catalog
 
@@ -84,25 +84,30 @@ theory AbelianGroup   = { assoc, commut, inverse, identity }
 theory Module         = { assoc, commut, inverse, identity }
 theory Nominal        = builtin
 theory ConstructorApp = builtin
+theory Semilattice    = { assoc, commut, idempotent }
 theory Composition    = { assoc, measure }
 
 kind Type     : HindleyMilner  with type
 kind Effect   : EffectRow      with effect
 kind Measure  : AbelianGroup   with unit
-kind Currency : Module         with currency
+kind Currency : Module over T  with currency
 kind Region   : Nominal        with region
-kind Layout   : Composition over Int with layout
+kind Perm     : Semilattice    with perm
+kind Layout   : Composition over Int with layout { be le }
+kind Dim      : HindleyMilner  with Int
 kind Shape    : ConstructorApp
 ```
 
 Each `kind` names its theory and, after the `with`, its
 **introducer word**: the declaration that mints habitants. `type`
 mints habitants of `Type`. `effect` mints habitants of `Effect`.
-`unit` mints habitants of `Measure`. `Shape` is the exception: it
-takes no `with`, because its habitants are not declared but
-*derived* — every `type T[a]` of one parameter already is one. You
-have been minting kind habitants for the whole book; all that was
-missing was the org chart:
+`unit` mints habitants of `Measure`. Two kinds break that mold:
+`Shape` takes no `with`, because its habitants are not declared but
+*derived* — every `type T[a]` of one parameter already is one —,
+and `Dim` writes `with Int`, meaning its habitants are `Int`
+*values* (`<3>`, `<128>`), not minted symbols. You have been
+minting kind habitants for the whole book; all that was missing was
+the org chart:
 
 | Kind | Theory | Introducer | Habitants | What the theory decides |
 |---|---|---|---|---|
@@ -111,28 +116,37 @@ missing was the org chart:
 | `Measure` | `AbelianGroup` | `unit` | `m`, `s`, `USD` if you like | product, quotient and power of units |
 | `Currency` | `Module` | `currency` | `USD`, `EUR`, … (`stdlib/money.kai`) | addition and scaling; **no** product |
 | `Region` | `Nominal` | `region` | one fresh per `region` block | identity: each arena is only itself |
+| `Perm` | `Semilattice` | `perm` | `read`, `write`, yours | idempotent union; subsumption along the lattice order |
 | `Layout` | `Composition` | `layout` | `be`, `le` | byte order; associative, **not** commutative |
+| `Dim` | `HindleyMilner` | `with Int` | `<3>`, `<128>`: `Int` values | index equality: `<3> ~ <3>`, never `<4>` |
 | `Shape` | `ConstructorApp` | — (derived) | `List`, `Vec`, `Option`, `Tree[a]` | arity-1: `List ~ List`, never `List ~ Vec` |
 
 Four theories say `builtin`: their engine is the compiler itself.
 `HindleyMilner` is the type inferencer that has been with you since
-chapter 3; `EffectRow` is chapter 12's row unification; `Nominal`
-is symbol equality, which the core already knew how to do;
-`ConstructorApp` binds one-argument constructors, and we see it in
-§19.9. The other three are described by algebraic properties. Two
-look nearly identical — `AbelianGroup` and `Module` — and the
-difference is *which operation* their properties govern. In
-`AbelianGroup`, the habitants themselves form a group under
+chapter 3 — and you'll notice it serves **two** kinds, `Type` and
+`Dim`: a theory names a unification engine, and nothing says an
+engine classifies only one kind. `EffectRow` is chapter 12's row
+unification; `Nominal` is symbol equality, which the core already
+knew how to do; `ConstructorApp` binds one-argument constructors,
+and we see it in §19.11. The other four are described by algebraic
+properties. Two look nearly identical — `AbelianGroup` and `Module`
+— and the difference is *which operation* their properties govern.
+In `AbelianGroup`, the habitants themselves form a group under
 product: `m * s`, `m^2`, `1/s` are new, derived habitants. In
 `Module`, the structure is additive only: *quantities* of a
 habitant add up and scale by a number, but habitants never multiply
 each other. `USD^2` is not a habitant of `Currency`; it does not
-exist. That asymmetry is deliberate, and §19.7 exploits it. The
-third, `Composition`, is associative but **not** commutative —order
-carries meaning— and sums a per-element measure (§19.8).
+exist. That asymmetry is deliberate, and §19.7 exploits it.
+`Semilattice` is an idempotent union with no inverse: habitants
+join with `+` (`read + write`, and `read + read = read`), and
+nothing subtracts; unification is subsumption along the lattice
+order, so a permission with more capabilities flows where fewer are
+demanded, never the reverse. And `Composition` is associative but
+**not** commutative —order carries meaning— and sums a per-element
+measure (§19.8).
 
 Note what is **not** in the table: anything of yours. The
-language's complete catalog fits on one screen. Seven kinds, seven
+language's complete catalog fits on one screen. Nine kinds, eight
 theories, and every chapter you have read so far is built on
 them.
 
@@ -145,7 +159,7 @@ three signatures:
 ```kai
 fn area_of[u: Measure](width: Real<u>, height: Real<u>) : Real<u^2>
 fn insert[r: Region](t: Tree<r>, k: Int) : Tree<r>
-pub fn convert[a: Currency, b: Currency](m: Money[a], rate: dec.Decimal) : Money[b]
+pub fn convert[a: Currency, b: Currency](m: Money[dec.Decimal]<a>, rate: dec.Decimal) : Money[dec.Decimal]<b>
 ```
 
 The first you wrote in chapter 10. The second you will meet in
@@ -364,10 +378,12 @@ purpose — but a bug can, and the type system would accept them
 with the same solemnity it accepts `m/s^2`.
 
 For money, the stdlib uses the `Currency` kind, whose theory
-`Module` simply **has no** habitant product. The type
-`Money[c: Currency]` mounts the currency on `Decimal` — exact
-fixed-point arithmetic, not floating point, which for money is
-the only defensible choice:
+`Module` simply **has no** habitant product. The type is
+`Money[t]<c>`: a **carrier** `t` (the type holding the amount)
+tagged with currency `c` in the `<>` slot. For real money the
+carrier is `Decimal` — exact fixed-point arithmetic, not floating
+point, which is the only defensible choice —, so the type you'll
+actually write is almost always `Money[Decimal]<USD>`:
 
 ```kai
 # Listing 19.5 — examples/ch19/05_money.kai
@@ -376,15 +392,15 @@ import decimal as dec
 import decimal_proto
 
 fn main() : Unit / Stdout = {
-  let a: Money[USD] = 10.50<USD>
-  let b: Money[USD] = 4.50<USD>
-  let total = a + b                       # same currency: Money[USD]
+  let a: Money[dec.Decimal]<USD> = 10.50<USD>
+  let b: Money[dec.Decimal]<USD> = 4.50<USD>
+  let total = a + b                       # same currency: Money[Decimal]<USD>
 
   let k: dec.Decimal = 3
   let triple = total * k                  # scalar: still USD
 
   let rate: dec.Decimal = 0.92
-  let in_euros: Money[EUR] = money.convert(total, rate)
+  let in_euros: Money[dec.Decimal]<EUR> = money.convert(total, rate)
 
   println("total  = #{money.to_string(total)} USD")
   println("triple = #{money.to_string(triple)} USD")
@@ -399,16 +415,16 @@ triple = 45.0 USD
 euros  = 13.800 EUR
 ```
 
-Adding the same currency: yes. Scaling by a number: yes — that is
-a module's "external multiplication", in the algebraic sense of
-the word. Converting: only through the explicit door of
-`money.convert`, target currency pinned by the annotation. And
-multiplying two monies?
+Adding the same currency: yes. Scaling by a number: yes — the
+scaling lives in the operation's signature (`Money[t]<c> * t` keeps
+the currency), not in the kind algebra. Converting: only through
+the explicit door of `money.convert`, target currency pinned by the
+annotation. And multiplying two monies?
 
 ```kai
 # Listing 19.6 — examples/ch19/06_usd_times_eur.kai (does not compile)
-let u: Money[USD] = 10.00<USD>
-let e: Money[EUR] = 5.00<EUR>
+let u: Money[dec.Decimal]<USD> = 10.00<USD>
+let e: Money[dec.Decimal]<EUR> = 5.00<EUR>
 let nonsense = u * e            # error: `EUR USD` does not exist
 ```
 
@@ -416,7 +432,7 @@ let nonsense = u * e            # error: `EUR USD` does not exist
 $ kai build examples/ch19/06_usd_times_eur.kai
 error: operator `*` cannot combine `Currency` quantities: the
 result unit `EUR USD` does not exist
-  = note: `Currency` is a Module kind: a quantity is either
+  = note: `Currency` habitants stand alone: a quantity is either
     scalar or carries exactly one habitant with exponent 1 —
     habitant products and powers are not expressible
 ```
@@ -488,15 +504,170 @@ a size is an integer and the sum has to be exact. The result is a
 positional, byte-exact binary format, its order checked at compile
 time and —like every kind— erased from the binary.
 
-## 19.9 Shape: the container as a habitant
+## 19.9 Perm: permissions the type chases
 
-The other six kinds mint habitants with a word: `unit m`,
-`currency USD`. `Shape` has no word, and that is the point: its
-habitants already exist. Every `type T[a]` of a single parameter
-—`List`, `Vec`, `Option`, your `Box[a]`— is automatically a `Shape`
-habitant, its bare constructor `T`, exactly as every `type` is a
-`Type` habitant. You declare nothing new; you name what you already
-have.
+The kinds so far classify *quantities* — meters, dollars, bytes.
+`Perm` classifies something else: **capabilities**. Its theory,
+`Semilattice`, is the odd one in the catalog, and it is worth
+understanding because it opens a door the others don't.
+
+The concrete case lives in the stdlib's file API. A `FileHandle`
+is not a bare handle: it carries in its type what the code may do
+with it. `open_read` returns `FileHandle<read>`; `open_write`
+returns `FileHandle<read + write>`. And each operation asks for
+exactly what it uses: `read_chunk` requires `<read>`, `write_chunk`
+requires `<write>`.
+
+```kai
+# Listing 19.9 — examples/ch19/09_perm.kai
+fn first_line(h: FileHandle<read>) : String / File =
+  match File.read_chunk(h, 64) {
+    Ok(s)  -> s
+    Err(e) -> e
+  }
+
+fn main() : Unit / Stdout + File = {
+  let path = "/tmp/kai_perm_demo.txt"
+  match File.open_write(path) {
+    Ok(h) -> {
+      let _ = File.write_chunk(h, "hello, kaikai")
+      File.close_file(h)
+      match File.open_read(path) {
+        Ok(r) -> {
+          println(first_line(r))
+          File.close_file(r)
+        }
+        Err(e) -> println(e)
+      }
+    }
+    Err(e) -> println(e)
+  }
+}
+```
+
+```
+$ kai run examples/ch19/09_perm.kai
+hello, kaikai
+```
+
+Look at `first_line`: it asks for a `FileHandle<read>`, but the
+handle `open_write` produced is a `FileHandle<read + write>`, and
+the program still compiles. That is what makes `Semilattice`
+distinctive. In the other kinds, two habitants unify only if they
+are *equal* — `U32<be>` never passes where `U32<le>` is expected.
+In `Perm`, they unify by **subsumption**: a handle with more
+capabilities serves where fewer are asked, never the reverse. `read
++ write` includes `read`, so it flows into `<read>`. Direction
+matters: a plain `FileHandle<read>` does **not** compile where
+`<write>` is demanded.
+
+```kai
+fn writes(h: FileHandle<read>) : Unit / File = {
+  let _ = File.write_chunk(h, "x")   # does not compile: <read>
+  ()                                 # does not subsume <write>
+}
+```
+
+```
+error: type mismatch in op call File.write_chunk
+  = note: expected: (FileHandle<write>, String) -> ...
+  = note: found:    (FileHandle<read>, String) -> ...
+```
+
+The `+` of `Semilattice` is an idempotent union: `read + read` is
+`read`, order does not matter (`read + write` = `write + read`),
+and nothing subtracts. Those are the three laws the theory checks —
+associative, commutative, idempotent — and out of them comes the
+partial order that defines subsumption. The habitants `read` and
+`write` ship with the file API (`perm read`, `perm write`), and
+like any kind with an introducer word, you can mint your own:
+`perm admin`, `perm audit`, whatever your domain needs.
+
+One honest note: the capability is the one your code **declared**
+at open time, not the permission the operating system happens to
+hold at that instant. A file that vanishes, a `chmod` at the wrong
+moment, still surface through each operation's `Result`. `Perm`
+protects you from a program error —writing through a handle you
+opened to read— not from the reality of the disk.
+
+## 19.10 Dim: shape as an index
+
+`Dim` is the newest kind and the most unlike the rest. Its
+habitants are not symbols you mint with a word, but **`Int` values
+written directly in `<>`**. `<3>` is a habitant because `3 : Int`.
+And its theory is `HindleyMilner`, the same one that classifies
+ordinary types: unification is the first-order equality you have
+known since chapter 3. `<3>` unifies with `<3>` and never with
+`<4>`.
+
+What for? To put the **shape** of a structure into its type. The
+canonical case is `Vec[t]<n>`: a vector whose length, `n`, is part
+of the type. A literal of a different length than the annotation
+announces does not compile.
+
+```kai
+# Listing 19.10 — examples/ch19/10_dim.kai
+fn head[n: Dim](v: Vec[Real]<n>) : Real = v[0]
+
+fn dot[n: Dim](a: Vec[Real]<n>, b: Vec[Real]<n>, i: Int, acc: Real) : Real =
+  if i < 0 { acc } else { dot(a, b, i - 1, acc + a[i] * b[i]) }
+
+fn main() : Unit / Stdout = {
+  let u : Vec[Real]<3> = [1.0, 2.0, 3.0]
+  let w : Vec[Real]<3> = [4.0, 5.0, 6.0]
+  println(real_to_string(head(u)))
+  println(real_to_string(dot(u, w, 2, 0.0)))
+}
+```
+
+```
+$ kai run examples/ch19/10_dim.kai
+1
+32
+```
+
+`head` is generic over the length: `[n: Dim]` says "for any
+length", exactly as `[u: Measure]` said "for any unit". But `dot`
+goes further: its two arguments are `Vec[Real]<n>` with the
+**same** `n`. The type forces the vectors to match in size; adding
+a `<2>` to a `<3>` is not a runtime error you find with an
+out-of-range index, it is a type that cannot be formed.
+
+And the wrong index is caught where it is written:
+
+```kai
+let a : Vec[Real]<3> = [1.0, 2.0]   # does not compile
+```
+
+```
+error: vector literal has 2 elements, but its type fixes the
+length to 3
+```
+
+Like every kind, `Dim` is erased at runtime: `<3>` takes no byte in
+the binary, it is pure compile-time scaffolding. And since `Int` is
+an infinite domain, `Dim` is also the proof of something §19.3
+foreshadowed: a theory can classify more than one kind.
+`HindleyMilner` is the engine of both `Type` and `Dim` — first-order
+equality over two distinct domains, types in one, integers in the
+other.
+
+A deliberate limit of the algebra: `Dim` is atomic. An index has no
+products or powers — `<3*4>` and `<3^2>` do not exist. Type-level
+arithmetic (concatenating two vectors to get one of length `n+k`)
+is deliberately outside the theory; adding that machinery would
+change the unification engine, and `Dim` prefers to stay in the
+plain equality it inherits from `HindleyMilner`.
+
+## 19.11 Shape: the container as a habitant
+
+The kinds with an introducer word mint habitants one at a time:
+`unit m`, `currency USD`, `perm read`. `Shape` has no word, and
+that is the point: its habitants already exist. Every `type T[a]`
+of a single parameter —`List`, `Vec`, `Option`, your `Box[a]`— is
+automatically a `Shape` habitant, its bare constructor `T`, exactly
+as every `type` is a `Type` habitant. You declare nothing new; you
+name what you already have.
 
 With that you can quantify over the container, not just the
 content. A `[s: Shape]` parameter accepts any one-argument
@@ -546,7 +717,7 @@ expressiveness of a functor —abstracting over the container—
 without the higher-kinded types that bring it in Haskell: after
 monomorphization, every call is a direct static dispatch.
 
-## 19.10 Closed theories, open models
+## 19.12 Closed theories, open models
 
 I close with the design question, because I know the reader
 coming from Haskell has it loaded: why a closed catalog? Why not

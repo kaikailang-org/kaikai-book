@@ -1,0 +1,29 @@
+# The Perm kind: a FileHandle's capability rides in its type.
+# `open_write` opens read+write, `open_read` opens read-only.
+# Each op asks only for what it uses, and a handle with more
+# capabilities flows where fewer are required (subsumption).
+
+# Needs only <read>: a <read + write> handle is accepted too.
+fn first_line(h: FileHandle<read>) : String / File =
+  match File.read_chunk(h, 64) {
+    Ok(s)  -> s
+    Err(e) -> e
+  }
+
+fn main() : Unit / Stdout + File = {
+  let path = "/tmp/kai_perm_demo.txt"
+  match File.open_write(path) {
+    Ok(h) -> {
+      let _ = File.write_chunk(h, "hello, kaikai")
+      File.close_file(h)
+      match File.open_read(path) {
+        Ok(r) -> {
+          println(first_line(r))
+          File.close_file(r)
+        }
+        Err(e) -> println(e)
+      }
+    }
+    Err(e) -> println(e)
+  }
+}

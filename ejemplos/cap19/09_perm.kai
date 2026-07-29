@@ -1,0 +1,29 @@
+# El kind Perm: la capacidad de un FileHandle viaja en su tipo.
+# `open_write` abre lectura+escritura, `open_read` solo lectura.
+# Cada operación pide solo lo que usa, y un handle con más
+# capacidades fluye donde se piden menos (subsunción).
+
+# Solo necesita <read>: acepta también un <read + write>.
+fn primera_linea(h: FileHandle<read>) : String / File =
+  match File.read_chunk(h, 64) {
+    Ok(s)  -> s
+    Err(e) -> e
+  }
+
+fn main() : Unit / Stdout + File = {
+  let ruta = "/tmp/kai_perm_demo.txt"
+  match File.open_write(ruta) {
+    Ok(h) -> {
+      let _ = File.write_chunk(h, "hola, kaikai")
+      File.close_file(h)
+      match File.open_read(ruta) {
+        Ok(r) -> {
+          println(primera_linea(r))
+          File.close_file(r)
+        }
+        Err(e) -> println(e)
+      }
+    }
+    Err(e) -> println(e)
+  }
+}

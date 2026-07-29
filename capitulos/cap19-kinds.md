@@ -67,7 +67,7 @@ unificar habitantes de un kind. Tres cosas la definen:
   (`unit parsec`) y hasta kinds nuevos (§19.5), pero no puedes
   declarar una theory nueva. Si lo intentas, el compilador
   responde `unknown theory`. Esta es una decisión de diseño, no
-  una limitación transitoria; el §19.10 la defiende.
+  una limitación transitoria; el §19.12 la defiende.
 
 ## 19.3 El catálogo completo
 
@@ -82,24 +82,30 @@ theory AbelianGroup   = { assoc, commut, inverse, identity }
 theory Module         = { assoc, commut, inverse, identity }
 theory Nominal        = builtin
 theory ConstructorApp = builtin
+theory Semilattice    = { assoc, commut, idempotent }
 theory Composition    = { assoc, measure }
 
 kind Type     : HindleyMilner  with type
 kind Effect   : EffectRow      with effect
 kind Measure  : AbelianGroup   with unit
-kind Currency : Module         with currency
+kind Currency : Module over T  with currency
 kind Region   : Nominal        with region
-kind Layout   : Composition over Int with layout
+kind Perm     : Semilattice    with perm
+kind Layout   : Composition over Int with layout { be le }
+kind Dim      : HindleyMilner  with Int
 kind Shape    : ConstructorApp
 ```
 
 Cada `kind` nombra su theory y, tras el `with`, su **palabra
 introductora**: la declaración que acuña habitantes. `type` acuña
 habitantes de `Type`. `effect` acuña habitantes de `Effect`.
-`unit` acuña habitantes de `Measure`. `Shape` es la excepción: no
-lleva `with`, porque sus habitantes no se declaran, se *derivan* —
-cada `type T[a]` de un solo parámetro ya es uno. Llevas todo el
-libro acuñando habitantes de kinds; solo faltaba el organigrama:
+`unit` acuña habitantes de `Measure`. Dos kinds no siguen ese
+molde: `Shape` no lleva `with` porque sus habitantes no se
+declaran, se *derivan* — cada `type T[a]` de un solo parámetro ya
+es uno —, y `Dim` escribe `with Int`, lo que significa que sus
+habitantes son *valores* de `Int` (`<3>`, `<128>`), no símbolos
+acuñados. Llevas todo el libro acuñando habitantes de kinds; solo
+faltaba el organigrama:
 
 | Kind | Theory | Introductor | Habitantes | Qué decide la theory |
 |---|---|---|---|---|
@@ -108,28 +114,37 @@ libro acuñando habitantes de kinds; solo faltaba el organigrama:
 | `Measure` | `AbelianGroup` | `unit` | `m`, `s`, `USD` si quieres | producto, cociente y potencia de unidades |
 | `Currency` | `Module` | `currency` | `USD`, `EUR`, … (`stdlib/money.kai`) | suma y escala; **sin** producto |
 | `Region` | `Nominal` | `region` | uno fresco por bloque `region` | identidad: cada arena es solo ella misma |
+| `Perm` | `Semilattice` | `perm` | `read`, `write`, los tuyos | unión idempotente; subsunción por el orden del retículo |
 | `Layout` | `Composition` | `layout` | `be`, `le` | orden de bytes; asociativa, **no** conmutativa |
+| `Dim` | `HindleyMilner` | `with Int` | `<3>`, `<128>`: valores `Int` | igualdad de índices: `<3> ~ <3>`, nunca `<4>` |
 | `Shape` | `ConstructorApp` | — (derivados) | `List`, `Vec`, `Option`, `Tree[a]` | aridad-1: `List ~ List`, nunca `List ~ Vec` |
 
 Cuatro theories dicen `builtin`: su motor es el compilador mismo.
 `HindleyMilner` es el inferidor de tipos que te acompaña desde el
-capítulo 3; `EffectRow` es la unificación de filas del capítulo
-12; `Nominal` es igualdad de símbolo, que el núcleo ya sabía hacer;
-`ConstructorApp` liga constructores de un argumento, y lo vemos en
-§19.9. Las otras tres se describen por propiedades algebraicas. Dos
-se ven casi idénticas — `AbelianGroup` y `Module` — y la diferencia
-es *sobre qué operación* rigen sus propiedades. En `AbelianGroup`,
-los habitantes mismos forman un grupo bajo el producto: `m * s`,
-`m^2`, `1/s` son habitantes nuevos derivados. En `Module`, la
-estructura es solo aditiva: las *cantidades* de un habitante se
-suman y se escalan por un número, pero los habitantes no se
-multiplican entre sí. `USD^2` no es un habitante de `Currency`; no
-existe. Esa asimetría es deliberada y el §19.7 la explota. La
-tercera, `Composition`, es asociativa pero **no** conmutativa —el
-orden carga significado— y suma una medida por elemento (§19.8).
+capítulo 3 — y notarás que sirve a **dos** kinds, `Type` y `Dim`:
+una theory nombra un motor de unificación, y nada obliga a que un
+motor clasifique un solo kind. `EffectRow` es la unificación de
+filas del capítulo 12; `Nominal` es igualdad de símbolo, que el
+núcleo ya sabía hacer; `ConstructorApp` liga constructores de un
+argumento, y lo vemos en §19.11. Las otras cuatro se describen por
+propiedades algebraicas. Dos se ven casi idénticas —
+`AbelianGroup` y `Module` — y la diferencia es *sobre qué
+operación* rigen sus propiedades. En `AbelianGroup`, los
+habitantes mismos forman un grupo bajo el producto: `m * s`, `m^2`,
+`1/s` son habitantes nuevos derivados. En `Module`, la estructura
+es solo aditiva: las *cantidades* de un habitante se suman y se
+escalan por un número, pero los habitantes no se multiplican entre
+sí. `USD^2` no es un habitante de `Currency`; no existe. Esa
+asimetría es deliberada y el §19.7 la explota. `Semilattice` es una
+unión idempotente sin inverso: los habitantes se juntan con `+`
+(`read + write`, y `read + read = read`), y nada se resta; unificar
+es subsunción por el orden del retículo, así que un permiso con más
+capacidades fluye donde se piden menos, nunca al revés. Y
+`Composition` es asociativa pero **no** conmutativa —el orden carga
+significado— y suma una medida por elemento (§19.8).
 
 Nota lo que **no** está en la tabla: nada tuyo. El catálogo
-completo del lenguaje cabe en una pantalla. Siete kinds, siete
+completo del lenguaje cabe en una pantalla. Nueve kinds, ocho
 theories, y todo el libro que llevas leído está construido sobre
 ellos.
 
@@ -142,7 +157,7 @@ kind. Compara estas tres firmas:
 ```kai
 fn area_de[u: Measure](ancho: Real<u>, alto: Real<u>) : Real<u^2>
 fn insertar[r: Region](t: Arbol<r>, k: Int) : Arbol<r>
-pub fn convert[a: Currency, b: Currency](m: Money[a], rate: dec.Decimal) : Money[b]
+pub fn convert[a: Currency, b: Currency](m: Money[dec.Decimal]<a>, rate: dec.Decimal) : Money[dec.Decimal]<b>
 ```
 
 La primera la escribiste en el capítulo 10. La segunda la vas a
@@ -366,9 +381,11 @@ tipos las aceptaría con la solemnidad con que acepta `m/s^2`.
 
 Para dinero, el stdlib usa el kind `Currency`, cuya theory
 `Module` simplemente **no tiene** producto de habitantes. El tipo
-`Money[c: Currency]` monta la moneda sobre `Decimal` — aritmética
-exacta de punto fijo, no punto flotante, que para dinero es lo
-único defendible:
+es `Money[t]<c>`: un **carrier** `t` (el tipo que guarda el monto)
+etiquetado con la moneda `c` en la ranura `<>`. Para dinero de
+verdad el carrier es `Decimal` — aritmética exacta de punto fijo,
+no punto flotante, que es lo único defendible —, así que el tipo
+que vas a escribir casi siempre es `Money[Decimal]<USD>`:
 
 ```kai
 # Listado 19.5 — ejemplos/cap19/05_dinero.kai
@@ -377,15 +394,15 @@ import decimal as dec
 import decimal_proto
 
 fn main() : Unit / Stdout = {
-  let a: Money[USD] = 10.50<USD>
-  let b: Money[USD] = 4.50<USD>
-  let total = a + b                       # misma moneda: Money[USD]
+  let a: Money[dec.Decimal]<USD> = 10.50<USD>
+  let b: Money[dec.Decimal]<USD> = 4.50<USD>
+  let total = a + b                       # misma moneda: Money[Decimal]<USD>
 
   let k: dec.Decimal = 3
   let triple = total * k                  # escalar: sigue en USD
 
   let tasa: dec.Decimal = 0.92
-  let en_euros: Money[EUR] = money.convert(total, tasa)
+  let en_euros: Money[dec.Decimal]<EUR> = money.convert(total, tasa)
 
   println("total  = #{money.to_string(total)} USD")
   println("triple = #{money.to_string(triple)} USD")
@@ -400,16 +417,16 @@ triple = 45.0 USD
 euros  = 13.800 EUR
 ```
 
-Sumar la misma moneda, sí. Escalar por un número, sí — esa es la
-"multiplicación externa" de un módulo, en el sentido algebraico
-de la palabra. Convertir, solo por la puerta explícita de
-`money.convert`, con la moneda destino fijada por la anotación.
-¿Y multiplicar dos dineros?
+Sumar la misma moneda, sí. Escalar por un número, sí — el escalado
+vive en la firma de la operación (`Money[t]<c> * t` conserva la
+moneda), no en el álgebra del kind. Convertir, solo por la puerta
+explícita de `money.convert`, con la moneda destino fijada por la
+anotación. ¿Y multiplicar dos dineros?
 
 ```kai
 # Listado 19.6 — ejemplos/cap19/06_usd_por_eur.kai (no compila)
-let u: Money[USD] = 10.00<USD>
-let e: Money[EUR] = 5.00<EUR>
+let u: Money[dec.Decimal]<USD> = 10.00<USD>
+let e: Money[dec.Decimal]<EUR> = 5.00<EUR>
 let sinsentido = u * e          # error: `EUR USD` no existe
 ```
 
@@ -417,7 +434,7 @@ let sinsentido = u * e          # error: `EUR USD` no existe
 $ kai build ejemplos/cap19/06_usd_por_eur.kai
 error: operator `*` cannot combine `Currency` quantities: the
 result unit `EUR USD` does not exist
-  = note: `Currency` is a Module kind: a quantity is either
+  = note: `Currency` habitants stand alone: a quantity is either
     scalar or carries exactly one habitant with exponent 1 —
     habitant products and powers are not expressible
 ```
@@ -490,15 +507,169 @@ suma tiene que ser exacta. El resultado es un formato binario
 posicional y byte-exacto, con el orden verificado en compilación y
 —como todo kind— borrado del binario.
 
-## 19.9 Shape: el contenedor como habitante
+## 19.9 Perm: permisos que el tipo persigue
 
-Los otros seis kinds acuñan habitantes con una palabra: `unit m`,
-`currency USD`. `Shape` no tiene palabra, y esa es su gracia: sus
-habitantes ya existen. Cada `type T[a]` de un solo parámetro
-—`List`, `Vec`, `Option`, tu `Caja[a]`— es automáticamente un
-habitante de `Shape`, su constructor pelado `T`, igual que cada
-`type` es un habitante de `Type`. No declaras nada nuevo; nombras
-lo que ya tienes.
+Los kinds que vimos hasta aquí clasifican *cantidades* — metros,
+dólares, bytes. `Perm` clasifica otra cosa: **capacidades**. Su
+theory, `Semilattice`, es la más rara del catálogo, y vale
+entenderla porque abre una puerta que los demás kinds no.
+
+El caso concreto vive en la API de archivos del stdlib. Un
+`FileHandle` no es un handle a secas: lleva en su tipo lo que el
+código puede hacer con él. `open_read` devuelve
+`FileHandle<read>`; `open_write` devuelve `FileHandle<read +
+write>`. Y cada operación pide exactamente lo que usa:
+`read_chunk` exige `<read>`, `write_chunk` exige `<write>`.
+
+```kai
+# Listado 19.9 — ejemplos/cap19/09_perm.kai
+fn primera_linea(h: FileHandle<read>) : String / File =
+  match File.read_chunk(h, 64) {
+    Ok(s)  -> s
+    Err(e) -> e
+  }
+
+fn main() : Unit / Stdout + File = {
+  let ruta = "/tmp/kai_perm_demo.txt"
+  match File.open_write(ruta) {
+    Ok(h) -> {
+      let _ = File.write_chunk(h, "hola, kaikai")
+      File.close_file(h)
+      match File.open_read(ruta) {
+        Ok(r) -> {
+          println(primera_linea(r))
+          File.close_file(r)
+        }
+        Err(e) -> println(e)
+      }
+    }
+    Err(e) -> println(e)
+  }
+}
+```
+
+```
+$ kai run ejemplos/cap19/09_perm.kai
+hola, kaikai
+```
+
+Fíjate en `primera_linea`: pide un `FileHandle<read>`, pero el
+handle que abrió `open_write` es un `FileHandle<read + write>`, y
+aun así el programa compila. Eso es lo distintivo de
+`Semilattice`. En los demás kinds, dos habitantes unifican solo si
+son *iguales* — `U32<be>` jamás pasa donde se espera `U32<le>`. En
+`Perm`, unifican por **subsunción**: un handle con más capacidades
+sirve donde se piden menos, nunca al revés. `read + write` incluye
+`read`, así que fluye hacia `<read>`. La dirección importa: un
+`FileHandle<read>` puro **no** compila donde se exige `<write>`.
+
+```kai
+fn escribe(h: FileHandle<read>) : Unit / File = {
+  let _ = File.write_chunk(h, "x")   # no compila: <read> no
+  ()                                 # subsume a <write>
+}
+```
+
+```
+error: type mismatch in op call File.write_chunk
+  = note: expected: (FileHandle<write>, String) -> ...
+  = note: found:    (FileHandle<read>, String) -> ...
+```
+
+El `+` de `Semilattice` es una unión idempotente: `read + read` es
+`read`, el orden no importa (`read + write` = `write + read`), y
+nada se resta. Son las tres leyes que la theory verifica —
+asociativa, conmutativa, idempotente — y de ahí sale el orden
+parcial que define la subsunción. Los habitantes `read` y `write`
+los trae la API de archivos (`perm read`, `perm write`), y como
+cualquier kind con palabra introductora, puedes acuñar los tuyos:
+`perm admin`, `perm audit`, lo que tu dominio necesite.
+
+Vale una precisión honesta: la capacidad es la que tu código
+**declaró** al abrir, no el permiso que el sistema operativo tenga
+en ese instante. Un archivo que desaparece, un `chmod` a
+destiempo, siguen apareciendo por el `Result` de cada operación.
+`Perm` te protege de un error de programa —escribir por un handle
+que abriste para leer—, no de la realidad del disco.
+
+## 19.10 Dim: la forma como índice
+
+`Dim` es el kind más nuevo y el más distinto de todos. Sus
+habitantes no son símbolos que acuñas con una palabra, sino
+**valores de `Int` escritos directamente en `<>`**. `<3>` es un
+habitante porque `3 : Int`. Y su theory es `HindleyMilner`, la
+misma que clasifica los tipos ordinarios: la unificación es la
+igualdad de primer orden que ya conoces desde el capítulo 3.
+`<3>` unifica con `<3>` y nunca con `<4>`.
+
+¿Para qué? Para meter la **forma** de una estructura en su tipo.
+El caso canónico es `Vec[t]<n>`: un vector cuyo largo, `n`, es
+parte del tipo. Un literal con un largo distinto al que anuncia la
+anotación no compila.
+
+```kai
+# Listado 19.10 — ejemplos/cap19/10_dim.kai
+fn punto[n: Dim](v: Vec[Real]<n>) : Real = v[0]
+
+fn dot[n: Dim](a: Vec[Real]<n>, b: Vec[Real]<n>, i: Int, acc: Real) : Real =
+  if i < 0 { acc } else { dot(a, b, i - 1, acc + a[i] * b[i]) }
+
+fn main() : Unit / Stdout = {
+  let u : Vec[Real]<3> = [1.0, 2.0, 3.0]
+  let w : Vec[Real]<3> = [4.0, 5.0, 6.0]
+  println(real_to_string(punto(u)))
+  println(real_to_string(dot(u, w, 2, 0.0)))
+}
+```
+
+```
+$ kai run ejemplos/cap19/10_dim.kai
+1
+32
+```
+
+`punto` es genérica sobre el largo: `[n: Dim]` dice "para cualquier
+largo", igual que `[u: Measure]` decía "para cualquier unidad".
+Pero `dot` va más lejos: sus dos argumentos son `Vec[Real]<n>` con
+el **mismo** `n`. El tipo obliga a que los vectores midan lo mismo;
+sumar un `<2>` con un `<3>` no es un error de runtime que descubres
+con un índice fuera de rango, es un tipo que no se puede formar.
+
+Y el índice equivocado se atrapa donde se escribe:
+
+```kai
+let a : Vec[Real]<3> = [1.0, 2.0]   # no compila
+```
+
+```
+error: vector literal has 2 elements, but its type fixes the
+length to 3
+```
+
+Como todo kind, `Dim` se borra en runtime: `<3>` no ocupa un byte
+en el binario, es puro andamiaje de compilación. Y como `Int` es
+un dominio infinito, `Dim` es también la demostración de algo que
+el §19.3 adelantó: una theory puede clasificar más de un kind.
+`HindleyMilner` es el motor de `Type` y de `Dim` a la vez —
+igualdad de primer orden sobre dos dominios distintos, tipos en
+uno, enteros en el otro.
+
+Un límite del álgebra, deliberado: `Dim` es atómico. Un índice no
+tiene productos ni potencias — `<3*4>` y `<3^2>` no existen. La
+aritmética a nivel de tipo (concatenar dos vectores para obtener
+uno de largo `n+k`) queda fuera de la theory a propósito; sumar
+esa maquinaria cambiaría el motor de unificación, y `Dim` prefiere
+mantenerse en la igualdad simple que hereda de `HindleyMilner`.
+
+## 19.11 Shape: el contenedor como habitante
+
+Los kinds con palabra introductora acuñan habitantes de a uno:
+`unit m`, `currency USD`, `perm read`. `Shape` no tiene palabra, y
+esa es su gracia: sus habitantes ya existen. Cada `type T[a]` de un
+solo parámetro —`List`, `Vec`, `Option`, tu `Caja[a]`— es
+automáticamente un habitante de `Shape`, su constructor pelado `T`,
+igual que cada `type` es un habitante de `Type`. No declaras nada
+nuevo; nombras lo que ya tienes.
 
 Con eso puedes cuantificar sobre el contenedor, no solo sobre el
 contenido. Un parámetro `[s: Shape]` acepta cualquier constructor
@@ -548,7 +719,7 @@ expresividad de un functor —abstraer sobre el contenedor— sin los
 tipos de orden superior que la traen en Haskell: después de
 monomorfizar, cada llamada es un despacho estático y directo.
 
-## 19.10 Theory cerrada, modelos abiertos
+## 19.12 Theory cerrada, modelos abiertos
 
 Cierro con la pregunta de diseño, porque sé que el lector que
 viene de Haskell la trae cargada: ¿por qué un catálogo cerrado?
