@@ -1,0 +1,23 @@
+# `#[derive(Json)]` teje un record con el DOM de JSON: genera
+# `to_json` y un shim `<tipo>_of_json` que reconstruye el valor
+# desde un JsonValue. La ida y vuelta es exactamente la propiedad
+# inversa del cap. 7: decode(encode(x)) == x.
+
+import encoding.json.{json_decode, json_encode}
+
+#[derive(Json)]
+type Nota = { titulo: String, prioridad: Int, etiqueta: Option[String] }
+
+fn main() : Unit / Stdout = {
+  let n = Nota { titulo: "comprar pan", prioridad: 1, etiqueta: None }
+  let texto = json_encode(to_json(n))
+  println(texto)
+
+  match json_decode("{\"titulo\":\"llamar\",\"prioridad\":2}") {
+    None    -> println("json inválido")
+    Some(v) -> match nota_of_json(v, "") {
+      Ok(m)  -> println("#{m.titulo} (p#{m.prioridad})")
+      Err(e) -> println(json_error_show(e))
+    }
+  }
+}

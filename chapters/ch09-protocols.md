@@ -203,6 +203,81 @@ You already saw `#[derive(Show)]` over `Point` in the tour
 (§1.6); here we show the manual implementation too and when
 each form pays off.
 
+### Derives that aren't protocols: `Json`
+
+Not everything a record derives is one of the five protocols.
+There are two more derives, of a different nature: `Layout`, which
+fixes a record's byte order for binary serialization (we see it in
+chapter 19), and `Json`, which weaves the record into the JSON
+format.
+
+`#[derive(Json)]` generates two things: `to_json`, which turns
+your record into a JSON value, and a `<type>_of_json` shim, which
+rebuilds it from one. It's the data boundary with the outside
+world: APIs, config files, messages.
+
+```kai
+# Listing 9.6 — examples/ch09/06_json.kai
+import encoding.json.{json_decode, json_encode}
+
+#[derive(Json)]
+type Note = { title: String, priority: Int, tag: Option[String] }
+
+fn main() : Unit / Stdout = {
+  let n = Note { title: "buy bread", priority: 1, tag: None }
+  println(json_encode(to_json(n)))
+
+  match json_decode("{\"title\":\"call back\",\"priority\":2}") {
+    None    -> println("invalid json")
+    Some(v) -> match note_of_json(v, "") {
+      Ok(m)  -> println("#{m.title} (p#{m.priority})")
+      Err(e) -> println(json_error_show(e))
+    }
+  }
+}
+```
+
+```
+$ kai run examples/ch09/06_json.kai
+{"title":"buy bread","priority":1,"tag":null}
+call back (p2)
+```
+
+The mapping rules are the ones you'd expect, and worth having
+straight because the compiler applies them without asking. Field
+names go to the wire verbatim — no case conversion. An `Option[T]`
+field accepts an explicit `null` and a missing key alike — both
+decode to `None`; **every other field is required**. Keys the
+record does not declare are ignored. And if decoding fails, the
+error carries the JSON path to the offending node
+(`address.boxes[2].zip: expected String, got Number`), not a bare
+"parse error".
+
+When the outside world doesn't use your names, there are three
+per-field overrides, each in its own attribute:
+
+```kai
+#[derive(Json)]
+type Config = {
+  #[json(rename = "user_name")] user: String,
+  #[json(default = 3)]          retries: Int,
+  #[json(skip)] #[json(default = false)] cached: Bool,
+}
+```
+
+`rename` changes the name on the wire; `default = <expr>` supplies
+a value when the key is missing (and makes that field optional);
+`skip` drops the field from the wire entirely — and since there's
+nothing to read on decode, it requires a `default` or an `Option`
+type. A field needing two overrides (skipped and defaulted) is
+written with two attributes, as above.
+
+One limitation worth knowing up front: `#[derive(Json)]` works on
+records, **not on sum types**. Encoding a tagged union is a
+convention —does the tag live in a `"type"` key, a wrapper,
+adjacent?— and the derive won't pick for you. For that,
+`to_json`/`of_json` by hand.
+
 ## 9.5 Custom protocols
 
 The five from the stdlib are the most common, but nothing
