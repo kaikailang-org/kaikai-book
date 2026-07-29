@@ -1,0 +1,23 @@
+# `#[derive(Json)]` weaves a record into the JSON DOM: it
+# generates `to_json` plus a `<type>_of_json` shim that rebuilds
+# the value from a JsonValue. The round-trip is exactly chapter
+# 7's inverse property: decode(encode(x)) == x.
+
+import encoding.json.{json_decode, json_encode}
+
+#[derive(Json)]
+type Note = { title: String, priority: Int, tag: Option[String] }
+
+fn main() : Unit / Stdout = {
+  let n = Note { title: "buy bread", priority: 1, tag: None }
+  let text = json_encode(to_json(n))
+  println(text)
+
+  match json_decode("{\"title\":\"call back\",\"priority\":2}") {
+    None    -> println("invalid json")
+    Some(v) -> match note_of_json(v, "") {
+      Ok(m)  -> println("#{m.title} (p#{m.priority})")
+      Err(e) -> println(json_error_show(e))
+    }
+  }
+}

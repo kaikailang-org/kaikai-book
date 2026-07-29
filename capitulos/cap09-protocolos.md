@@ -194,6 +194,80 @@ Ya viste `#[derive(Show)]` sobre `Punto` en el tour (§1.6); aquí
 mostramos también la implementación manual y cuándo conviene
 una sobre la otra.
 
+### Derives que no son protocolos: `Json`
+
+No todo lo que deriva un record es uno de los cinco protocolos.
+Hay dos derives más, de otra naturaleza: `Layout`, que fija el
+orden de bytes de un record para serialización binaria (lo vemos
+en el cap. 19), y `Json`, que teje el record con el formato JSON.
+
+`#[derive(Json)]` genera dos cosas: `to_json`, que convierte tu
+record a un valor JSON, y un shim `<tipo>_of_json`, que lo
+reconstruye desde uno. Es la frontera de datos con el mundo:
+APIs, archivos de configuración, mensajes.
+
+```kai
+# Listado 9.6 — ejemplos/cap09/06_json.kai
+import encoding.json.{json_decode, json_encode}
+
+#[derive(Json)]
+type Nota = { titulo: String, prioridad: Int, etiqueta: Option[String] }
+
+fn main() : Unit / Stdout = {
+  let n = Nota { titulo: "comprar pan", prioridad: 1, etiqueta: None }
+  println(json_encode(to_json(n)))
+
+  match json_decode("{\"titulo\":\"llamar\",\"prioridad\":2}") {
+    None    -> println("json inválido")
+    Some(v) -> match nota_of_json(v, "") {
+      Ok(m)  -> println("#{m.titulo} (p#{m.prioridad})")
+      Err(e) -> println(json_error_show(e))
+    }
+  }
+}
+```
+
+```
+$ kai run ejemplos/cap09/06_json.kai
+{"titulo":"comprar pan","prioridad":1,"etiqueta":null}
+llamar (p2)
+```
+
+Las reglas del mapeo son las que uno esperaría, y vale tenerlas
+claras porque el compilador las aplica sin preguntar. Los nombres
+de campo van al JSON tal cual, sin conversión de mayúsculas. Un
+campo `Option[T]` acepta un `null` explícito y una clave ausente
+por igual —ambos decodifican a `None`—; **cualquier otro campo es
+obligatorio**. Las claves que el record no declara se ignoran. Y
+si algo falla al decodificar, el error trae la ruta JSON al nodo
+culpable (`address.boxes[2].zip: expected String, got Number`), no
+un "parse error" pelado.
+
+Cuando el mundo externo no usa tus nombres, hay tres ajustes por
+campo, cada uno en su propio atributo:
+
+```kai
+#[derive(Json)]
+type Config = {
+  #[json(rename = "user_name")] usuario: String,
+  #[json(default = 3)]          reintentos: Int,
+  #[json(skip)] #[json(default = false)] cacheado: Bool,
+}
+```
+
+`rename` cambia el nombre en el JSON; `default = <expr>` da un
+valor cuando la clave falta (y vuelve opcional ese campo); `skip`
+saca el campo del JSON por completo —y como al decodificar no hay
+nada que leer, exige un `default` o que el campo sea `Option`. Un
+campo necesita dos ajustes (saltado y con default) se escribe con
+dos atributos, como arriba.
+
+Una limitación que conviene saber de antemano: `#[derive(Json)]`
+funciona sobre records, **no sobre tipos suma**. Codificar una
+unión etiquetada es una convención —¿el tag va en una clave
+`"type"`, en un envoltorio, adyacente?— y el derive no elige por
+ti. Para eso, `to_json`/`of_json` a mano.
+
 ## 9.5 Protocolos propios
 
 Los cinco del stdlib son los más comunes, pero nada te impide
