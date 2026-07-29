@@ -2,7 +2,8 @@
 
 Chapter 13 showed how to start fibers and coordinate them
 with a nursery. That solves internal concurrency: many units
-of work inside the same program, sharing CPU cooperatively.
+of work inside the same program, spread across the machine's
+cores.
 
 For many cases that structure is enough. But there's a
 pattern that pure fibers leave awkward, and it's worth
@@ -72,11 +73,14 @@ The mental rule:
 - **Does the task live and respond to messages from several
   clients?** Actor.
 
-Both models are **concurrent but not parallel** in v1: the
-runtime runs a single OS thread, and fibers and actors
-interleave cooperatively on it (chapter 13 §13.8 *Concurrency,
-not parallelism*). The benefit is structural and for
-IO-bound loads, not multi-core speedup.
+Both models are **concurrent and parallel**: the runtime
+spreads fibers and actors across as many OS threads as the
+machine has cores (chapter 13 §13.8 *Concurrency and
+parallelism*). An actor running on another thread changes
+nothing in this chapter: its mailbox is still processed
+serially, one message at a time, and messages crossing a
+thread boundary are copied. No actor observes shared memory,
+whether you run on one thread or thirty-two.
 
 Cases where an actor is natural: a cache server, a connection
 controller, a process supervisor, a notification router, a

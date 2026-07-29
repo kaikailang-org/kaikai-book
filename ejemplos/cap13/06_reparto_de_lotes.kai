@@ -1,0 +1,40 @@
+# Caso de estudio en miniatura: repartir una lista de tareas
+# entre varias fibras trabajadoras.
+#
+# Cada trabajadora recibe su propio lote, lo procesa entero, y
+# devuelve sus resultados. El padre los combina cuando todas
+# terminaron.
+#
+# No hay cola compartida, y es deliberado: los handlers de
+# efectos son locales a la fibra. Un `State` instalado en el
+# `main` no se ve desde una fibra hija. Lo que cruza el `spawn`
+# es el valor de retorno, no la capacidad.
+
+import spawn
+import core.list
+
+fn procesar_lote(id: Int, lote: [String]) : [String] / Spawn =
+  match lote {
+    []           -> []
+    [t, ...rest] -> {
+      spawn.yield()
+      ["worker #{id}: #{t}", ...procesar_lote(id, rest)]
+    }
+  }
+
+fn imprimir(xs: [String]) : Unit / Stdout =
+  match xs {
+    []           -> ()
+    [x, ...rest] -> { println(x) imprimir(rest) }
+  }
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  let resultados = nursery { n ->
+    let a = n.spawn(() => procesar_lote(1, ["alpha", "bravo"]))
+    let b = n.spawn(() => procesar_lote(2, ["charlie", "delta"]))
+    let c = n.spawn(() => procesar_lote(3, ["echo", "foxtrot"]))
+    n.await(a) ++ n.await(b) ++ n.await(c)
+  }
+  imprimir(resultados)
+  println("(#{list.length(resultados)} tareas procesadas)")
+}

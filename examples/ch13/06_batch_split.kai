@@ -1,0 +1,40 @@
+# A miniature case study: split a list of tasks across several
+# worker fibers.
+#
+# Each worker gets its own batch, processes it end to end, and
+# returns its results. The parent combines them once everyone
+# has finished.
+#
+# There is no shared queue, and that is deliberate: effect
+# handlers are fiber-local. A `State` installed in `main` is
+# not visible from a child fiber. What crosses the `spawn` is
+# the return value, not the capability.
+
+import spawn
+import core.list
+
+fn process_batch(id: Int, batch: [String]) : [String] / Spawn =
+  match batch {
+    []           -> []
+    [t, ...rest] -> {
+      spawn.yield()
+      ["worker #{id}: #{t}", ...process_batch(id, rest)]
+    }
+  }
+
+fn print_all(xs: [String]) : Unit / Stdout =
+  match xs {
+    []           -> ()
+    [x, ...rest] -> { println(x) print_all(rest) }
+  }
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  let results = nursery { n ->
+    let a = n.spawn(() => process_batch(1, ["alpha", "bravo"]))
+    let b = n.spawn(() => process_batch(2, ["charlie", "delta"]))
+    let c = n.spawn(() => process_batch(3, ["echo", "foxtrot"]))
+    n.await(a) ++ n.await(b) ++ n.await(c)
+  }
+  print_all(results)
+  println("(#{list.length(results)} tasks processed)")
+}

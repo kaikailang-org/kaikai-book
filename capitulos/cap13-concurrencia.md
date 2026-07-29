@@ -158,7 +158,7 @@ fn main() {
 }
 ```
 
-Salida:
+Una salida posible:
 
 ```
 $ kai run ejemplos/cap13/01_dos_fibras.kai
@@ -170,14 +170,43 @@ A
 B
 ```
 
+**"Una salida posible" es literal, y conviene detenerse aquí.**
+Este programa no promete ese orden. `A` y `B` son fibras
+independientes: nada en el código dice que la primera `A` va
+antes que la primera `B`. El runtime reparte las fibras entre
+tantos hilos del sistema como núcleos tenga tu máquina, así
+que en la práctica vas a ver órdenes distintos entre corrida y
+corrida — `A A A B B B` es tan válido como el intercalado de
+arriba.
+
+Si quieres la salida perfectamente alternada, hay una manera:
+
+```
+$ KAI_THREADS=1 kai run ejemplos/cap13/01_dos_fibras.kai
+A
+B
+A
+B
+A
+B
+```
+
+`KAI_THREADS=1` fuerza al scheduler a un solo hilo, y ahí sí
+`spawn.yield()` es lo único que decide de quién es el turno.
+Es el modo con el que vas a querer leer los ejemplos de este
+capítulo cuando el punto sea *ver* la alternancia. Volvemos
+sobre esto en §13.8; por ahora quédate con la idea de que la
+alternancia es una propiedad del scheduler de un hilo, no una
+garantía del lenguaje.
+
 Lectura literal:
 
 - `import spawn` trae las operaciones de fibras.
 - `spawn.spawn(() => worker("B", 3))` crea una fibra nueva que
   va a correr el lambda cuando el scheduler la elija.
 - `worker("A", 3)` corre en la fibra actual (la del `main`).
-- `spawn.yield()` dentro de `worker` cede el control. Cada
-  vuelta, la otra fibra toma su turno.
+- `spawn.yield()` dentro de `worker` cede el control: la fibra
+  declara un punto donde puede perder el turno.
 - `spawn.await(f)` espera a que `f` termine antes de que `main`
   retorne.
 
@@ -455,121 +484,155 @@ tipos lo garantiza al nivel sintáctico, no al nivel de
 convención. **No hay manera de que una fibra se quede
 huérfana.**
 
-## 13.8 Caso de estudio: cola de tareas con pool de trabajadores
+## 13.8 Caso de estudio: repartir trabajo entre fibras
 
-Cerramos con un patrón clásico: una cola de tareas servida por
-un pool de fibras trabajadoras. Cada trabajador toma la
-siguiente tarea, la procesa, y vuelve por otra. Cuando la cola
-se vacía, todos terminan.
+Cerramos con un patrón que vas a escribir muchas veces:
+repartir una lista de tareas entre varias fibras trabajadoras
+y juntar los resultados al final.
+
+Antes del código, una restricción que conviene tener clara,
+porque decide la forma de la solución: **los handlers de
+efectos son locales a la fibra**. Si instalas un handler de
+`State` en el `main` y una fibra hija ejecuta `State.get()`,
+esa operación no encuentra handler y el programa aborta:
+
+```
+kai: effect not handled in fiber: State
+```
+
+No es un descuido del runtime, es el mismo invariante de
+aislación que sostiene todo el capítulo. Una capacidad es
+parte del contexto de una fibra, y una fibra no hereda el
+contexto de quien la creó. Lo único que cruza un `spawn` en
+una dirección son los valores que capturas en el lambda, y en
+la otra el valor de retorno que recoge `await`.
+
+Así que la "cola compartida" que uno escribiría en Go con un
+canal, o en Java con un `BlockingQueue`, aquí no se escribe
+así. Se reparte el trabajo por adelantado y cada fibra devuelve
+lo suyo:
 
 ```kai
 import spawn
+import core.list
 
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
-}
-
-fn siguiente() : Option[String] / State[[String]] {
-  match State.get() {
-    []           -> None
-    [h, ...rest] -> {
-      State.set(rest)
-      Some(h)
-    }
-  }
-}
-
-fn worker(id: Int) : Unit / Stdout + Spawn + State[[String]] {
-  match siguiente() {
-    None       -> println("worker #{id}: cola vacía, salgo")
-    Some(tarea) -> {
-      println("worker #{id}: procesando '#{tarea}'")
+fn procesar_lote(id: Int, lote: [String]) : [String] / Spawn =
+  match lote {
+    []           -> []
+    [t, ...rest] -> {
       spawn.yield()
-      worker(id)
+      ["worker #{id}: #{t}", ...procesar_lote(id, rest)]
     }
   }
-}
 ```
 
-Hasta aquí, código puro de efectos: tres operaciones (`get`,
-`set`, `siguiente`), una recursión que termina cuando la cola
-se acaba. No hay locks, no hay atomics, no hay `Arc<Mutex<...>>`.
+`procesar_lote` no sabe que existen otras fibras. Recibe su
+lote, lo recorre, y va armando la lista de salida. El
+`spawn.yield()` está para que las trabajadoras se turnen; no
+cambia el resultado, solo lo hace concurrente de verdad.
 
-El `main` instala los handlers y arranca el pool:
+El `main` reparte, espera y concatena:
 
 ```kai
 fn main() : Unit / Stdout + Spawn + Cancel {
-  handle {
-    nursery { n ->
-      let a = n.spawn(() => worker(1))
-      let b = n.spawn(() => worker(2))
-      let c = n.spawn(() => worker(3))
-      n.await(a)
-      n.await(b)
-      n.await(c)
-    }
-  } with State[[String]](["alpha", "bravo", "charlie", "delta", "echo", "foxtrot"]) {
-    get(resume)    -> resume(state)
-    set(v, resume) -> resume((), v)
-    return(x)      -> x
+  let resultados = nursery { n ->
+    let a = n.spawn(() => procesar_lote(1, ["alpha", "bravo"]))
+    let b = n.spawn(() => procesar_lote(2, ["charlie", "delta"]))
+    let c = n.spawn(() => procesar_lote(3, ["echo", "foxtrot"]))
+    n.await(a) ++ n.await(b) ++ n.await(c)
   }
-  println("(todas las tareas procesadas)")
+  imprimir(resultados)
+  println("(#{list.length(resultados)} tareas procesadas)")
 }
 ```
+
+(`imprimir` es un recorrido trivial de la lista; está completo
+en el archivo del ejemplo.)
 
 Salida:
 
 ```
-$ kai run ejemplos/cap13/06_eco_concurrente.kai
-worker 1: procesando 'alpha'
-worker 2: procesando 'bravo'
-worker 3: procesando 'charlie'
-worker 1: procesando 'delta'
-worker 2: procesando 'echo'
-worker 3: procesando 'foxtrot'
-worker 1: cola vacía, salgo
-worker 2: cola vacía, salgo
-worker 3: cola vacía, salgo
-(todas las tareas procesadas)
+$ kai run ejemplos/cap13/06_reparto_de_lotes.kai
+worker 1: alpha
+worker 1: bravo
+worker 2: charlie
+worker 2: delta
+worker 3: echo
+worker 3: foxtrot
+(6 tareas procesadas)
 ```
 
-Tres fibras se reparten seis tareas concurrentemente. Cada
-una accede a la "cola compartida" vía el efecto `State`, pero
-por dentro no hay shared memory: el handler de `State` vive en
-el `main`, y las operaciones de las fibras son mensajes a ese
-handler. La cola es serializada por construcción.
+Y esta vez la salida **sí** está garantizada, a diferencia de
+los ejemplos anteriores del capítulo. No porque las fibras
+corran en orden — corren como quieran, en los núcleos que
+haya — sino porque nadie imprime desde una fibra. Las
+trabajadoras solo devuelven listas; el `main` las concatena en
+el orden que él eligió al escribir `n.await(a) ++ n.await(b) ++
+n.await(c)`, y recién ahí imprime. El orden de la salida es una
+consecuencia del código, no del scheduler.
 
-### Concurrencia, no paralelismo
+Esa es una regla de diseño que vale más que el ejemplo: **si
+te importa el orden, ordénalo tú en el punto de reunión, no
+confíes en el de ejecución.**
 
-Vale ser preciso con una palabra. kaikai en v1 corre **un solo
-hilo del sistema operativo**: un único scheduler, una sola
-cola de fibras listas. Las fibras se intercalan
-cooperativamente, pero nunca dos fibras están ejecutando
-instrucciones al mismo tiempo. Eso es **concurrencia**, no
-**paralelismo**.
+¿Y si el trabajo no se puede repartir por adelantado — si las
+tareas llegan de a poco, o son de duración muy dispareja y
+quieres que la fibra que se desocupa tome la siguiente? Ahí sí
+necesitas algo que posea la cola y responda pedidos. Ese algo
+es un actor, y es el capítulo 14.
 
-¿Por qué importa? Porque si tu programa está limitado por
-CPU (cálculo numérico, compresión, renderizado), correrlo
-con cien fibras no lo va a hacer más rápido: van a turnarse
-en el mismo núcleo. Para problemas como esos, las fibras te
-dan estructura (forma natural de expresar trabajo concurrente,
-cancelación, timeouts) pero no aceleración.
+### Concurrencia y paralelismo
 
-Donde las fibras sí pagan en velocidad es cuando el cuello de
-botella es **IO**: leer archivos, esperar red, esperar mensajes.
-Mientras una fibra está bloqueada esperando bytes, otras
-fibras corren. El mismo núcleo aprovecha el tiempo que de
-otra manera estaría ocioso.
+Vale ser preciso con dos palabras que se confunden seguido.
 
-El paralelismo real (varios núcleos físicos trabajando a la
-vez) requiere multi-threading, que está fuera del alcance de
-v1. Cuando aterrice, será sobre el mismo modelo de actores y
-fibras: un scheduler por hilo, fibras cooperativas adentro,
-mensajes entre hilos. Por ahora, la garantía es que cualquier
-código que escribas hoy con fibras y actores va a seguir
-funcionando cuando el multi-threading llegue, solo más
-rápido en máquinas con varios núcleos.
+**Concurrencia** es una propiedad de tu programa: tener varias
+líneas de trabajo vivas a la vez, que progresan de manera
+independiente. **Paralelismo** es una propiedad de la máquina:
+que dos de esas líneas ejecuten instrucciones en el mismo
+instante, en núcleos distintos.
+
+kaikai te da las dos. Las fibras son el mecanismo de
+concurrencia: livianas, cooperativas, atadas a un nursery. Y
+desde la versión 0.104 el runtime las reparte por defecto
+sobre tantos hilos del sistema como núcleos tenga la máquina,
+con un scheduler M:N que roba trabajo entre hilos. No hay que
+pedirlo ni configurar nada: el programa que escribiste en
+§13.3 ya usa tus dieciséis núcleos si los tienes.
+
+Lo que **no** cambia con el número de hilos es la semántica:
+
+- Cada fibra sigue teniendo su propia memoria. Un mensaje que
+  cruza de un hilo a otro se copia, así que el conteo de
+  referencias de Perceus sigue sin necesitar atómicos.
+- Las fibras siguen siendo cooperativas: ninguna es
+  interrumpida a media instrucción. Entre dos yields, una
+  fibra tiene determinismo local.
+- Nurseries, cancelación y `await` se comportan igual con uno
+  o con treinta y dos hilos.
+
+Lo que sí cambia es lo que ya viste: **el orden en que se
+intercalan fibras independientes deja de ser predecible**. Con
+un hilo, `spawn.yield()` decidía los turnos y la salida era
+reproducible. Con varios, no. Por eso `KAI_THREADS=1` sigue
+existiendo: fuerza el scheduler cooperativo de un solo hilo,
+byte a byte idéntico al de antes. Es la herramienta para
+depurar una carrera, para un test que compara salida literal,
+o para leer un ejemplo pedagógico como los de este capítulo.
+
+```sh
+$ ./programa                  # tantos hilos como núcleos
+$ KAI_THREADS=4 ./programa    # cuatro, ni más ni menos
+$ KAI_THREADS=1 ./programa    # cooperativo, reproducible
+```
+
+Ahora sí, la pregunta útil: **¿te va a servir?** Si tu programa
+está limitado por IO — esperar red, leer archivos, recibir
+mensajes — las fibras ya te pagaban antes, porque mientras una
+espera bytes las otras corren. Si está limitado por CPU, antes
+las fibras te daban estructura pero no velocidad; hoy sí te
+dan velocidad, siempre que el trabajo se pueda partir en
+pedazos que no dependan uno del otro. El ejemplo de esta
+sección es exactamente esa forma.
 
 ## 13.9 Filosofía: dos invariantes que vale recordar
 
@@ -624,14 +687,17 @@ en términos del modelo de memoria por fibra de §13.1.
 `Time.sleep(ms)` y devuelve `None`. Pista: necesitas un tipo
 suma local para distinguir "completó" de "timeout".
 
-**13.4.** En §13.8, el `State` es una cola FIFO sin
-preferencias. Modifica el ejemplo para que algunas tareas
-tengan prioridad alta y los workers las procesen primero.
-Pista: el `State` puede ser un record con dos listas.
+**13.4.** El §13.8 reparte los lotes de antemano y en partes
+iguales. Modifícalo para que los lotes tengan tamaños muy
+dispares (uno con diez tareas, dos con una) y mide cuánto
+tarda el conjunto. Después reparte las once tareas en tres
+lotes parejos y vuelve a medir. ¿Por qué el reparto estático
+deja núcleos ociosos, y qué necesitarías para evitarlo?
 
 **13.5.** Una fibra que entra a un bucle infinito sin
-`spawn.yield()` bloquea a todas las demás. Escribe ese código
-y observa qué pasa. Después agrega yields cada N
+`spawn.yield()` no cede su turno. Escribe ese código y observa
+qué pasa: primero con `KAI_THREADS=1`, después sin la
+variable. ¿Por qué el síntoma cambia? Agrega yields cada N
 iteraciones. ¿Cada cuántas? ¿Cómo decides el N?
 
 **13.6.** En tu lenguaje habitual, busca un programa

@@ -159,7 +159,7 @@ fn main() {
 }
 ```
 
-Output:
+One possible output:
 
 ```
 $ kai run examples/ch13/01_two_fibers.kai
@@ -171,14 +171,42 @@ A
 B
 ```
 
+**"One possible output" is literal, and worth stopping on.**
+This program promises no such order. `A` and `B` are
+independent fibers: nothing in the code says the first `A`
+comes before the first `B`. The runtime spreads fibers across
+as many OS threads as your machine has cores, so in practice
+you'll see different orders run to run — `A A A B B B` is as
+valid as the interleaving above.
+
+If you want the perfectly alternating output, there's a way:
+
+```
+$ KAI_THREADS=1 kai run examples/ch13/01_two_fibers.kai
+A
+B
+A
+B
+A
+B
+```
+
+`KAI_THREADS=1` pins the scheduler to a single thread, and
+there `spawn.yield()` is the only thing deciding whose turn it
+is. That's the mode you'll want for reading this chapter's
+examples whenever the point is to *see* the alternation. More
+on this in §13.8; for now, hold on to the idea that the
+alternation is a property of the single-threaded scheduler,
+not a guarantee of the language.
+
 Reading literally:
 
 - `import spawn` brings in the fiber operations.
 - `spawn.spawn(() => worker("B", 3))` creates a new fiber
   that will run the lambda when the scheduler picks it.
 - `worker("A", 3)` runs in the current fiber (`main`'s).
-- `spawn.yield()` inside `worker` hands control back. On
-  each yield, the other fiber gets its turn.
+- `spawn.yield()` inside `worker` hands control back: the
+  fiber declares a point where it may lose its turn.
 - `spawn.await(f)` waits for `f` to finish before `main`
   returns.
 
@@ -454,121 +482,157 @@ fiber ends before its parent ends, and the type system
 guarantees it syntactically, not by convention. **There's no
 way for a fiber to be orphaned.**
 
-## 13.8 Case study: task queue with a worker pool
+## 13.8 Case study: splitting work across fibers
 
-We close with a classic pattern: a task queue served by a
-pool of worker fibers. Each worker takes the next task,
-processes it, and goes back for another. When the queue is
-empty, they all exit.
+We close with a pattern you'll write many times: split a list
+of tasks across several worker fibers and collect the results
+at the end.
+
+Before the code, a constraint worth having straight, because
+it decides the shape of the solution: **effect handlers are
+fiber-local**. Install a `State` handler in `main`, have a
+child fiber run `State.get()`, and that operation finds no
+handler — the program aborts:
+
+```
+kai: effect not handled in fiber: State
+```
+
+This isn't a runtime oversight, it's the same isolation
+invariant that holds up the whole chapter. A capability is
+part of a fiber's context, and a fiber does not inherit the
+context of whoever created it. The only things that cross a
+`spawn` are the values you capture in the lambda on the way
+in, and the return value `await` collects on the way out.
+
+So the "shared queue" you'd write in Go with a channel, or in
+Java with a `BlockingQueue`, isn't written that way here. You
+split the work up front and each fiber returns its own share:
 
 ```kai
 import spawn
+import core.list
 
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
-}
-
-fn next() : Option[String] / State[[String]] {
-  match State.get() {
-    []           -> None
-    [h, ...rest] -> {
-      State.set(rest)
-      Some(h)
-    }
-  }
-}
-
-fn worker(id: Int) : Unit / Stdout + Spawn + State[[String]] {
-  match next() {
-    None       -> println("worker #{id}: queue empty, exiting")
-    Some(task) -> {
-      println("worker #{id}: processing '#{task}'")
+fn process_batch(id: Int, batch: [String]) : [String] / Spawn =
+  match batch {
+    []           -> []
+    [t, ...rest] -> {
       spawn.yield()
-      worker(id)
+      ["worker #{id}: #{t}", ...process_batch(id, rest)]
     }
   }
-}
 ```
 
-Up to here, pure effect code: three operations (`get`,
-`set`, `next`), a recursion that ends when the queue is
-empty. No locks, no atomics, no `Arc<Mutex<...>>`.
+`process_batch` doesn't know other fibers exist. It takes its
+batch, walks it, and builds the output list. The
+`spawn.yield()` is there so the workers take turns; it doesn't
+change the result, it just makes the thing genuinely
+concurrent.
 
-The `main` installs the handlers and starts the pool:
+`main` splits, waits, and concatenates:
 
 ```kai
 fn main() : Unit / Stdout + Spawn + Cancel {
-  handle {
-    nursery { n ->
-      let a = n.spawn(() => worker(1))
-      let b = n.spawn(() => worker(2))
-      let c = n.spawn(() => worker(3))
-      n.await(a)
-      n.await(b)
-      n.await(c)
-    }
-  } with State[[String]](["alpha", "bravo", "charlie", "delta", "echo", "foxtrot"]) {
-    get(resume)    -> resume(state)
-    set(v, resume) -> resume((), v)
-    return(x)      -> x
+  let results = nursery { n ->
+    let a = n.spawn(() => process_batch(1, ["alpha", "bravo"]))
+    let b = n.spawn(() => process_batch(2, ["charlie", "delta"]))
+    let c = n.spawn(() => process_batch(3, ["echo", "foxtrot"]))
+    n.await(a) ++ n.await(b) ++ n.await(c)
   }
-  println("(all tasks processed)")
+  print_all(results)
+  println("(#{list.length(results)} tasks processed)")
 }
 ```
+
+(`print_all` is a trivial walk over the list; it's complete in
+the example file.)
 
 Output:
 
 ```
-$ kai run examples/ch13/06_task_queue.kai
-worker 1: processing 'alpha'
-worker 2: processing 'bravo'
-worker 3: processing 'charlie'
-worker 1: processing 'delta'
-worker 2: processing 'echo'
-worker 3: processing 'foxtrot'
-worker 1: queue empty, exiting
-worker 2: queue empty, exiting
-worker 3: queue empty, exiting
-(all tasks processed)
+$ kai run examples/ch13/06_batch_split.kai
+worker 1: alpha
+worker 1: bravo
+worker 2: charlie
+worker 2: delta
+worker 3: echo
+worker 3: foxtrot
+(6 tasks processed)
 ```
 
-Three fibers share six tasks under cooperative concurrency.
-Each one accesses the "shared queue" via the `State`
-effect, but underneath there's no shared memory: the
-`State` handler lives in `main`, and the fibers'
-operations are messages to that handler. The queue is
-serialized by construction.
+And this time the output **is** guaranteed, unlike the earlier
+examples in the chapter. Not because the fibers run in order —
+they run however they like, on whatever cores are around — but
+because nobody prints from a fiber. The workers only return
+lists; `main` concatenates them in the order it chose when it
+wrote `n.await(a) ++ n.await(b) ++ n.await(c)`, and only then
+prints. The output order is a consequence of the code, not of
+the scheduler.
 
-### Concurrency, not parallelism
+That's a design rule worth more than the example itself: **if
+you care about order, impose it at the join point — don't
+trust the order of execution.**
 
-A precise word matters here. kaikai in v1 runs **on a single
-OS thread**: one scheduler, one ready queue. Fibers
-interleave cooperatively, but never two fibers execute
-instructions at the same wall-clock moment. That's
-**concurrency**, not **parallelism**.
+And if the work can't be split up front — if tasks arrive over
+time, or vary so much in length that you want whichever fiber
+frees up to take the next one? Then you need something that
+owns the queue and answers requests. That something is an
+actor, and that's chapter 14.
 
-Why does this matter? Because if your program is CPU-bound
-(numerical computation, compression, rendering), running it
-with a hundred fibers won't make it faster: they'll take
-turns on the same core. For problems like that, fibers
-give you structure (a natural way to express concurrent
-work, cancellation, timeouts) but no speedup.
+### Concurrency and parallelism
 
-Where fibers do pay off in speed is when the bottleneck is
-**IO**: reading files, waiting on the network, waiting on
-messages. While one fiber is blocked waiting for bytes,
-other fibers run. The same core uses the time that would
-otherwise be idle.
+Two words worth keeping apart, because they get conflated
+constantly.
 
-Real parallelism (several physical cores working at once)
-requires multi-threading, which is out of v1's scope. When
-it lands, it'll be on the same fibers-and-actors model: one
-scheduler per thread, cooperative fibers inside, messages
-between threads. For now, the guarantee is that any code
-you write today with fibers and actors will keep working
-when multi-threading arrives, just faster on multi-core
-machines.
+**Concurrency** is a property of your program: having several
+lines of work alive at once, progressing independently.
+**Parallelism** is a property of the machine: two of those
+lines executing instructions at the same instant, on different
+cores.
+
+kaikai gives you both. Fibers are the concurrency mechanism:
+lightweight, cooperative, tied to a nursery. And as of version
+0.104 the runtime spreads them by default across as many OS
+threads as the machine has cores, with an M:N scheduler that
+steals work between threads. Nothing to request, nothing to
+configure: the program you wrote back in §13.3 already uses
+your sixteen cores if you have them.
+
+What does **not** change with the thread count is the
+semantics:
+
+- Each fiber still has its own memory. A message crossing from
+  one thread to another is copied, so Perceus reference
+  counting still needs no atomics.
+- Fibers are still cooperative: none is interrupted mid
+  instruction. Between two yields, a fiber has local
+  determinism.
+- Nurseries, cancellation and `await` behave the same at one
+  thread or at thirty-two.
+
+What does change is what you already saw: **the order in which
+independent fibers interleave stops being predictable.** On one
+thread, `spawn.yield()` decided the turns and the output was
+reproducible. On several, it isn't. That's why `KAI_THREADS=1`
+still exists: it forces the single-threaded cooperative
+scheduler, byte-identical to the old one. It's the tool for
+debugging a race, for a test that compares literal output, or
+for reading a teaching example like the ones in this chapter.
+
+```sh
+$ ./program                  # as many threads as cores
+$ KAI_THREADS=4 ./program    # four, no more, no less
+$ KAI_THREADS=1 ./program    # cooperative, reproducible
+```
+
+Now the useful question: **will it help you?** If your program
+is IO-bound — waiting on the network, reading files, receiving
+messages — fibers already paid off before, because while one
+waits for bytes the others run. If it's CPU-bound, fibers used
+to give you structure but no speed; today they give you speed
+too, as long as the work splits into pieces that don't depend
+on each other. The example in this section is exactly that
+shape.
 
 ## 13.9 Philosophy: two invariants worth remembering
 
@@ -626,15 +690,18 @@ lines, in terms of the per-fiber memory model from §13.1.
 `Time.sleep(ms)` and returns `None`. Hint: you'll need a
 local sum type to distinguish "completed" from "timeout".
 
-**13.4.** In §13.8, the `State` is a FIFO queue with no
-priorities. Modify the example so some tasks have high
-priority and the workers process those first. Hint: the
-`State` can be a record with two lists.
+**13.4.** §13.8 splits the batches up front and evenly. Modify
+it so the batches are wildly uneven (one with ten tasks, two
+with one) and time the whole run. Then split the same eleven
+tasks into three even batches and time it again. Why does
+static splitting leave cores idle, and what would you need to
+avoid it?
 
 **13.5.** A fiber that enters an infinite loop without
-`spawn.yield()` blocks all the others. Write that code and
-observe what happens. Then add yields every N iterations.
-How often? How do you choose N?
+`spawn.yield()` never gives up its turn. Write that code and
+observe what happens: first under `KAI_THREADS=1`, then
+without the variable. Why does the symptom change? Then add
+yields every N iterations. How often? How do you choose N?
 
 **13.6.** In your usual language, find a concurrent program
 you wrote or maintain. Count how many lines are "real work"

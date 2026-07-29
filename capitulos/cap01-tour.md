@@ -285,7 +285,7 @@ fn main() {
 ```
 
 ```
-$ kai run ejemplos/cap01/05_concurrente.kai
+$ KAI_THREADS=1 kai run ejemplos/cap01/05_concurrente.kai
 A
 B
 A
@@ -305,6 +305,15 @@ otra".
 Sin los `spawn.yield`, el `worker` "A" correría sus tres
 iteraciones antes de soltarle el turno a "B". Con ellos, la
 salida queda alternada.
+
+El `KAI_THREADS=1` del comando merece una nota. Por defecto,
+kaikai reparte las fibras sobre tantos hilos del sistema como
+núcleos tenga tu máquina, y entonces el orden entre `A` y `B`
+lo decide el scheduler: cambia de corrida en corrida. Con un
+solo hilo, `spawn.yield` es lo único que reparte los turnos y
+la alternancia queda visible. Es una muleta pedagógica para
+este ejemplo, no cómo vas a correr tus programas; el capítulo
+13 lo desarma en serio.
 
 La firma de `worker` es `: Unit / Stdout + Spawn`. Dos
 efectos: el que ya conocíamos para imprimir, y `Spawn` para

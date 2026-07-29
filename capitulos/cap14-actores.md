@@ -2,8 +2,8 @@
 
 El capítulo 13 mostró cómo arrancar fibras y coordinarlas vía
 un nursery. Eso resuelve la concurrencia interna: muchas
-unidades de trabajo dentro de un mismo programa, que se
-reparten el CPU cooperativamente.
+unidades de trabajo dentro de un mismo programa, repartidas
+sobre los núcleos de la máquina.
 
 Para muchos casos esa estructura alcanza. Pero hay un patrón
 que las fibras puras dejan incómodo, y vale la pena nombrarlo
@@ -73,11 +73,14 @@ La regla mental:
 - **¿La tarea vive y responde mensajes a varios clientes?**
   Actor.
 
-Ambos modelos son **concurrentes pero no paralelos** en v1: el
-runtime corre un solo hilo del sistema, y fibras y actores se
-intercalan cooperativamente en él (cap. 13 §13.8 *Concurrencia,
-no paralelismo*). La ganancia es estructural y para cargas
-limitadas por IO, no aceleración multinúcleo.
+Ambos modelos son **concurrentes y paralelos**: el runtime
+reparte fibras y actores sobre tantos hilos del sistema como
+núcleos tenga la máquina (cap. 13 §13.8 *Concurrencia y
+paralelismo*). Que un actor corra en otro hilo no cambia nada
+de lo que vas a leer en este capítulo: su mailbox se sigue
+procesando en serie, un mensaje a la vez, y los mensajes que
+cruzan de un hilo a otro se copian. Ningún actor observa
+memoria compartida, corras con uno o con treinta y dos hilos.
 
 Casos donde el actor es lo natural: un servidor de cache, un
 controlador de conexiones, un supervisor de procesos, un router
