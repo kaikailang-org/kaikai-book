@@ -6,15 +6,15 @@ import decimal as dec
 import decimal_proto
 
 fn main() : Unit / Stdout = {
-  let a: Money[USD] = 10.50<USD>
-  let b: Money[USD] = 4.50<USD>
-  let total = a + b                       # same currency: Money[USD]
+  let a: Money[dec.Decimal]<USD> = 10.50<USD>
+  let b: Money[dec.Decimal]<USD> = 4.50<USD>
+  let total = a + b                       # same currency: Money[Decimal]<USD>
 
   let k: dec.Decimal = 3
   let triple = total * k                  # scalar: still USD
 
   let rate: dec.Decimal = 0.92
-  let in_euros: Money[EUR] = money.convert(total, rate)
+  let in_euros: Money[dec.Decimal]<EUR> = money.convert(total, rate)
 
   println("total  = #{money.to_string(total)} USD")
   println("triple = #{money.to_string(triple)} USD")

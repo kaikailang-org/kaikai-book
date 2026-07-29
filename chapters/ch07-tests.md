@@ -229,8 +229,10 @@ have it.
 Properties are useful when you can **state a universal
 truth** about your code. Some common examples:
 
-- **Inverses**: `decode(encode(x)) == x`,
-  `parse(format(x)) == x`.
+- **Inverses**: `parse(format(x)) == x`,
+  `decompress(compress(x)) == x`. The byte round-trip that
+  `#[derive(Layout)]` generates (chapter 19) is exactly this
+  shape.
 - **Idempotence**:
   `normalize(normalize(s)) == normalize(s)`.
 - **Algebraic invariants**: commutativity, associativity,

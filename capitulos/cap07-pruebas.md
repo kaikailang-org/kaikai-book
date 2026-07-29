@@ -229,8 +229,10 @@ Las propiedades son útiles cuando puedes **enunciar una
 verdad universal** sobre tu código. Algunos ejemplos
 comunes:
 
-- **Inversas**: `decode(encode(x)) == x`,
-  `parse(format(x)) == x`.
+- **Inversas**: `parse(format(x)) == x`,
+  `descomprimir(comprimir(x)) == x`. La ida y vuelta de bytes
+  que genera `#[derive(Layout)]` (cap. 19) es exactamente esta
+  forma.
 - **Idempotencia**: `normalize(normalize(s)) == normalize(s)`.
 - **Invariantes algebraicas**: conmutatividad, asociatividad,
   identidad.

@@ -1,0 +1,20 @@
+# The Dim kind: a static shape index rides in the type.
+# `Vec[t]<n>` fixes the length at `n`, an Int value written in
+# `<>`. A literal of a different length does not compile; the
+# index is erased at runtime.
+
+# Generic over the length: `n` is a habitant of Dim, so `head`
+# accepts a vector of any size.
+fn head[n: Dim](v: Vec[Real]<n>) : Real = v[0]
+
+# Dot product of two vectors of the SAME length `n`. The type
+# forces them to match: passing a <2> and a <3> does not compile.
+fn dot[n: Dim](a: Vec[Real]<n>, b: Vec[Real]<n>, i: Int, acc: Real) : Real =
+  if i < 0 { acc } else { dot(a, b, i - 1, acc + a[i] * b[i]) }
+
+fn main() : Unit / Stdout = {
+  let u : Vec[Real]<3> = [1.0, 2.0, 3.0]
+  let w : Vec[Real]<3> = [4.0, 5.0, 6.0]
+  println(real_to_string(head(u)))             # 1.0
+  println(real_to_string(dot(u, w, 2, 0.0)))   # 1·4 + 2·5 + 3·6 = 32
+}
