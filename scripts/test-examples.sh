@@ -5,13 +5,16 @@
 #   scripts/test-examples.sh es         # solo edición español
 #   scripts/test-examples.sh en         # solo edición inglés
 #   scripts/test-examples.sh -v         # verbose (muestra output de cada caso)
+#   KAI_BACKEND=native scripts/test-examples.sh   # valida el backend del lector
 #
-# Backend C por defecto. Salida: tabla con OK / FAIL / XFAIL / XPASS.
+# Backend C por defecto, porque es el que más cobertura tiene hoy; el nativo
+# es el default de `kai`, así que conviene pasarle la suite de vez en cuando.
+# Salida: tabla con OK / FAIL / XFAIL / XPASS.
 # XFAIL = falla esperada (bug conocido, demo deliberada).
 # XPASS = pasó algo que esperábamos que fallara — revisar.
 
 set -u
-export KAI_BACKEND=c
+export KAI_BACKEND="${KAI_BACKEND:-c}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TMP="$(mktemp -d -t kaikai-book-test.XXXXXX)"
@@ -112,6 +115,7 @@ build|ejemplos/cap09/01_protocolo_basico.kai|ok
 build|ejemplos/cap09/02_eq_ord.kai|ok
 build|ejemplos/cap09/03_derive.kai|ok
 build|ejemplos/cap09/04_protocolo_propio.kai|ok
+run|ejemplos/cap09/06_json.kai|ok
 
 # Capítulo 10 — unidades
 build|ejemplos/cap10/01_unidades_basicas.kai|ok
@@ -141,19 +145,23 @@ build|ejemplos/cap12/10_var_local.kai|ok
 build|ejemplos/cap12/11_instancias.kai|ok
 
 # Capítulo 13 — fibras
-build|ejemplos/cap13/01_dos_fibras.kai|ok
-build|ejemplos/cap13/02_nursery.kai|ok
-build|ejemplos/cap13/03_cancel.kai|ok
-build|ejemplos/cap13/04_race.kai|ok
-build|ejemplos/cap13/05_worker_pool.kai|ok
-build|ejemplos/cap13/06_eco_concurrente.kai|ok
+# En modo run, no solo build: compilar no prueba que un programa
+# concurrente corra. El orden de la salida no es estable arriba de
+# un hilo, pero el exit code sí.
+run|ejemplos/cap13/01_dos_fibras.kai|ok
+run|ejemplos/cap13/02_nursery.kai|ok
+run|ejemplos/cap13/03_cancel.kai|fail
+run|ejemplos/cap13/04_race.kai|ok
+run|ejemplos/cap13/05_worker_pool.kai|ok
+run|ejemplos/cap13/06_reparto_de_lotes.kai|ok
 
 # Capítulo 14 — actores
-build|ejemplos/cap14/01_with_mailbox.kai|ok
-build|ejemplos/cap14/02_spawn_actor.kai|ok
-build|ejemplos/cap14/03_request_reply.kai|ok
-build|ejemplos/cap14/04_mailbox_policy.kai|ok
-build|ejemplos/cap14/05_supervisor.kai|ok
+run|ejemplos/cap14/01_with_mailbox.kai|ok
+run|ejemplos/cap14/02_spawn_actor.kai|ok
+run|ejemplos/cap14/03_request_reply.kai|ok
+run|ejemplos/cap14/04_mailbox_policy.kai|ok
+run|ejemplos/cap14/05_supervisor.kai|ok
+run|ejemplos/cap14/06_receive_timeout.kai|ok
 
 # Capítulo 15 — holes (compilan, abortan en runtime al llegar al hole)
 run|ejemplos/cap15/01_hole_basico.kai|run_panic
@@ -165,7 +173,7 @@ build|ejemplos/cap15/05_diseno_top_down.kai|ok
 # Capítulo 16 — FFI
 build|ejemplos/cap16/ffi/01_libc_abs.kai|ok
 build|ejemplos/cap16/ffi/02_renombre.kai|ok
-project|ejemplos/cap16/ffi/03_shim|ok|app.kai|shim.c|native
+project|ejemplos/cap16/ffi/03_shim|ok|app.kai|shim.c|c
 
 # Capítulo 17 — caso notas
 project|ejemplos/cap17/notas|ok
@@ -182,6 +190,8 @@ build|ejemplos/cap19/05_dinero.kai|ok
 build|ejemplos/cap19/06_usd_por_eur.kai|fail
 run|ejemplos/cap19/07_layout.kai|ok
 run|ejemplos/cap19/08_shape.kai|ok
+run|ejemplos/cap19/09_perm.kai|ok
+run|ejemplos/cap19/10_dim.kai|ok
 
 # ===== Edición inglés =====
 
@@ -255,6 +265,7 @@ build|examples/ch09/01_basic_protocol.kai|ok
 build|examples/ch09/02_eq_ord.kai|ok
 build|examples/ch09/03_derive.kai|ok
 build|examples/ch09/04_own_protocol.kai|ok
+run|examples/ch09/06_json.kai|ok
 
 # Chapter 10
 build|examples/ch10/01_basic_units.kai|ok
@@ -284,19 +295,23 @@ build|examples/ch12/10_local_var.kai|ok
 build|examples/ch12/11_instances.kai|ok
 
 # Chapter 13
-build|examples/ch13/01_two_fibers.kai|ok
-build|examples/ch13/02_nursery.kai|ok
-build|examples/ch13/03_cancel.kai|ok
-build|examples/ch13/04_race.kai|ok
-build|examples/ch13/05_worker_pool.kai|ok
-build|examples/ch13/06_task_queue.kai|ok
+# In run mode, not just build: compiling proves nothing about a
+# concurrent program actually running. Output order is not stable
+# above one thread, but the exit code is.
+run|examples/ch13/01_two_fibers.kai|ok
+run|examples/ch13/02_nursery.kai|ok
+run|examples/ch13/03_cancel.kai|fail
+run|examples/ch13/04_race.kai|ok
+run|examples/ch13/05_worker_pool.kai|ok
+run|examples/ch13/06_batch_split.kai|ok
 
 # Chapter 14
-build|examples/ch14/01_with_mailbox.kai|ok
-build|examples/ch14/02_spawn_actor.kai|ok
-build|examples/ch14/03_request_reply.kai|ok
-build|examples/ch14/04_mailbox_policy.kai|ok
-build|examples/ch14/05_supervisor.kai|ok
+run|examples/ch14/01_with_mailbox.kai|ok
+run|examples/ch14/02_spawn_actor.kai|ok
+run|examples/ch14/03_request_reply.kai|ok
+run|examples/ch14/04_mailbox_policy.kai|ok
+run|examples/ch14/05_supervisor.kai|ok
+run|examples/ch14/06_receive_timeout.kai|ok
 
 # Chapter 15 — holes
 run|examples/ch15/01_basic_hole.kai|run_panic
@@ -308,7 +323,7 @@ build|examples/ch15/05_top_down_design.kai|ok
 # Chapter 16
 build|examples/ch16/ffi/01_libc_abs.kai|ok
 build|examples/ch16/ffi/02_rename.kai|ok
-project|examples/ch16/ffi/03_shim|ok|app.kai|shim.c|native
+project|examples/ch16/ffi/03_shim|ok|app.kai|shim.c|c
 
 # Chapter 17
 project|examples/ch17/notes|ok
@@ -325,6 +340,8 @@ build|examples/ch19/05_money.kai|ok
 build|examples/ch19/06_usd_times_eur.kai|fail
 run|examples/ch19/07_layout.kai|ok
 run|examples/ch19/08_shape.kai|ok
+run|examples/ch19/09_perm.kai|ok
+run|examples/ch19/10_dim.kai|ok
 EOF
 
 # ============================================================
