@@ -287,7 +287,7 @@ fn main() {
 ```
 
 ```
-$ kai run examples/ch01/05_concurrent.kai
+$ KAI_THREADS=1 kai run examples/ch01/05_concurrent.kai
 A
 B
 A
@@ -306,6 +306,15 @@ current fiber says "I can wait — give someone else a turn".
 Without the `spawn.yield` calls, worker A would run all three
 iterations before giving B a chance. With them, the output
 ends up interleaved.
+
+The `KAI_THREADS=1` in that command deserves a note. By
+default kaikai spreads fibers across as many OS threads as
+your machine has cores, and then the order of `A` and `B` is
+the scheduler's call: it changes run to run. On a single
+thread, `spawn.yield` is the only thing handing out turns, and
+the alternation becomes visible. It's a teaching crutch for
+this example, not how you'll run your programs; chapter 13
+takes it apart properly.
 
 The signature of `worker` is `: Unit / Stdout + Spawn`. Two
 effects: the one we already knew for printing, and `Spawn` for
