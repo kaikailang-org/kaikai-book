@@ -333,9 +333,13 @@ reasonable flow is this:
 1. **The human writes the signature and the tests.** Defines
    what the program is expected to do. Puts holes in the
    bodies.
-2. **The agent reads `--holes-json`.** It knows what type is
-   expected, what bindings are in scope, what candidates are
-   reasonable. It generates an implementation proposal.
+2. **The agent reads `kai typecheck --holes-json`.** It knows
+   what type is expected, what bindings are in scope, what
+   candidates are reasonable. It generates an implementation
+   proposal. It uses `typecheck` rather than `build` on
+   purpose: the report is the same, but each query costs only
+   the front-end (chapter 16 §16.1), and in a loop that gets
+   paid many times over.
 3. **The human runs `kai check`.** If the tests pass, things
    proceed. If not, the counterexample tells the agent
    what's wrong.
