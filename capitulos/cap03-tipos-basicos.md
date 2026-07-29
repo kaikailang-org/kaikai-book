@@ -155,6 +155,28 @@ siempre devuelve flotante; en kaikai el tipo manda: `Int /
 Int` es `Int`, y si quieres parte fraccionaria conviertes
 explícitamente o trabajas con `Real` desde el principio.
 
+Y con negativos hay un segundo cambio de hábito, más
+traicionero porque no da error: **`/` trunca hacia cero, y el
+resto de `%` lleva el signo del dividendo.**
+
+```kai
+println("#{-17 / 5}")      # -3, no -4
+println("#{-17 % 5}")      # -2, no 3
+println("#{17 % -5}")      #  2: el signo lo pone el 17
+```
+
+Python decide al revés — usa división hacia abajo, así que
+`-17 // 5` es `-4` y `-17 % 5` es `3`. Si vienes de C, Go,
+Java o Rust, en cambio, kaikai hace lo que ya esperabas. La
+identidad que se mantiene en todos los casos es
+`(a / b) * b + a % b == a`.
+
+La consecuencia práctica: si usas `%` para saber si algo es
+par, para rotar un índice en un buffer circular o para
+repartir en cubetas, y el valor puede ser negativo, vas a
+recibir un resto negativo. `x % 2 == 1` es falso para todo `x`
+negativo impar; lo que quieres preguntar es `x % 2 != 0`.
+
 Los operadores lógicos son palabras, no símbolos:
 
 ```
