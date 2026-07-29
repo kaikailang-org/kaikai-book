@@ -79,6 +79,60 @@ size can take 30 seconds to compile, where a kaikai program
 of the same size takes less than a second — an order of
 magnitude you feel on every save.
 
+### Just check: `kai typecheck`
+
+Sometimes you want neither the binary nor to run anything: you
+just want to know whether the program is well-typed. That's what
+`kai typecheck` is for — the fastest "does this compile?" answer:
+
+```
+$ kai typecheck app.kai
+$ echo $?
+0
+```
+
+On success it prints nothing and exits `0`. On an error, it
+prints the diagnostic and exits `1`:
+
+```
+$ kai typecheck app.kai
+error: type mismatch in function call
+  --> app.kai:5:12
+     |
+   5 |   println("#{double(s)}")
+     |            ^
+  = note: expected: (Int) -> Int
+  = note: found:    (String) -> ?t2
+```
+
+The point is what `typecheck` does **not** do. It runs the
+compiler's full front-end — lexer, parser, name resolution, HM
+and effect-row inference, the kind and unit machinery, protocol-
+dispatch validation — and stops there. No monomorphisation, no
+codegen, no link, no binary. All the work a `build` spends
+*after* it knows the program is correct is skipped, which is why
+it finishes in a fraction of a full compile.
+
+The diagnostics and the exit code are **identical** to `kai
+build`'s: the same checking runs in both, `typecheck` just gets
+off the train earlier. If `typecheck` is silent, the front-end
+is clean.
+
+One honest limit, because the name promises a touch more:
+`typecheck` covers the front-end, not the whole pipeline. A
+handful of errors only surface in later phases — a protocol
+bound violated only when it monomorphises at a concrete
+instantiation, or a backend coverage gap — and those `typecheck`
+does not see. A file that passes `typecheck` almost always
+builds, but "almost always" is not "always". For total
+certainty, the judge is still `kai build`.
+
+The structured-report flags mount on `typecheck` the same way
+they do on `build` (`--diags-json`, `--holes-json`): the same
+report, without paying for codegen. That makes it the natural
+tool for chapter 15's hole loop, where each iteration costs the
+front-end and nothing more.
+
 ## 16.2 Tests, properties and benchmarks
 
 Three subcommands cover the three verification constructs
@@ -443,6 +497,13 @@ $ kai build --backend=c app.kai      # portable C backend
 A handful of environment variables control the `kai` binary's
 behavior for special cases:
 
+- **`KAI_THREADS`** (integer): how many OS threads the M:N
+  scheduler of the program you run will use. With the variable
+  unset, the runtime takes the host's core count (capped at 32).
+  `KAI_THREADS=1` falls back to the byte-identical
+  single-threaded cooperative scheduler — handy when you want
+  reproducible output. It's the only one on this list that
+  affects the executable rather than the compile.
 - **`KAI_BACKEND`** (`c` | `native`): the default backend when
   you don't pass `--backend`. The flag overrides it.
 - **`KAI_NATIVE_OPT`** (`0|1|2|3|s|z`, default `2`): the

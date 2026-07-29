@@ -330,9 +330,13 @@ el flujo razonable es este:
 
 1. **El humano escribe la firma y los tests.** Define qué se
    espera del programa. Pone holes en los cuerpos.
-2. **El agente lee la salida `--holes-json`.** Sabe qué tipo
-   se espera, qué bindings están en alcance, qué candidatos
-   son razonables. Genera una propuesta de implementación.
+2. **El agente lee la salida `kai typecheck --holes-json`.**
+   Sabe qué tipo se espera, qué bindings están en alcance, qué
+   candidatos son razonables. Genera una propuesta de
+   implementación. Usa `typecheck` y no `build` a propósito: el
+   reporte es el mismo, pero cada consulta cuesta solo el
+   front-end (cap. 16 §16.1), y en un loop eso se paga muchas
+   veces.
 3. **El humano corre `kai check`.** Si los tests pasan, sigue
    adelante. Si no, el contraejemplo le dice al agente qué
    está mal.
