@@ -110,7 +110,7 @@ faltaba el organigrama:
 | Kind | Theory | Introductor | Habitantes | Qué decide la theory |
 |---|---|---|---|---|
 | `Type` | `HindleyMilner` | `type` | `Int`, `String`, los tuyos | igualdad e inferencia de tipos |
-| `Effect` | `EffectRow` | `effect` | `Stdout`, `Fail`, los tuyos | filas: orden irrelevante, duplicados colapsan |
+| `Effect` | `EffectRow` | `effect` | `Stdout`, `Cancel`, los tuyos | filas: orden irrelevante, duplicados colapsan |
 | `Measure` | `AbelianGroup` | `unit` | `m`, `s`, `USD` si quieres | producto, cociente y potencia de unidades |
 | `Currency` | `Module` | `currency` | `USD`, `EUR`, … (`stdlib/money.kai`) | suma y escala; **sin** producto |
 | `Region` | `Nominal` | `region` | uno fresco por bloque `region` | identidad: cada arena es solo ella misma |

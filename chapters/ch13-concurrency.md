@@ -21,7 +21,8 @@ consequences worth naming before the syntax:
 - **Concurrency is an effect.** `spawn` is an operation of a
   `Spawn` effect, not a keyword. Creating and awaiting
   fibers composes with the rest of the system (`State`,
-  `Fail`, `Cancel`) using the chapter-12 machinery.
+  `Cancel`, a `Fail` you declare yourself) using the
+  chapter-12 machinery.
 
 Let's take it piece by piece.
 

@@ -222,18 +222,31 @@ and returned doesn't require `Mutable`.
 
 ## D.6 Errors and control
 
-### `Fail`
+### `ReadFault`
 
 ```kai
-effect Fail {
-  fail(msg: String) : Nothing
+effect ReadFault {
+  bad_chunk(msg: String)  : Unit      # resumable: skip and go on
+  open_fault(msg: String) : Nothing   # abort-only
 }
 ```
 
-Abort with a message. The operation returns `Nothing` (the
-empty type), so the type system guarantees you can't call
-`resume` after `Fail.fail`. It's the canonical pattern for
-"lightweight exception" in kaikai.
+The recoverable fault of streamed reads, declared in
+`stdlib/stream.kai`. It is the only failure-shaped effect the
+stdlib declares, and its design explains why: `bad_chunk`
+returns `Unit`, so a handler that resumes drops the bad chunk
+and continues (skip policy), while one that abandons the
+continuation aborts. `open_fault` returns `Nothing`: a stream
+whose source cannot open has nothing to resume into.
+
+`ReadFault` carries no default handler. A consumer that forces
+the stream must pick a policy with `handle ... with ReadFault`,
+or the typer reports `effect not handled: ReadFault`. The abort
+path still releases the producer's handle: `read_lines` and
+`write_lines` bracket the file in a handler carrying
+`initially` / `finally` (chapter 12 §12.8), so `close_file` runs
+on the unwind even though the fault jumps clean over the read
+loop.
 
 ### `Cancel`
 
@@ -247,6 +260,31 @@ Cooperative cancellation. The scheduler injects
 `Cancel.raise()` into a canceled fiber at the next yield
 point. The fiber can install a `Cancel` handler for cleanup
 (chapter 13).
+
+### `Fail`: retired from the stdlib
+
+`Fail` was a stdlib effect (`fail(msg: String) : Nothing`) with
+a default handler that printed a banner and exited 1. **As of
+kaikai 0.106 it is gone.** The removal ratifies what the stdlib
+already practiced: every fallible API returns `Result` and
+propagates with postfix `!`. Not one `/ Fail` row was left
+across the stdlib.
+
+What to reach for instead, by what you need:
+
+| You need | Use |
+|---|---|
+| Inspectable failure | `Result[a, e]` with postfix `!` |
+| A failure whose policy the consumer picks | a domain effect whose op returns `Unit`, so the handler can resume and skip |
+| Deep non-local exit | `Cancel.raise() : Nothing` |
+| Programming error | `panic` |
+
+`Fail` remains a good teaching example of an operation that
+returns `Nothing`, which is why chapter 12 declares it **locally**
+in several examples. A `Fail` you declare yourself carries no
+default, so an unhandled `fail` is a compile error (`effect not
+handled: Fail`) rather than a runtime abort. That's the whole
+practical difference.
 
 ## D.7 Concurrency
 

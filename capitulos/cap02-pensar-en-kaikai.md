@@ -251,12 +251,13 @@ En la versión kaikai, el `match` es exhaustivo: si te olvidas
 del caso `None`, no compila. El compilador te recuerda lo que
 en Python depende de tu memoria.
 
-¿Y las excepciones? kaikai tiene un mecanismo equivalente (el
-efecto `Fail` y, más en general, los efectos algebraicos del
-capítulo 12), pero también ahí lo que puede fallar aparece en el
-tipo. Las "excepciones invisibles" que en Java o Python pueden
-brotar de cualquier llamada, en kaikai no existen. Si una
-función puede saltar a otro lado, su firma lo declara.
+¿Y las excepciones? kaikai tiene un mecanismo equivalente —los
+efectos algebraicos del capítulo 12, con los que se declara en
+tres líneas un efecto que aborta—, pero también ahí lo que puede
+fallar aparece en el tipo. Las "excepciones invisibles" que en
+Java o Python pueden brotar de cualquier llamada, en kaikai no
+existen. Si una función puede saltar a otro lado, su firma lo
+declara.
 
 Esto cambia la sensación de programar. En vez de envolver cada
 llamada externa en un `try` por las dudas, lees la firma, ves
