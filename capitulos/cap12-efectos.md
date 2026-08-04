@@ -215,6 +215,10 @@ fila es un conjunto, no una secuencia. `Log + Fail` y `Fail + Log`
 son la misma fila para el compilador. El operador `+` es solo
 sintaxis para construirla.
 
+(`Fail` no viene del stdlib: es un efecto que declararemos en
+§12.5, igual que `Log` en §12.2. Lo uso desde ya porque el nombre
+se explica solo.)
+
 Si esto te suena al capítulo 10 — donde `m * s` y `s * m` eran
 la misma unidad — no es coincidencia. Los efectos son otra de
 las familias de etiquetas del §2.6: habitan su propio kind, con
@@ -641,6 +645,97 @@ Esa es una diferencia profunda con `try/catch + variables
 globales`: ahí el orden es implícito y depende del runtime. Aquí es
 explícito y lo decides en la firma de los `handle`.
 
+### Limpieza garantizada: `initially` y `finally`
+
+El anidamiento trae un problema que las excepciones también
+tienen y resuelven a medias. Si un handler externo abandona el
+`resume` — como el `Fail` de §12.5 —, el body interior nunca
+vuelve. Cualquier línea que hayas escrito *después* del `handle`
+para cerrar un archivo, soltar un lock o devolver una conexión al
+pool no corre nunca. El salto no local se la comió.
+
+Un handler puede llevar dos cláusulas más para cerrar ese hueco:
+
+- `initially { }` corre una vez, cuando el handler se instala,
+  antes del body. Su valor es el estado del handler, legible como
+  `state` en las cláusulas. Ocupa el mismo espacio que la forma
+  `with Eff(init)`: se escribe una o la otra, nunca las dos.
+- `finally { }` corre cuando el scope se desarma, **por cualquier
+  camino**: retorno normal, una cláusula que abandona `resume`
+  (incluida una instalada más afuera, cuyo salto se brinca este
+  scope), y cancelación cooperativa (cap. 13). No corre en
+  `panic`, que aborta el proceso en vez de desarmarlo.
+
+Juntas son el *bracket* de adquirir/liberar. Y lo son de verdad,
+no por convención: la adquisición vive **dentro** de la
+construcción que garantiza la liberación, así que no existe una
+ventana en la que el recurso está abierto y todavía sin protección.
+
+```kai
+# ejemplos/cap12/12_limpieza.kai
+effect Fail {
+  fail(motivo: String) : Nothing
+}
+
+effect Conexion {
+  consultar(sql: String) : String
+}
+
+fn reporte() : String / Conexion + Fail {
+  let fila = Conexion.consultar("SELECT total FROM ventas")
+  Fail.fail("se cortó la red antes del segundo query")
+}
+
+fn main() : Unit / Stdout {
+  let r = handle {
+    handle {
+      reporte()
+    } with Conexion {
+      initially { println("abriendo conexión"); 42 }
+      finally   { println("cerrando conexión #{state}") }
+      consultar(sql, resume) -> resume("1500")
+      return(x)              -> x
+    }
+  } with Fail {
+    fail(motivo, resume) -> "abortado: #{motivo}"
+    return(x)            -> x
+  }
+  println(r)
+}
+```
+
+```
+$ kai run ejemplos/cap12/12_limpieza.kai
+abriendo conexión
+cerrando conexión 42
+abortado: se cortó la red antes del segundo query
+```
+
+El `Fail` externo abandonó el `resume` y el body de `Conexion`
+nunca terminó. Aun así la conexión se cerró, y se cerró *antes* de
+que el valor de reemplazo llegara a `main`. Ese orden no es
+casualidad: el desarme del scope interior ocurre en el camino del
+salto, no después.
+
+Hay una regla que conviene tener presente: **la limpieza corre en
+el contexto de evidencia del momento en que se instaló**. Si el
+`finally` realiza un efecto, ese efecto se despacha a los handlers
+que estaban vivos cuando el handler se instaló, no a los del punto
+de salto — esos marcos ya no existen. La consecuencia práctica es
+que un `finally` no puede realizar el efecto que su propio handler
+descarga. Eso es un error de compilación ("effect not handled"), no
+un ciclo en tiempo de ejecución.
+
+`finally` no recibe parámetros y su valor se descarta: corre por su
+efecto, no por lo que devuelve. Para transformar el resultado del
+`handle` está `return(x)`, que es otra cosa.
+
+Dos detalles de convivencia. `initially` y la forma `with Eff(init)`
+ocupan el mismo espacio, así que escribir las dos es un error de
+parseo: eliges una. Y ninguna de las dos palabras es reservada —
+son contextuales—, de modo que un efecto tuyo puede seguir
+declarando una operación llamada `finally` sin que nada se rompa.
+
 ## 12.9 Instancias nombradas: el handler como valor
 
 Hasta aquí, cada operación encuentra su handler por el nombre del
@@ -890,7 +985,7 @@ fn main() : Unit / Stdout {
   } with MyLog {
     info(msg, resume) -> resume(())   # silencia adentro del handle
   }
-  print("result: #{int_to_string(r)}")
+  print("result: #{r}")
 }
 ```
 
@@ -902,12 +997,28 @@ que el contexto haya decidido.
 
 ### Cuándo no hay default: el efecto sin red
 
-No todos los efectos traen `default`. `Fail` es el contraejemplo
-claro: si una operación puede abortar el programa, no quieres que
-"olvidarse de manejarla" sea legal. La declaración pública de
-`Fail` (apéndice D) no tiene bloque `default`, y por eso una
-función que produce `/ Fail` obliga a ser manejada en algún lado
-antes de `main`, o el compilador rechaza con un mensaje claro.
+No todos los efectos traen `default`. El `Fail` que declaramos en
+§12.5 es el contraejemplo claro: si una operación puede abortar el
+programa, no quieres que "olvidarse de manejarla" sea legal. Como
+lo declaraste tú y no lleva bloque `default`, una función que
+produce `/ Fail` obliga a ser manejada en algún lado antes de
+`main`, o el compilador rechaza con un mensaje claro.
+
+Vale la pena decir de dónde viene ese ejemplo. Hasta la versión
+0.105, `Fail` era un efecto del stdlib **con** default: el runtime
+imprimía un banner y salía con código 1. En 0.106 lo retiraron.
+El argumento fue que no aportaba nada que `Result[a, e]` con `!`
+postfijo no diera mejor — de hecho, no quedaba una sola fila
+`/ Fail` en todo el stdlib — y que su forma, una operación que
+devuelve `Nothing`, era justamente la que *no* podía expresar la
+falla interesante: aquella en la que el consumidor elige si saltear
+o abortar. Para eso el efecto tiene que devolver `Unit` y dejar que
+el handler decida si llama a `resume`. El apéndice D tiene la tabla
+completa de reemplazos.
+
+Que `Fail` sobreviva en este capítulo como efecto declarado en el
+propio archivo no es nostalgia: sigue siendo la forma más corta de
+mostrar qué significa una operación que no vuelve.
 
 Lo mismo vale para `State[T]`, `Reader[T]`, `Writer[W]`: efectos
 genéricos en los que **no existe** una implementación razonable
@@ -942,8 +1053,9 @@ fn main() {
 }
 ```
 
-Es lo que el stdlib usa para construcciones como `try { body }` y
-`with_state(0) { body }`. La diferencia con un default es que la
+Es lo que el stdlib usa para construcciones como
+`with_reader(env) { body }`, `with_writer { body }` y
+`with_mailbox { body }`. La diferencia con un default es que la
 envoltura es **explícita en el código**: quien lee `main` ve la
 línea, abre la función, sabe qué hace. Un default vive en la
 declaración del efecto.
@@ -1199,10 +1311,13 @@ mensajes. Un `main` sin envoltorio dispara el default; un `main`
 envuelto en `with_quiet_log` no. Compara con cómo harías lo mismo
 en un lenguaje con inyección de dependencias clásica.
 
-**12.9.** ¿Por qué `Fail` no trae bloque `default { }`? Anota tres
-efectos hipotéticos (los tuyos o de stdlib que imagines) y para
-cada uno decide si llevaría default. Argumenta en una línea por
-qué sí o por qué no.
+**12.9.** ¿Por qué el `Fail` de §12.5 no lleva bloque
+`default { }`? Anota tres efectos hipotéticos (los tuyos o de
+stdlib que imagines) y para cada uno decide si llevaría default.
+Argumenta en una línea por qué sí o por qué no. Después toma el
+argumento del retiro de `Fail` del stdlib (apéndice D §D.6) y
+aplícalo a los tres: ¿cuál de ellos se expresaría mejor con
+`Result[a, e]`?
 
 **12.10.** Lee la declaración de `Stdout` en
 `stdlib/io/console.kai` del repositorio del lenguaje. ¿Qué hace la

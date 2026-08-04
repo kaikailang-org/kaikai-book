@@ -221,6 +221,10 @@ the row is a set, not a sequence. `Log + Fail` and
 `Fail + Log` are the same row to the compiler. The `+`
 operator is just syntax for building it.
 
+(`Fail` doesn't come from the stdlib: it's an effect we'll
+declare in §12.5, just like `Log` in §12.2. I use it here
+already because the name explains itself.)
+
 If this reminds you of chapter 10 — where `m * s` and `s * m`
 were the same unit — that is no coincidence. Effects are
 another of §2.6's families of labels: they inhabit their own
@@ -659,6 +663,96 @@ variables`: there, the order is implicit and runtime-
 dependent. Here it's explicit and you decide it in the
 signature of the `handle`s.
 
+### Guaranteed cleanup: `initially` and `finally`
+
+Nesting brings a problem exceptions also have, and only half
+solve. If an outer handler abandons `resume` — like the `Fail`
+of §12.5 — the inner body never returns. Any line you wrote
+*after* the `handle` to close a file, drop a lock, or return a
+connection to the pool never runs. The non-local jump ate it.
+
+A handler can carry two more clauses that close that gap:
+
+- `initially { }` runs once, when the handler is installed,
+  before the body. Its value is the handler state, readable as
+  `state` in the clauses. It fills the same slot as the
+  `with Eff(init)` form: you write one or the other, never both.
+- `finally { }` runs when the scope unwinds, **on every path**:
+  normal return, a clause that abandons `resume` (including one
+  installed further out, whose jump skips over this scope), and
+  cooperative cancellation (chapter 13). It does not run on
+  `panic`, which aborts the process rather than unwinding it.
+
+Together they are the acquire/release bracket — and they are one
+for real, not by convention: the acquisition lives **inside** the
+construct that guarantees the release, so there is no window
+where the resource is open and still unguarded.
+
+```kai
+# examples/ch12/12_cleanup.kai
+effect Fail {
+  fail(reason: String) : Nothing
+}
+
+effect Conn {
+  query(sql: String) : String
+}
+
+fn report() : String / Conn + Fail {
+  let row = Conn.query("SELECT total FROM sales")
+  Fail.fail("network dropped before the second query")
+}
+
+fn main() : Unit / Stdout {
+  let r = handle {
+    handle {
+      report()
+    } with Conn {
+      initially { println("opening connection"); 42 }
+      finally   { println("closing connection #{state}") }
+      query(sql, resume) -> resume("1500")
+      return(x)          -> x
+    }
+  } with Fail {
+    fail(reason, resume) -> "aborted: #{reason}"
+    return(x)            -> x
+  }
+  println(r)
+}
+```
+
+```
+$ kai run examples/ch12/12_cleanup.kai
+opening connection
+closing connection 42
+aborted: network dropped before the second query
+```
+
+The outer `Fail` abandoned `resume` and the `Conn` body never
+finished. The connection still closed — and it closed *before*
+the replacement value reached `main`. That order is not an
+accident: the inner scope unwinds along the jump's path, not
+after it.
+
+One rule is worth keeping in mind: **a cleanup runs in the
+evidence context of its installation**. If the `finally` performs
+an effect, that effect dispatches to the handlers that were live
+when the handler was installed, not to those at the jump site —
+those frames are already gone. The practical consequence is that
+a `finally` cannot perform the effect its own handler discharges.
+That is a compile error ("effect not handled"), not a runtime
+loop.
+
+`finally` takes no parameters and its value is discarded: it runs
+for its effect, not for what it returns. To transform the
+`handle`'s result there is `return(x)`, which is a different job.
+
+Two details about living with them. `initially` and the
+`with Eff(init)` form fill the same slot, so writing both is a
+parse error: you pick one. And neither word is reserved — they're
+contextual — so an effect of yours can still declare an operation
+named `finally` without anything breaking.
+
 ## 12.9 Named instances: the handler as a value
 
 So far, every operation finds its handler by the effect's name:
@@ -907,7 +1001,7 @@ fn main() : Unit / Stdout {
   } with MyLog {
     info(msg, resume) -> resume(())   # silence inside the handle
   }
-  print("result: #{int_to_string(r)}")
+  print("result: #{r}")
 }
 ```
 
@@ -919,12 +1013,27 @@ decided.
 
 ### When there's no default — the effect without a net
 
-Not every effect carries a `default`. `Fail` is the clear
-counter-example: if an op can abort the program, you don't want
-"forgetting to handle it" to be legal. The public declaration of
-`Fail` (appendix D) has no `default` block, and so a function
+Not every effect carries a `default`. The `Fail` we declared in
+§12.5 is the clear counter-example: if an op can abort the program,
+you don't want "forgetting to handle it" to be legal. Since you
+declared it yourself and it carries no `default` block, a function
 producing `/ Fail` must be handled somewhere before `main`, or the
 compiler rejects with a clear message.
+
+Where that example comes from is worth saying. Through 0.105,
+`Fail` was a stdlib effect **with** a default: the runtime printed
+a banner and exited 1. In 0.106 it was retired. The argument was
+that it added nothing `Result[a, e]` with postfix `!` didn't give
+you better — there wasn't a single `/ Fail` row left in the whole
+stdlib — and that its shape, an operation returning `Nothing`, was
+precisely the one that *couldn't* express the interesting failure:
+the one where the consumer picks whether to skip or abort. For that
+the op has to return `Unit` and let the handler decide whether to
+call `resume`. Appendix D has the full replacement table.
+
+That `Fail` survives in this chapter as an effect declared in the
+file itself isn't nostalgia: it's still the shortest way to show
+what an operation that never returns means.
 
 The same applies to `State[T]`, `Reader[T]`, `Writer[W]`: generic
 effects where **no** reasonable implementation exists without
@@ -959,8 +1068,9 @@ fn main() {
 }
 ```
 
-This is what stdlib uses for constructs like `try { body }` and
-`with_state(0) { body }`. The difference from a default is that
+This is what stdlib uses for constructs like
+`with_reader(env) { body }`, `with_writer { body }` and
+`with_mailbox { body }`. The difference from a default is that
 the wrapping is **explicit in the code**: whoever reads `main`
 sees the line, opens the function, knows what it does. A default
 lives in the effect declaration.
@@ -1219,10 +1329,13 @@ the wrapper triggers the default; a `main` wrapped in
 `with_quiet_log` doesn't. Compare with how you'd do the same
 in a language with classical dependency injection.
 
-**12.9.** Why doesn't `Fail` carry a `default { }` block? Pick
-three hypothetical effects (yours or stdlib ones you imagine)
-and for each decide whether it would have a default. Argue in
-one line why or why not.
+**12.9.** Why doesn't the `Fail` of §12.5 carry a `default { }`
+block? Pick three hypothetical effects (yours or stdlib ones you
+imagine) and for each decide whether it would have a default.
+Argue in one line why or why not. Then take the argument behind
+`Fail`'s retirement from the stdlib (appendix D §D.6) and apply
+it to all three: which of them would be better expressed as
+`Result[a, e]`?
 
 **12.10.** Read the declaration of `Stdout` in
 `stdlib/io/console.kai` in the language repo. What does the
