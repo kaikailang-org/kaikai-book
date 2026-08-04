@@ -25,3 +25,6 @@ ejemplos/cap17/notas/*.log
 ejemplos/cap18/ledger/ledger
 examples/ch17/notes/notes
 examples/ch18/ledger/ledger
+
+# Caché de compilación por paquete (kai build dentro de un proyecto)
+**/.kai-cache/
