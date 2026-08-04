@@ -17,5 +17,5 @@ fn main() : Unit / Stdout = {
     |? (x) => x % 2 == 0     # lazy filter: keep the evens
     |> stream.foldl(0, (acc, x) => acc + x)
 
-  Stdout.print("sum of even squares = #{int_to_string(total)}")
+  Stdout.print("sum of even squares = #{total}")
 }

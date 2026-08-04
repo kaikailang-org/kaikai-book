@@ -606,15 +606,15 @@ fn main() : Unit / Stdout + Mutable = {
   let texto = ["sol", "mar", "sol", "viento", "mar", "sol"]
   let m = frecuencias(texto)
   match m["sol"] {
-    Some(n) -> Stdout.print("sol aparece #{int_to_string(n)} veces")
+    Some(n) -> Stdout.print("sol aparece #{n} veces")
     None    -> Stdout.print("sol no aparece")
   }
-  Stdout.print("palabras distintas: #{int_to_string(hashmap.size(m))}")
+  Stdout.print("palabras distintas: #{hashmap.size(m)}")
 
   # Un HashSet descarta duplicados al insertar.
   let vistas = hashset.empty()
   marcar(vistas, texto)
-  Stdout.print("únicas vía set: #{int_to_string(hashset.size(vistas))}")
+  Stdout.print("únicas vía set: #{hashset.size(vistas)}")
 }
 
 fn marcar(s: hashset.HashSet[String], palabras: [String]) : Unit / Mutable = match palabras {

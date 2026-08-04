@@ -17,5 +17,5 @@ fn main() : Unit / Stdout = {
     |? (x) => x % 2 == 0     # filter lazy: deja los pares
     |> stream.foldl(0, (acc, x) => acc + x)
 
-  Stdout.print("suma de cuadrados pares = #{int_to_string(total)}")
+  Stdout.print("suma de cuadrados pares = #{total}")
 }

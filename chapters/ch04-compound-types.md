@@ -594,15 +594,15 @@ fn main() : Unit / Stdout + Mutable = {
   let text = ["sun", "sea", "sun", "wind", "sea", "sun"]
   let m = word_frequencies(text)
   match m["sun"] {
-    Some(n) -> Stdout.print("sun appears #{int_to_string(n)} times")
+    Some(n) -> Stdout.print("sun appears #{n} times")
     None    -> Stdout.print("sun does not appear")
   }
-  Stdout.print("distinct words: #{int_to_string(hashmap.size(m))}")
+  Stdout.print("distinct words: #{hashmap.size(m)}")
 
   # A HashSet drops duplicates on insertion.
   let seen = hashset.empty()
   mark(seen, text)
-  Stdout.print("unique via set: #{int_to_string(hashset.size(seen))}")
+  Stdout.print("unique via set: #{hashset.size(seen)}")
 }
 
 fn mark(s: hashset.HashSet[String], words: [String]) : Unit / Mutable = match words {
