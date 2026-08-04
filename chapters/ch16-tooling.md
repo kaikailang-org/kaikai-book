@@ -504,8 +504,9 @@ behavior for special cases:
   single-threaded cooperative scheduler — handy when you want
   reproducible output. It's the only one on this list that
   affects the executable rather than the compile.
-- **`KAI_BACKEND`** (`c` | `native`): the default backend when
-  you don't pass `--backend`. The flag overrides it.
+- **`KAI_BACKEND`** (`c` | `native`, default `native`): the
+  backend used when you don't pass `--backend`. The flag
+  overrides it.
 - **`KAI_NATIVE_OPT`** (`0|1|2|3|s|z`, default `2`): the
   optimization level of the native backend's LLVM pipeline.
   `--debug` lowers it to `0`, `--release` keeps it at `2`.
@@ -813,9 +814,9 @@ the start.
 ### What an edition is
 
 An edition is a name — `tongariki`, `hanga-roa`, `orongo` —
-that pins a version of the **language contract** between
-kaikai and your code. Within one edition, the following
-don't change in incompatible ways:
+that bounds the **language contract** between kaikai and
+your code. The contract covers what you touch when you
+write:
 
 - syntax and reserved keywords;
 - type and effect system semantics;
@@ -829,12 +830,29 @@ internal variant layout, fiber stack format, on-disk cache
 format, exact diagnostic wording, typer passes, Perceus
 internals, performance characteristics.
 
-The commitment to you is simple: **upgrading the compiler
-is painless**. Read the release notes, install the new
-version, recompile. The commitment to the kaikai team is
-also simple: we can iterate hard on internals as long as we
-don't break what's outside — which is the whole point of the
-bargain.
+Now the part to be clear about today: **the contract is
+sealed when the edition closes, not before.** `hanga-roa` is
+the edition where that surface is still being decided. An
+incompatible change to the list above isn't a broken
+promise — it's the work of building one. `Fail`'s retirement
+from the stdlib in 0.106 is exactly that: a `pub` signature
+that was put to the test, didn't earn its place, and left.
+
+Those changes don't get buried in git history. They're
+recorded as they happen in the language repository's
+`docs/editions.md`, under *Breaking changes accumulated for
+the Orongo cut*, each with its migration written beside it.
+That list is what will feed the release notes and the
+`kai migrate` rules when `orongo` closes the edition. Until
+then it's your changelog: the thing you read before you
+upgrade.
+
+So the commitment comes in two tenses. Today, under
+`hanga-roa`: breaking changes are few, recorded, and ship
+with migration guidance. Later, under `orongo`: the surface
+is pinned and upgrading the compiler stops requiring any
+reading first. An edition isn't the promise that nothing
+moves; it's the mechanism that decides when it stops moving.
 
 ### How you declare it
 
@@ -852,7 +870,10 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.105.1 - hanga-roa (stage 2, self-hosted)
+kaikai 0.107.0 - hanga-roa (stage 2, self-hosted)
+demos baseline: 37
+native p2:      active
+home:           https://kaikai-lang.org
 ```
 
 If `kai.toml` omits the field, the compiler assumes the

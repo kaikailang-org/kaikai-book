@@ -495,8 +495,9 @@ del binario `kai` para casos especiales:
   hilo, byte a byte — útil cuando quieres una salida
   reproducible. Es la única de esta lista que afecta al
   ejecutable y no a la compilación.
-- **`KAI_BACKEND`** (`c` | `native`): el backend por defecto
-  cuando no pasas `--backend`. Lo sobreescribe la flag.
+- **`KAI_BACKEND`** (`c` | `native`, por defecto `native`): el
+  backend que se usa cuando no pasas `--backend`. Lo sobreescribe
+  la flag.
 - **`KAI_NATIVE_OPT`** (`0|1|2|3|s|z`, por defecto `2`): nivel
   de optimización del pipeline LLVM del backend nativo.
   `--debug` lo baja a `0`, `--release` lo deja en `2`.
@@ -809,9 +810,9 @@ en 2014), pero kaikai la toma en serio desde temprano.
 ### Qué es una edición
 
 Una edición es un nombre (`tongariki`, `hanga-roa`,
-`orongo`) que fija una versión del **contrato del
-lenguaje** entre kaikai y tu código. Dentro de una edición,
-estas cosas no cambian de manera incompatible:
+`orongo`) que delimita el **contrato del lenguaje** entre
+kaikai y tu código. El contrato cubre lo que tocas al
+escribir:
 
 - la sintaxis y las palabras reservadas;
 - la semántica del sistema de tipos y los efectos;
@@ -826,12 +827,30 @@ fibras, formato del caché en disco, texto exacto de los
 diagnósticos, fases del typer, internals del Perceus,
 performance.
 
-El compromiso para ti es simple: **subir el compilador es
-indoloro**. Lees las notas de release, instalas la versión
-nueva, recompilas. El compromiso para el equipo de kaikai
-es también simple: podemos iterar fuerte por dentro mientras
-no rompamos lo de afuera, sin que ninguno de los dos lados
-ceda de más.
+Ahora la parte que hay que tener clara hoy: **el contrato
+se sella cuando la edición se cierra, no antes.**
+`hanga-roa` es la edición donde esa superficie todavía se
+está decidiendo. Un cambio incompatible en la lista de
+arriba no es una violación de la promesa: es el trabajo de
+construirla. El retiro de `Fail` del stdlib en 0.106 es
+exactamente eso — una firma `pub` que se puso a prueba, no
+se ganó su lugar, y salió.
+
+Esos cambios no quedan enterrados en el historial de git.
+Se anotan a medida que ocurren en `docs/editions.md` del
+repositorio del lenguaje, bajo *Breaking changes
+accumulated for the Orongo cut*, cada uno con su migración
+escrita al lado. Esa lista es la que va a alimentar las
+notas de release y las reglas de `kai migrate` cuando
+`orongo` cierre la edición. Mientras tanto es tu changelog:
+lo que lees antes de subir de versión.
+
+El compromiso, entonces, tiene dos tiempos. Hoy, bajo
+`hanga-roa`: los cambios rompedores son pocos, están
+anotados y traen migración. Después, bajo `orongo`: la
+superficie queda fija y subir el compilador deja de pedir
+lectura previa. Una edición no es la promesa de que nada se
+mueve; es el mecanismo que decide cuándo deja de moverse.
 
 ### Cómo se declara
 
@@ -849,7 +868,10 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.105.1 - hanga-roa (stage 2, self-hosted)
+kaikai 0.107.0 - hanga-roa (stage 2, self-hosted)
+demos baseline: 37
+native p2:      active
+home:           https://kaikai-lang.org
 ```
 
 Si el `kai.toml` omite el campo, el compilador asume la
