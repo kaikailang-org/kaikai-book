@@ -112,7 +112,7 @@ the org chart:
 | Kind | Theory | Introducer | Habitants | What the theory decides |
 |---|---|---|---|---|
 | `Type` | `HindleyMilner` | `type` | `Int`, `String`, yours | type equality and inference |
-| `Effect` | `EffectRow` | `effect` | `Stdout`, `Fail`, yours | rows: order irrelevant, duplicates collapse |
+| `Effect` | `EffectRow` | `effect` | `Stdout`, `Cancel`, yours | rows: order irrelevant, duplicates collapse |
 | `Measure` | `AbelianGroup` | `unit` | `m`, `s`, `USD` if you like | product, quotient and power of units |
 | `Currency` | `Module` | `currency` | `USD`, `EUR`, … (`stdlib/money.kai`) | addition and scaling; **no** product |
 | `Region` | `Nominal` | `region` | one fresh per `region` block | identity: each arena is only itself |

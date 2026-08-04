@@ -255,11 +255,11 @@ In the kaikai version, `match` is exhaustive: if you forget the
 of what Python leaves to your memory.
 
 What about exceptions? kaikai has an equivalent mechanism — the
-`Fail` effect, and more generally the algebraic effects from
-chapter 12 — but there too, what can fail appears in the type.
-The "invisible exceptions" that in Java or Python can spring
-out of any call do not exist in kaikai. If a function can jump
-elsewhere, its signature says so.
+algebraic effects of chapter 12, which let you declare an
+aborting effect in three lines — but there too, what can fail
+appears in the type. The "invisible exceptions" that in Java or
+Python can spring out of any call do not exist in kaikai. If a
+function can jump elsewhere, its signature says so.
 
 This changes how programming feels. Instead of wrapping every
 external call in a `try` just in case, you read the signature,

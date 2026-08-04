@@ -21,8 +21,8 @@ sintaxis:
   programa.
 - **La concurrencia es un efecto.** `spawn` es una operación de
   un efecto `Spawn`, no una palabra clave. Crear y esperar
-  fibras se compone con el resto del sistema (`State`, `Fail`,
-  `Cancel`) usando la maquinaria del cap. 12.
+  fibras se compone con el resto del sistema (`State`, `Cancel`,
+  un `Fail` que declares tú) usando la maquinaria del cap. 12.
 
 Vamos por partes.
 

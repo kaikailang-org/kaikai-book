@@ -222,18 +222,31 @@ devuelto no requiere `Mutable`.
 
 ## D.6 Errores y control
 
-### `Fail`
+### `ReadFault`
 
 ```kai
-effect Fail {
-  fail(msg: String) : Nothing
+effect ReadFault {
+  bad_chunk(msg: String)  : Unit      # reanudable: saltar y seguir
+  open_fault(msg: String) : Nothing   # solo abortar
 }
 ```
 
-Abortar con un mensaje. La operación devuelve `Nothing` (el
-tipo vacío), así que el sistema de tipos garantiza que no se
-puede llamar a `resume` después de `Fail.fail`. Es el patrón
-canónico para "excepción ligera" en kaikai.
+La falla recuperable de las lecturas por streaming, declarada
+en `stdlib/stream.kai`. Es el único efecto con forma de falla
+que el stdlib declara, y su diseño explica por qué: `bad_chunk`
+devuelve `Unit`, así que un handler que reanuda descarta el
+chunk malo y continúa (política de salteo), y uno que abandona
+la continuación aborta. `open_fault` devuelve `Nothing`: un
+stream cuyo origen no abre no tiene a dónde reanudar.
+
+`ReadFault` no trae handler por defecto. Un consumidor que
+fuerza el stream tiene que elegir política con `handle ... with
+ReadFault`, o el typer reporta `effect not handled: ReadFault`.
+El camino de aborto igual libera el handle del productor:
+`read_lines` y `write_lines` encierran el archivo en un handler
+con `initially` / `finally` (cap. 12 §12.8), así que
+`close_file` corre en el desarme aunque la falla salte limpio
+sobre el loop de lectura.
 
 ### `Cancel`
 
@@ -246,6 +259,31 @@ effect Cancel {
 Cancelación cooperativa. El scheduler inyecta `Cancel.raise()`
 en una fibra cancelada en el próximo punto de yield. La fibra
 puede instalar un handler de `Cancel` para limpieza (cap. 13).
+
+### `Fail`: retirado del stdlib
+
+`Fail` fue un efecto del stdlib (`fail(msg: String) : Nothing`)
+con handler por defecto que imprimía un banner y salía con
+código 1. **Desde kaikai 0.106 ya no está.** El retiro ratifica
+lo que el stdlib ya practicaba: toda API que puede fallar
+devuelve `Result` y propaga con `!` postfijo. No quedaba una
+sola fila `/ Fail` en el stdlib.
+
+Qué usar en su lugar, según qué necesitas:
+
+| Necesitas | Usa |
+|---|---|
+| Falla inspeccionable | `Result[a, e]` con `!` postfijo |
+| Falla cuya política elige el consumidor | un efecto de dominio cuya op devuelva `Unit`, para que el handler pueda reanudar y saltear |
+| Salida no local profunda | `Cancel.raise() : Nothing` |
+| Error de programación | `panic` |
+
+`Fail` sigue siendo un buen ejemplo didáctico de operación que
+devuelve `Nothing`, y por eso el capítulo 12 lo declara **local**
+en varios ejemplos. Un `effect Fail` declarado por ti no trae
+default, así que un `fail` sin manejar es un error de
+compilación (`effect not handled: Fail`) y no un aborto en
+tiempo de ejecución. Esa es toda la diferencia práctica.
 
 ## D.7 Concurrencia
 
