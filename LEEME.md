@@ -70,12 +70,11 @@ Una nota sobre la palabra: el *lenguaje* kaikai también tiene
 ediciones — Tongariki, Hanga Roa, Orongo, y Anakena en el
 horizonte — como su mecanismo de estabilidad (el capítulo 16
 lo cubre). Este libro está escrito y validado contra la
-edición **Hanga Roa**, hoy **kaikai 0.105.1**. Los hitos del
-lenguaje se definen por
-edición, nunca por un número de versión: Hanga Roa ya pasó
-por la serie 0.100.x sin cambiar de edición, Orongo llegará
-cuando su alcance esté cerrado y no antes, y no hay ningún
-hito "1.0" en el mapa.
+edición **Hanga Roa**, hoy **kaikai 0.107.0**. Los hitos del
+lenguaje se definen por edición, nunca por un número de
+versión: Hanga Roa ya pasó por la serie 0.100.x sin cambiar de
+edición, Orongo llegará cuando su alcance esté cerrado y no
+antes, y no hay ningún hito "1.0" en el mapa.
 
 ## Estructura del repositorio
 
