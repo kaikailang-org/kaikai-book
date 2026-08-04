@@ -1,0 +1,39 @@
+# Limpieza garantizada con `initially` / `finally`.
+#
+# El handler de `Conexion` abre el recurso en `initially` y lo
+# cierra en `finally`. El handler externo de `Fail` abandona el
+# `resume`: el body nunca vuelve, así que un cierre escrito
+# después del `handle` jamás correría. El `finally` sí corre.
+
+effect Fail {
+  fail(motivo: String) : Nothing
+}
+
+effect Conexion {
+  consultar(sql: String) : String
+}
+
+fn reporte() : String / Conexion + Fail {
+  let fila = Conexion.consultar("SELECT total FROM ventas")
+  Fail.fail("se cortó la red antes del segundo query")
+}
+
+fn main() : Unit / Stdout {
+  let r = handle {
+    handle {
+      reporte()
+    } with Conexion {
+      # Adquirir: corre una vez, al instalar el handler.
+      # Su valor es el estado, legible como `state`.
+      initially { println("abriendo conexión"); 42 }
+      # Liberar: corre en toda salida que desarme el scope.
+      finally   { println("cerrando conexión #{state}") }
+      consultar(sql, resume) -> resume("1500")
+      return(x)              -> x
+    }
+  } with Fail {
+    fail(motivo, resume) -> "abortado: #{motivo}"
+    return(x)            -> x
+  }
+  println(r)
+}

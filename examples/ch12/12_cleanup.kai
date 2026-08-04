@@ -1,0 +1,39 @@
+# Guaranteed cleanup with `initially` / `finally`.
+#
+# The `Conn` handler acquires the resource in `initially` and
+# releases it in `finally`. The outer `Fail` handler abandons
+# `resume`: the body never returns, so a close written after the
+# `handle` would never run. The `finally` does.
+
+effect Fail {
+  fail(reason: String) : Nothing
+}
+
+effect Conn {
+  query(sql: String) : String
+}
+
+fn report() : String / Conn + Fail {
+  let row = Conn.query("SELECT total FROM sales")
+  Fail.fail("network dropped before the second query")
+}
+
+fn main() : Unit / Stdout {
+  let r = handle {
+    handle {
+      report()
+    } with Conn {
+      # Acquire: runs once, when the handler is installed.
+      # Its value is the handler state, readable as `state`.
+      initially { println("opening connection"); 42 }
+      # Release: runs on every exit path that unwinds the scope.
+      finally   { println("closing connection #{state}") }
+      query(sql, resume) -> resume("1500")
+      return(x)          -> x
+    }
+  } with Fail {
+    fail(reason, resume) -> "aborted: #{reason}"
+    return(x)            -> x
+  }
+  println(r)
+}
