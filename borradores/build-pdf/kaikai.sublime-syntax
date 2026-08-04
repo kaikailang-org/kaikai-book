@@ -80,7 +80,7 @@ contexts:
   keywords:
     - match: '\b(fn|let|var|if|else|match|case|when|where|return|do|then|in|as|of)\b'
       scope: keyword.control.kai
-    - match: '\b(effect|handle|with|resume|default)\b'
+    - match: '\b(effect|handle|with|resume|default|initially|finally)\b'
       scope: keyword.effect.kai
     - match: '\b(type|protocol|impl|axiom|const|extern|import|use|pub)\b'
       scope: keyword.declaration.kai
