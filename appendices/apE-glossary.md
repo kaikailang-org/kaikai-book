@@ -285,8 +285,9 @@ mutable state. The sugared form `var name = init` desugars
 to `handle ... with State[T](init)` (chapter 12 §12.7).
 
 **Stdout, Stderr, Stdin.** Standard output, standard error,
-standard input. In kaikai these live under the `Console`
-effect (for the first two) and `Stdin` (for the last).
+standard input. In kaikai each is its own effect, one per file
+descriptor, and `Console` is the alias bundling all three. All
+three also expose `is_tty()`. Appendix D §D.1.
 
 **Sum type (algebraic data type).** A type with several
 constructors, each carrying different data. The construct
