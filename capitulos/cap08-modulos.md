@@ -156,7 +156,17 @@ En la práctica, esto se traduce a:
 - **Funciones helper:** rara vez. Si las necesitas exportar,
   pregúntate si está en el lugar correcto.
 - **Constantes:** sí, si forman parte del API. Si son
-  detalles de implementación, no.
+  detalles de implementación, no. `pub` va delante igual que
+  en todo lo demás, y quien importa la usa calificada:
+
+  ```kai
+  # limites.kai
+  pub const PUERTO_MAX : Int = 65535
+
+  # main.kai
+  import limites
+  println("max = #{limites.PUERTO_MAX}")
+  ```
 
 La mayoría de los lenguajes con visibilidad pública por
 defecto acaban con módulos cuyo "API real" se mezcla con
