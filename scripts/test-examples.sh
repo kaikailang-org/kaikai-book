@@ -172,6 +172,9 @@ build|ejemplos/cap15/04_hole_en_patron.kai|ok
 build|ejemplos/cap15/05_diseno_top_down.kai|ok
 
 # Capítulo 16 — FFI
+# Sale con 1 a propósito: el ejemplo demuestra que el Int que
+# devuelve main es el código de salida del proceso.
+run|ejemplos/cap16/01_estado_de_salida.kai|fail
 build|ejemplos/cap16/ffi/01_libc_abs.kai|ok
 build|ejemplos/cap16/ffi/02_renombre.kai|ok
 project|ejemplos/cap16/ffi/03_shim|ok|app.kai|shim.c|c
@@ -323,6 +326,9 @@ build|examples/ch15/04_hole_in_pattern.kai|ok
 build|examples/ch15/05_top_down_design.kai|ok
 
 # Chapter 16
+# Exits 1 on purpose: the example demonstrates that the Int main
+# returns is the process exit status.
+run|examples/ch16/01_exit_status.kai|fail
 build|examples/ch16/ffi/01_libc_abs.kai|ok
 build|examples/ch16/ffi/02_rename.kai|ok
 project|examples/ch16/ffi/03_shim|ok|app.kai|shim.c|c

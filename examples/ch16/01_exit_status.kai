@@ -1,0 +1,16 @@
+# The `Int` main returns is the process exit status. A CLI signals
+# failure with the same `Result` it already uses internally, without
+# calling into the operating system.
+#
+# This program exits 1 on purpose: try it with `echo $?`.
+
+fn validate(port: Int) : Result[Int, String] =
+  if port > 0 and port < 65536 { Ok(port) }
+  else { Err("port out of range: #{port}") }
+
+fn main() : Int / Stdout {
+  match validate(70000) {
+    Ok(p)      -> { println("listening on #{p}"); 0 }
+    Err(msg)   -> { println("error: #{msg}"); 1 }
+  }
+}
