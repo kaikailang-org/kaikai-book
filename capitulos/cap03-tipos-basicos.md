@@ -224,6 +224,8 @@ dígitos:
 let w = 42i32 + 7i32
 let grande : Int128 = 9223372036854775808i128   # 2⁶³: fuera del
                                                 # alcance de Int
+let mascara = 0xFFi32                           # el sufijo vale en
+let bits    = 0b1010u8                          # cualquier base
 ```
 
 Dos reglas los gobiernan. La primera: **no se mezclan con

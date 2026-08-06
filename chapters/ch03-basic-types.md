@@ -219,6 +219,8 @@ digits:
 let w = 42i32 + 7i32
 let big : Int128 = 9223372036854775808i128   # 2⁶³: out of
                                              # Int's reach
+let mask = 0xFFi32                           # the suffix works on
+let bits = 0b1010u8                          # any base
 ```
 
 Two rules govern them. First: **they don't mix with `Int`**. An

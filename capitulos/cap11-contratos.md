@@ -52,13 +52,28 @@ Es por eso que viven en el mismo capítulo.
 ## 11.2 `requires` y `ensures` en una firma
 
 Un contrato se escribe como anotaciones en la firma de una
-función, antes del `=` que abre el cuerpo:
+función, entre el tipo de retorno y el cuerpo:
 
 ```kai
 fn divide(a: Int, b: Int) : Int
   requires b != 0
   ensures  result * b + (a % b) == a
 = a / b
+```
+
+Las dos formas de cuerpo aceptan contratos. Cuando el cuerpo va
+entre llaves, las cláusulas se escriben igual y la llave abre
+después:
+
+```kai
+fn retirar(saldo: Int, monto: Int) : Int
+  requires monto > 0
+  requires saldo >= monto
+  ensures  result == saldo - monto
+{
+  let restante = saldo - monto
+  restante
+}
 ```
 
 Tres componentes:

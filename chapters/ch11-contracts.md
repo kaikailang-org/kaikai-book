@@ -51,13 +51,28 @@ That's why they live in the same chapter.
 ## 11.2 `requires` and `ensures` in a signature
 
 A contract is written as annotations on the signature of a
-function, before the `=` opening the body:
+function, between the return type and the body:
 
 ```kai
 fn divide(a: Int, b: Int) : Int
   requires b != 0
   ensures  result * b + (a % b) == a
 = a / b
+```
+
+Both body spellings take contracts. When the body is braced,
+the clauses are written the same way and the brace opens after
+them:
+
+```kai
+fn withdraw(balance: Int, amount: Int) : Int
+  requires amount > 0
+  requires balance >= amount
+  ensures  result == balance - amount
+{
+  let remaining = balance - amount
+  remaining
+}
 ```
 
 Three components:
