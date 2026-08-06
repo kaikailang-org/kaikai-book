@@ -67,7 +67,7 @@ A note on the word: the kaikai *language* also has editions —
 Tongariki, Hanga Roa, Orongo, and Anakena on the horizon — as
 its stability mechanism (chapter 16 covers it). This book is
 written and validated against the **Hanga Roa** edition,
-currently **kaikai 0.107.0**. The language's milestones are
+currently **kaikai 0.108.0**. The language's milestones are
 defined per edition, never by a version number: Hanga Roa has
 already carried the 0.100.x series without an edition change,
 Orongo lands when its scope closes and not before, and there
