@@ -11,58 +11,114 @@ mostramos la declaración del efecto y para qué sirve.
 
 ## D.1 IO básico
 
-### `Console`
+### `Stdout`, `Stderr` y `Stdin`
+
+Los tres flujos estándar son efectos separados, uno por
+descriptor. Esa granularidad es lo que le permite a un arnés de
+tests capturar stdout sin tocar lo que se escribe a stderr.
 
 ```kai
-effect Console {
-  print(s: String)  : Unit
+effect Stdout {
+  print(s: String) : Unit
+  is_tty()         : Bool
+}
+
+effect Stderr {
   eprint(s: String) : Unit
+  is_tty()          : Bool
 }
-```
 
-Imprimir a stdout y stderr. Cada operación agrega un newline.
-El handler por defecto del runtime escribe al descriptor de
-archivo correspondiente.
-
-### `Stdin`
-
-```kai
 effect Stdin {
-  read_line() : Result[String, String]
+  read_line()        : Option[String]
+  read_bytes(n: Int) : String
+  is_tty()           : Bool
 }
 ```
 
-Leer una línea de entrada estándar. Devuelve `Err(motivo)` en
-caso de EOF o error de lectura.
+`print` y `eprint` agregan un newline. Ninguna de las dos lleva
+tipo de falla: bajo el handler por defecto, el fallo recuperable
+común (el pipe cerrado del otro lado, `EPIPE`) se absorbe en
+silencio, y lo que quede es lo bastante catastrófico como para
+entrar en pánico. `read_line` devuelve `None` en EOF.
+
+`is_tty()` responde si el flujo es una terminal, según
+`isatty(3)` sobre su propio descriptor. Es la compuerta estándar
+para color ANSI: emites escapes cuando `Stdout.is_tty()`, texto
+plano bajo un pipe o una redirección. La otra mitad de esa
+convención la cubre `Env.get("NO_COLOR")`.
+
+El alias `Console = Stdout + Stderr + Stdin` agrupa a los tres
+cuando la distinción no aporta.
 
 ### `Env`
 
 ```kai
 effect Env {
-  get(name: String) : Option[String]
-  args()            : [String]
+  args()                               : [String]
+  get(name: String)                    : Option[String]
+  set_var(name: String, value: String) : Result[Unit, String]
+  unset_var(name: String)              : Result[Unit, String]
+  vars()                               : [Pair[String, String]]
 }
 ```
 
-Acceso a variables de entorno (`PATH`, `HOME`, etc.) y a los
-argumentos de línea de comando (`argv`).
+Acceso a los argumentos de línea de comando (`argv`) y a las
+variables de entorno, tanto de lectura como de escritura.
 
 ### `File`
 
 ```kai
+perm read
+perm write
+
 effect File {
-  read_file(path: String)                  : Result[String, String]
-  write_file(path: String, content: String): Result[Unit, String]
-  append(path: String, content: String)    : Result[Unit, String]
-  exists(path: String)                     : Bool
-  delete(path: String)                     : Result[String, Unit]
-  rename(from: String, to: String)         : Result[String, Unit]
+  read_file(path: String)                    : Result[String, String]
+  write_file(path: String, contents: String) : Result[Unit, String]
+  open_read(path: String)                    : Result[FileHandle<read>, String]
+  read_chunk(h: FileHandle<read>, max: Int)  : Result[String, String]
+  open_write(path: String)                   : Result[FileHandle<read + write>, String]
+  write_chunk(h: FileHandle<write>, data: String) : Result[Unit, String]
+  close_file(h: FileHandle)                  : Unit
 }
 ```
 
-Operaciones sobre archivos. Para todo lo que sea no-trivial
-(streams, directorios, permisos), ver `fs.dir` y los módulos
-auxiliares.
+Dos niveles. `read_file` / `write_file` mueven el archivo
+entero de una vez, que es lo que quieres la mayoría de las
+veces. El resto es la ruta por chunks para archivos que no
+caben o que no quieres cargar completos.
+
+Fíjate en el `<...>` de los handles: `FileHandle<read>` y
+`FileHandle<read + write>` llevan la capacidad **en el tipo**.
+Un handle abierto para lectura no tipa donde se espera
+`FileHandle<write>`, y eso lo decide el compilador, no un
+chequeo en runtime. Es el kind `Perm` del cap. 19 §19.9
+haciendo su trabajo. Lo que el tipo declara es lo que el código
+pidió al abrir, no el permiso que el sistema operativo tenga
+sobre el archivo: esa falla sigue viajando por el `Result` de
+cada operación.
+
+Para directorios y metadata, ver los módulos de `fs`.
+
+### `Log`
+
+```kai
+effect Log {
+  debug(msg: String) : Unit
+  info(msg: String)  : Unit
+  warn(msg: String)  : Unit
+  error(msg: String) : Unit
+}
+```
+
+Logging con niveles. El handler por defecto escribe cada
+mensaje a stderr con el formato `[ISO8601Z] NIVEL mensaje`;
+instalar un handler propio te deja capturarlo o filtrarlo.
+
+Una nota para quien venga del capítulo 12: ahí declaramos un
+`effect Log { log(msg: String) : Unit }` propio, más chico,
+para enseñar el mecanismo. No hay conflicto — una declaración
+local hace *shadowing* del nombre del stdlib dentro de su
+archivo. Si quieres el de cuatro niveles, no lo declares.
 
 ## D.2 Tiempo y aleatoriedad
 
@@ -70,36 +126,46 @@ auxiliares.
 
 ```kai
 effect Clock {
-  now()              : Int          # nanosegundos desde epoch
-  sleep(ms: Int)     : Unit / Cancel
+  wall_now()        : WallTime
+  monotonic_now()   : Instant
+  sleep_ns(ns: Int) : Unit
 }
 ```
 
-Reloj y sleep. `sleep` es punto de yield (carga `Cancel`).
+Dos relojes distintos a propósito. `wall_now` da la hora del
+calendario (`WallTime` es `{ secs, nanos }` desde epoch), que
+salta cuando alguien ajusta el reloj del sistema. `monotonic_now`
+da un `Instant` que solo avanza: es el que quieres para medir
+cuánto tardó algo. `sleep_ns` parkea la fibra, no el hilo.
 
 ### `Random`
 
 ```kai
 effect Random {
-  int(min: Int, max: Int)   : Int
-  real()                    : Real
-  shuffle[a](xs: [a])       : [a]
+  int_range(lo: Int, hi: Int) : Int
 }
 ```
 
-Generación pseudo-aleatoria, no apta para criptografía. Para
-secretos, ver `SecureRandom`.
+Una sola operación, uniforme en `[lo, hi]` con ambos extremos
+incluidos. El handler por defecto siembra un PCG64 desde el
+reloj y el pid del proceso. Los helpers de más alto nivel viven
+en el módulo `Random`, construidos sobre esta op. No sirve para
+criptografía.
 
 ### `SecureRandom`
 
 ```kai
 effect SecureRandom {
-  bytes(n: Int) : [Byte]
+  int_range(min: Int, max: Int) : Int
+  bytes(n: Int)                 : [Int]
 }
 ```
 
-Bytes aleatorios criptográficamente seguros (vía
-`/dev/urandom` o equivalente del sistema).
+Aleatoriedad criptográficamente segura, deliberadamente separada
+de `Random` para que un handler de tests que stubea `Random` no
+pueda debilitar sin querer una ruta sensible. `bytes(n)` entrega
+`n` bytes como enteros en `[0, 255]`. El handler por defecto
+puentea al CSPRNG del sistema (`getrandom` / `arc4random`).
 
 ## D.3 Red
 
@@ -107,39 +173,78 @@ Bytes aleatorios criptográficamente seguros (vía
 
 ```kai
 effect NetTcp {
-  connect(host: String, port: Int)   : Result[Conn, String]
-  listen(host: String, port: Int)    : Result[Listener, String]
-  accept(l: Listener)                : Result[Conn, String]
-  send(c: Conn, data: [Byte])        : Result[Int, String]
-  recv(c: Conn, max: Int)            : Result[[Byte], String]
-  close(c: Conn)                     : Unit
+  connect(host: String, port: Int) : Result[Conn, String]
+  listen(host: String, port: Int)  : Result[Listener, String]
+  accept(l: Listener)              : Result[Conn, String]
+  send(c: Conn, data: [Int])       : Result[Int, String]
+  recv(c: Conn, max: Int)          : Result[[Int], String]
+  recv_timeout(c: Conn, max: Int, nanos: Int) : Option[Result[[Int], String]]
+  close(c: Conn)                   : Unit
 }
 ```
 
-Sockets TCP byte-level. Las operaciones bloqueantes (`connect`,
-`accept`, `send`, `recv`) suspenden la fibra vía el reactor
-del runtime cuando aterrice (v1 las hace bloqueantes al OS
-thread).
+Sockets TCP a nivel de bytes; los bytes viajan como `[Int]` en
+`[0, 255]`. Las operaciones bloqueantes (`connect`, `accept`,
+`send`, `recv`) parkean la fibra vía el reactor del runtime, no
+el hilo del sistema. `recv_timeout` devuelve `None` si se vence
+el plazo.
 
 ### `NetUdp` y `NetDns`
 
-UDP (`bind`/`send`/`recv`/`close`) y DNS (`resolve`). Mismo
-estilo que `NetTcp`. El alias `Net = NetTcp + NetUdp + NetDns`
-es útil cuando una función usa los tres.
+```kai
+effect NetUdp {
+  bind(host: String, port: Int)                    : Result[UdpSocket, String]
+  send(s: UdpSocket, dst: SocketAddr, data: [Int]) : Result[Int, String]
+  recv(s: UdpSocket, max: Int) : Result[Pair[SocketAddr, [Int]], String]
+  close(s: UdpSocket)                              : Unit
+}
+
+effect NetDns {
+  resolve(host: String) : Result[[IpAddr], String]
+}
+```
+
+Mismo estilo que `NetTcp`. El alias `Net = NetTcp + NetUdp +
+NetDns` es útil cuando una función usa los tres.
 
 ## D.4 Procesos y señales
 
 ### `Process`
 
 ```kai
+type Child = { pid: Int }
+type Exit  = Exited(Int) | Signaled(Int)
+
 effect Process {
-  run(cmd: String, args: [String]) : Result[ProcessResult, String]
-  pid()                            : Int
+  start(cmd: String, args: [String]) : Child
+  wait(c: Child)                     : Result[Exit, String]
+  kill(c: Child, sig: Int)           : Result[Unit, String]
+  exit(code: Int)                    : Nothing
+  start_piped(cmd: String, args: [String],
+              pipe_stdin: Bool, pipe_stdout: Bool) : Result[Child, String]
+  write_stdin(c: Child, data: String) : Result[Unit, String]
+  close_stdin(c: Child)               : Result[Unit, String]
+  read_stdout(c: Child)               : Result[String, String]
 }
 ```
 
-Ejecutar comandos externos como subprocesos.
-`ProcessResult` contiene `exit_code`, `stdout` y `stderr`.
+Lanzar y controlar subprocesos. `start` hace fork/exec y
+devuelve un `Child` (un handle opaco con el pid); `wait` lo
+cosecha y entrega un `Exit`, que distingue explícitamente entre
+terminar con un código y morir por una señal. `kill` manda un
+signo POSIX crudo.
+
+`exit(code)` termina el **proceso actual** vía `_exit(2)`, así
+que los buffers de stdio **no** se vacían: imprime todo lo que
+quieras imprimir antes de llamarlo. La operación no resume
+(devuelve `Nothing`) y los handlers de `Cancel` no corren. Para
+el caso normal —terminar con un código de salida— basta con
+devolver un `Int` desde `main` (cap. 16 §16.1), que sí usa el
+camino de salida completo de la libc.
+
+`start_piped` es la forma `popen`: conecta pipes al stdin y/o al
+stdout del hijo, y desde ahí `write_stdin`, `close_stdin` y
+`read_stdout` manejan la conversación.
 
 ### `Signal`
 
@@ -203,14 +308,14 @@ efectos.
 
 ```kai
 effect Mutable {
-  ref_make[T](init: T)      : Ref[T]
-  ref_get[T](r: Ref[T])     : T
-  ref_set[T](r: Ref[T], v: T): Unit
-  array_make[T](n: Int, init: T) : Array[T]
-  array_length[T](a: Array[T])   : Int
-  array_get[T](a: Array[T], i: Int)        : T
-  array_set[T](a: Array[T], i: Int, v: T)  : Unit
-  array_grow[T](a: Array[T], n: Int, init: T): Unit
+  array_make[T](n: Int, init: T)             : Array[T]
+  array_length[T](a: Array[T])               : Int
+  array_get[T](a: Array[T], i: Int)          : T
+  array_set[T](a: Array[T], i: Int, v: T)    : Array[T]
+  array_grow[T](a: Array[T], n: Int, init: T): Array[T]
+  ref_make[T](init: T)                       : Ref[T]
+  ref_get[T](r: Ref[T])                      : T
+  ref_set[T](r: Ref[T], v: T)                : Unit
 }
 ```
 
@@ -219,6 +324,11 @@ disciplina de **efectos observables** (cap. 12 §12.7): un
 `array_set` requiere `Mutable` en la fila solo cuando la
 mutación es visible para quien llama. Un array creado local y
 devuelto no requiere `Mutable`.
+
+`array_set` y `array_grow` devuelven el `Array[T]` en vez de
+`Unit`. No es que copien: devuelven el mismo arreglo para que
+Perceus (apéndice B) pueda razonar sobre el último uso y decidir
+si mutar en el lugar. Encadenar la operación es idiomático.
 
 ## D.6 Errores y control
 
@@ -291,42 +401,54 @@ tiempo de ejecución. Esa es toda la diferencia práctica.
 
 ```kai
 effect Spawn {
-  spawn[T, e](f: () -> T / e) : Fiber[T]
-  await[T](f: Fiber[T])       : T
-  select[T](fs: [Fiber[T]])   : T
-  yield()                     : Unit
-  cancel[T](f: Fiber[T])      : Unit
+  yield()                       : Unit
+  spawn[T](thunk: () -> T / e)  : Fiber[T]
+  await[T](fiber: Fiber[T])     : T
+  select[T](fibers: [Fiber[T]]) : T
+  cancel[T](fiber: Fiber[T])    : Unit
+  set_trap_exit(on: Bool)       : Unit
+  scope_enter()                 : Unit
+  scope_exit()                  : Unit
 }
 ```
 
 Crear fibras, esperarlas, racear, ceder, cancelar.
 `nursery { n -> ... }` del cap. 13 es azúcar sobre
-`handle ... with Spawn as n { ... }`.
+`handle ... with Spawn as n { ... }`, y las dos últimas
+operaciones son la maquinaria detrás de esa azúcar:
+`scope_enter` y `scope_exit` delimitan el alcance que hace el
+*join* de las hijas. `set_trap_exit` decide si la fibra recibe
+la caída de un peer enlazado como mensaje en vez de morir con
+él (cap. 14 §14.6).
 
 ### `Actor[Msg]`
 
 ```kai
 effect Actor[Msg] {
-  self()                         : Pid[Msg]
-  send(pid: Pid[Msg], msg: Msg)  : Unit / Cancel
-  receive()                      : Msg / Cancel
+  self()                        : Pid[Msg]
+  send(pid: Pid[Msg], msg: Msg) : Unit
+  receive()                     : Msg
+  receive_timeout(nanos: Int)   : Option[Msg]
 }
 ```
 
 El efecto que da forma al modelo de actores del cap. 14.
 `with_mailbox { ... }` y `spawn_actor(...)` son los wrappers
-del stdlib que instalan este handler.
+del stdlib que instalan este handler. `receive_timeout`
+devuelve `None` si no llegó nada en el plazo, que es lo que
+evita que un actor quede colgado esperando un mensaje que no
+va a llegar.
 
 ### `Link` y `Monitor`
 
 ```kai
 effect Link {
-  link(pid: Pid[_]) : Unit
+  link(peer: Pid[Nothing]) : Unit
 }
 
 effect Monitor {
-  monitor(pid: Pid[_])         : MonitorRef
-  demonitor(ref: MonitorRef)   : Unit
+  monitor(target: Pid[Nothing]) : Pid[Nothing]
+  demonitor(ref: Pid[Nothing])  : Unit
 }
 ```
 
@@ -340,7 +462,7 @@ mensaje `MonitorDown` cuando el observado termina.
 ### `Ffi`
 
 ```kai
-effect Ffi
+effect Ffi {}
 ```
 
 El efecto que cargan todas las funciones declaradas con
@@ -351,27 +473,37 @@ cubre la sintaxis de declaración, el mapeo de tipos en el
 borde, el enlazado con shims C, y qué soporta y qué no
 FFI v1.
 
-## D.9 Composición: el alias `Io`
+## D.9 Composición: los alias `Console` e `Io`
 
 ```kai
-type Io = Console + Stdin + Env + File
+type Console = Stdout + Stderr + Stdin
+type Io      = Console + Env + File
 ```
 
-Bundle de los efectos más comunes para IO al sistema
-operativo. Una función que dice `/ Io` está declarando que
-puede tocar consola, leer stdin, leer variables de entorno y
-manipular archivos. Es el equivalente a "esta función no es
-pura, hace cosas con el sistema".
+Dos niveles de agrupación. `Console` junta los tres flujos
+estándar; `Io` le suma el entorno y los archivos. Una función
+que dice `/ Io` está declarando que puede tocar consola, leer
+variables de entorno y manipular archivos: el equivalente a
+"esta función no es pura, hace cosas con el sistema".
+
+Fíjate en quiénes **no** están en `Io`: `Clock`, `Random`,
+`SecureRandom`, la familia `Net` y `Process` quedan fuera a
+propósito. Una función que "logguea y lee configuración" no
+debería ganar en silencio la capacidad de salir a la red o de
+lanzar subprocesos solo porque ambas cosas viven bajo un nombre
+cómodo. Esos efectos aparecen explícitos en la firma o no
+aparecen.
 
 ## D.10 Handlers por defecto
 
 Cuando `main` declara uno de estos efectos en su fila, el
 runtime instala automáticamente un handler por defecto:
 
-- `Console`, `Stdin`, `Env`, `File` → IO al sistema.
+- `Stdout`, `Stderr`, `Stdin`, `Env`, `File` → IO al sistema.
 - `Clock`, `Random`, `SecureRandom` → reloj y RNG del sistema.
 - `NetTcp`, `NetUdp`, `NetDns` → POSIX sockets.
 - `Process`, `Signal` → llamadas POSIX.
+- `Log` → cada mensaje a stderr como `[ISO8601Z] NIVEL mensaje`.
 - `Mutable` → asignaciones reales en heap.
 - `Spawn`, `Cancel` → el scheduler de fibras del runtime.
 

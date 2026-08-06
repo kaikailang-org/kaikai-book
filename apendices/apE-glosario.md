@@ -288,9 +288,10 @@ encapsulado. La forma azucarada `var nombre = init` desazucara
 a `handle ... with State[T](init)` (cap. 12 §12.7).
 
 **Stdout, Stderr, Stdin.** Salida estándar, salida de error
-estándar, entrada estándar. En kaikai estos están bajo el
-efecto `Console` (para los dos primeros) y `Stdin` (para el
-último).
+estándar, entrada estándar. En kaikai cada una es un efecto
+propio, uno por descriptor, y `Console` es el alias que junta
+a los tres. Los tres exponen además `is_tty()`. Apéndice D
+§D.1.
 
 **Sum type** *(tipo suma, tipo algebraico de datos)*. Un tipo
 con varios constructores, cada uno cargando datos distintos.
