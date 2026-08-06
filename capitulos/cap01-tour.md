@@ -52,7 +52,10 @@ No hay punto y coma al final de la línea. No hay `return` para
 funciones que no devuelven nada. Tampoco hace falta declarar el
 tipo de retorno de `main` cuando no devuelve un valor útil. Todo
 eso es por diseño: kaikai trata de no pedirte que escribas lo
-obvio.
+obvio. Cuando sí devuelve algo útil hay una convención que vale
+saber desde ya: un `main` que devuelve `Int` usa ese número como
+código de salida del proceso, igual que en C o en Go. El cap. 16
+§16.1 lo retoma.
 
 ## 1.2 Tipos algebraicos y `match`: FizzBuzz
 

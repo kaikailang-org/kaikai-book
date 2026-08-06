@@ -60,6 +60,52 @@ Es el backend nativo el que arma las tablas DWARF; sobre
 `--backend=c` el flag no aporta. Sin flag alguno queda el punto
 medio de siempre: compilación rápida, símbolos presentes.
 
+### Lo que tu programa le devuelve al shell
+
+Un binario no habla con el shell por lo que imprime sino por su
+**código de salida**. En kaikai eso no pide una llamada al
+sistema operativo: si `main` devuelve un `Int`, ese entero *es*
+el estado del proceso. Con cualquier otro tipo de retorno el
+programa sale con 0.
+
+```kai
+# ejemplos/cap16/01_estado_de_salida.kai
+fn validar(puerto: Int) : Result[Int, String] =
+  if puerto > 0 and puerto < 65536 { Ok(puerto) }
+  else { Err("puerto fuera de rango: #{puerto}") }
+
+fn main() : Int / Stdout {
+  match validar(70000) {
+    Ok(p)    -> { println("escuchando en #{p}"); 0 }
+    Err(msg) -> { println("error: #{msg}"); 1 }
+  }
+}
+```
+
+```
+$ kai run ejemplos/cap16/01_estado_de_salida.kai
+error: puerto fuera de rango: 70000
+$ echo $?
+1
+```
+
+Es la misma convención de C, Go y Rust, y le da a un CLI de
+kaikai la salida natural: el `Result` que ya usas adentro
+termina de decidir, en el `match` final, con qué número sale el
+proceso. Sin eso, un `set -e`, un gate de CI o un `make` leen
+como éxito lo que tu programa considera una falla.
+
+Dos detalles que vas a agradecer cuando aparezcan:
+
+- **POSIX se queda con los 8 bits bajos.** Devolver `256` sale
+  con 0 y `-1` sale con 255. No es kaikai truncando: es el
+  sistema operativo, igual que en cualquier otro lenguaje.
+- **La salida buffereada se vacía igual.** El retorno de `main`
+  usa el camino de salida completo de la libc, así que lo que
+  imprimiste alcanza a llegar. Eso lo distingue de
+  `os.process.exit`, que corta por `_exit(2)` y puede dejarte
+  sin las últimas líneas.
+
 ### Compilación rápida
 
 `kai run` y `kai build` están diseñados para sentirse
@@ -868,7 +914,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.107.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.108.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org

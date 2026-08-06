@@ -1,0 +1,16 @@
+# El `Int` que devuelve `main` es el código de salida del proceso.
+# Un CLI señala la falla con el mismo `Result` que ya usa adentro,
+# sin llamar a nada del sistema operativo.
+#
+# Este programa sale con 1 a propósito: pruébalo con `echo $?`.
+
+fn validar(puerto: Int) : Result[Int, String] =
+  if puerto > 0 and puerto < 65536 { Ok(puerto) }
+  else { Err("puerto fuera de rango: #{puerto}") }
+
+fn main() : Int / Stdout {
+  match validar(70000) {
+    Ok(p)    -> { println("escuchando en #{p}"); 0 }
+    Err(msg) -> { println("error: #{msg}"); 1 }
+  }
+}

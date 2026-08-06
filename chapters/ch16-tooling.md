@@ -61,6 +61,50 @@ DWARF tables; on `--backend=c` the flag is a no-op. With no
 flag you get the usual middle ground: fast compilation,
 symbols kept.
 
+### What your program hands back to the shell
+
+A binary talks to the shell through its **exit status**, not
+through what it prints. In kaikai that costs no system call: if
+`main` returns an `Int`, that integer *is* the process status.
+With any other return type the program exits 0.
+
+```kai
+# examples/ch16/01_exit_status.kai
+fn validate(port: Int) : Result[Int, String] =
+  if port > 0 and port < 65536 { Ok(port) }
+  else { Err("port out of range: #{port}") }
+
+fn main() : Int / Stdout {
+  match validate(70000) {
+    Ok(p)      -> { println("listening on #{p}"); 0 }
+    Err(msg)   -> { println("error: #{msg}"); 1 }
+  }
+}
+```
+
+```
+$ kai run examples/ch16/01_exit_status.kai
+error: port out of range: 70000
+$ echo $?
+1
+```
+
+It's the same convention as C, Go and Rust, and it gives a
+kaikai CLI its natural exit: the `Result` you already use
+internally settles, in that final `match`, which number the
+process leaves with. Without it, a `set -e`, a CI gate or a
+`make` reads as success what your program considers a failure.
+
+Two details you'll be glad to know when they show up:
+
+- **POSIX keeps the low 8 bits.** Returning `256` exits 0 and
+  `-1` exits 255. That isn't kaikai truncating — it's the
+  operating system, the same as in any other language.
+- **Buffered output still flushes.** Returning from `main` takes
+  libc's full exit path, so what you printed does make it out.
+  That sets it apart from `os.process.exit`, which cuts through
+  `_exit(2)` and can cost you the last few lines.
+
 ### Fast compilation
 
 `kai run` and `kai build` are designed to feel immediate. A
@@ -870,7 +914,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.107.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.108.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org

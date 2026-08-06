@@ -56,7 +56,11 @@ There is no semicolon at the end of the line. There is no
 `return` for a function that does not return a value. You don't
 even need to declare a return type on `main` when there is
 nothing useful to return. All of this is by design: kaikai
-tries not to make you write the obvious.
+tries not to make you write the obvious. When there *is*
+something useful to return, one convention is worth knowing up
+front: a `main` returning `Int` uses that number as the
+process's exit status, just like C or Go. Chapter 16 §16.1
+picks it up.
 
 ## 1.2 Algebraic types and `match`: FizzBuzz
 
