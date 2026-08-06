@@ -163,6 +163,7 @@ run|ejemplos/cap14/03_request_reply.kai|ok
 run|ejemplos/cap14/04_mailbox_policy.kai|ok
 run|ejemplos/cap14/05_supervisor.kai|ok
 run|ejemplos/cap14/06_receive_timeout.kai|ok
+run|ejemplos/cap14/07_trap_exit.kai|ok
 
 # Capítulo 15 — holes (compilan, abortan en runtime al llegar al hole)
 run|ejemplos/cap15/01_hole_basico.kai|run_panic
@@ -317,6 +318,7 @@ run|examples/ch14/03_request_reply.kai|ok
 run|examples/ch14/04_mailbox_policy.kai|ok
 run|examples/ch14/05_supervisor.kai|ok
 run|examples/ch14/06_receive_timeout.kai|ok
+run|examples/ch14/07_trap_exit.kai|ok
 
 # Chapter 15 — holes
 run|examples/ch15/01_basic_hole.kai|run_panic

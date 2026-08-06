@@ -1,0 +1,39 @@
+# Learning HOW a child died, not just that it did.
+#
+# `Link.link(parent)` binds child to parent. On its own, the
+# child's death would cancel the parent. With
+# `set_trap_exit(true)` the parent survives: each child's
+# termination arrives in its mailbox as "Normal" or "Crashed"
+# and the parent decides what to do.
+#
+# The notice comes through the ordinary mailbox, so it's read
+# with the same `Actor.receive()` as any other message.
+
+import actor
+import spawn
+
+fn child_ok(parent: Pid[String]) : Unit / Actor[String] + Link =
+  Link.link(parent)
+  # The body returns Unit: the fiber ends cleanly -> "Normal".
+
+fn child_crash(parent: Pid[String]) : Unit / Actor[String] + Link + Cancel = {
+  Link.link(parent)
+  Cancel.raise()
+  # Cancel.raise() unwinds the body -> "Crashed".
+}
+
+fn supervise() : Unit / Actor[String] + Spawn + Console + Link + Cancel = {
+  spawn.set_trap_exit(true)
+  let me = Actor.self()
+
+  let _ = spawn.spawn(() => with_mailbox { child_ok(me) })
+  Stdout.print("a child died: " ++ Actor.receive())
+
+  let _ = spawn.spawn(() => with_mailbox { child_crash(me) })
+  Stdout.print("a child died: " ++ Actor.receive())
+}
+
+fn main() : Int / Spawn + Console + Cancel + Link = {
+  with_mailbox { supervise() }
+  0
+}
