@@ -476,18 +476,63 @@ to the observed actor's. It returns a reference — another
 `Pid[Nothing]` — that you hand to `demonitor` later if you
 want to stop watching.
 
-`Spawn` holds the other half of the mechanism:
-`set_trap_exit(true)` tells a fiber that a linked peer's
-death should arrive as a notice rather than take it down. It
-is Erlang's `process_flag(trap_exit, true)`.
+When the observed one dies, the notice reaches you **through
+the ordinary mailbox**: the runtime pushes the dead actor's pid
+there and you read it with the same `Actor.receive()` as any
+other message. That is all a monitor says today: *this actor
+terminated*. It doesn't say how.
 
-One limit worth knowing before you lean on this: **the shape
-of that notice is not settled in the stdlib yet.** There is no
-`MonitorDown` type, no `TerminationCause`, that you could add
-as a variant of your supervisor's message type. The effects
-exist and do register the observation; the typed delivery of
-"the observed one died, and died this way" is surface that
-hasn't landed. That's why §14.7's example doesn't use them.
+### Learning how it died: `Link` + trap exit
+
+For the cause you go the other way. `Spawn` exposes
+`set_trap_exit(true)`, which tells a fiber that a linked peer's
+death should arrive as a notice rather than take it down —
+Erlang's `process_flag(trap_exit, true)` — and that notice does
+distinguish: `"Normal"` or `"Crashed"` lands in the mailbox.
+
+```kai
+# examples/ch14/07_trap_exit.kai (excerpt)
+fn supervise() : Unit / Actor[String] + Spawn + Console + Link + Cancel = {
+  spawn.set_trap_exit(true)
+  let me = Actor.self()
+
+  let _ = spawn.spawn(() => with_mailbox { child_ok(me) })
+  Stdout.print("a child died: " ++ Actor.receive())
+
+  let _ = spawn.spawn(() => with_mailbox { child_crash(me) })
+  Stdout.print("a child died: " ++ Actor.receive())
+}
+```
+
+```
+$ kai run examples/ch14/07_trap_exit.kai
+a child died: Normal
+a child died: Crashed
+```
+
+The child binds itself with `Link.link(parent)` and then either
+returns cleanly or calls `Cancel.raise()`. Without
+`set_trap_exit`, the first death would cancel the supervisor
+and the second would never be seen.
+
+Worth knowing: that `String` is a v1 simplification. The
+language design (`docs/actors.md`) specifies something richer —
+a `MonitorDown(ref, cause)` with
+`cause = Normal | Crashed(String) | Cancelled`, travelling
+through the actor's typed mailbox as one more variant of your
+own message type:
+
+```kai
+# The specified shape, not implemented yet.
+type SupervisorMsg
+  = Work(Task)
+  | Down(MonitorDown)
+```
+
+When that lands, the cause stops being a string and becomes a
+value you can `match` on. Until then the two routes above are
+what you have: the monitor tells you *who*, trap exit tells you
+*how*.
 
 ### When to pick each
 
@@ -505,11 +550,13 @@ hasn't landed. That's why §14.7's example doesn't use them.
   make sense for one to survive without the other.
 
 The §14.7 pattern that follows uses explicit notification —
-not only because it's the simplest, but because today it's
-also the only one that's complete end to end. Until the typed
-delivery of the death notice lands, a supervisor that wants to
-know *how* its worker died finds out because the worker tells
-it.
+not only because it's the simplest, but because it's the only
+one where the supervisor gets the reason *in its own terms*. A
+`"Crashed"` tells you the fiber unwound; a
+`Failed("division by zero at (30, 0)")` tells you what
+happened. For nearly everything you'll write, having the actor
+report how it went before exiting remains better design than
+inspecting its corpse.
 
 ## 14.7 Case study: supervisor with retries
 

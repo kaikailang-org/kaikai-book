@@ -1,0 +1,38 @@
+# Enterarse de CÓMO murió un hijo, no solo de que murió.
+#
+# `Link.link(padre)` liga al hijo con el padre. Sin más, la
+# caída del hijo cancelaría al padre. Con `set_trap_exit(true)`
+# el padre no cae: la terminación de cada hijo le llega al
+# mailbox como "Normal" o "Crashed" y él decide qué hacer.
+#
+# El mensaje llega por el mailbox de siempre, así que se recibe
+# con el mismo `Actor.receive()` que cualquier otro mensaje.
+
+import actor
+import spawn
+
+fn hijo_ok(padre: Pid[String]) : Unit / Actor[String] + Link =
+  Link.link(padre)
+  # El cuerpo devuelve Unit: la fibra termina bien -> "Normal".
+
+fn hijo_crash(padre: Pid[String]) : Unit / Actor[String] + Link + Cancel = {
+  Link.link(padre)
+  Cancel.raise()
+  # Cancel.raise() desenrolla el cuerpo -> "Crashed".
+}
+
+fn supervisar() : Unit / Actor[String] + Spawn + Console + Link + Cancel = {
+  spawn.set_trap_exit(true)
+  let yo = Actor.self()
+
+  let _ = spawn.spawn(() => with_mailbox { hijo_ok(yo) })
+  Stdout.print("murió un hijo: " ++ Actor.receive())
+
+  let _ = spawn.spawn(() => with_mailbox { hijo_crash(yo) })
+  Stdout.print("murió un hijo: " ++ Actor.receive())
+}
+
+fn main() : Int / Spawn + Console + Cancel + Link = {
+  with_mailbox { supervisar() }
+  0
+}
