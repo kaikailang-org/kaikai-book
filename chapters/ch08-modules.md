@@ -156,7 +156,17 @@ In practice:
 - **Helper functions:** rarely. If you need to export them,
   ask whether they belong in this module at all.
 - **Constants:** yes, if they're part of the API. Otherwise,
-  no.
+  no. `pub` goes in front just like everywhere else, and the
+  importer uses it qualified:
+
+  ```kai
+  # limits.kai
+  pub const MAX_PORT : Int = 65535
+
+  # main.kai
+  import limits
+  println("max = #{limits.MAX_PORT}")
+  ```
 
 Most languages with public-by-default end up with modules
 whose "real API" is mixed with everything else. kaikai
