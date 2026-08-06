@@ -438,24 +438,26 @@ En BEAM, los actores se supervisan con **links** (bidireccional)
 y **monitores** (unidireccional). Cuando un actor cae, los
 actores que lo observan se enteran y deciden qué hacer.
 
-kaikai trae el mismo modelo, expresado como dos efectos del
-módulo `actor` del stdlib:
+kaikai trae el mismo modelo, expresado como dos efectos que
+viven en `stdlib/effects/concurrent.kai`, junto a `Spawn` y
+`Actor[Msg]`:
 
 ```kai
-# Declarados en stdlib/actor.kai, junto con Actor[Msg].
 pub effect Link {
-  link(pid: Pid[_]) : Unit
+  link(peer: Pid[Nothing]) : Unit
 }
 
 pub effect Monitor {
-  monitor(pid: Pid[_]) : MonitorRef
-  demonitor(ref: MonitorRef) : Unit
+  monitor(target: Pid[Nothing]) : Pid[Nothing]
+  demonitor(ref: Pid[Nothing])  : Unit
 }
 ```
 
-`Pid[_]` es un PID "existencial": cualquier tipo de mensaje
-sirve. Eso porque `link` y `monitor` no envían ni reciben
-mensajes; solo registran observación sobre la vida del actor.
+`Pid[Nothing]` es el PID visto sin su tipo de mensaje: `Nothing`
+es el tipo vacío, así que un PID así no puede recibir nada. Es
+la forma de decir "acá solo me interesa la identidad del actor,
+no su protocolo" — porque `link` y `monitor` no mandan ni
+reciben mensajes, solo registran observación sobre su vida.
 
 ### Links: bidireccionales
 
@@ -469,36 +471,23 @@ para "supervisor observa worker": ese es el caso de monitores.
 ### Monitores: unidireccionales
 
 `Monitor.monitor(pid)` declara que el actor actual quiere
-saber cuándo `pid` termina, sin acoplar la vida del
-observador a la del observado. Cuando `pid` termina (normal,
-crash o cancelación), el observador recibe un mensaje
-`MonitorDown` en su mailbox. El stdlib expone los tipos
-relevantes:
+saber cuándo `pid` termina, sin acoplar la vida del observador
+a la del observado. Devuelve una referencia —otro
+`Pid[Nothing]`— que después le pasas a `demonitor` si quieres
+dejar de observar.
 
-```kai
-# Definidos en stdlib/actor.kai junto con el efecto Monitor.
-pub type MonitorDown = MonitorDown(MonitorRef, TerminationCause)
-pub type TerminationCause
-  = Normal
-  | Crashed(String)
-  | Cancelled
-```
+Del lado del `Spawn` está la otra mitad del mecanismo:
+`set_trap_exit(true)` le dice a la fibra que la caída de un
+peer enlazado le llegue como aviso en vez de tumbarla. Es el
+equivalente del `process_flag(trap_exit, true)` de Erlang.
 
-Para que un actor pueda recibir `MonitorDown`, su tipo de
-mensaje debe incluirlo como variante:
-
-```kai
-type SupervisorMsg
-  = Tick
-  | Stop
-  | Down(MonitorDown)
-```
-
-El supervisor hace `Monitor.monitor(worker)` después de
-crearlo, y cualquier terminación del worker llega como
-`Down(ev)` al `match` principal del supervisor. El supervisor
-decide qué hacer (reiniciar, escalar, ignorar) sin que su vida
-quede atada a la del worker.
+Un límite que conviene saber antes de apoyarse en esto: **la
+forma del aviso todavía no está fijada en el stdlib.** No hay
+un tipo `MonitorDown` ni un `TerminationCause` que puedas
+poner como variante del tipo de mensaje de tu supervisor. Los
+efectos existen y registran la observación; la entrega
+tipada de "el observado murió, y murió así" es superficie que
+aún no aterriza. Por eso el ejemplo de §14.7 no los usa.
 
 ### Cuándo elegir cada uno
 
@@ -513,10 +502,11 @@ quede atada a la del worker.
 - **`Link`**, cuando dos actores forman una unidad y no tiene
   sentido que uno sobreviva sin el otro.
 
-El patrón de §14.7 que sigue usa notificación explícita por
-ser lo más simple. Las versiones que mencionan `Monitor` o
-`Link` son refinamientos que conviene introducir solo cuando
-el protocolo de mensajes se vuelve insuficiente.
+El patrón de §14.7 que sigue usa notificación explícita, y no
+solo por ser el más simple: hoy es también el único que está
+completo de punta a punta. Mientras la entrega tipada del aviso
+de muerte no aterrice, un supervisor que quiera saber *cómo*
+murió su worker lo averigua porque el worker se lo cuenta.
 
 ## 14.7 Caso de estudio: supervisor con reintentos
 
