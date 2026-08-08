@@ -9,7 +9,10 @@ This chapter closes the book with a very different case:
 more than concurrency. A debit that doesn't match its credit is
 a bug your auditor finds before you do, and here "it works and
 the tests pass" isn't enough — you have to show **why** it
-works, and the type system has a lot to say about that.
+works. I picked this case because it's the ground I've worked
+on most, and because it's where a type error stops being an
+annoyance and starts being money. The type system has a lot to
+say about that.
 
 Why fintech deserves its own chapter: it's one of the
 domains where getting it wrong is most expensive and where

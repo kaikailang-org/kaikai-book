@@ -4,7 +4,9 @@ Los siete primitivos del capítulo anterior te dan piezas
 sueltas. Para construir programas de verdad, las pegas en
 estructuras: agregados con campos nombrados, listas, tuplas y
 las dos joyas del stdlib que vas a ver más que cualquier otro
-tipo, `Option` y `Result`.
+tipo, `Option` y `Result`. Si tuviera que quedarme con una sola
+decisión del stdlib, me quedo con esas dos: son las que más
+bugs me han ahorrado.
 
 Este capítulo cubre todo eso. Los **sum types** (`type Tag =
 Foo | Bar(Int)`) que viste en el tour merecen su propio
@@ -65,7 +67,7 @@ que conviene tener presentes:
 - **Los records son nominales.** `Punto { x: Int, y: Int }` y
   otro tipo `Posicion { x: Int, y: Int }` con los mismos
   campos son distintos. El compilador no los confunde aunque
-  tengan la misma forma. Esto es deliberado: si quieres una
+  tengan la misma forma. Lo quise así: si quieres una
   posición, di posición.
 
 - **El spread tiene reglas.** Solo un spread por literal, y
@@ -353,7 +355,7 @@ bytes list: 5
 
 La regla mental es corta: **`length` y `slice` razonan en bytes;
 `char_count` y `chars` razonan en codepoints.** Que `length` sea
-barato y por byte es una elección consciente. La representación
+barato y por byte lo decidí a conciencia. La representación
 es UTF-8 y el indexado de `slice` y `char_at` es por byte, así que
 `length` devuelve la unidad que esos cortes usan. Cuando lo que te
 importa es el conteo de caracteres y no el de bytes, pides
@@ -361,6 +363,31 @@ importa es el conteo de caracteres y no el de bytes, pides
 (Grafemas como "é" compuesta de `e` + tilde combinante son otra
 capa todavía; ahí ni los codepoints alcanzan, pero rara vez los
 necesitas.)
+
+El mismo cuidado aparece en el plegado de mayúsculas. `core.char`
+trae `to_upper`, `to_lower`, `is_upper` e `is_lower` para ASCII.
+Desde la versión 0.109 su hermano `core.char_unicode` extiende los
+cuatro a los alfabetos cuyo mapeo es un desplazamiento uniforme de
+codepoint: Latin-1, Latin Extended-A, griego y cirílico. Lo que
+cae fuera de esa regla pasa sin cambios, y kaikai prefiere
+decírtelo con el nombre del módulo antes que fingir cobertura
+completa de Unicode:
+
+```
+$ kai run ejemplos/cap04/10_mayusculas.kai
+CAFÉ
+ПРИВЕТ
+OMEGA
+ΩΜΕΓΑ
+ΩΜέΓΑ
+☃ 42
+K
+```
+
+La línea `ΩΜέΓΑ` marca el borde: `ωμεγα` se pliega entero, pero en
+`ωμέγα` la `έ` se queda abajo porque su mayúscula no está a un
+desplazamiento fijo. Para plegado completo de Unicode necesitas
+tablas, y esas todavía no viven en el stdlib.
 
 Para concatenar, ya lo viste en el capítulo 3, usas `++`:
 
@@ -645,6 +672,15 @@ devuelven los elementos en el orden interno de los buckets,
 que no es el de inserción. Si necesitas orden, ordena al
 final o usa la estructura ordenada del stdlib (`Map`, sobre
 árbol AVL).
+
+`Map` además compara por contenido: dos mapas con los mismos
+pares son iguales aunque se hayan construido insertando en
+orden distinto. Por eso es la estructura correcta cuando el
+resultado sale de la función y alguien lo va a comparar
+contra una expectativa. El puente entre las dos familias vive
+en `collections/convert`: `convert.to_map(h)` congela un
+`HashMap` una vez que terminó la construcción rápida, y
+`convert.to_hashmap(m)` hace el camino inverso.
 
 ## Ejercicios
 

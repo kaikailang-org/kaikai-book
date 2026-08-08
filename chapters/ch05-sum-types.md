@@ -6,7 +6,9 @@ language, you change how you model data. Sum types and the
 they are the tool that replaces half of the class hierarchies,
 flag-based enums, `instanceof` chains and visitor patterns
 you've probably been writing. Once you have them in hand, you
-don't want to give them up.
+don't want to give them up. That is exactly what happened to me:
+I came to the functional family late, with my head already shaped
+by class hierarchies, and after sum types going back was uphill.
 
 The chapter goes from less to more. We start with basic sum
 types, pass through type recursion, see `match` with all its
@@ -123,7 +125,7 @@ type Event = Login(LoginData) | Logout(LogoutData)
 ```
 
 is that the second reads better wherever you build or
-destructure an event. The practical rule: if the data names
+destructure an event. The way I see it: if the data names
 itself by position — a point is `(Real, Real)` — keep it
 positional. If the data forces the reader to remember the
 order, use a record.
@@ -404,7 +406,8 @@ let q : QueryError = id           # one step: IdentityError → QueryError
 handle_app(q)                      # another step: QueryError → AppError
 ```
 
-This is deliberate. Chained subtyping makes type inference
+I left it that way on purpose. Chained subtyping makes type
+inference
 brittle and error messages hard to phrase. The "one step"
 rule keeps kaikai with a predictable type system whose
 messages point to the right place.

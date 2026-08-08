@@ -7,7 +7,9 @@ sobre los núcleos de la máquina.
 
 Para muchos casos esa estructura alcanza. Pero hay un patrón
 que las fibras puras dejan incómodo, y vale la pena nombrarlo
-antes de la sintaxis.
+antes de la sintaxis. Lo tomé prestado de Erlang casi sin
+cambios, porque después de mirarlo un rato no encontré nada que
+mejorarle.
 
 ## Una fibra es un cómputo; un actor es un proceso vivo
 
@@ -456,7 +458,7 @@ pub effect Monitor {
 `Pid[Nothing]` es el PID visto sin su tipo de mensaje: `Nothing`
 es el tipo vacío, así que un PID así no puede recibir nada. Es
 la forma de decir "acá solo me interesa la identidad del actor,
-no su protocolo" — porque `link` y `monitor` no mandan ni
+no su protocolo", porque `link` y `monitor` no mandan ni
 reciben mensajes, solo registran observación sobre su vida.
 
 ### Links: bidireccionales
@@ -472,8 +474,8 @@ para "supervisor observa worker": ese es el caso de monitores.
 
 `Monitor.monitor(pid)` declara que el actor actual quiere
 saber cuándo `pid` termina, sin acoplar la vida del observador
-a la del observado. Devuelve una referencia —otro
-`Pid[Nothing]`— que después le pasas a `demonitor` si quieres
+a la del observado. Devuelve una referencia (otro
+`Pid[Nothing]`) que después le pasas a `demonitor` si quieres
 dejar de observar.
 
 Cuando el observado muere, el aviso te llega **por el mailbox
@@ -486,8 +488,8 @@ terminó*. No te dice cómo.
 
 Para la causa hay que ir por el otro lado. `Spawn` expone
 `set_trap_exit(true)`, que le dice a la fibra que la muerte de
-un peer enlazado le llegue como aviso en vez de tumbarla —el
-`process_flag(trap_exit, true)` de Erlang—, y ese aviso sí
+un peer enlazado le llegue como aviso en vez de tumbarla (el
+`process_flag(trap_exit, true)` de Erlang), y ese aviso sí
 distingue: llega `"Normal"` o `"Crashed"` al mailbox.
 
 ```kai

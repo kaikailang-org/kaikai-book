@@ -7,7 +7,9 @@ cores.
 
 For many cases that structure is enough. But there's a
 pattern that pure fibers leave awkward, and it's worth
-naming before the syntax.
+naming before the syntax. I borrowed it from Erlang almost
+unchanged, because after staring at it for a while I found
+nothing worth improving.
 
 ## An actor is a process; a fiber is a computation
 

@@ -3,7 +3,9 @@
 The seven primitives from chapter 3 give you raw pieces. To
 build real programs, you glue them into structures: aggregates
 with named fields, lists, tuples, and the two stdlib types you'll
-reach for more than any other, `Option` and `Result`.
+reach for more than any other, `Option` and `Result`. If I had to
+keep a single stdlib decision, I'd keep those two. They are the
+ones that have saved me the most bugs.
 
 This chapter covers all of that. **Sum types** (`type Tag =
 Foo | Bar(Int)`) you saw in the tour deserve their own chapter
@@ -63,7 +65,7 @@ down:
 - **Records are nominal.** `Point { x: Int, y: Int }` and
   another `Position { x: Int, y: Int }` with the same fields
   are distinct types. The compiler doesn't conflate them even
-  if they have the same shape. This is on purpose: if you
+  if they have the same shape. I wanted it that way: if you
   want a position, say position.
 
 - **Spread has rules.** Only one spread per literal, and it
@@ -344,7 +346,7 @@ bytes list: 5
 
 The mental rule is short: **`length` and `slice` reason in bytes;
 `char_count` and `chars` reason in codepoints.** That `length` is
-cheap and byte-based is a conscious choice — the representation is
+cheap and byte-based I decided deliberately — the representation is
 UTF-8 and the `slice`/`char_at` family indexes by byte, so
 `length` reports the unit those cuts use. When what you care about
 is the character count rather than the byte count, you ask for
@@ -352,6 +354,30 @@ is the character count rather than the byte count, you ask for
 (Graphemes like an "é" built from `e` plus a combining accent are
 yet another layer; there even codepoints fall short, but you rarely
 need them.)
+
+The same care shows up in case folding. `core.char` ships
+`to_upper`, `to_lower`, `is_upper` and `is_lower` for ASCII. Since
+0.109 its sibling `core.char_unicode` extends all four to the
+alphabets whose mapping is a uniform codepoint offset: Latin-1,
+Latin Extended-A, Greek and Cyrillic. Whatever falls outside that
+rule passes through untouched, and kaikai would rather tell you so
+in the module's name than pretend to full Unicode coverage:
+
+```
+$ kai run examples/ch04/10_case_folding.kai
+CAFÉ
+ПРИВЕТ
+OMEGA
+ΩΜΕΓΑ
+ΩΜέΓΑ
+☃ 42
+K
+```
+
+The `ΩΜέΓΑ` line marks the edge: `ωμεγα` folds whole, while in
+`ωμέγα` the `έ` stays down, because its uppercase form does not sit
+at a fixed offset. Full Unicode folding needs tables, and those do
+not live in the stdlib yet.
 
 For concatenation, you saw it in chapter 3: use `++`:
 
@@ -633,6 +659,15 @@ hand you the elements in the internal bucket order, which is
 not insertion order. If you need order, sort at the end or
 reach for the stdlib's ordered structure (`Map`, built on an
 AVL tree).
+
+`Map` also compares by content: two maps holding the same
+pairs are equal even when they were built by inserting in a
+different order. That makes it the right structure when the
+result leaves the function and something downstream will
+compare it against an expectation. The bridge between the two
+families lives in `collections/convert`: `convert.to_map(h)`
+freezes a `HashMap` once the fast build is done, and
+`convert.to_hashmap(m)` goes the other way.
 
 ## Exercises
 

@@ -13,9 +13,11 @@ que pide. Te van a ahorrar incomodidades en las siguientes
 ciento cincuenta páginas.
 
 No vamos a abrir la teoría de cada idea: eso es trabajo de los
-capítulos siguientes. Lo que queremos es nombrar el cambio de
-hábito, mostrarlo, y darle al lector las palabras para
-reconocerlo cuando aparezca.
+capítulos siguientes. Lo que quiero aquí es nombrar el cambio de
+hábito, mostrarlo, y darte las palabras para reconocerlo cuando
+aparezca. A mí me tomó años hacer estos hábitos míos, y sospecho
+que buena parte de ese tiempo se fue en no tener a nadie que me
+los nombrara.
 
 ## 2.1 Expresiones, no sentencias
 
@@ -73,6 +75,10 @@ Esto tiene consecuencias prácticas que vas a notar pronto:
 - **Refactor más fluido.** Una expresión se puede extraer a una
   función o reemplazar por otra expresión sin tocar el contexto
   alrededor; una sentencia, no tanto.
+
+Este fue el primer punto que fijé cuando empecé a diseñar kaikai,
+antes que los efectos y antes que los kinds. Todo lo demás se
+acomodó alrededor.
 
 Vas a ver lo mismo en `match`. En la mayoría de los lenguajes con
 `switch`, cada `case` es una sentencia que ejecuta un bloque y
@@ -185,7 +191,7 @@ que se observa desde fuera) sí aparecen en la firma, bajo
 efectos como `Mutable`, `Actor` o los que correspondan. Esa
 distinción la veremos en el capítulo 13.
 
-La regla práctica es simple: usa `let` por defecto; si
+La regla que sigo es simple: usa `let` por defecto; si
 necesitas una variable local que cambia, `var` con `:=`;
 si lo que quieres mutar es algo visible desde afuera, ya
 estamos en territorio de efectos y vas a tener que declararlos.
@@ -251,9 +257,9 @@ En la versión kaikai, el `match` es exhaustivo: si te olvidas
 del caso `None`, no compila. El compilador te recuerda lo que
 en Python depende de tu memoria.
 
-¿Y las excepciones? kaikai tiene un mecanismo equivalente —los
+¿Y las excepciones? kaikai tiene un mecanismo equivalente, los
 efectos algebraicos del capítulo 12, con los que se declara en
-tres líneas un efecto que aborta—, pero también ahí lo que puede
+tres líneas un efecto que aborta. Pero también ahí lo que puede
 fallar aparece en el tipo. Las "excepciones invisibles" que en
 Java o Python pueden brotar de cualquier llamada, en kaikai no
 existen. Si una función puede saltar a otro lado, su firma lo
@@ -406,9 +412,9 @@ función puede hacerle a tu programa.
 Hay un último hábito que conviene instalar temprano, porque
 reordena cómo lees todo lo que viene. En los lenguajes que
 traes, el compilador razona sobre una sola clase de etiqueta:
-el tipo. Todo lo demás que importa de un valor — en qué unidad
+el tipo. Todo lo demás que importa de un valor (en qué unidad
 está, qué puede fallar al calcularlo, quién es dueño de su
-memoria — vive en comentarios, en convenciones de nombres, o
+memoria) vive en comentarios, en convenciones de nombres, o
 en tu cabeza.
 
 En kaikai, el tipo es una etiqueta entre varias. La sección
@@ -419,8 +425,8 @@ otras: **unidades de medida** que multiplican y se cancelan
 como en física (cap. 10), **monedas** que se suman pero se
 niegan a multiplicarse entre sí, **regiones de memoria** que
 nunca se confunden una con otra (cap. 13). Cada familia tiene
-su propia álgebra — sus propias reglas de qué combina con qué
-— y el compilador la aplica con el mismo rigor con que
+su propia álgebra, sus propias reglas de qué combina con qué,
+y el compilador la aplica con el mismo rigor con que
 verifica tipos. A cada una de estas familias el lenguaje la
 llama un **kind**.
 
@@ -439,7 +445,8 @@ parte.
 
 kaikai no salió de la nada. Hereda decisiones de varias familias
 de lenguajes, y conviene saber cuáles para entender por qué se
-ven como se ven.
+ven como se ven. Ninguna de estas ideas es mía; lo que elegí fue
+cuáles poner juntas.
 
 - **De ML (1973), OCaml y Haskell** vienen los tipos
   algebraicos, el pattern matching, la inferencia de tipos

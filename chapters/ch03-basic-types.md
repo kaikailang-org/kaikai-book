@@ -6,8 +6,10 @@ them, and how values bind to names with `let`. It also pins down
 something you've already seen in passing: **`if` and blocks are
 expressions**, not statements.
 
-If you read chapter 2, what follows is the concrete content of
-those warnings. If you skipped it and you come from an imperative
+Seven struck me as the right number: enough not to fight the
+language day to day, few enough to hold all at once. If you read
+chapter 2, what follows is the concrete content of those
+warnings. If you skipped it and you come from an imperative
 background, go back. It will save you friction.
 
 ## 3.1 The seven primitive types
@@ -331,7 +333,7 @@ let y : Real = 3.14
 The annotation is more than decoration. It's there for two
 reasons: to document intent when the type isn't obvious, and
 to guide the type inferrer in the few cases where local
-inference isn't enough. The practical rule is **annotate the arguments
+inference isn't enough. I **annotate the arguments
 and return type of public functions, and leave local `let`s
 unannotated**. Types travel through the signatures and the
 body stays clean.

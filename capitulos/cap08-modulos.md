@@ -7,8 +7,9 @@ cambios chocan, las búsquedas confunden módulos lógicos que
 están físicamente revueltos. Hay que partir el código en
 pedazos con nombres.
 
-kaikai resuelve esto con un sistema deliberadamente simple. **Un
-archivo es un módulo.** No hay declaraciones `module Foo`, ni
+kaikai resuelve esto con un sistema deliberadamente simple, y la
+simpleza aquí es mía y es a propósito. **Un archivo es un
+módulo.** No hay declaraciones `module Foo`, ni
 archivos especiales que reabran un módulo desde otro lado.
 El nombre del módulo se deriva de la ruta del archivo y eso es
 todo. Por encima de los módulos viene una segunda escala: un
@@ -68,7 +69,8 @@ fn main() {
 módulo bajo el prefijo `aritmetica.`. La función
 `doble_mas_uno` se llama como `aritmetica.doble_mas_uno`.
 
-El prefijo es deliberado. Cuando un proyecto crece a quince o
+El prefijo es a propósito, y sé que a alguna gente le molesta.
+Cuando un proyecto crece a quince o
 veinte módulos, ver `aritmetica.doble_mas_uno` en una
 expresión te dice de inmediato de dónde sale. La alternativa,
 importar todos los nombres sueltos al namespace del

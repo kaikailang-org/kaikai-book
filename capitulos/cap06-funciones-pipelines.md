@@ -9,6 +9,11 @@ cómo escribir lambdas, qué son las funciones de orden
 superior, y los cuatro operadores pipe que kaikai usa para
 encadenar transformaciones.
 
+Los cuatro pipes son, de todo lo que decidí, lo que más discusión
+me generó conmigo mismo: cuatro operadores es mucho para un
+lenguaje que presume de tener pocas formas. Al final los dejé, y
+en §6.4 explico por qué.
+
 Vamos también a ver con detalle algo que kaikai promete y que
 muy pocos lenguajes garantizan en serio: la **eliminación de
 llamadas en posición de cola**. Esa garantía es lo que te
@@ -202,8 +207,8 @@ let mayores = personas |? .edad > 18       # ERROR: mezcla proyección con `>`
 ```
 
 Lo que ahí quieres es la flecha explícita, `(p) => p.edad > 18`.
-La regla práctica: si la lambda *solo* saca un campo o llama un
-método, escríbela point-free; si hace cualquier otra cosa, flecha.
+Yo lo resuelvo así: si la lambda *solo* saca un campo o llama un
+método, point-free; si hace cualquier otra cosa, flecha.
 
 Las lambdas son **valores de primera clase**: las atas a
 `let`, las pasas como argumento, las devuelves de funciones,
@@ -500,6 +505,29 @@ n por dos". La forma vale tanto para `|` como para `||` (que
 también esperan una función), y se mezcla con el resto del
 pipeline sin ruido.
 
+Hay un detalle que muerde al anidar. Una lambda-etapa no abre
+un scope para las etapas que vienen después, así que la
+siguiente lambda queda como hermana suya, al mismo nivel del
+pipe.
+
+```kai
+# no compila
+[0..2] | (r) => [0..2] | (c) => r * 10 + c
+```
+
+```
+error: cannot find `r` in this scope
+```
+
+`(c) => …` quedó como una etapa del pipe de afuera, así que
+`r` nunca estuvo a la vista. Los paréntesis meten el pipe
+interno dentro de la lambda:
+
+```kai
+[0..2] | (r) => ([0..2] | (c) => r * 10 + c)
+# [[0, 1, 2], [10, 11, 12], [20, 21, 22]]
+```
+
 ### Doble trailing lambda
 
 Si los **dos** últimos argumentos son lambdas, los dos van en
@@ -533,8 +561,8 @@ Es lo mismo que `(n) => { let cuadrado = n * n; cuadrado + 1
 ### Patrones de tupla como parámetro
 
 El parámetro de un bloque-lambda puede ser un **patrón de
-tupla**. Si lo que fluye por el pipe son pares — el resultado de
-`list.zip` o `list.enumerate`, por ejemplo —, destructuras en el
+tupla**. Si lo que fluye por el pipe son pares, el resultado de
+`list.zip` o `list.enumerate`, por ejemplo, destructuras en el
 acto, sin un `let` intermedio:
 
 ```kai
@@ -547,8 +575,8 @@ list.foreach(list.enumerate(filas)) { (i, fila) ->
 ```
 
 El patrón tiene que ser **irrefutable**: `(a, b)` sobre un par
-siempre calza. Un patrón que puede fallar — `(Some(n))`, digamos
-— se rechaza con un diagnóstico de match no exhaustivo; para
+siempre calza. Un patrón que puede fallar, `(Some(n))` digamos,
+se rechaza con un diagnóstico de match no exhaustivo; para
 esos casos está `match`. Y ojo con una asimetría deliberada: la
 destructuración es exclusiva del bloque-lambda. La forma con
 flecha `(a, b) => ...` sigue siendo una lambda de **dos

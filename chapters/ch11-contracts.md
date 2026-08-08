@@ -8,6 +8,9 @@ preconditions and postconditions that live in a function's
 signature — and **refinement types** — restrictions on the
 values a type accepts.
 
+These are forty-year-old ideas, and I still think the industry
+paid them far less attention than they deserved.
+
 The two mechanisms share the same idea: **state restrictions
 in the type, have the compiler verify them where it can, and
 defer them to runtime where it can't**. Where they differ is
@@ -377,8 +380,8 @@ What **distinguishes** kaikai in this family:
 
 ## 11.8 What kaikai doesn't do, and why
 
-It's worth enumerating what kaikai **deliberately** doesn't
-support:
+It's worth enumerating what I decided **not** to support, and
+why:
 
 - **No SMT solving**. If your contract is `ensures
   result.entries == sort(c.entries)`, kaikai won't prove

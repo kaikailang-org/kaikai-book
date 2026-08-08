@@ -15,9 +15,11 @@ save you a lot of friction across the next hundred and fifty
 pages.
 
 We are not going to open up the theory of each idea — that's
-the job of the chapters that follow. What we want is to name
+the job of the chapters that follow. What I want here is to name
 the habit change, show it, and give you the words to recognize
-it when it shows up.
+it when it shows up. These habits took me years to make my own,
+and I suspect a good part of that time went into not having
+anyone name them for me.
 
 ## 2.1 Expressions, not statements
 
@@ -188,7 +190,7 @@ observed from outside — *do* show up in the signature, under
 effects like `Mutable`, `Actor`, or whichever fits. We'll see
 that distinction in chapter 12.
 
-The practical rule is simple: use `let` by default; if you
+The rule I follow is simple: use `let` by default; if you
 need a local variable that changes, `var` with `:=`;
 if what you want to mutate is something visible from outside,
 you are in effects territory and you'll have to declare them.
@@ -440,7 +442,8 @@ languages existed nowhere at all.
 
 kaikai did not appear from nowhere. It inherits decisions from
 several language families, and it helps to know which ones to
-understand why things look the way they do.
+understand why things look the way they do. None of these ideas
+are mine. What I chose was which ones to put together.
 
 - **From ML (1973), OCaml, and Haskell** come algebraic data
   types, pattern matching, Hindley-Milner type inference, and

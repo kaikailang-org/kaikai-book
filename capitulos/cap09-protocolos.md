@@ -12,7 +12,9 @@ una variante de `println` solo para `Punto`? Ninguna escala.
 
 La respuesta de kaikai son los **protocolos**: un contrato con
 nombre y un puñado de operaciones, que cualquier tipo puede
-satisfacer. Conceptualmente, los protocolos hacen lo que las
+satisfacer. Elegí la palabra "protocolo" y no "trait" ni
+"interfaz" porque describe mejor lo que pasa: dos partes que
+acuerdan cómo hablarse. Conceptualmente, los protocolos hacen lo que las
 **interfaces** de Go, los **traits** de Rust, los **protocols**
 de Clojure y Elixir, y la parte fácil de las **typeclasses**
 de Haskell. Pero kaikai elige un punto preciso del espacio de
@@ -199,7 +201,7 @@ una sobre la otra.
 No todo lo que deriva un record es uno de los cinco protocolos.
 Hay dos derives más, de otra naturaleza: `Layout`, que fija el
 orden de bytes de un record para serialización binaria (lo vemos
-en el cap. 19), y `Json`, que teje el record con el formato JSON.
+en el cap. 19), y `Json`, que lleva el record al formato JSON.
 
 `#[derive(Json)]` genera dos cosas: `to_json`, que convierte tu
 record a un valor JSON, y un shim `<tipo>_of_json`, que lo
@@ -237,7 +239,7 @@ Las reglas del mapeo son las que uno esperaría, y vale tenerlas
 claras porque el compilador las aplica sin preguntar. Los nombres
 de campo van al JSON tal cual, sin conversión de mayúsculas. Un
 campo `Option[T]` acepta un `null` explícito y una clave ausente
-por igual —ambos decodifican a `None`—; **cualquier otro campo es
+por igual (ambos decodifican a `None`); **cualquier otro campo es
 obligatorio**. Las claves que el record no declara se ignoran. Y
 si algo falla al decodificar, el error trae la ruta JSON al nodo
 culpable (`address.boxes[2].zip: expected String, got Number`), no
@@ -257,15 +259,15 @@ type Config = {
 
 `rename` cambia el nombre en el JSON; `default = <expr>` da un
 valor cuando la clave falta (y vuelve opcional ese campo); `skip`
-saca el campo del JSON por completo —y como al decodificar no hay
+saca el campo del JSON por completo, y como al decodificar no hay
 nada que leer, exige un `default` o que el campo sea `Option`. Un
 campo necesita dos ajustes (saltado y con default) se escribe con
 dos atributos, como arriba.
 
 Una limitación que conviene saber de antemano: `#[derive(Json)]`
 funciona sobre records, **no sobre tipos suma**. Codificar una
-unión etiquetada es una convención —¿el tag va en una clave
-`"type"`, en un envoltorio, adyacente?— y el derive no elige por
+unión etiquetada es una convención (¿el tag va en una clave
+`"type"`, en un envoltorio, adyacente?) y el derive no elige por
 ti. Para eso, `to_json`/`of_json` a mano.
 
 ## 9.5 Protocolos propios
@@ -386,9 +388,9 @@ sola a las que ella invoque.
 
 ¿Qué se pierde? Algunas abstracciones que en Haskell son
 elegantes, particularmente todo lo que vive sobre Functor y
-amigos. Ese trade-off es deliberado: las abstracciones que
-kaikai prioriza viven en el sistema de efectos (cap. 12), no
-en el sistema de tipos.
+amigos. Ese trade-off lo tomé con los ojos abiertos: las
+abstracciones que quise priorizar viven en el sistema de
+efectos (cap. 12) y no en el de tipos.
 
 ## 9.7 Cotas de protocolo en funciones genéricas
 

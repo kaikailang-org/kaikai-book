@@ -6,8 +6,10 @@ los manipulan, y cómo se atan a nombres con `let`. También
 introduce algo que ya viste de pasada y vamos a fijar bien:
 **`if` y los bloques son expresiones**, no sentencias.
 
-Si leíste el capítulo 2, lo que viene es el contenido concreto
-de aquellas advertencias. Si no lo leíste y vienes de un mundo
+Siete me pareció el número correcto: suficientes para no pelear
+con el lenguaje en el día a día, pocos para tenerlos todos en la
+cabeza. Si leíste el capítulo 2, lo que viene es el contenido
+concreto de aquellas advertencias. Si no lo leíste y vienes de un mundo
 imperativo, vuelve. Te ahorra fricción.
 
 ## 3.1 Los siete tipos primitivos
@@ -45,9 +47,9 @@ inalcanzable, y por eso una expresión de tipo `Nothing` calza en
 cualquier contexto donde se espere otro tipo. Te vas a topar con
 `Nothing` rara vez, pero conviene tener el nombre.
 
-Estos siete no son los únicos números del lenguaje — hay enteros
+Estos siete no son los únicos números del lenguaje. Hay enteros
 de ancho fijo y tipos de precisión arbitraria, que veremos en la
-sección 3.4 —, pero sí son los que vas a teclear el 95% del
+sección 3.4, pero estos son los que vas a teclear el 95% del
 tiempo.
 
 ## 3.2 Literales e interpolación de strings
@@ -165,7 +167,7 @@ println("#{-17 % 5}")      # -2, no 3
 println("#{17 % -5}")      #  2: el signo lo pone el 17
 ```
 
-Python decide al revés — usa división hacia abajo, así que
+Python decide al revés: usa división hacia abajo, así que
 `-17 // 5` es `-4` y `-17 % 5` es `3`. Si vienes de C, Go,
 Java o Rust, en cambio, kaikai hace lo que ya esperabas. La
 identidad que se mantiene en todos los casos es
@@ -231,7 +233,7 @@ let bits    = 0b1010u8                          # cualquier base
 Dos reglas los gobiernan. La primera: **no se mezclan con
 `Int`**. Un `Int32` no unifica con un `Int`; sumarlos es error de
 tipos, igual que mezclar `Int` con `Real`. Se convierte con
-nombre y apellido — `int_to_int32(...)`, `int32_to_int(...)` y
+nombre y apellido: `int_to_int32(...)`, `int32_to_int(...)` y
 los análogos para `u32`, `u64` e `i128`. Nada de coerciones
 silenciosas, tampoco aquí.
 
@@ -257,15 +259,15 @@ de vuelta = 11
 
 ¿Cuándo los usas? Sobre todo en la frontera con C: en una firma
 `extern "C"`, un `Int32` cruza como `int32_t`, un `UInt64` como
-`uint64_t` — el ancho que declaras es el ancho que viaja
+`uint64_t`: el ancho que declaras es el ancho que viaja
 (capítulo 16). `Int128` además sirve solo: alcanza ~38 dígitos
 donde `Int` se queda en ~19, con la misma aritmética de siempre.
 
 ### Precisión arbitraria: `BigInt`, `DecimalBig`, `Rational`
 
 Cuando ningún ancho fijo basta, el stdlib ofrece tres tipos que
-crecen lo que haga falta. Son opt-in — se importan, no vienen
-cargados por defecto — porque su costo es real: valores en heap,
+crecen lo que haga falta. Son opt-in, se importan y no vienen
+cargados por defecto, porque su costo es real: valores en heap,
 aritmética por software. kaikai te lo cobra solo cuando lo pides.
 
 - **`BigInt`** (`import math.bigint`): entero de precisión
@@ -279,22 +281,22 @@ aritmética por software. kaikai te lo cobra solo cuando lo pides.
   forma explícita, porque truncar es una decisión, no un
   accidente. Comparar `1.5` con `1.50` da igualdad: la escala no
   es parte del valor. Su hermano `Decimal` (`import decimal`)
-  usa `Int128` como soporte — más liviano, con techo cerca de
+  usa `Int128` como soporte: más liviano, con techo cerca de
   los 38 dígitos. También tiene sufijo: `12.0d` es un `Decimal`.
 - **`Rational`** (`import rational`): fracción exacta, un par
   `num/den` sobre `BigInt` siempre reducido a términos mínimos.
   `1/2 + 1/3` es exactamente `5/6`, sin redondeo en ninguna
   parte.
 
-Estos tipos son records con invariantes — un `Rational` siempre
-está reducido, un `Decimal` lleva su escala — así que no se
+Estos tipos son records con invariantes (un `Rational` siempre
+está reducido, un `Decimal` lleva su escala), así que no se
 construyen con el literal de record crudo, que se saltaría esa
 lógica. La forma corta es el **constructor posicional**: un tipo
 marcado con el atributo `#[constructor]` deja que `Tipo(args)`
 llame a la función que lo construye de verdad. `Rational(1, 2)`
 es `rational.make(1, 2)`, con la reducción incluida; `Complex(1.5,
 2.0)` es `complex.mk(...)`. Es azúcar, no magia: la aridad tiene
-que calzar con la función marcada — `Rational(5)`, con un solo
+que calzar con la función marcada: `Rational(5)`, con un solo
 argumento, no existe (para eso está `rational.from_int(5)`).
 
 El ejemplo `ejemplos/cap03/06_numeros_grandes.kai` muestra los
@@ -312,7 +314,7 @@ Si vienes de Python, `BigInt` es lo que allá llaman simplemente
 caso común y rápido, y la precisión arbitraria es la excepción
 que se pide por su nombre. Y si tu problema es dinero, la
 respuesta completa combina estos tipos con las unidades de
-medida del capítulo 10 — los decimales exactos ponen la
+medida del capítulo 10: los decimales exactos ponen la
 aritmética; las unidades, la disciplina de no sumar pesos con
 dólares.
 
@@ -337,10 +339,9 @@ let y : Real = 3.14
 La anotación no es solo decoración. Sirve para dos cosas:
 documentar la intención cuando el tipo no es obvio, y guiar al
 inferidor en los pocos casos en que la inferencia local no
-alcanza. La regla práctica es **anotar los argumentos y el
-retorno de las funciones públicas, dejar los `let` locales sin
-anotación**. Así el tipo viaja por las firmas y el cuerpo se
-queda limpio.
+alcanza. Yo **anoto los argumentos y el retorno de las funciones
+públicas, y dejo los `let` locales sin anotación**. Así el tipo
+viaja por las firmas y el cuerpo se queda limpio.
 
 Una vez que un nombre se ata, no se puede volver a atar al mismo
 nombre en el mismo bloque. La línea siguiente daría un error:

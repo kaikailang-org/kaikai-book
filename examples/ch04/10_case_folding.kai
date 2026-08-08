@@ -1,0 +1,32 @@
+# Case folding beyond ASCII.
+#
+# `core.char` covers ASCII. `core.char_unicode` adds the
+# alphabets whose upper/lower mapping is a uniform codepoint
+# offset: Latin-1, Latin Extended-A, Greek and Cyrillic.
+# Anything outside that rule passes through untouched.
+
+import core.char
+import core.char_unicode
+import core.list
+import core.string
+
+fn upper(s: String) : String =
+  string.from_chars(list.map(string.chars(s), char_unicode.to_upper))
+
+fn main() : Unit / Stdout = {
+  Stdout.print(upper("café"))
+  Stdout.print(upper("привет"))
+  Stdout.print(upper("omega"))
+
+  # Where the coverage stops: unaccented Greek folds, the
+  # accented letter does not, because its uppercase form does
+  # not sit at a fixed offset.
+  Stdout.print(upper("ωμεγα"))
+  Stdout.print(upper("ωμέγα"))
+
+  # A non-letter passes through as well.
+  Stdout.print(upper("☃ 42"))
+
+  # `core.char` is still the way when the data is ASCII.
+  Stdout.print("#{char.to_upper('k')}")
+}

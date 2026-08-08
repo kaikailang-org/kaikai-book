@@ -6,8 +6,9 @@ and get fixed three times; `async`/`await` introduces
 function colors; actors fix the previous problems but
 historically come with a GC and a heavy runtime.
 
-kaikai bets on an unusual combination: **cooperative fibers +
-per-fiber memory + Perceus**. The structure has three
+I fought with all three in their day, and kaikai's bet came out
+of that fight. It is an unusual combination: **cooperative fibers
++ per-fiber memory + Perceus**. The structure has three
 consequences worth naming before the syntax:
 
 - **No shared memory between fibers.** Each fiber has its own

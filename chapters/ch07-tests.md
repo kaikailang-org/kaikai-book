@@ -13,6 +13,11 @@ constructs** dedicated to verification: `test`, `check`, and
 exercise, all three run via the `kai` driver, and all three
 are stripped out when you build a binary for production.
 
+Putting them in the same file was a decision I struggled with,
+because it cuts against the habit of nearly every project I have
+worked on. I made it anyway, for one simple reason: the test
+that's hard to find is the test nobody updates.
+
 This chapter walks through the three, explains when to use
 which, and closes with a case study: a mini-evaluator with
 contractual tests, verified properties, and benchmarks

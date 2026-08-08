@@ -9,7 +9,9 @@ están en alcance, qué expresiones podrían encajar. El programa
 sigue compilando con holes adentro; solo aborta si la ejecución
 llega a uno.
 
-Los holes son útiles aunque nunca uses un LLM. Te permiten
+Quiero ser claro con algo antes de seguir, porque el título del
+capítulo puede confundir: los holes son útiles aunque nunca uses
+un LLM. Te permiten
 diseñar de arriba hacia abajo (escribir la firma primero,
 completar el cuerpo después) y avanzar en partes sin que el
 archivo entero deje de compilar. Eso sirve al lector humano.

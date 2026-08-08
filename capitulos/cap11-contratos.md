@@ -8,6 +8,9 @@ provienen de Eiffel (1986) y Ada 2012: los **contratos**
 una función) y los **refinement types** (restricciones
 sobre los valores que un tipo admite).
 
+Son ideas de hace cuarenta años, y sigo pensando que la industria
+les hizo mucho menos caso del que merecían.
+
 Los dos mecanismos comparten la misma idea: **enunciar
 restricciones en el tipo, hacer que el compilador las
 verifique cuando puede, y diferirlas a runtime cuando no
@@ -265,7 +268,7 @@ intervalos pequeño, decidible, lineal (y diferir el resto a
 runtime), sobre tener compilación impredecible y dependencias
 externas pesadas.
 
-La regla mental: **lo que el compilador puede probar barato, lo
+Así lo pienso yo: **lo que el compilador puede probar barato, lo
 prueba; lo demás se prueba al ejecutarse**. El binario lleva
 ambos casos sin que tengas que distinguir cuál de los dos
 aplicó.
@@ -383,7 +386,7 @@ Lo que **distingue** a kaikai en esta familia:
 
 ## 11.8 Lo que kaikai no hace, y por qué
 
-Vale enumerar lo que kaikai **deliberadamente** no implementa:
+Vale enumerar lo que decidí **no** implementar, y por qué:
 
 - **No SMT solving**. Si tu contrato es `ensures result.entries
   == sort(c.entries)`, kaikai no va a probar estáticamente

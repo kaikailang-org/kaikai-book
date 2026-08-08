@@ -116,7 +116,7 @@ instalar un handler propio te deja capturarlo o filtrarlo.
 
 Una nota para quien venga del capítulo 12: ahí declaramos un
 `effect Log { log(msg: String) : Unit }` propio, más chico,
-para enseñar el mecanismo. No hay conflicto — una declaración
+para enseñar el mecanismo. No hay conflicto: una declaración
 local hace *shadowing* del nombre del stdlib dentro de su
 archivo. Si quieres el de cuatro niveles, no lo declares.
 
@@ -238,7 +238,7 @@ signo POSIX crudo.
 que los buffers de stdio **no** se vacían: imprime todo lo que
 quieras imprimir antes de llamarlo. La operación no resume
 (devuelve `Nothing`) y los handlers de `Cancel` no corren. Para
-el caso normal —terminar con un código de salida— basta con
+el caso normal, terminar con un código de salida, basta con
 devolver un `Int` desde `main` (cap. 16 §16.1), que sí usa el
 camino de salida completo de la libc.
 
@@ -269,7 +269,7 @@ correspondiente. `off(sig)` desuscribe.
 El handler default vive alrededor de `main` cuando `Signal`
 está en la fila. Solo una fibra puede estar en `await()` a
 la vez; un segundo llamado concurrente entra en pánico.
-Útil para limpieza ordenada al apagar el proceso —
+Útil para limpieza ordenada al apagar el proceso:
 `Signal.on(SigInt); match Signal.await() { ... }` reemplaza
 el típico handler de SIGINT escrito a mano.
 

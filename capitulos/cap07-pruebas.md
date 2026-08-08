@@ -13,6 +13,11 @@ viven en el mismo archivo del código que prueban, las tres se
 ejecutan vía el driver `kai`, y las tres se ignoran cuando
 construyes un binario para producción.
 
+Que vivan en el mismo archivo fue una decisión que me costó
+tomar, porque va contra la costumbre de casi todos los proyectos
+en que he trabajado. La tomé igual, y por una razón simple: la
+prueba que cuesta encontrar es la prueba que nadie actualiza.
+
 Este capítulo recorre las tres, explica cuándo usar cuál, y
 cierra con un caso de estudio: un mini-evaluador con tests
 contractuales, propiedades verificadas, y benchmarks que

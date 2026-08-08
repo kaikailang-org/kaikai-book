@@ -150,7 +150,7 @@ language's complete catalog fits on one screen. Nine kinds, eight
 theories, and every chapter you have read so far is built on
 them.
 
-## 19.4 The same shape, three kinds
+## 19.4 Quantifying over any kind
 
 What makes this a *system* rather than five stacked features is
 that quantification works the same over any kind. Compare these

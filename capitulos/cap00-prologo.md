@@ -241,7 +241,7 @@ instalado, manda un issue al
 [repo del libro](https://github.com/kaikailang-org/kaikai-book/issues).
 El libro indica al inicio de cada edición contra qué versión
 del compilador se validó. Esta edición está validada contra
-**kaikai 0.108.0**, edición Hanga Roa del lenguaje.
+**kaikai 0.109.2**, edición Hanga Roa del lenguaje.
 
 ## Quién debería leer este libro
 

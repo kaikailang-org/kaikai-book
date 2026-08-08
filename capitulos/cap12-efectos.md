@@ -7,6 +7,11 @@ encontrarías parecidas en Haskell, en Rust, en F#. Los **efectos
 algebraicos** son lo que distingue a kaikai de casi cualquier
 lenguaje de uso real hoy.
 
+También son la razón por la que este proyecto existe. Llevaba
+años dándole vueltas a un lenguaje propio sin terminar de
+arrancarlo, hasta que cayó en mis manos un post sobre efectos
+algebraicos y entendí qué era lo que quería construir.
+
 La idea es simple de enunciar y rara al principio: **una función
 declara en su firma qué efectos usa, pero no cómo se realizan**.
 Imprimir a pantalla, leer un archivo, fallar con un error,
@@ -219,8 +224,8 @@ sintaxis para construirla.
 §12.5, igual que `Log` en §12.2. Lo uso desde ya porque el nombre
 se explica solo.)
 
-Si esto te suena al capítulo 10 — donde `m * s` y `s * m` eran
-la misma unidad — no es coincidencia. Los efectos son otra de
+Si esto te suena al capítulo 10, donde `m * s` y `s * m` eran
+la misma unidad, no es coincidencia. Los efectos son otra de
 las familias de etiquetas del §2.6: habitan su propio kind, con
 su propia álgebra (la fila, donde el orden no cuenta y los
 duplicados colapsan), y el compilador la aplica al unificar
@@ -649,7 +654,7 @@ explícito y lo decides en la firma de los `handle`.
 
 El anidamiento trae un problema que las excepciones también
 tienen y resuelven a medias. Si un handler externo abandona el
-`resume` — como el `Fail` de §12.5 —, el body interior nunca
+`resume`, como el `Fail` de §12.5, el body interior nunca
 vuelve. Cualquier línea que hayas escrito *después* del `handle`
 para cerrar un archivo, soltar un lock o devolver una conexión al
 pool no corre nunca. El salto no local se la comió.
@@ -721,10 +726,10 @@ Hay una regla que conviene tener presente: **la limpieza corre en
 el contexto de evidencia del momento en que se instaló**. Si el
 `finally` realiza un efecto, ese efecto se despacha a los handlers
 que estaban vivos cuando el handler se instaló, no a los del punto
-de salto — esos marcos ya no existen. La consecuencia práctica es
+de salto: esos marcos ya no existen. La consecuencia práctica es
 que un `finally` no puede realizar el efecto que su propio handler
-descarga. Eso es un error de compilación ("effect not handled"), no
-un ciclo en tiempo de ejecución.
+descarga. Eso te lo dice el compilador ("effect not handled") y
+nunca se convierte en un ciclo en tiempo de ejecución.
 
 `finally` no recibe parámetros y su valor se descarta: corre por su
 efecto, no por lo que devuelve. Para transformar el resultado del
@@ -732,8 +737,8 @@ efecto, no por lo que devuelve. Para transformar el resultado del
 
 Dos detalles de convivencia. `initially` y la forma `with Eff(init)`
 ocupan el mismo espacio, así que escribir las dos es un error de
-parseo: eliges una. Y ninguna de las dos palabras es reservada —
-son contextuales—, de modo que un efecto tuyo puede seguir
+parseo: eliges una. Y ninguna de las dos palabras es reservada,
+son contextuales, de modo que un efecto tuyo puede seguir
 declarando una operación llamada `finally` sin que nada se rompa.
 
 ## 12.9 Instancias nombradas: el handler como valor
@@ -758,8 +763,8 @@ handle {
 
 El `as a` liga `a` como un **capability value**: un valor cuyo
 tipo es el efecto mismo (`Cell`, `State[Int]`). Dentro del cuerpo,
-`a.get()` opera contra *esa* instancia — no contra "el `Cell` más
-cercano", sino contra el handler que tiene nombre `a`.
+`a.get()` opera contra *esa* instancia: el handler que tiene
+nombre `a`, y no el `Cell` más cercano.
 
 Lo interesante empieza cuando el capability viaja. Una instancia
 nombrada **se puede pasar como argumento**:
@@ -773,7 +778,7 @@ Mira esa firma con calma, porque tiene una sutileza. `Cell`
 aparece como **tipo de parámetro**, no en la fila de efectos.
 Son dos modos distintos de pedir lo mismo:
 
-- **En la fila** (`fn f() : T / Cell`): el efecto se *demanda* —
+- **En la fila** (`fn f() : T / Cell`): el efecto se *demanda*, y
   lo satisface un `handle` que envuelva la llamada, o un default.
 - **Como parámetro** (`fn f(c: Cell) : T`): el capability lo
   *provee* quien llama, pasándolo explícito. No va en la fila,
@@ -801,12 +806,12 @@ destino = 30
 
 `add` suma las celdas que le den, sin saber cuál es cuál. Antes
 de las instancias nombradas, la única salida era declarar tres
-efectos idénticos — `CellA`, `CellB`, `CellDst` — y manejar cada
+efectos idénticos (`CellA`, `CellB`, `CellDst`) y manejar cada
 uno por separado. Ceremonia pura, y no escala.
 
 Una restricción importante: el capability es **de segunda
-clase**. Puede bajar por la pila — como argumento de llamada,
-como receptor de operaciones — pero no puede *escapar*:
+clase**. Puede bajar por la pila, como argumento de llamada o
+como receptor de operaciones, pero no puede *escapar*:
 guardarlo en un record, devolverlo desde la función, capturarlo
 en una closure que sobreviva al `handle`, o cruzarlo a una fibra
 con `spawn`. Un handler es una promesa con alcance léxico; un
@@ -1008,8 +1013,8 @@ Vale la pena decir de dónde viene ese ejemplo. Hasta la versión
 0.105, `Fail` era un efecto del stdlib **con** default: el runtime
 imprimía un banner y salía con código 1. En 0.106 lo retiraron.
 El argumento fue que no aportaba nada que `Result[a, e]` con `!`
-postfijo no diera mejor — de hecho, no quedaba una sola fila
-`/ Fail` en todo el stdlib — y que su forma, una operación que
+postfijo no diera mejor (de hecho, no quedaba una sola fila
+`/ Fail` en todo el stdlib) y que su forma, una operación que
 devuelve `Nothing`, era justamente la que *no* podía expresar la
 falla interesante: aquella en la que el consumidor elige si saltear
 o abortar. Para eso el efecto tiene que devolver `Unit` y dejar que

@@ -6,7 +6,8 @@ vez al mes y se arreglan tres veces; `async`/`await` introduce
 colores de funciones; los actores corrigen lo anterior pero
 históricamente vienen con GC y un runtime pesado.
 
-kaikai apuesta por una combinación poco usual: **fibras
+Peleé con las tres formas en su momento, y de esa pelea salió la
+apuesta de kaikai, que es una combinación poco usual: **fibras
 cooperativas + memoria por fibra + Perceus**. La estructura tiene
 tres consecuencias que valen la pena nombrar antes de la
 sintaxis:
@@ -119,8 +120,8 @@ se necesita uno del mismo shape inmediatamente después, se
 reusa la misma memoria sin tocar el contador). En la práctica
 el costo es bajo y predecible.
 
-Para el caso extremo — un cálculo que arma montañas de
-estructura descartable solo para plegarla a un escalar —
+Para el caso extremo, un cálculo que arma montañas de
+estructura descartable solo para plegarla a un escalar,
 existe un escape opt-in: el bloque `region`, que asigna en
 una arena y la libera entera de un golpe, sin contadores de
 por medio. Es parte del mismo catálogo de kinds que las
@@ -176,7 +177,7 @@ independientes: nada en el código dice que la primera `A` va
 antes que la primera `B`. El runtime reparte las fibras entre
 tantos hilos del sistema como núcleos tenga tu máquina, así
 que en la práctica vas a ver órdenes distintos entre corrida y
-corrida — `A A A B B B` es tan válido como el intercalado de
+corrida: `A A A B B B` es tan válido como el intercalado de
 arriba.
 
 Si quieres la salida perfectamente alternada, hay una manera:
@@ -564,8 +565,8 @@ worker 3: foxtrot
 
 Y esta vez la salida **sí** está garantizada, a diferencia de
 los ejemplos anteriores del capítulo. No porque las fibras
-corran en orden — corren como quieran, en los núcleos que
-haya — sino porque nadie imprime desde una fibra. Las
+corran en orden, que corren como quieran y en los núcleos que
+haya, sino porque nadie imprime desde una fibra. Las
 trabajadoras solo devuelven listas; el `main` las concatena en
 el orden que él eligió al escribir `n.await(a) ++ n.await(b) ++
 n.await(c)`, y recién ahí imprime. El orden de la salida es una
@@ -575,7 +576,7 @@ Esa es una regla de diseño que vale más que el ejemplo: **si
 te importa el orden, ordénalo tú en el punto de reunión, no
 confíes en el de ejecución.**
 
-¿Y si el trabajo no se puede repartir por adelantado — si las
+¿Y si el trabajo no se puede repartir por adelantado, si las
 tareas llegan de a poco, o son de duración muy dispareja y
 quieres que la fibra que se desocupa tome la siguiente? Ahí sí
 necesitas algo que posea la cola y responda pedidos. Ese algo
@@ -626,8 +627,8 @@ $ KAI_THREADS=1 ./programa    # cooperativo, reproducible
 ```
 
 Ahora sí, la pregunta útil: **¿te va a servir?** Si tu programa
-está limitado por IO — esperar red, leer archivos, recibir
-mensajes — las fibras ya te pagaban antes, porque mientras una
+está limitado por IO, esperar red, leer archivos o recibir
+mensajes, las fibras ya te pagaban antes, porque mientras una
 espera bytes las otras corren. Si está limitado por CPU, antes
 las fibras te daban estructura pero no velocidad; hoy sí te
 dan velocidad, siempre que el trabajo se pueda partir en

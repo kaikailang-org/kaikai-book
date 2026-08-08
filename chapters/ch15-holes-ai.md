@@ -9,7 +9,9 @@ in scope, what expressions could fit. The program keeps
 compiling with holes inside; it only aborts if execution
 reaches one.
 
-Holes are useful even if you never use an LLM. They let you
+Let me be clear about one thing before going on, because the
+chapter title can mislead: holes are useful even if you never
+use an LLM. They let you
 design top-down (write the signature first, fill in the body
 later) and make progress piece by piece without the whole
 file failing to compile. That's the human side.
