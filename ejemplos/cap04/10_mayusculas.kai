@@ -1,0 +1,32 @@
+# Plegado de mayúsculas más allá del ASCII.
+#
+# `core.char` cubre el ASCII. `core.char_unicode` agrega los
+# alfabetos cuyo mapeo mayúscula/minúscula es un desplazamiento
+# uniforme de codepoint: Latin-1, Latin Extended-A, griego y
+# cirílico. Lo que cae fuera de esa regla pasa sin cambios.
+
+import core.char
+import core.char_unicode
+import core.list
+import core.string
+
+fn arriba(s: String) : String =
+  string.from_chars(list.map(string.chars(s), char_unicode.to_upper))
+
+fn main() : Unit / Stdout = {
+  Stdout.print(arriba("café"))
+  Stdout.print(arriba("привет"))
+  Stdout.print(arriba("omega"))
+
+  # Dónde termina la cobertura: el griego sin acento se pliega,
+  # el acentuado no, porque su mayúscula no está a un
+  # desplazamiento fijo.
+  Stdout.print(arriba("ωμεγα"))
+  Stdout.print(arriba("ωμέγα"))
+
+  # Un símbolo que no es letra también pasa intacto.
+  Stdout.print(arriba("☃ 42"))
+
+  # `core.char` sigue siendo el camino cuando el dato es ASCII.
+  Stdout.print("#{char.to_upper('k')}")
+}

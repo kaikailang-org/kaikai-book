@@ -8,6 +8,11 @@ what was missing: how to declare functions carefully, how to
 write lambdas, what higher-order functions are, and the four
 pipe operators kaikai uses to chain transformations.
 
+Of everything I decided, the four pipes are what I argued with
+myself about the longest: four operators is a lot for a language
+that prides itself on having few forms. I kept them in the end,
+and §6.4 explains why.
+
 We will also look in detail at something kaikai promises and
 very few languages guarantee seriously: **tail-call
 elimination**. That guarantee is what lets you replace `for`
@@ -188,7 +193,7 @@ let adults = people |? .age > 18         # ERROR: mixes projection with `>`
 ```
 
 What you want there is the explicit arrow, `(p) => p.age > 18`.
-The practical rule: if the lambda *only* pulls out a field or
+Here's how I settle it: if the lambda *only* pulls out a field or
 calls a method, write it point-free; if it does anything else,
 arrow.
 
@@ -432,6 +437,28 @@ xs | { n -> n * n + 1 }
 
 This reads almost like prose. It works for `|` and `||`, and
 mixes with the rest of the pipeline without noise.
+
+One detail bites when you nest. A lambda stage does not open a
+scope for the stages that follow it, so the next lambda lands
+as its sibling, at the same level of the pipe.
+
+```kai
+# does not compile
+[0..2] | (r) => [0..2] | (c) => r * 10 + c
+```
+
+```
+error: cannot find `r` in this scope
+```
+
+`(c) => …` ended up as a stage of the outer pipe, so `r` was
+never in sight. Parentheses put the inner pipe inside the
+lambda:
+
+```kai
+[0..2] | (r) => ([0..2] | (c) => r * 10 + c)
+# [[0, 1, 2], [10, 11, 12], [20, 21, 22]]
+```
 
 ### Double trailing lambda
 

@@ -3,7 +3,9 @@
 Llegamos al primero de dos casos de estudio que cierran el
 libro. La idea es ver, en un solo lugar, cómo las piezas de
 los capítulos anteriores encajan en algo que se parece a
-software real.
+software real. Desconfío de los libros de lenguajes que nunca
+salen del ejemplo de juguete, así que quise cerrar este con dos
+programas que podrían estar en producción.
 
 Este capítulo cubre **un servidor HTTP**: la familia de
 problemas donde lo que pesa es la concurrencia, la

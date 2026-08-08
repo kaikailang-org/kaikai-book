@@ -2,9 +2,10 @@
 
 Hasta aquí cada capítulo se concentró en el lenguaje: la
 sintaxis, los tipos, los efectos, el modelo de memoria.
-Pero un lenguaje sin tooling no se usa. Este capítulo cubre
-el otro lado: el binario `kai`, que es la cara con la que
-todo programador interactúa todos los días.
+Pero un lenguaje sin tooling no se usa, y esa es una lección que
+me tocó aprender mirando morir lenguajes mejores que kaikai. Este
+capítulo cubre el otro lado: el binario `kai`, que es la cara con
+la que todo programador interactúa todos los días.
 
 Es un capítulo corto y de referencia. No hay ejercicios. La
 idea es que sepas qué comando usar cuándo, y que tengas a
@@ -151,9 +152,9 @@ error: type mismatch in function call
 ```
 
 La clave es lo que `typecheck` **no** hace. Corre el front-end
-completo del compilador —lexer, parser, resolución de nombres,
+completo del compilador (lexer, parser, resolución de nombres,
 inferencia HM y de filas de efectos, la maquinaria de kinds y
-unidades, la validación de dispatch de protocolos— y se detiene
+unidades, la validación de dispatch de protocolos) y se detiene
 ahí. No monomorfiza, no genera código, no enlaza, no escribe un
 binario. Todo el trabajo que un `build` gasta *después* de
 saber que el programa es correcto se lo salta, y por eso termina
@@ -166,9 +167,9 @@ front-end está limpio.
 
 Un límite honesto, porque el nombre promete un poco de más:
 `typecheck` cubre el front-end, no el pipeline entero. Un puñado
-de errores solo aparecen en fases posteriores —una cota de
+de errores solo aparecen en fases posteriores (una cota de
 protocolo que se viola recién al monomorfizar en una instancia
-concreta, o un hueco de cobertura de un backend— y esos
+concreta, o un hueco de cobertura de un backend) y esos
 `typecheck` no los ve. Un archivo que pasa `typecheck` casi
 siempre compila, pero "casi siempre" no es "siempre". Para la
 certeza total, el juez sigue siendo `kai build`.
@@ -287,16 +288,24 @@ fn run() : Int {
 ```
 
 Pero si la llamada descartada **carga efectos**, el descarte
-es legítimo — llamaste por el efecto, no por el valor — y la
+es legítimo, porque llamaste por el efecto y no por el valor, y la
 regla se queda callada. Esa distinción requiere la fila de
 efectos; un linter textual no la tiene.
 
-Otras reglas del catálogo empujan hacia el kaikai idiomático:
+Otras reglas del catálogo empujan hacia el kaikai idiomático.
 `point_free_nudge` sugiere la sección point-free (§6.2) cuando
-una lambda unaria solo proyecta sobre su parámetro, y
+una lambda unaria solo proyecta sobre su parámetro.
 `and_then_to_map_nudge` avisa cuando un `and_then` es en
-realidad un `map`. El catálogo crece por fases; `kai info
-lint` lista el estado actual.
+realidad un `map`, y `match_option_to_combinator` hace lo
+propio con un `match` sobre `Option` que ya tiene combinador.
+El resto barre residuos: `redundant_if_bool`,
+`redundant_match_catchall`, `dead_code_unused_priv`,
+`effect_over_declared` y `effect_ffi_without_extern`.
+
+Son nueve al día de hoy, y el número va a subir. Cada regla
+entra cuando se puede demostrar que las dos formas son
+equivalentes, porque un linter ruidoso es peor que ninguno.
+`kai info lint` lista el estado actual.
 
 ## 16.5 Gestión de paquetes: `init`, `add`, `install`, `update`
 
@@ -391,24 +400,28 @@ $ kai info
 kai info — language reference, organized by topic.
 
 Topics:
-  actors       Message-passing concurrency built on fibers
-  effects      Algebraic effects and handlers
-  ffi          Foreign function interface — calling C via `Ffi`.
-  fibers       Structured concurrency via nursery, spawn, await, cancel
+  actors       Message-passing concurrency built on fibers — `Actor[Msg]` effect
+  contracts    Design-by-Contract — `requires` / `ensures` on a function, and
+  deltas       Where kaikai deliberately differs from Rust/Go/Python/JS/Haskell
+  effects      Algebraic effects and handlers — kaikai's first-class mechanism for
+  ffi          Foreign function interface — calling C via the `Ffi` capability.
+  fibers       Structured concurrency via nursery, spawn, await, cancel — BEAM-style
   holes        Typed holes for incremental development.
-  idiomatic    How to write kaikai the way kaikai wants to be written.
+  idiomatic    How to write kaikai the way kaikai wants to be written — the idioms,
   install      Install and self-update the kaikai compiler.
-  lint         A Clippy-style linter for suspect-but-valid code.
-  llm          Bootstrap guide for an agentic AI pointed at a kaikai repo.
+  kinds        Kinds classify types the way types classify values — one closed
+  lint         A Clippy-style linter for suspect-but-valid code, beside the compiler.
+  llm          Bootstrap guide for an agentic AI pointed at a kaikai repo — what
   loop         Control flow — `if`, `while`, `until`, and iteration via pipes.
-  lsp          The kaikai Language Server (`kai lsp`).
+  lsp          The kaikai Language Server (`kai lsp`) for editor integration.
   match        Pattern matching with exhaustiveness checking.
   packages     `kai.toml`, imports, visibility.
-  pipes        Apply, map, flat-map, filter — four pipe operators.
+  pipes        Apply (`|>`), map (`|`), flat-map (`||`), filter (`|?`) — four pipe
   protocols    Single-dispatch protocols, Go/Clojure/Elixir-style.
-  syntax       One-page reference of the forms kaikai actually has.
+  syntax       One-page reference of the forms kaikai actually has. Every form on
   testing      Test blocks, assertions, benchmarks, property checks.
-  units        Units of measure on `Real`.
+  units        Units of measure on `Real` — phantom-type discipline, zero runtime
+  vec          `Vec[T]` — the pure value vector: flat contiguous storage with
 ```
 
 Pasando un tema, lo despliega:
@@ -427,7 +440,7 @@ Tres flags útiles:
   los que mencionan la palabra.
 - `kai info <topic> --json`: la página estructurada en JSON.
 
-Esta última forma es deliberada: kaikai trata su propia
+Esta última forma la agregué a propósito: kaikai trata su propia
 documentación como **datos**, no como prosa estática. Un
 agente IA puede consumir `kai info effects --json` y
 disponer de la doc completa del sistema de efectos sin
@@ -473,12 +486,14 @@ $ kai doc
 kai doc — stdlib reference, by module.
 
 Modules:
-  array                Bridge helpers between `[T]` and `Array[T]`.
-  collections/hashmap  Mutable, separately-chained `HashMap[k, v]`.
-  core/string          Byte-indexed string helpers.
+  collections/queue    Amortised-O(1) two-list FIFO queue (Okasaki).
+  collections/stack    LIFO stack, a wrapper over `[a]`.
   date                 Civil calendar dates (proleptic Gregorian).
-  encoding/json        JSON encoder + decoder.
-  string_builder       Amortised text accumulator.
+  encoding/base64      Base64 encoder/decoder.
+  encoding/hex         Hexadecimal encoding/decoding.
+  path                 POSIX path manipulation.
+  string_builder       `StringBuilder` — an amortised text accumulator.
+  uuid                 RFC 4122 UUID v4 generator + parser.
   ...
 ```
 
@@ -491,11 +506,12 @@ $ kai doc date
 
   Civil calendar dates (proleptic Gregorian).
 
-  add_days       Shift by `n` civil days (negative goes backwards).
-  day_of_week    ISO-8601 weekday numbering: 1 = Monday … 7 = Sunday.
-  make           Validating constructor. `None` when the month is …
-  parse          Strict ISO-8601 `YYYY-MM-DD`.
-  today          Today's civil date in UTC. The only effectful fn …
+  add_days               Shift by `n` civil days (negative goes backwards).
+  day_of_week            ISO-8601 weekday numbering: 1 = Monday … 7 = Sunday.
+  days_in_month          Days in `m` of year `y`.
+  make                   Validating constructor.
+  to_string              `YYYY-MM-DD`, zero-padded (year to 4 digits, month/day to 2).
+  today                  Today's civil date in UTC.
   ...
 ```
 
@@ -504,6 +520,14 @@ símbolo:
 
 ```
 $ kai doc date.parse
+# date.parse   (date.kai)
+
+  parse(s: String) -> Option[Date]
+
+  Strict ISO-8601 `YYYY-MM-DD`: exactly 10 chars, ASCII digits in the
+  three fields, `-` separators. Anything else — wrong length, signs,
+  spaces, `2026/01/02`, `2026-1-2` — is `None`, as is a well-formed
+  string naming an invalid date (`2026-02-30`, `2026-13-01`).
 ```
 
 `kai doc` resuelve los nombres contra el paquete actual, no
@@ -538,7 +562,7 @@ del binario `kai` para casos especiales:
   scheduler M:N del programa que corres. Sin la variable, el
   runtime toma la cantidad de núcleos del host (con tope en 32).
   `KAI_THREADS=1` vuelve al scheduler cooperativo de un solo
-  hilo, byte a byte — útil cuando quieres una salida
+  hilo, byte a byte. Sirve cuando quieres una salida
   reproducible. Es la única de esta lista que afecta al
   ejecutable y no a la compilación.
 - **`KAI_BACKEND`** (`c` | `native`, por defecto `native`): el
@@ -689,7 +713,7 @@ Fíjate en el `I32`. La declaración que el compilador emite
 **es** el contrato del binding, y para un símbolo que los
 headers del sistema ya declaran (como toda libc) tiene que
 calzar con el tipo C exacto: `abs` es `int abs(int)`, así
-que el binding dice `I32`, no `Int` — de lo contrario `cc`
+que el binding dice `I32`, no `Int`. De lo contrario `cc`
 rechaza la redeclaración en conflicto. Y un símbolo cuyo
 tipo C no tiene mapeo kaikai (`size_t`, un struct de libc)
 no se ata directo: lo envuelves en un `.c` chico, como
@@ -879,7 +903,7 @@ se sella cuando la edición se cierra, no antes.**
 está decidiendo. Un cambio incompatible en la lista de
 arriba no es una violación de la promesa: es el trabajo de
 construirla. El retiro de `Fail` del stdlib en 0.106 es
-exactamente eso — una firma `pub` que se puso a prueba, no
+exactamente eso: una firma `pub` que se puso a prueba, no
 se ganó su lugar, y salió.
 
 Esos cambios no quedan enterrados en el historial de git.
@@ -914,7 +938,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.108.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.109.2 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org
@@ -975,16 +999,16 @@ Al cierre de este libro, kaikai conoce tres:
 |---|---|---|
 | `tongariki` | cerrada | Fase de iteración rápida pre-2026. Solo paquetes que aún no migraron. |
 | `hanga-roa` | activa (default) | La primera edición pública. El libro está escrito contra esta. |
-| `orongo` | futura | La edición de estabilización. Todavía no tiene número de versión asignado — `hanga-roa` ya cruzó la serie 0.100.x sin cambiar de edición, que es justo la demostración de que el compromiso vive en la edición y no en un número. El rótulo "1.0" está postergado indefinidamente. |
+| `orongo` | futura | La edición de estabilización. Todavía no tiene número de versión asignado: `hanga-roa` ya cruzó la serie 0.100.x sin cambiar de edición, que es justo la demostración de que el compromiso vive en la edición y no en un número. El rótulo "1.0" está postergado indefinidamente. |
 
 Los nombres siguen la cantera rapanui del resto del
-ecosistema: lugares de Rapa Nui en orden cronológico —
+ecosistema: lugares de Rapa Nui en orden cronológico.
 Tongariki, Hanga Roa, Orongo, y Anakena como el horizonte
 que viene después. Los hitos del lenguaje se definen por
 edición, nunca por un número de versión con aura.
 Cuando se cierre `hanga-roa`, llegará un anuncio, una guía
 de migración, y `kai migrate` automatizará los cambios
-mecánicos — la herramienta ya existe: reescribe el AST de
+mecánicos. La herramienta ya existe: reescribe el AST de
 un archivo entre ediciones, por defecto en modo dry-run
 (imprime sin tocar nada) y con `--write` aplica, de forma
 idempotente. Mientras tanto, el código que escribiste

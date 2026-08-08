@@ -6,8 +6,9 @@ file becomes a problem: readers get lost, changes clash, searches
 conflate logical modules that are physically tangled. The code
 has to be split into named pieces.
 
-kaikai handles this with a deliberately simple system. **One file
-is one module.** There is no `module Foo` declaration. There are
+kaikai handles this with a deliberately simple system, and the
+simplicity here is mine and it is on purpose. **One file is one
+module.** There is no `module Foo` declaration. There are
 no special files that reopen a module from elsewhere. The module
 name is derived from the file path, and that's it. Above modules
 sits a second scale: a **project**, described by a `kai.toml`,
@@ -68,7 +69,8 @@ fn main() {
 accessible under the prefix `arithmetic.`. The function
 `double_plus_one` is called as `arithmetic.double_plus_one`.
 
-The prefix is deliberate. When a project grows to fifteen or
+The prefix is on purpose, and I know it annoys some people.
+When a project grows to fifteen or
 twenty modules, seeing `arithmetic.double_plus_one` in an
 expression tells you instantly where it comes from. The
 alternative — pulling all names loose into the consumer's

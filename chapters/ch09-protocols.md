@@ -12,7 +12,9 @@ Define a `println` variant just for `Point`? None of these
 scale.
 
 kaikai's answer is **protocols**: a named contract with a
-small set of operations, that any type can satisfy.
+small set of operations, that any type can satisfy. I picked the
+word "protocol" over "trait" or "interface" because it describes
+what actually happens: two parties agreeing on how to talk.
 Conceptually, protocols do what **interfaces** do in Go,
 **traits** in Rust, **protocols** in Clojure and Elixir, and
 the easy part of **typeclasses** in Haskell. But kaikai
@@ -208,7 +210,7 @@ each form pays off.
 Not everything a record derives is one of the five protocols.
 There are two more derives, of a different nature: `Layout`, which
 fixes a record's byte order for binary serialization (we see it in
-chapter 19), and `Json`, which weaves the record into the JSON
+chapter 19), and `Json`, which maps the record onto the JSON
 format.
 
 `#[derive(Json)]` generates two things: `to_json`, which turns
@@ -394,9 +396,9 @@ What do you gain with these restrictions? Three things:
 
 What do you lose? Some abstractions that are elegant in
 Haskell — particularly everything that lives over Functor
-and friends. That trade-off is deliberate: the abstractions
-kaikai prioritizes live in the effect system (chapter 12),
-not in the type system.
+and friends. I made that trade-off with my eyes open: the
+abstractions I wanted to prioritize live in the effect system
+(chapter 12), not in the type system.
 
 ## 9.7 Protocol bounds on generic functions
 

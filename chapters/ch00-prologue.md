@@ -245,7 +245,7 @@ issue against the
 [book's repo](https://github.com/kaikailang-org/kaikai-book/issues).
 The book records up front the compiler version each edition
 was validated against. This edition is validated against
-**kaikai 0.108.0**, the language's Hanga Roa edition.
+**kaikai 0.109.2**, the language's Hanga Roa edition.
 
 ## Who should read this book
 

@@ -7,6 +7,9 @@ produced thrust in pound-force per second; another read it
 as newtons per second. Nobody had written units on the
 interface. The probe disintegrated on Mars.
 
+It's the story that comes to mind whenever someone asks me what,
+concretely, a type system is good for.
+
 It's an extreme example, but the family is huge: two
 components sharing the same numeric type but not the same
 interpretation. Passing seconds where milliseconds are
@@ -236,7 +239,7 @@ physicists do by hand when they write "10 km × 1000 m/km =
 10000 m". kaikai forces writing that multiplication
 explicitly.
 
-This is deliberate and at the same time freeing. Deliberate
+I did it on purpose, and I think it also frees you. On purpose
 because forcing a visible conversion makes the programmer
 think about what rate they're using, when it was applied, and
 where it came from. Freeing because once the conversion is

@@ -7,6 +7,11 @@ you'd find counterparts in Haskell, Rust, F#. **Algebraic
 effects** are what set kaikai apart from nearly every
 production-ready language today.
 
+They are also the reason this project exists. I had spent years
+circling a language of my own without ever quite starting it,
+until a post on algebraic effects landed in front of me and I
+understood what it was I wanted to build.
+
 The idea is easy to state and strange at first: **a function
 declares in its signature which effects it uses, but not how
 they happen**. Printing to a screen, reading a file, failing

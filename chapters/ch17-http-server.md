@@ -3,7 +3,9 @@
 We've reached the first of two case studies that close the
 book. The point is to see, in one place, how the pieces
 from the previous chapters fit into something resembling
-real software.
+real software. I distrust language books that never leave the
+toy example, so I wanted to close this one with two programs
+that could plausibly ship.
 
 This chapter covers **an HTTP server**: the family of
 problems where what matters is concurrency, modularity, and

@@ -1,8 +1,9 @@
 # Capítulo 1 · Tour de kaikai
 
-La mejor forma de conocer un lenguaje es leerlo y correrlo. Este
-capítulo es un recorrido panorámico por kaikai en diez
-programas cortos. Ninguno pasa de unas treinta líneas, todos
+La mejor forma de conocer un lenguaje es leerlo y correrlo. Así
+aprendí todos los que sé, y por eso este libro empieza con
+programas y no con definiciones. Este capítulo es un recorrido
+panorámico por kaikai en diez programas cortos. Ninguno pasa de unas treinta líneas, todos
 compilan, y juntos cubren las formas que vas a ver una y otra
 vez en el resto del libro: declaraciones, tipos algebraicos,
 pattern matching, efectos, fibras, protocolos, unidades de
@@ -691,8 +692,8 @@ $ curl -fsSL https://raw.githubusercontent.com/kaikailang-org/kaikai/main/instal
 Descarga el último release, verifica su SHA-256, lo deja bajo
 `~/.kaikai/` y agrega `~/.kaikai/bin` al `PATH` de tu shell. Si
 prefieres Homebrew, `brew install kaikailang-org/kaikai/kaikai`
-llega al mismo lugar. El binario es autocontenido — trae su
-propio LLVM adentro, no necesitas toolchain aparte —, aunque por
+llega al mismo lugar. El binario es autocontenido: trae su
+propio LLVM adentro y no necesitas toolchain aparte, aunque por
 ahora los releases preconstruidos cubren macOS sobre Apple
 Silicon.
 
@@ -705,9 +706,9 @@ $ make tier0
 $ ./bin/kai run examples/minimal/hello.kai
 ```
 
-`make tier0` construye la cadena de bootstrap completa — stage 0
-(escrito en C), stage 1 (kaikai-minimal) y stage 2, el compilador
-auto-hosteado que usas en el día a día — y corre las baterías
+`make tier0` construye la cadena de bootstrap completa (stage 0
+escrito en C, stage 1 en kaikai-minimal, y stage 2, el compilador
+auto-hosteado que usas en el día a día) y corre las baterías
 rápidas para confirmar que quedó sana.
 
 Instalado una vez, el compilador se actualiza solo:
@@ -731,6 +732,8 @@ $ kai test archivo.kai    # ejecuta los bloques `test "..." { ... }` del archivo
 
 `kai run` es el comando que más vas a teclear mientras lees el
 libro. Edita un archivo, córrelo, mira la salida, vuelve a editar.
+Ese ciclo es el que más me importó dejar rápido cuando diseñé el
+tooling, porque es donde se pasa el tiempo de verdad.
 
 El capítulo 16 cubre el resto del tooling: `fmt`, `lsp`,
 integración con editores, y los comandos de paquetes (`init`,

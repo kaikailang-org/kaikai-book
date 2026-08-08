@@ -1,7 +1,9 @@
 # Chapter 1 · A Tour of kaikai
 
 The best way to get to know a language is to read it and run it.
-This chapter is a guided tour of kaikai in eight short programs.
+That is how I learned every language I know, which is why this
+book opens with programs instead of definitions. This chapter is
+a guided tour of kaikai in eight short programs.
 None of them runs longer than thirty lines, every one of them
 compiles, and together they cover the shapes you will see again
 and again in the rest of the book: declarations, algebraic data

@@ -8,6 +8,9 @@ segundo, otro lo leía como newtons por segundo. Nadie había
 escrito las unidades en la interfaz. La sonda se desintegró
 contra Marte.
 
+Es la historia que se me viene a la cabeza cada vez que alguien
+me pregunta para qué sirve, en concreto, un sistema de tipos.
+
 Es un ejemplo extremo, pero la familia es enorme: dos
 componentes que comparten el mismo tipo numérico pero no la
 misma interpretación. Pasar segundos donde se esperan
@@ -27,7 +30,7 @@ documentada en cada firma que la toca.
 Y si el §2.6 te dejó la idea de que en kaikai el tipo no es
 la única etiqueta, este capítulo es donde esa idea se vuelve
 tangible: las unidades son tu primer encuentro de cuerpo
-entero con un **kind** — una familia de etiquetas con su
+entero con un **kind**: una familia de etiquetas con su
 propia álgebra, distinta de los tipos. Ya usaste otra sin
 mirarla de frente (la fila de efectos); esta es la primera
 que vas a declarar y manipular tú.
@@ -183,7 +186,7 @@ fn promedio[u: Measure](a: Real<u>, b: Real<u>) : Real<u> =
 unidad. `Measure` no es un caso aislado: es una entrada del
 catálogo de kinds del lenguaje (`stdlib/core/kinds.kai`), el
 mismo mecanismo que clasifica tipos, efectos, monedas y
-regiones de memoria — el capítulo 19 lo recorre completo. La
+regiones de memoria. El capítulo 19 lo recorre completo. La
 función `promedio` acepta dos `Real<u>` y devuelve
 un `Real<u>`: el "para cualquier u" es lo que permite usarla
 con `USD`, `kg`, `m/sec`, lo que sea, **siempre y cuando los
@@ -240,7 +243,7 @@ lo que se hace en física a mano cuando uno escribe "10 km × 1000
 m/km = 10000 m". kaikai obliga a escribir esa multiplicación
 explícita.
 
-Esto es deliberado y a la vez liberador. Deliberado porque
+Lo hice a propósito, y creo que además libera. A propósito porque
 forzar una conversión visible hace que el programador piense
 qué tasa está usando, en qué momento se aplicó, y de dónde
 salió. Liberador porque, una vez escrita la conversión, el

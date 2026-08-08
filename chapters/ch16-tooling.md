@@ -2,9 +2,10 @@
 
 Every chapter so far has focused on the language: syntax,
 types, effects, the memory model. But a language without
-tooling doesn't get used. This chapter covers the other
-side: the `kai` binary, which is the face every programmer
-interacts with every day.
+tooling doesn't get used, and that is a lesson I learned
+watching languages better than kaikai die. This chapter covers
+the other side: the `kai` binary, which is the face every
+programmer interacts with every day.
 
 It's a short reference chapter. No exercises. The point is
 for you to know which command to use when, and to have the
@@ -290,12 +291,20 @@ is legitimate — you called for the effect, not the value —
 and the rule stays quiet. That distinction requires the
 effect row; a textual linter doesn't have it.
 
-Other rules in the catalog nudge toward idiomatic kaikai:
+Other rules in the catalog nudge toward idiomatic kaikai.
 `point_free_nudge` suggests the point-free section (§6.2)
-when a unary lambda only projects on its parameter, and
+when a unary lambda only projects on its parameter.
 `and_then_to_map_nudge` warns when an `and_then` is really a
-`map`. The catalog grows in phases; `kai info lint` lists
-the current state.
+`map`, and `match_option_to_combinator` does the same for a
+`match` over `Option` that already has a combinator. The rest
+sweep up residue: `redundant_if_bool`,
+`redundant_match_catchall`, `dead_code_unused_priv`,
+`effect_over_declared` and `effect_ffi_without_extern`.
+
+Nine as of today, and the number will climb. A rule earns its
+place only when the two forms can be shown equivalent, because
+a noisy linter is worse than none. `kai info lint` lists the
+current state.
 
 ## 16.5 Package management: `init`, `add`, `install`, `update`
 
@@ -390,24 +399,28 @@ $ kai info
 kai info — language reference, organized by topic.
 
 Topics:
-  actors       Message-passing concurrency built on fibers
-  effects      Algebraic effects and handlers
-  ffi          Foreign function interface — calling C via `Ffi`.
-  fibers       Structured concurrency via nursery, spawn, await, cancel
+  actors       Message-passing concurrency built on fibers — `Actor[Msg]` effect
+  contracts    Design-by-Contract — `requires` / `ensures` on a function, and
+  deltas       Where kaikai deliberately differs from Rust/Go/Python/JS/Haskell
+  effects      Algebraic effects and handlers — kaikai's first-class mechanism for
+  ffi          Foreign function interface — calling C via the `Ffi` capability.
+  fibers       Structured concurrency via nursery, spawn, await, cancel — BEAM-style
   holes        Typed holes for incremental development.
-  idiomatic    How to write kaikai the way kaikai wants to be written.
+  idiomatic    How to write kaikai the way kaikai wants to be written — the idioms,
   install      Install and self-update the kaikai compiler.
-  lint         A Clippy-style linter for suspect-but-valid code.
-  llm          Bootstrap guide for an agentic AI pointed at a kaikai repo.
+  kinds        Kinds classify types the way types classify values — one closed
+  lint         A Clippy-style linter for suspect-but-valid code, beside the compiler.
+  llm          Bootstrap guide for an agentic AI pointed at a kaikai repo — what
   loop         Control flow — `if`, `while`, `until`, and iteration via pipes.
-  lsp          The kaikai Language Server (`kai lsp`).
+  lsp          The kaikai Language Server (`kai lsp`) for editor integration.
   match        Pattern matching with exhaustiveness checking.
   packages     `kai.toml`, imports, visibility.
-  pipes        Apply, map, flat-map, filter — four pipe operators.
+  pipes        Apply (`|>`), map (`|`), flat-map (`||`), filter (`|?`) — four pipe
   protocols    Single-dispatch protocols, Go/Clojure/Elixir-style.
-  syntax       One-page reference of the forms kaikai actually has.
+  syntax       One-page reference of the forms kaikai actually has. Every form on
   testing      Test blocks, assertions, benchmarks, property checks.
-  units        Units of measure on `Real`.
+  units        Units of measure on `Real` — phantom-type discipline, zero runtime
+  vec          `Vec[T]` — the pure value vector: flat contiguous storage with
 ```
 
 Pass a topic and it prints the page:
@@ -426,7 +439,7 @@ Three useful flags:
   the ones that mention the word.
 - `kai info <topic> --json` — the structured page as JSON.
 
-That last form is deliberate: kaikai treats its own
+I added that last form on purpose: kaikai treats its own
 documentation as **data**, not as static prose. An AI agent
 can consume `kai info effects --json` and have the full
 documentation of the effect system at hand without having to
@@ -471,12 +484,14 @@ $ kai doc
 kai doc — stdlib reference, by module.
 
 Modules:
-  array                Bridge helpers between `[T]` (linked list) and `Array[T]`
-  collections/hashmap  Mutable, separately-chained hash table `HashMap[k, v]` behind the
-  core/string          core.string — byte-indexed string helpers over the runtime string
+  collections/queue    Amortised-O(1) two-list FIFO queue (Okasaki).
+  collections/stack    LIFO stack, a wrapper over `[a]`.
   date                 Civil calendar dates (proleptic Gregorian).
-  encoding/json        stdlib/encoding/json.kai — JSON encoder + decoder.
-  string_builder       Amortized text accumulator.
+  encoding/base64      Base64 encoder/decoder.
+  encoding/hex         Hexadecimal encoding/decoding.
+  path                 POSIX path manipulation.
+  string_builder       `StringBuilder` — an amortised text accumulator.
+  uuid                 RFC 4122 UUID v4 generator + parser.
   ...
 ```
 
@@ -489,11 +504,12 @@ $ kai doc date
 
   Civil calendar dates (proleptic Gregorian).
 
-  add_days       Shift by `n` civil days (negative goes backwards). Total: every
-  day_of_week    ISO-8601 weekday numbering: 1 = Monday … 7 = Sunday.
-  make           Validating constructor. `None` when the month is outside 1..12 or
-  parse          Strict ISO-8601 `YYYY-MM-DD`: exactly 10 chars, ASCII digits in the
-  today          Today's civil date in UTC. The only effectful fn in this module —
+  add_days               Shift by `n` civil days (negative goes backwards).
+  day_of_week            ISO-8601 weekday numbering: 1 = Monday … 7 = Sunday.
+  days_in_month          Days in `m` of year `y`.
+  make                   Validating constructor.
+  to_string              `YYYY-MM-DD`, zero-padded (year to 4 digits, month/day to 2).
+  today                  Today's civil date in UTC.
   ...
 
 Run 'kai doc date.<symbol>' for a symbol's signature and full doc.
@@ -505,7 +521,7 @@ And `module.symbol` shows a symbol's signature and full doc:
 $ kai doc date.parse
 # date.parse   (date.kai)
 
-  parse(s: String) -> Option
+  parse(s: String) -> Option[Date]
 
   Strict ISO-8601 `YYYY-MM-DD`: exactly 10 chars, ASCII digits in the
   three fields, `-` separators. Anything else — wrong length, signs,
@@ -914,7 +930,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.108.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.109.2 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org
