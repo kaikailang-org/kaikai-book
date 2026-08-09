@@ -339,9 +339,10 @@ let y : Real = 3.14
 La anotación no es solo decoración. Sirve para dos cosas:
 documentar la intención cuando el tipo no es obvio, y guiar al
 inferidor en los pocos casos en que la inferencia local no
-alcanza. Yo **anoto los argumentos y el retorno de las funciones
-públicas, y dejo los `let` locales sin anotación**. Así el tipo
-viaja por las firmas y el cuerpo se queda limpio.
+alcanza. La regla práctica es **anotar los argumentos y el
+retorno de las funciones públicas, dejar los `let` locales sin
+anotación**. Así el tipo viaja por las firmas y el cuerpo se
+queda limpio.
 
 Una vez que un nombre se ata, no se puede volver a atar al mismo
 nombre en el mismo bloque. La línea siguiente daría un error:

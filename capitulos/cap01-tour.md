@@ -3,8 +3,9 @@
 La mejor forma de conocer un lenguaje es leerlo y correrlo. Así
 aprendí todos los que sé, y por eso este libro empieza con
 programas y no con definiciones. Este capítulo es un recorrido
-panorámico por kaikai en diez programas cortos. Ninguno pasa de unas treinta líneas, todos
-compilan, y juntos cubren las formas que vas a ver una y otra
+panorámico por kaikai en diez programas cortos. Ninguno pasa de
+unas treinta líneas, todos compilan, y juntos cubren las formas
+que vas a ver una y otra
 vez en el resto del libro: declaraciones, tipos algebraicos,
 pattern matching, efectos, fibras, protocolos, unidades de
 medida, contratos, pruebas inline y holes tipados.
@@ -754,8 +755,11 @@ la trata en serio.
   efectos algebraicos, la concurrencia con fibras, los actores
   y la apuesta del lenguaje en torno a los LLMs. Es la mitad
   donde kaikai paga su novedad.
-- **Parte IV: Práctica** (capítulos 16 y 17) se ocupa del
-  tooling y cierra con un caso de estudio integrador.
+- **Parte IV: Práctica** (capítulos 16 a 19) se ocupa del
+  tooling, cierra con dos casos de estudio integradores (un
+  servidor HTTP y un ledger contable) y remata con el catálogo
+  de kinds, que es el capítulo más abstracto y el más
+  prescindible.
 - Antes, el **capítulo 2** te ablanda algunas asunciones si
   vienes de un mundo imperativo: expresiones vs sentencias,
   inmutabilidad por defecto, `Option` en vez de `null`,

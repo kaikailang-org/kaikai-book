@@ -2,8 +2,9 @@
 
 Concurrency is where most languages accumulate debt. Threads
 with shared memory lead to races that show up once a month
-and get fixed three times; `async`/`await` introduces
-function colors; actors fix the previous problems but
+and get fixed three times before they actually go away;
+`async`/`await` introduces function colors; actors fix the
+previous problems but
 historically come with a GC and a heavy runtime.
 
 I fought with all three in their day, and kaikai's bet came out

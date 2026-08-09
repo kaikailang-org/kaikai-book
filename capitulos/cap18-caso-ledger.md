@@ -9,11 +9,9 @@ libro mayor contable**, donde lo que pesa es la precisión y no
 la concurrencia. Un débito que no calza con su crédito es un
 bug que tu auditor va a encontrar antes que tú, y aquí
 "funciona y pasa los tests" no alcanza: hay que poder mostrar
-**por qué** funciona. Elegí este caso porque es el terreno en
-que más he trabajado, y porque es donde un error de tipos deja
-de ser una molestia y se convierte en plata. El sistema de tipos
-tiene mucho que
-decir al respecto.
+**por qué** funciona. Lo elegí porque es donde un error de tipos
+deja de ser una molestia y se convierte en plata. El sistema de
+tipos tiene mucho que decir al respecto.
 
 Por qué fintech merece su propio capítulo: es uno de los
 dominios donde más caro sale equivocarse y donde más rinde

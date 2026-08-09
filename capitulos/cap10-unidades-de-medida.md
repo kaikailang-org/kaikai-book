@@ -8,9 +8,6 @@ segundo, otro lo leía como newtons por segundo. Nadie había
 escrito las unidades en la interfaz. La sonda se desintegró
 contra Marte.
 
-Es la historia que se me viene a la cabeza cada vez que alguien
-me pregunta para qué sirve, en concreto, un sistema de tipos.
-
 Es un ejemplo extremo, pero la familia es enorme: dos
 componentes que comparten el mismo tipo numérico pero no la
 misma interpretación. Pasar segundos donde se esperan

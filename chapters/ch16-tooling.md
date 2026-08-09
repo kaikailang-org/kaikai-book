@@ -2,8 +2,8 @@
 
 Every chapter so far has focused on the language: syntax,
 types, effects, the memory model. But a language without
-tooling doesn't get used, and that is a lesson I learned
-watching languages better than kaikai die. This chapter covers
+tooling doesn't get used, and I think that is where several
+languages better than this one have stalled. This chapter covers
 the other side: the `kai` binary, which is the face every
 programmer interacts with every day.
 

@@ -3,9 +3,7 @@
 The book covered kaikai but barely touched the family of
 ideas it's built on. If you want to dig in, here's a short
 list of sources worth reading, grouped by topic. Not meant
-to be exhaustive — meant to be useful. These are the ones I
-read while designing the language, ordered by how much they
-helped me.
+to be exhaustive — meant to be useful.
 
 ## F.1 Algebraic effects
 

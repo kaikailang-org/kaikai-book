@@ -193,7 +193,7 @@ let adults = people |? .age > 18         # ERROR: mixes projection with `>`
 ```
 
 What you want there is the explicit arrow, `(p) => p.age > 18`.
-Here's how I settle it: if the lambda *only* pulls out a field or
+The practical rule: if the lambda *only* pulls out a field or
 calls a method, write it point-free; if it does anything else,
 arrow.
 

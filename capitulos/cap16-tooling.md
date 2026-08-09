@@ -2,10 +2,10 @@
 
 Hasta aquí cada capítulo se concentró en el lenguaje: la
 sintaxis, los tipos, los efectos, el modelo de memoria.
-Pero un lenguaje sin tooling no se usa, y esa es una lección que
-me tocó aprender mirando morir lenguajes mejores que kaikai. Este
-capítulo cubre el otro lado: el binario `kai`, que es la cara con
-la que todo programador interactúa todos los días.
+Pero un lenguaje sin tooling no se usa, y creo que ahí se han
+quedado varios lenguajes mejores que este. Este capítulo cubre
+el otro lado: el binario `kai`, que es la cara con la que todo
+programador interactúa todos los días.
 
 Es un capítulo corto y de referencia. No hay ejercicios. La
 idea es que sepas qué comando usar cuándo, y que tengas a

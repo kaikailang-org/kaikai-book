@@ -7,9 +7,7 @@ cores.
 
 For many cases that structure is enough. But there's a
 pattern that pure fibers leave awkward, and it's worth
-naming before the syntax. I borrowed it from Erlang almost
-unchanged, because after staring at it for a while I found
-nothing worth improving.
+naming before the syntax.
 
 ## An actor is a process; a fiber is a computation
 
@@ -90,6 +88,10 @@ task queue, a logger actor. Cases where a fiber suffices: an
 expensive computation the parent wants to run concurrently
 with other work, a `with_timeout` measuring how long
 something takes, a concurrent map over a list of IO.
+
+Of everything in kaikai, this is the part that is least mine.
+Erlang settled the split between a computation and a live
+process decades ago, and I took it almost unchanged.
 
 ## Actors are not language primitives
 

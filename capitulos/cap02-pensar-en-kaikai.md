@@ -191,7 +191,7 @@ que se observa desde fuera) sí aparecen en la firma, bajo
 efectos como `Mutable`, `Actor` o los que correspondan. Esa
 distinción la veremos en el capítulo 13.
 
-La regla que sigo es simple: usa `let` por defecto; si
+La regla práctica es simple: usa `let` por defecto; si
 necesitas una variable local que cambia, `var` con `:=`;
 si lo que quieres mutar es algo visible desde afuera, ya
 estamos en territorio de efectos y vas a tener que declararlos.

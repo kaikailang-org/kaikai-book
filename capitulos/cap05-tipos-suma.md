@@ -6,10 +6,7 @@ y el `match` que los acompaña no son una construcción exótica:
 son la herramienta que reemplaza a la mitad de las jerarquías
 de clases, los `enum` con flags, los `instanceof` y los
 visitor patterns que probablemente has venido escribiendo. Una
-vez que los manejas, no quieres soltarlos. A mí me pasó
-exactamente eso: llegué a la familia funcional tarde, con la
-cabeza ya hecha a las jerarquías de clases, y después de los sum
-types volver atrás se me hizo cuesta arriba.
+vez que los manejas, no quieres soltarlos.
 
 El capítulo va de menos a más. Empezamos por los sum types
 básicos, pasamos por la recursión en tipos, vemos `match` con
@@ -132,7 +129,7 @@ type Evento = Login(DatosLogin) | Logout(DatosLogout)
 ```
 
 es que el segundo se lee mejor en cualquier lugar donde
-construyas o destructures un evento. Como lo veo yo: si los
+construyas o destructures un evento. La regla práctica: si los
 datos se nombran solos por su posición (un punto es `(Real,
 Real)`), quedan posicionales. Si los datos requieren que el
 lector recuerde el orden, conviene un record.
@@ -286,7 +283,7 @@ ayuda del compilador: cuando agregues un constructor nuevo a
 `Expr`, los `match` con `_` final lo absorberán sin
 quejarse, y vas a perder el aviso.
 
-Mi regla: usa `_` solo cuando de verdad no te
+La regla práctica: usa `_` solo cuando de verdad no te
 interesa distinguir el resto. Si los casos son tres y los tres
 te importan, escribe los tres.
 

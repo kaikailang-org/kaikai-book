@@ -268,7 +268,7 @@ intervalos pequeño, decidible, lineal (y diferir el resto a
 runtime), sobre tener compilación impredecible y dependencias
 externas pesadas.
 
-Así lo pienso yo: **lo que el compilador puede probar barato, lo
+La regla mental: **lo que el compilador puede probar barato, lo
 prueba; lo demás se prueba al ejecutarse**. El binario lleva
 ambos casos sin que tengas que distinguir cuál de los dos
 aplicó.

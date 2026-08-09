@@ -3,12 +3,12 @@
 The best way to get to know a language is to read it and run it.
 That is how I learned every language I know, which is why this
 book opens with programs instead of definitions. This chapter is
-a guided tour of kaikai in eight short programs.
+a guided tour of kaikai in ten short programs.
 None of them runs longer than thirty lines, every one of them
 compiles, and together they cover the shapes you will see again
 and again in the rest of the book: declarations, algebraic data
 types, pattern matching, effects, fibers, protocols, units of
-measure, and inline tests.
+measure, contracts, inline tests, and typed holes.
 
 We will not explain every detail yet. The point is to leave you
 with a view of the language from above, and the sense that you
@@ -19,7 +19,7 @@ follow.
 If you want to follow along on your own machine, the source
 files for this chapter live under `examples/ch01/` in the book
 repository. Installation of `kai` is covered at the end of the
-chapter, in §1.9 — if you need it now, jump there first and come
+chapter, in §1.12 — if you need it now, jump there first and come
 back.
 
 ## 1.1 Hello, kaikai
@@ -458,7 +458,68 @@ integers with names like `UserId` or `OrderId` so the compiler
 won't let you confuse them. All of that lives in chapter 10.
 For now, knowing it exists is enough.
 
-## 1.8 Inline tests
+## 1.8 Programming by contract
+
+kaikai carries another tool inherited from a short list of
+languages (Eiffel in the eighties, Ada 2012, D) for stating what
+a function expects from its caller and what it guarantees in
+return: **preconditions** and **postconditions**.
+
+```kai
+fn divide(a: Int, b: Int) : Int
+  requires b != 0
+  ensures  result * b + (a % b) == a
+= a / b
+
+fn main() {
+  println("10 / 2 = #{divide(10, 2)}")
+  println("17 / 3 = #{divide(17, 3)}")
+}
+```
+
+```
+$ kai run examples/ch01/09_contracts.kai
+10 / 2 = 5
+17 / 3 = 5
+```
+
+`requires b != 0` says "this function demands that `b` not be
+zero at the moment of the call". The compiler does two things
+with that precondition. If it can **prove it at compile time**
+(because the arguments are literals, or because it already knows
+the possible ranges), it rejects the call before emitting code:
+a literal `divide(10, 0)` is a compile error, not a runtime one.
+If the arguments are dynamic and the compiler can't decide, it
+inserts an assert checked **on entry**, and the program aborts
+if the precondition fails.
+
+`ensures result * b + (a % b) == a` says "this function
+guarantees the fundamental identity of integer division holds on
+the way out". `result` is a reserved name inside `ensures` that
+refers to the return value. The postcondition is checked **on
+exit**: if some internal bug made the function return something
+that violated it, the program aborts there too.
+
+Contracts are not comments. They are code the compiler emits as
+real checks: static where it can manage, dynamic where it can't.
+The day something violates a contract, you find out at the exact
+spot.
+
+How do they differ from the tests in the next section? A test
+says "for this specific input, I expect this specific output". A
+contract says "for **every** input satisfying this precondition,
+the output satisfies this postcondition". One is a fixed case;
+the other is a universal promise documented in the signature.
+
+There is a sibling mechanism that extends the same idea to
+**values** rather than operations: **refinement types**, which
+let you declare types like `Int where >= 0` or
+`Real where 0.0 <= self <= 1.0`. They are the structural
+counterpart to contracts, with the type describing which values
+are valid and the contract describing what operations do with
+them. Both live together in chapter 11.
+
+## 1.9 Inline tests
 
 kaikai treats tests as part of the language proper: they live
 in the same file as the code they exercise, with their own
@@ -508,7 +569,106 @@ cases, `check` for invariants that must hold over any input,
 `bench` to measure performance instead of guessing. Chapter 7
 treats each one in detail.
 
-## 1.9 Installing and running `kai`
+## 1.10 Holes: gaps that still compile
+
+There is one last construct worth seeing in the tour, because it
+shifts how you write code a little. kaikai lets you leave
+**holes** where you don't yet know what belongs, and the program
+compiles anyway.
+
+```kai
+fn circle_area(r: Real) : Real = ?formula
+
+fn circle_perimeter(r: Real) : Real = ?
+
+fn main() {
+  println("compiled: the body is pending")
+}
+```
+
+```
+$ kai run examples/ch01/10_holes.kai
+compiled: the body is pending
+```
+
+`?` and `?name` are **typed expressions**. The compiler accepts
+the program, infers the expected type at each hole (at
+`?formula`, it knows you owe it a `Real`), and leaves the rest of
+the file compiling. If something calls `circle_area` at runtime
+without the hole being filled, the program aborts with
+`panic: unfilled hole`. Since `main` never calls it, the program
+above finishes cleanly.
+
+What is this good for? Three things:
+
+- **Designing top-down.** You write the function's signature,
+  leave the body as `?`, and compile. The compiler tells you
+  what type belongs there and which values are in scope. You
+  hold a conversation with the compiler before writing the body.
+- **Making progress on a partial program.** You have ten
+  functions left to write, but you want the program to compile
+  so you can run the first one and see whether the idea holds.
+  The other nine stay `?`; the code compiles; you try the first;
+  the rest can wait.
+- **Working with an AI agent.** You hand the agent a signature
+  with holes and ask it to fill them. The compiler's
+  documentation was designed so that information — expected
+  type, bindings in scope, plausible candidates — can be emitted
+  as structured JSON, ready to feed the agent.
+
+The first two help the human programmer. The third is the
+language's most strategic bet: kaikai wants to be a language an
+LLM can write well in even when its training corpus holds little
+kaikai, because the compiler does much of the work. Chapter 15
+takes that bet apart at length.
+
+## 1.11 Dependencies and projects: `kai.toml`
+
+Every example in the tour so far has been a loose file. A real
+project looks different: you will have several files, you will
+depend on libraries other people published, and you will want a
+colleague to clone the repo and get exactly the build you have.
+
+kaikai handles this with a minimal manifest, **`kai.toml`**:
+
+```toml
+name = "my_app"
+version = "0.1.0"
+
+[dependencies]
+manutara = "github.com/kaikailang-org/manutara@v0.1"
+local    = { path = "../local-thing" }
+```
+
+Day to day it comes down to three commands:
+
+```
+$ kai init                                        # creates kai.toml in the current directory
+$ kai add github.com/kaikailang-org/manutara@v0.1 # adds a dependency
+$ kai run main.kai                                # compiles and runs
+```
+
+`kai add` clones the dependency's repository, caches it under
+`~/.cache/kai/pkg/` addressed by SHA, and updates two files:
+`kai.toml` (what you asked for) and **`kai.lock`** (which exact
+version got resolved). The lockfile is what buys you
+**reproducible builds**: when your colleague clones the repo and
+runs `kai install`, they get bit-for-bit the same dependencies
+you have.
+
+Dependency resolution is **git-first**: a URL can name a tag
+(`@v0.1`), a branch (`@main`), or a specific commit (`@abc123`).
+No central registry, no TLS, no authentication. If the repo is on
+GitHub, GitLab, or your own private git server, kaikai knows how
+to go fetch it.
+
+Chapter 8 covers this properly: how to organize a project into
+modules, what goes in `[dependencies]`, how version selection
+works when two dependencies want different things. For now it's
+enough to know it exists, and that **you don't need an external
+build system**: `kai` is the only binary.
+
+## 1.12 Installing and running `kai`
 
 To run any of the programs above you need the `kai` binary.
 The short path is the installer:
@@ -564,22 +724,26 @@ file, run it, look at the output, edit again.
 Chapter 16 covers the rest of the tooling: `fmt`, `lsp`,
 `watch`, editor integration. For now, `run` is enough.
 
-## 1.10 How the rest of the book is laid out
+## 1.13 How the rest of the book is laid out
 
 We saw, without going deep, almost everything that makes
 kaikai distinctive. The rest of the book takes each piece and
 treats it seriously.
 
-- **Part II — The Language** (chapters 3 to 10) covers basic
+- **Part II — The Language** (chapters 3 to 11) covers basic
   types, compound types, sum types and `match`, functions,
-  testing and benchmarking, modules, protocols, and units of
-  measure. It is the solid, predictable half.
-- **Part III — What Sets It Apart** (chapters 11 to 14) takes
+  testing and benchmarking, modules, protocols, units of
+  measure, and programming by contract. It is the solid,
+  predictable half.
+- **Part III — What Sets It Apart** (chapters 12 to 15) takes
   algebraic effects, fiber-based concurrency, actors, and the
   language's bet around LLMs. This is the half where kaikai
   earns its novelty.
-- **Part IV — Practice** (chapters 15 and 16) covers the
-  tooling and closes with an integrating case study.
+- **Part IV — Practice** (chapters 16 to 19) covers the
+  tooling, closes with two integrating case studies (an HTTP
+  server and an accounting ledger), and finishes with the
+  catalog of kinds, the most abstract chapter and the most
+  skippable.
 - Before all that, **chapter 2** softens a few assumptions if
   you come from an imperative world: expressions vs
   statements, immutability by default, `Option` instead of

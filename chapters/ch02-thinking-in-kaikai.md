@@ -190,7 +190,7 @@ observed from outside — *do* show up in the signature, under
 effects like `Mutable`, `Actor`, or whichever fits. We'll see
 that distinction in chapter 12.
 
-The rule I follow is simple: use `let` by default; if you
+The practical rule is simple: use `let` by default; if you
 need a local variable that changes, `var` with `:=`;
 if what you want to mutate is something visible from outside,
 you are in effects territory and you'll have to declare them.
