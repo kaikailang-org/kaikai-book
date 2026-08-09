@@ -272,9 +272,10 @@ aritmética por software. kaikai te lo cobra solo cuando lo pides.
 
 - **`BigInt`** (`import math.bigint`): entero de precisión
   arbitraria, nunca desborda. El sufijo `n` construye uno desde
-  un literal: `99n`. El sufijo solo alcanza para literales que
-  caben en `Int`; para valores más grandes se parte de un string
-  con `bigint.from_string("…")`.
+  un literal de cualquier tamaño: `99n`, y también
+  `18446744073709551616n`, que ya no cabe en `Int`. Cuando los
+  dígitos llegan en runtime y no en el fuente, `bigint.from_literal("…")`
+  los toma desde un string, con `_` permitido como separador.
 - **`DecimalBig`** (`import decimal_big`): punto fijo sobre
   `BigInt`, pensado para cantidades decimales exactas. `add`,
   `sub` y `mul` son totales; `div` pide la escala destino de

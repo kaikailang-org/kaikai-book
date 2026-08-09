@@ -120,6 +120,32 @@ para enseñar el mecanismo. No hay conflicto: una declaración
 local hace *shadowing* del nombre del stdlib dentro de su
 archivo. Si quieres el de cuatro niveles, no lo declares.
 
+### `Trace`
+
+```kai
+effect Trace {
+  log(msg: String)         : Unit
+  checkpoint(name: String) : Unit
+}
+```
+
+Trazas ad-hoc, más chico que `Log` y con otro propósito:
+`log` emite una línea suelta, `checkpoint` marca un punto con
+nombre. Se importa desde `trace`.
+
+A diferencia del resto de esta sección, **`Trace` no trae
+handler por defecto**. Sin uno instalado el programa ni
+siquiera compila, porque el nombre no está en alcance. El
+módulo trae dos:
+
+- `trace.with_trace_default(body)` escribe cada operación a
+  stdout como `[trace] mensaje`, y los checkpoints como
+  `[trace] checkpoint: nombre`.
+- `trace.with_log_prefix(prefijo, body)` antepone
+  `prefijo ++ ": "` a cada operación y la reemite vía
+  `Trace.log` al siguiente handler de la pila, así que se
+  encadena con el anterior.
+
 ## D.2 Tiempo y aleatoriedad
 
 ### `Clock`
@@ -204,8 +230,19 @@ effect NetDns {
 }
 ```
 
-Mismo estilo que `NetTcp`. El alias `Net = NetTcp + NetUdp +
-NetDns` es útil cuando una función usa los tres.
+Mismo estilo que `NetTcp`. El stdlib **no** trae un alias que
+agrupe a los tres: los únicos que declara son `Console` e `Io`
+(§D.9). Una función que use los tres los suma en su fila,
+`/ NetTcp + NetUdp + NetDns`, o defines el alias tú, que es una
+línea una vez importados los tres módulos:
+
+```kai
+import net.tcp
+import net.udp
+import net.dns
+
+type Net = NetTcp + NetUdp + NetDns
+```
 
 ## D.4 Procesos y señales
 
@@ -312,7 +349,7 @@ effect Mutable {
   array_length[T](a: Array[T])               : Int
   array_get[T](a: Array[T], i: Int)          : T
   array_set[T](a: Array[T], i: Int, v: T)    : Array[T]
-  array_grow[T](a: Array[T], n: Int, init: T): Array[T]
+  array_grow[T](a: Array[T], n: Int, init: T) : Array[T]
   ref_make[T](init: T)                       : Ref[T]
   ref_get[T](r: Ref[T])                      : T
   ref_set[T](r: Ref[T], v: T)                : Unit
@@ -487,7 +524,7 @@ variables de entorno y manipular archivos: el equivalente a
 "esta función no es pura, hace cosas con el sistema".
 
 Fíjate en quiénes **no** están en `Io`: `Clock`, `Random`,
-`SecureRandom`, la familia `Net` y `Process` quedan fuera a
+`SecureRandom`, los tres efectos de red y `Process` quedan fuera a
 propósito. Una función que "logguea y lee configuración" no
 debería ganar en silencio la capacidad de salir a la red o de
 lanzar subprocesos solo porque ambas cosas viven bajo un nombre

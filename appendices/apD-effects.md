@@ -119,6 +119,32 @@ the mechanism. There's no conflict — a local declaration shadows
 the stdlib name within its file. If you want the four-level one,
 don't declare it.
 
+### `Trace`
+
+```kai
+effect Trace {
+  log(msg: String)         : Unit
+  checkpoint(name: String) : Unit
+}
+```
+
+Ad-hoc tracing, smaller than `Log` and aimed elsewhere: `log`
+emits a single line, `checkpoint` marks a named point. It comes
+from `trace`.
+
+Unlike everything else in this section, **`Trace` ships no
+default handler**. With none installed the program doesn't even
+compile, because the name isn't in scope. The module carries
+two:
+
+- `trace.with_trace_default(body)` writes every op to stdout as
+  `[trace] message`, and checkpoints as
+  `[trace] checkpoint: name`.
+- `trace.with_log_prefix(prefix, body)` prepends
+  `prefix ++ ": "` to every op and re-emits it via `Trace.log`
+  to the next handler on the stack, so it chains with the one
+  above.
+
 ## D.2 Time and randomness
 
 ### `Clock`
@@ -203,8 +229,19 @@ effect NetDns {
 }
 ```
 
-Same style as `NetTcp`. The alias `Net = NetTcp + NetUdp +
-NetDns` is useful when a function uses all three.
+Same style as `NetTcp`. The stdlib ships **no** alias bundling
+the three — the only ones it declares are `Console` and `Io`
+(§D.9). A function using all three sums them in its row,
+`/ NetTcp + NetUdp + NetDns`, or you declare the alias yourself,
+which is one line once the three modules are imported:
+
+```kai
+import net.tcp
+import net.udp
+import net.dns
+
+type Net = NetTcp + NetUdp + NetDns
+```
 
 ## D.4 Processes and signals
 
@@ -309,7 +346,7 @@ effect Mutable {
   array_length[T](a: Array[T])               : Int
   array_get[T](a: Array[T], i: Int)          : T
   array_set[T](a: Array[T], i: Int, v: T)    : Array[T]
-  array_grow[T](a: Array[T], n: Int, init: T): Array[T]
+  array_grow[T](a: Array[T], n: Int, init: T) : Array[T]
   ref_make[T](init: T)                       : Ref[T]
   ref_get[T](r: Ref[T])                      : T
   ref_set[T](r: Ref[T], v: T)                : Unit
@@ -485,7 +522,7 @@ vars and manipulate files: the equivalent of "this function is
 not pure, it does things with the system".
 
 Note who is **not** in `Io`: `Clock`, `Random`, `SecureRandom`,
-the `Net` family and `Process` are kept out on purpose. A
+the three network effects and `Process` are kept out on purpose. A
 function that "logs and reads config" shouldn't silently gain
 the capability to reach the network or spawn subprocesses just
 because both live under one convenient name. Those effects
