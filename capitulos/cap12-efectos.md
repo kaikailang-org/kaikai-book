@@ -7,10 +7,8 @@ encontrarías parecidas en Haskell, en Rust, en F#. Los **efectos
 algebraicos** son lo que distingue a kaikai de casi cualquier
 lenguaje de uso real hoy.
 
-También son la razón por la que este proyecto existe. Llevaba
-años dándole vueltas a un lenguaje propio sin terminar de
-arrancarlo, hasta que cayó en mis manos un post sobre efectos
-algebraicos y entendí qué era lo que quería construir.
+También son la razón por la que este proyecto existe, como
+conté en el prólogo.
 
 La idea es simple de enunciar y rara al principio: **una función
 declara en su firma qué efectos usa, pero no cómo se realizan**.

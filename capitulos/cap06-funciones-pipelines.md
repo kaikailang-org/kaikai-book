@@ -207,8 +207,8 @@ let mayores = personas |? .edad > 18       # ERROR: mezcla proyección con `>`
 ```
 
 Lo que ahí quieres es la flecha explícita, `(p) => p.edad > 18`.
-Yo lo resuelvo así: si la lambda *solo* saca un campo o llama un
-método, point-free; si hace cualquier otra cosa, flecha.
+La regla práctica: si la lambda *solo* saca un campo o llama un
+método, escríbela point-free; si hace cualquier otra cosa, flecha.
 
 Las lambdas son **valores de primera clase**: las atas a
 `let`, las pasas como argumento, las devuelves de funciones,

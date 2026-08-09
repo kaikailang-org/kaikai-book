@@ -333,10 +333,10 @@ let y : Real = 3.14
 The annotation is more than decoration. It's there for two
 reasons: to document intent when the type isn't obvious, and
 to guide the type inferrer in the few cases where local
-inference isn't enough. I **annotate the arguments
-and return type of public functions, and leave local `let`s
-unannotated**. Types travel through the signatures and the
-body stays clean.
+inference isn't enough. The practical rule is **annotate the
+arguments and return type of public functions, and leave local
+`let`s unannotated**. Types travel through the signatures and
+the body stays clean.
 
 Once a name is bound, you can't bind the same name again in
 the same block. The next line would error:

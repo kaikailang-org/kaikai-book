@@ -7,9 +7,7 @@ sobre los núcleos de la máquina.
 
 Para muchos casos esa estructura alcanza. Pero hay un patrón
 que las fibras puras dejan incómodo, y vale la pena nombrarlo
-antes de la sintaxis. Lo tomé prestado de Erlang casi sin
-cambios, porque después de mirarlo un rato no encontré nada que
-mejorarle.
+antes de la sintaxis.
 
 ## Una fibra es un cómputo; un actor es un proceso vivo
 
@@ -91,6 +89,10 @@ donde la fibra basta: un cómputo que el padre quiere hacer en
 paralelo conceptual mientras hace otra cosa, un `with_timeout`
 que mide cuánto tarda algo, un map concurrente sobre una lista
 de IO.
+
+De todo lo que hay en kaikai, esta es la parte que menos me
+pertenece. El reparto entre cómputo y proceso vivo lo resolvió
+Erlang hace décadas, y lo tomé casi sin cambios.
 
 ## Los actores no son primitivos del lenguaje
 

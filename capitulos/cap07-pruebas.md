@@ -8,15 +8,19 @@ sí), dejas de poder verificar a ojo que cada cambio
 mantiene el comportamiento.
 
 Para eso están las pruebas. kaikai trae **tres construcciones
-top-level** dedicadas: `test`, `check` y `bench`. Las tres
-viven en el mismo archivo del código que prueban, las tres se
-ejecutan vía el driver `kai`, y las tres se ignoran cuando
+top-level** dedicadas: `test`, `check` y `bench`. Las tres se
+ejecutan vía el driver `kai` y las tres se ignoran cuando
 construyes un binario para producción.
 
-Que vivan en el mismo archivo fue una decisión que me costó
-tomar, porque va contra la costumbre de casi todos los proyectos
-en que he trabajado. La tomé igual, y por una razón simple: la
-prueba que cuesta encontrar es la prueba que nadie actualiza.
+Lo habitual es escribirlas en el mismo archivo del código que
+prueban, pero el lenguaje no te obliga: un
+`aritmetica_test.kai` que importe `aritmetica` y
+declare sus `test` compila y corre igual con
+`kai test aritmetica_test.kai`. Ojo con una trampa si eliges esa
+forma: `kai test ./...` solo compila los módulos alcanzables
+desde el entry point del paquete, así que un archivo de tests
+que nadie importa no se recoge y el driver informa `0/0 tests
+passed` sin advertir que se lo saltó.
 
 Este capítulo recorre las tres, explica cuándo usar cuál, y
 cierra con un caso de estudio: un mini-evaluador con tests

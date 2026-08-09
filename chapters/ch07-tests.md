@@ -9,14 +9,18 @@ by eye that each change preserves behavior.
 
 That's what tests are for. kaikai brings **three top-level
 constructs** dedicated to verification: `test`, `check`, and
-`bench`. All three live in the same file as the code they
-exercise, all three run via the `kai` driver, and all three
+`bench`. All three run via the `kai` driver, and all three
 are stripped out when you build a binary for production.
 
-Putting them in the same file was a decision I struggled with,
-because it cuts against the habit of nearly every project I have
-worked on. I made it anyway, for one simple reason: the test
-that's hard to find is the test nobody updates.
+The usual thing is to write them in the same file as the code
+they exercise, but the language doesn't force it: an
+`arithmetic_test.kai` that imports
+`arithmetic` and declares its `test` blocks compiles and runs
+fine under `kai test arithmetic_test.kai`. One trap if you go
+that way: `kai test ./...` only compiles the modules reachable
+from the package entry point, so a test file nothing imports is
+never collected and the driver reports `0/0 tests passed`
+without warning you it skipped it.
 
 This chapter walks through the three, explains when to use
 which, and closes with a case study: a mini-evaluator with

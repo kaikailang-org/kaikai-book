@@ -2,8 +2,9 @@
 
 La concurrencia es donde la mayoría de los lenguajes acumulan
 deuda. Threads con shared memory llevan a races que aparecen una
-vez al mes y se arreglan tres veces; `async`/`await` introduce
-colores de funciones; los actores corrigen lo anterior pero
+vez al mes y se arreglan tres veces antes de irse de verdad;
+`async`/`await` introduce colores de funciones; los actores
+corrigen lo anterior pero
 históricamente vienen con GC y un runtime pesado.
 
 Peleé con las tres formas en su momento, y de esa pelea salió la

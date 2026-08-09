@@ -7,9 +7,6 @@ produced thrust in pound-force per second; another read it
 as newtons per second. Nobody had written units on the
 interface. The probe disintegrated on Mars.
 
-It's the story that comes to mind whenever someone asks me what,
-concretely, a type system is good for.
-
 It's an extreme example, but the family is huge: two
 components sharing the same numeric type but not the same
 interpretation. Passing seconds where milliseconds are

@@ -3,9 +3,7 @@
 El libro cubrió kaikai pero apenas tocó la familia de ideas
 sobre las que se construye. Si te interesa profundizar, esta
 es una lista corta de fuentes que vale la pena leer, agrupadas
-por tema. No pretende ser exhaustiva; pretende ser útil. Son las
-que yo leí mientras diseñaba el lenguaje, y las ordeno por lo
-que me sirvieron a mí.
+por tema. No pretende ser exhaustiva; pretende ser útil.
 
 ## F.1 Efectos algebraicos
 
