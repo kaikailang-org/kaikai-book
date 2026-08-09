@@ -17,9 +17,7 @@ pages.
 We are not going to open up the theory of each idea — that's
 the job of the chapters that follow. What I want here is to name
 the habit change, show it, and give you the words to recognize
-it when it shows up. These habits took me years to make my own,
-and I suspect a good part of that time went into not having
-anyone name them for me.
+it when it shows up.
 
 ## 2.1 Expressions, not statements
 

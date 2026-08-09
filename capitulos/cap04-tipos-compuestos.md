@@ -5,8 +5,7 @@ sueltas. Para construir programas de verdad, las pegas en
 estructuras: agregados con campos nombrados, listas, tuplas y
 las dos joyas del stdlib que vas a ver más que cualquier otro
 tipo, `Option` y `Result`. Si tuviera que quedarme con una sola
-decisión del stdlib, me quedo con esas dos: son las que más
-bugs me han ahorrado.
+decisión del stdlib, me quedaría con esas dos.
 
 Este capítulo cubre todo eso. Los **sum types** (`type Tag =
 Foo | Bar(Int)`) que viste en el tour merecen su propio
