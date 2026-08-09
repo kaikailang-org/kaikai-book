@@ -570,8 +570,12 @@ fn writes(h: FileHandle<read>) : Unit / File = {
 
 ```
 error: type mismatch in op call File.write_chunk
-  = note: expected: (FileHandle<write>, String) -> ...
-  = note: found:    (FileHandle<read>, String) -> ...
+  --> writes.kai:2:27
+    |
+  2 |   let _ = File.write_chunk(h, "x")
+    |                           ^
+  = note: expected: (FileHandle<write>, String) -> Result[Unit, String]
+  = note: found:    (FileHandle<read>, String) -> ?t0
 ```
 
 The `+` of `Semilattice` is an idempotent union: `read + read` is
@@ -640,8 +644,11 @@ let a : Vec[Real]<3> = [1.0, 2.0]   # does not compile
 ```
 
 ```
-error: vector literal has 2 elements, but its type fixes the
-length to 3
+error: vector literal has 2 elements, but its type fixes the length to 3
+  --> lengths.kai:4:26
+    |
+  4 |   let a : Vec[Real]<3> = [1.0, 2.0]
+    |                          ^
 ```
 
 Like every kind, `Dim` is erased at runtime: `<3>` takes no byte in

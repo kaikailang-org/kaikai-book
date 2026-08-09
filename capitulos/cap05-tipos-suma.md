@@ -271,7 +271,7 @@ error: non-exhaustive match on Expr: missing Neg
  12 |   match e {
     |   ^
   = note: missing variant: `Neg`
-  = note: covered: Lit, Suma, Mul
+  = note: covered: Mul, Suma, Lit
   = help: add an arm `Neg -> ...` or a wildcard `_ -> ...`
 ```
 
