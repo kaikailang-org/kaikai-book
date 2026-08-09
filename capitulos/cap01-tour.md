@@ -128,9 +128,11 @@ también desempaca el dato y lo amarra al nombre `n`, listo
 para usarse a la derecha. Es destructurar, comparar y declarar
 una variable en un solo paso.
 
-`loop` es recursivo. No hay `while`, no hay `for`. Bueno, no
-para esto: en el capítulo 6 vamos a ver que kaikai sí tiene
-formas más cómodas para iterar, pero la base es la recursión.
+`loop` es recursivo. No hay sentencia `while` ni sentencia
+`for`: la base de la iteración es la recursión. Sí existe un
+`while`, pero es una función corriente del stdlib que se lee
+como si fuera un keyword, y lo vemos en el capítulo 6 junto al
+resto de las comodidades para iterar.
 Y para que esa base no le cueste a tu programa, el lenguaje
 garantiza **tail-call optimisation**: una llamada recursiva en
 posición de cola no consume stack. `loop(1, 1_000_000)`
