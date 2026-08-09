@@ -936,7 +936,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.109.2 - hanga-roa (stage 2, self-hosted)
+kaikai 0.110.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org
