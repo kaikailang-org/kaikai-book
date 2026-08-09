@@ -268,9 +268,11 @@ software arithmetic. kaikai charges you only when you ask.
 
 - **`BigInt`** (`import math.bigint`): an arbitrary-precision
   integer that never overflows. The `n` suffix builds one from a
-  literal: `99n`. The suffix only reaches literals that fit in
-  `Int`; for larger values you start from a string with
-  `bigint.from_string("…")`.
+  literal of any size: `99n`, and equally
+  `18446744073709551616n`, which no longer fits in `Int`. When
+  the digits arrive at runtime rather than in the source,
+  `bigint.from_literal("…")` takes them from a string, with `_`
+  allowed as a separator.
 - **`DecimalBig`** (`import decimal_big`): fixed-point over
   `BigInt`, meant for exact decimal quantities. `add`, `sub`,
   and `mul` are total; `div` asks for the target scale
