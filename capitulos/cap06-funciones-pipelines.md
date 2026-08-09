@@ -534,14 +534,14 @@ Si los **dos** últimos argumentos son lambdas, los dos van en
 llaves:
 
 ```kai
-fn while(cond: () -> Bool, body: () -> Unit) : Unit / e = ...
+fn while(pred: () -> Bool, body: () -> Unit) : Unit / e = ...
 
 while { i < 10 } { i := i + 1 }
 ```
 
 Esto le da a kaikai control de flujo definible por el
-usuario. `while` es una función ordinaria del stdlib; solo
-parece un keyword.
+usuario. `while` es una función ordinaria del stdlib, del
+módulo `loop`; solo parece un keyword.
 
 ### Block como lambda
 

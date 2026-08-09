@@ -465,13 +465,14 @@ lambda:
 If the **two** last arguments are lambdas, both go in braces:
 
 ```kai
-fn while_loop(cond: () -> Bool, body: () -> Unit) : Unit / e = ...
+fn while(pred: () -> Bool, body: () -> Unit) : Unit / e = ...
 
-while_loop { i < 10 } { i := i + 1 }
+while { i < 10 } { i := i + 1 }
 ```
 
-This gives kaikai user-defined control flow. `while_loop` is
-an ordinary stdlib function; it just looks like a keyword.
+This gives kaikai user-defined control flow. `while` is an
+ordinary stdlib function from `loop`; it just looks like a
+keyword.
 
 ### Tuple patterns as the parameter
 

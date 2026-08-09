@@ -133,9 +133,11 @@ to the name `n`, ready to use on the right-hand side.
 Destructuring, comparing, and declaring a name happen in a
 single move.
 
-`loop` is recursive. There is no `while`, no `for`. Well —
-there are conveniences for iteration in chapter 6, but the base
-is recursion. So that base does not cost your program anything,
+`loop` is recursive. There is no `while` statement and no `for`
+statement: recursion is the base of iteration. A `while` does
+exist, but it is an ordinary stdlib function that reads like a
+keyword, and chapter 6 covers it along with the rest of the
+iteration conveniences. So that base does not cost your program anything,
 the language guarantees **mandatory tail-call optimization**: a
 recursive call in tail position does not consume stack.
 `loop(1, 1_000_000)` works without blowing up.
