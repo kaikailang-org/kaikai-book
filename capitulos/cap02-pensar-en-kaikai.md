@@ -15,9 +15,7 @@ ciento cincuenta páginas.
 No vamos a abrir la teoría de cada idea: eso es trabajo de los
 capítulos siguientes. Lo que quiero aquí es nombrar el cambio de
 hábito, mostrarlo, y darte las palabras para reconocerlo cuando
-aparezca. A mí me tomó años hacer estos hábitos míos, y sospecho
-que buena parte de ese tiempo se fue en no tener a nadie que me
-los nombrara.
+aparezca.
 
 ## 2.1 Expresiones, no sentencias
 
