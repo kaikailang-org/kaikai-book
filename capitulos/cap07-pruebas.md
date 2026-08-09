@@ -13,14 +13,12 @@ ejecutan vía el driver `kai` y las tres se ignoran cuando
 construyes un binario para producción.
 
 Lo habitual es escribirlas en el mismo archivo del código que
-prueban, pero el lenguaje no te obliga: un
-`aritmetica_test.kai` que importe `aritmetica` y
-declare sus `test` compila y corre igual con
-`kai test aritmetica_test.kai`. Ojo con una trampa si eliges esa
-forma: `kai test ./...` solo compila los módulos alcanzables
-desde el entry point del paquete, así que un archivo de tests
-que nadie importa no se recoge y el driver informa `0/0 tests
-passed` sin advertir que se lo saltó.
+prueban, pero el lenguaje no te obliga: un `aritmetica_test.kai`
+que importe `aritmetica` y declare sus `test` compila y corre
+igual. Desde la versión 0.110 el driver además lo encuentra
+solo: `kai test ./...` recorre los `*_test.kai` del paquete
+aunque nadie los importe, los corre como unidad aparte, y si
+alguno falla el proceso sale con código distinto de cero.
 
 Este capítulo recorre las tres, explica cuándo usar cuál, y
 cierra con un caso de estudio: un mini-evaluador con tests

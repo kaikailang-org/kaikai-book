@@ -14,13 +14,11 @@ are stripped out when you build a binary for production.
 
 The usual thing is to write them in the same file as the code
 they exercise, but the language doesn't force it: an
-`arithmetic_test.kai` that imports
-`arithmetic` and declares its `test` blocks compiles and runs
-fine under `kai test arithmetic_test.kai`. One trap if you go
-that way: `kai test ./...` only compiles the modules reachable
-from the package entry point, so a test file nothing imports is
-never collected and the driver reports `0/0 tests passed`
-without warning you it skipped it.
+`arithmetic_test.kai` that imports `arithmetic` and declares its
+`test` blocks compiles and runs fine. Since 0.110 the driver
+finds it on its own, too: `kai test ./...` walks the package's
+`*_test.kai` files even when nothing imports them, runs each as
+its own unit, and exits non-zero if any of them fails.
 
 This chapter walks through the three, explains when to use
 which, and closes with a case study: a mini-evaluator with
