@@ -143,20 +143,19 @@ imprime el diagnóstico y sale con `1`:
 ```
 $ kai typecheck app.kai
 error: type mismatch in function call
-  --> app.kai:1:6
+  --> app.kai:5:16
     |
-  1 | fn doble(x: Int) : Int = x * 2
-    |      ^
+  5 |   let n = doble(s)
+    |                ^
   = note: expected: (Int) -> Int
-  = note: found:    (String) -> ?t2
+  = note: found:    (String) -> ?t0
   = note: in argument 1 of `doble`
   = note: `doble` expects: (Int) -> Int
 ```
 
-Fíjate dónde cae el cursor: sobre la **declaración** de
-`doble`, no sobre la llamada que la usó mal. Las notas te dan
-el resto (`in argument 1 of `doble``), pero el salto lo tienes
-que dar tú.
+El cursor cae sobre el argumento que no calza, y las notas
+nombran cuál es (`in argument 1 of `doble``) y qué se esperaba
+ahí.
 
 La clave es lo que `typecheck` **no** hace. Corre el front-end
 completo del compilador (lexer, parser, resolución de nombres,
