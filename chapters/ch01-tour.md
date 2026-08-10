@@ -655,7 +655,7 @@ $ kai run main.kai                                # compiles and runs
 `kai.toml` (what you asked for) and **`kai.lock`** (which exact
 version got resolved). The lockfile is what buys you
 **reproducible builds**: when your colleague clones the repo and
-runs `kai install`, they get bit-for-bit the same dependencies
+runs `kai fetch`, they get bit-for-bit the same dependencies
 you have.
 
 Dependency resolution is **git-first**: a URL can name a tag

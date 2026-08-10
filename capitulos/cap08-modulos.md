@@ -360,7 +360,7 @@ sha = "abc123def456..."
 ```
 
 El lockfile cierra el contrato. Si dos programadores corren
-`kai install` con el mismo `kai.toml` y el mismo `kai.lock`,
+`kai fetch` con el mismo `kai.toml` y el mismo `kai.lock`,
 **bajan exactamente la misma SHA**, exactamente el mismo árbol
 de archivos, exactamente el mismo binario al final. La
 reproducibilidad es la promesa central del lockfile.
@@ -371,7 +371,7 @@ declara qué obtuviste.
 
 ### Cuándo se actualiza el lock
 
-- `kai install` lo crea si no existe; si existe, lo respeta.
+- `kai fetch` lo crea si no existe; si existe, lo respeta.
 - `kai update` lo regenera con la última versión de cada
   dependencia que cumpla la ref declarada.
 - `kai add` lo refresca cuando agregas una dependencia nueva.
@@ -408,7 +408,7 @@ queda en los autores de bibliotecas. Si subes a una versión que
 rompe, todo el mundo que dependa transitivamente de ti se
 rompe. Eso te obliga a tomar el versionado en serio.
 
-## 8.8 Cache y `kai install`
+## 8.8 Cache y `kai fetch`
 
 Cuando bajas una dependencia, no se queda en tu proyecto: se
 queda en un **cache compartido entre proyectos**, por defecto
@@ -431,7 +431,7 @@ si en algún momento `v0.1.0` se actualiza upstream (movimiento
 de tag, que no debería pasar pero pasa), el cache fijado al
 SHA original sigue intacto.
 
-`kai install` se puede correr explícitamente, pero **`kai run`
+`kai fetch` se puede correr explícitamente, pero **`kai run`
 y `kai build` lo invocan automáticamente** cuando detectan
 deps no resueltas. En la práctica, después de `git clone` de un
 proyecto, basta con `kai run main.kai`: el driver baja lo que
@@ -530,7 +530,7 @@ Y en `miapp` cambias el path a git:
 config_lib = { source = "github.com/tuusuario/config-lib", ref = "v0.1.0" }
 ```
 
-`kai install` baja la versión fijada por el lockfile. El
+`kai fetch` baja la versión fijada por el lockfile. El
 código de `main.kai` y `negocio.kai` no cambia: los imports
 siguen siendo los mismos.
 

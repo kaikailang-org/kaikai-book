@@ -18,7 +18,11 @@ they exercise, but the language doesn't force it: an
 `test` blocks compiles and runs fine. Since 0.110 the driver
 finds it on its own, too: `kai test ./...` walks the package's
 `*_test.kai` files even when nothing imports them, runs each as
-its own unit, and exits non-zero if any of them fails.
+its own unit, and exits non-zero if any of them fails. Since
+0.111 that holds for a **library** as well — a package that by
+definition declares no entry point: `kai test` used to die
+looking for a `main` that wasn't there, leaving file mode as
+the only way in.
 
 This chapter walks through the three, explains when to use
 which, and closes with a case study: a mini-evaluator with
