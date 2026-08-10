@@ -142,19 +142,19 @@ prints the diagnostic and exits `1`:
 ```
 $ kai typecheck app.kai
 error: type mismatch in function call
-  --> app.kai:1:7
+  --> app.kai:5:17
     |
-  1 | fn double(x: Int) : Int = x * 2
-    |       ^
+  5 |   let n = double(s)
+    |                 ^
   = note: expected: (Int) -> Int
-  = note: found:    (String) -> ?t2
+  = note: found:    (String) -> ?t0
   = note: in argument 1 of `double`
   = note: `double` expects: (Int) -> Int
 ```
 
-Notice where the caret lands: on `double`'s **declaration**,
-not on the call that misused it. The notes carry the rest
-(`in argument 1 of `double``), but you make the jump yourself.
+The caret lands on the argument that doesn't fit, and the notes
+name which one it is (`in argument 1 of `double``) and what was
+expected there.
 
 The point is what `typecheck` does **not** do. It runs the
 compiler's full front-end — lexer, parser, name resolution, HM
