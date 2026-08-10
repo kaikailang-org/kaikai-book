@@ -369,7 +369,7 @@ want; `kai.lock` declares what you got.
 
 ### When the lock is updated
 
-- `kai install` creates it if absent; respects it if present.
+- `kai fetch` creates it if absent; respects it if present.
 - `kai update` regenerates it with the latest version of each
   dependency that satisfies the declared ref.
 - `kai add` refreshes it when you add a new dependency.
@@ -405,7 +405,7 @@ on library authors. If you bump to a version that breaks,
 everyone depending transitively on you breaks. That forces
 you to take versioning seriously.
 
-## 8.8 Cache and `kai install`
+## 8.8 Cache and `kai fetch`
 
 When you download a dependency, it doesn't land in your
 project: it lands in a **cache shared across projects**, by
@@ -428,7 +428,7 @@ point `v0.1.0` is updated upstream (tag movement, which
 shouldn't happen but does), the cache pinned to the original
 SHA stays intact.
 
-`kai install` can be run explicitly, but **`kai run` and
+`kai fetch` can be run explicitly, but **`kai run` and
 `kai build` invoke it automatically** when they detect
 unresolved deps. In practice, after `git clone`ing a project,
 `kai run main.kai` is enough: the driver downloads what's
@@ -525,7 +525,7 @@ And in `myapp` switch the path to git:
 config_lib = { source = "github.com/youruser/config-lib", ref = "v0.1.0" }
 ```
 
-`kai install` downloads the pinned version and the lockfile
+`kai fetch` downloads the pinned version and the lockfile
 nails it down. The code in `main.kai` and `domain.kai`
 doesn't change: the imports remain the same.
 

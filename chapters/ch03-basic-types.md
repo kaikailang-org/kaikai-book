@@ -107,8 +107,30 @@ let message = """
 
 Each line's indentation is measured against the closing `"""`,
 so you can format the string visually without dragging extra
-spaces into the output. Escape sequences (`\n`, `\t`,
-`\u{HHHH}`, etc.) work the same as in regular strings.
+spaces into the output. Escape sequences work the same as in
+regular strings.
+
+The escape set is short and **closed**: `\n`, `\t`, `\r`, `\0`,
+`\\`, `\"`, `\'`, plus `\xHH` (exactly two hex digits, one
+byte) and `\u{H..H}` (a codepoint, which kaikai encodes as
+UTF-8). Anything else is a compile error, not a backslash that
+quietly evaporates:
+
+```
+error: unknown escape sequence '\q'; write '\\q' for a literal backslash
+  --> bad.kai:2:9
+    |
+  2 |   print("path: C:\qtemp")
+    |         ^
+```
+
+That the list is short and explicit is recent. Through 0.110
+the compiler decoded nothing: it handed the raw text to the
+backend and let the C compiler decide, so the escape set was
+C99's by accident of inheritance — a `\q` quietly dropped its
+backslash. Decoding now lives in one place in the compiler,
+with the same rules for strings, `Char`, triple-quoted bodies,
+and interpolation.
 
 `Char` values use single quotes: `'a'`, `'\n'`, `'\u{2603}'`. A
 `Char` is not a `String` of length one — they are distinct

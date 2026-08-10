@@ -149,7 +149,6 @@ error: type mismatch in function call
   = note: expected: (Int) -> Int
   = note: found:    (String) -> ?t0
   = note: in argument 1 of `double`
-  = note: `double` expects: (Int) -> Int
 ```
 
 The caret lands on the argument that doesn't fit, and the notes
@@ -312,7 +311,7 @@ place only when the two forms can be shown equivalent, because
 a noisy linter is worse than none. `kai info lint` lists the
 current state.
 
-## 16.5 Package management: `init`, `add`, `install`, `update`
+## 16.5 Package management: `init`, `add`, `fetch`, `update`
 
 Chapter 8 §8.5-8.8 covered the package model (`kai.toml`
 manifest, `kai.lock` lockfile, shared cache,
@@ -324,17 +323,44 @@ $ kai init myapp
 kai-pkg: wrote kai.toml for package 'myapp'
 
 $ kai add github.com/kaikailang-org/manutara@v0.1.0
-$ kai install
+$ kai fetch                 # resolve deps and write kai.lock
 $ kai update                # refresh all deps
 $ kai update manutara       # refresh only manutara
 $ kai show                  # print parsed kai.toml
 ```
 
-`kai run` and `kai build` invoke `kai install` automatically
+`kai run` and `kai build` invoke `kai fetch` automatically
 if they detect dependencies declared in `kai.toml` but not
 resolved in `kai.lock`. In practice, after cloning a kaikai
 project, `kai run` is enough to download whatever's
 missing.
+
+`fetch` is a recent name. Through 0.110 that resolution was
+called `kai install`, with npm's semantics; 0.111 gave
+`install` back the meaning a Rust or Go user reaches for —
+**put a binary on your PATH** — and moved resolution to
+`fetch`, the name both ecosystems already use:
+
+```
+$ kai install .                        # build the cwd package and install its binary
+$ kai install github.com/x/pepito      # from a git source
+$ kai install github.com/x/pepito@v1   # pinned to a tag, branch, or SHA
+$ kai install --list                   # what this prefix installed
+```
+
+The binary is named from the manifest's `name` field, not
+from the source URL, and lands in `$KAIKAI_HOME/bin`, which
+the installer already put on your PATH. Replacing an existing
+one requires `--force`. The no-argument form still resolves
+dependencies, but warns that its name is now `fetch`:
+
+```
+$ kai install
+kai: warning: 'kai install' with no argument resolves dependencies; that is now 'kai fetch'.
+  'kai install <spec>' installs a package's binary. The no-argument form changes at the next edition.
+```
+
+When `hanga-roa` closes, that form goes away.
 
 Don't confuse `kai update` with `kai upgrade`: `update`
 refreshes your package's **dependencies**; `upgrade` updates
@@ -936,7 +962,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.110.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.111.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org

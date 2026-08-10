@@ -19,6 +19,10 @@ igual. Desde la versión 0.110 el driver además lo encuentra
 solo: `kai test ./...` recorre los `*_test.kai` del paquete
 aunque nadie los importe, los corre como unidad aparte, y si
 alguno falla el proceso sale con código distinto de cero.
+Desde 0.111 eso vale también para una **biblioteca**, un
+paquete que por definición no declara punto de entrada: antes
+`kai test` moría buscando un `main` que no existía y la única
+vía era nombrar el archivo a mano.
 
 Este capítulo recorre las tres, explica cuándo usar cuál, y
 cierra con un caso de estudio: un mini-evaluador con tests

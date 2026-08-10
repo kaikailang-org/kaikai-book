@@ -666,7 +666,7 @@ bajo `~/.cache/kai/pkg/` direccionado por SHA, y actualiza
 dos archivos: `kai.toml` (qué se quería) y **`kai.lock`** (qué
 versión exacta se resolvió). El lockfile es lo que garantiza
 **builds reproducibles**: cuando tu colega clone el repo y
-corra `kai install`, va a obtener bit-por-bit las mismas
+corra `kai fetch`, va a obtener bit-por-bit las mismas
 dependencias que tú.
 
 La resolución de dependencias es **git-first**: una URL puede
@@ -740,7 +740,7 @@ tooling, porque es donde se pasa el tiempo de verdad.
 
 El capítulo 16 cubre el resto del tooling: `fmt`, `lsp`,
 integración con editores, y los comandos de paquetes (`init`,
-`add`, `install`, `update`). Por ahora con `run` te basta.
+`add`, `fetch`, `update`). Por ahora con `run` te basta.
 
 ## 1.13 Cómo está organizado el resto del libro
 
