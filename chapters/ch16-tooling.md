@@ -235,15 +235,30 @@ The three commands share two important properties:
 `kai fmt` is the canonical formatter. `gofmt` style:
 
 - One correct way to print any file.
-- No configuration options. The project doesn't want style
-  wars.
+- One knob, and it isn't a style knob: the line width. The
+  project doesn't want style wars.
 - Idempotent: formatting an already-formatted file doesn't
   change it.
 
-Three ways to use it:
+The width drives the layout. A construct that fits on its
+line stays there; one that doesn't breaks at its own points —
+after the `=`, one argument per line, one pipe stage per line
+— and a break you already wrote at one of those points is
+kept, so a hand-wrapped pipe chain survives the formatter.
+The default is 100 columns; `--width N` changes it for one
+run, and the `width` key of the `[fmt]` table in `kai.toml`
+fixes it for the package:
+
+```toml
+[fmt]
+width = 80
+```
+
+Four ways to use it:
 
 ```
 $ kai fmt file.kai                # rewrite in place
+$ kai fmt .                       # format the whole package
 $ kai fmt --check file.kai        # exit 0 if formatted, 1 if not
 $ cat file.kai | kai fmt --stdin  # read stdin, write stdout
 ```
@@ -301,12 +316,15 @@ Other rules in the catalog nudge toward idiomatic kaikai.
 when a unary lambda only projects on its parameter.
 `and_then_to_map_nudge` warns when an `and_then` is really a
 `map`, and `match_option_to_combinator` does the same for a
-`match` over `Option` that already has a combinator. The rest
-sweep up residue: `redundant_if_bool`,
+`match` over `Option` that already has a combinator.
+`list_concat_literal_to_spread` catches `[h] ++ t`, which
+builds a one-element list only to concatenate it away — the
+spread `[h, ...t]` emits the cons directly and skips the
+allocation. The rest sweep up residue: `redundant_if_bool`,
 `redundant_match_catchall`, `dead_code_unused_priv`,
 `effect_over_declared` and `effect_ffi_without_extern`.
 
-Nine as of today, and the number will climb. A rule earns its
+Ten as of today, and the number will climb. A rule earns its
 place only when the two forms can be shown equivalent, because
 a noisy linter is worse than none. `kai info lint` lists the
 current state.
@@ -749,9 +767,9 @@ wrap it in a small `.c`, as we'll see next.
 For libraries that aren't already in libc, the typical
 shape is: write a small C file with the functions you need,
 let `kai build` invoke its C compiler with that file
-included. The package manager doesn't automate C
-compilation, so you wire it via the `CFLAGS` environment
-variable that `kai` passes through to the host C compiler.
+included. There are two ways to wire it up, and which one is
+yours depends on whether this is a one-off program or
+something other people will use.
 
 A minimal example. The C side:
 
@@ -777,7 +795,9 @@ fn main() : Unit / Console + Ffi {
 }
 ```
 
-Building:
+For a one-off program you wire it by hand through the
+`CFLAGS` environment variable, which `kai` passes to the host
+C compiler:
 
 ```
 $ CFLAGS="shim.c" kai build app.kai -o app
@@ -789,9 +809,39 @@ The `CFLAGS` value lets you splice anything the host C
 compiler accepts: `-include` to expose declarations,
 extra `.c` sources to compile in, `-l<lib>` to link
 against installed libraries, `pkg-config --cflags --libs
-<package>` to pull in the flags of a system library. Wrap
-the whole thing in a `Makefile` when it grows beyond one
-line.
+<package>` to pull in the flags of a system library. It is
+the escape hatch, and it keeps precedence over everything
+else.
+
+But `CFLAGS` doesn't travel. If your binding is a package,
+whoever uses it has no business knowing there's a `.c`
+inside, let alone guessing the right environment variable.
+That's what the manifest's `[native]` table is for:
+
+```toml
+[native]
+sources = ["c/shim.c"]   # vendored C, relative to the package
+include = ["c"]          # -I dirs for compiling those sources
+libs = ["sqlite3"]       # system libraries, -l<name> at link
+```
+
+With that declared, the consumer types plain `kai build`.
+Every verb honors the table — `build`, `run`, `test`,
+`install` — on both backends, and it propagates transitively:
+if A and B both depend on the same shim-binding package, the
+shim compiles and links exactly once.
+
+It is declarative and nothing more: `sources`, `include`,
+`libs`, no build scripts and no free-form flags. A build
+script is somebody else's code running on the installer's
+machine — attack surface and a reproducibility hole — and
+free-form flags would turn the manifest into a build system.
+The distinction that does matter is between `sources` and
+`libs`: a vendored source always works, because the `.c`
+travels with the package and compiles on the target machine;
+a system library may be absent there through nobody's fault,
+and when the link fails the driver names the package and the
+library that was missing.
 
 It works the same on both backends: the native backend also
 links the final object with `cc`, so your extra C sources
@@ -962,7 +1012,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.111.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.114.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org

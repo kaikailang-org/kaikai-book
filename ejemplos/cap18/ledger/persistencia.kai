@@ -8,7 +8,6 @@
 # permite que el almacén siga respondiendo mientras el disco
 # está ocupado.
 
-import actor
 import fs.file
 
 pub type Evento = Linea(String)

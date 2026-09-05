@@ -9,7 +9,6 @@
 #     `procesar` en un loop sobre `Actor.receive()`.
 #   - `preguntar` es el wrapper sincrónico para el cliente.
 
-import actor
 import dominio
 
 # Protocolo del almacén: un comando más el Pid del que pide la

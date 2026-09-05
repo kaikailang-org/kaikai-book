@@ -13,7 +13,6 @@
 # acumulan. Eso le da al ledger su valor de auditoría: una
 # vez escrito un asiento, queda fijo.
 
-import actor
 import dominio
 import cuadre
 

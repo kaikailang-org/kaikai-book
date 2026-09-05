@@ -16,8 +16,6 @@
 #      `main` — spawn y uso ocurren en el mismo bloque.
 
 import actor
-import spawn
-import fs.file
 import dominio
 import almacen
 import persistencia
