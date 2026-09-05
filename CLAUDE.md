@@ -10,7 +10,7 @@ escrito con la voz del autor.
 El libro enseña kaikai a un programador profesional que ya conoce
 otro lenguaje (Python, Go, JavaScript, Java, Rust, C#) **pero que
 no necesariamente ha trabajado en un lenguaje funcional**. No es
-un manual de referencia — la referencia vive en `../kaikai/docs/`.
+un manual de referencia — la referencia vive en `kaikai/docs/`.
 Es un libro de lectura: capítulos cortos, ejemplos que se compilan
 y corren, prosa que explica decisiones de diseño y muestra cómo
 *pensar* en kaikai.
@@ -120,7 +120,7 @@ Lo que **no** tomamos de LYAH:
 
 ## Estilo del autor (lnds)
 
-Estudiar `../lnds-blog/content/posts/` para calibrar voz. Patrones
+Estudiar `lnds-blog/content/posts/` para calibrar voz. Patrones
 recurrentes:
 
 - **Primera persona, registro conversacional pero técnico.** "Yo
@@ -172,9 +172,9 @@ Implicaciones prácticas:
   de su idioma. Un giro chileno puede tener un equivalente
   anglosajón distinto, no una traducción palabra por palabra. La
   voz del autor (lnds) se calibra por separado:
-  - **Español:** posts del blog en `../lnds-blog/content/posts/`.
-  - **Inglés:** documentos de diseño y commits en `../kaikai/` y
-    `../kaikai/docs/` — donde lnds ya escribe técnicamente en
+  - **Español:** posts del blog en `lnds-blog/content/posts/`.
+  - **Inglés:** documentos de diseño y commits en `kaikai/` y
+    `kaikai/docs/` — donde lnds ya escribe técnicamente en
     inglés. Más prosa que la doc, menos que el blog en español.
 - **Idioma de trabajo en este repo: el del capítulo que se está
   escribiendo.** Si un capítulo nace en español, redactar primero
@@ -198,7 +198,7 @@ Reglas de español (cuando aplica):
 Reglas de inglés (cuando aplica):
 
 - Registro técnico-conversacional, alineado con los docs de
-  `../kaikai/docs/` pero más prosa.
+  `kaikai/docs/` pero más prosa.
 - Ortografía estadounidense (color, behavior, optimization).
 - No emular pasivamente a Kernighan: el tono es del autor, no del
   libro de referencia.
@@ -233,17 +233,46 @@ y nombres de archivos siempre en su forma original (inglés).
 
 ## Referencia al lenguaje
 
-El lenguaje vive en `../kaikai`. Ahí está la verdad sobre la
-sintaxis, los efectos, el stdlib y el toolchain.
+El lenguaje vive en el clon de **`lnds/kaikai`**. Ahí está la
+verdad sobre la sintaxis, los efectos, el stdlib y el toolchain.
+
+### Cómo ubicar los repos vecinos (regla)
+
+Este libro se apoya en dos repos que no son suyos:
+
+| Repo | Para qué |
+|---|---|
+| `lnds/kaikai` | doc, ejemplos y fuente del lenguaje; destino de los issues |
+| `lnds/lnds-blog` | posts que calibran la voz del autor en español |
+
+**Identifícalos por su remote, nunca por una ruta fija.** Dónde
+estén clonados depende de la máquina y cambia con el tiempo; el
+remote no. Para confirmar que un directorio es el que crees:
+
+```
+$ git -C <ruta> remote get-url origin
+git@github.com:lnds/kaikai.git
+```
+
+Esa verificación no es ceremonia. Un `cd ../kaikai` puede tener
+éxito y dejarte en otro repo del ecosistema (`kaikai-site`,
+`kaikai-vscode`, `tree-sitter-kaikai`) porque el shell tiene
+`CDPATH` o `zoxide` resolviendo por ti, y el error no aparece
+hasta que estás leyendo la doc equivocada. Si no encuentras el
+clon, pregunta — no adivines la ruta.
+
+De aquí en adelante este documento nombra los archivos relativos
+a la raíz de cada repo (`kaikai/docs/design.md`), no a la del
+libro.
 
 - **Antes de afirmar algo sobre kaikai, verificar contra
-  `../kaikai/docs/` o contra los ejemplos de
-  `../kaikai/examples/`.** El lenguaje está en evolución; lo que
+  `kaikai/docs/` o contra los ejemplos de
+  `kaikai/examples/`.** El lenguaje está en evolución; lo que
   era cierto hace un mes puede no serlo hoy.
 - **Si un ejemplo del libro no compila, se arregla el ejemplo, no
   el lenguaje.** Si surge una fricción real escribiendo el libro
   que apunta a un problema del diseño, anotarlo aparte y
-  comentarlo con el autor — no resolverlo modificando `../kaikai`
+  comentarlo con el autor — no resolverlo modificando `lnds/kaikai`
   desde este repo.
 
 ### Validar antes de afirmar (regla absoluta)
@@ -263,7 +292,7 @@ introduce.
 
 No asumir nada. Diagnosticar:
 
-1. **Releer la doc** del lenguaje (`../kaikai/docs/`) para
+1. **Releer la doc** del lenguaje (`kaikai/docs/`) para
    confirmar la sintaxis y semántica que el ejemplo asume. La
    doc puede haber cambiado, o uno la puede haber malinterpretado.
 2. **Reducir a un repro mínimo** — el archivo más corto posible
@@ -277,7 +306,9 @@ No asumir nada. Diagnosticar:
      **consultarlo con el autor antes de seguir.** No asumir que
      el ejemplo está mal y reescribirlo silenciosamente.
 4. **Si es bug y el autor da el OK**, abrir un issue en
-   `kaikailang-org/kaikai` con el repro mínimo, hipótesis de causa, y
+   `lnds/kaikai` —el repo de desarrollo del lenguaje, no el
+   espejo público `kaikailang-org/kaikai` al que apunta el texto
+   del libro— con el repro mínimo, hipótesis de causa, y
    workaround. El libro queda escrito en la forma idiomática
    asumiendo el fix; el ejemplo en disco puede fallar hoy hasta
    que se cierre el issue. Esa decisión es deliberada y queda
@@ -297,15 +328,15 @@ casos donde la doc del lenguaje sugería una sintaxis que no
 estaba implementada (#311, #312, #325, #326, #328) o que tenía
 una semántica distinta a la documentada (#318). En todos esos
 casos la regla evitó publicar el libro con afirmaciones falsas.
-- Documentos clave en `../kaikai/docs/` para tener a mano:
+- Documentos clave en `kaikai/docs/` para tener a mano:
   `design.md` (principios y tier list), `kaikai-minimal.md`
   (gramática y precedencia), `effects.md` /
   `effects-stdlib.md` / `syntax-sugars.md` (efectos),
   `structured-concurrency.md` y `actors.md` (concurrencia),
   `unions.md`, `protocols.md`, `typed-holes.md`.
-- Ejemplos canónicos: `../kaikai/examples/quickstart/` (los cinco
+- Ejemplos canónicos: `kaikai/examples/quickstart/` (los cinco
   programas que cubren las formas principales) y
-  `../kaikai/examples/phase4/`.
+  `kaikai/examples/phase4/`.
 
 ## Estructura del repo (provisional)
 
@@ -328,17 +359,17 @@ escriben los capítulos.
 ## Cómo trabajar este libro con Claude
 
 - **Tarea por defecto: escribir prosa o código de ejemplo.** No
-  refactorizar el lenguaje, no abrir issues en `../kaikai`, no
+  refactorizar el lenguaje, no abrir issues en `lnds/kaikai`, no
   modificar el compilador.
 - **Pedir confirmación antes de crear capítulos nuevos o cambiar la
   tabla de contenidos.** La estructura general se discute con el
   autor y vive en `estructura.md` una vez acordada.
 - **No inventar features de kaikai.** Si el texto necesita ilustrar
-  algo y no está claro si existe, leer `../kaikai/docs/` o
+  algo y no está claro si existe, leer `kaikai/docs/` o
   preguntar. No suponer la sintaxis.
 - **Conservar la voz del autor.** Cuando se redacta una sección
   desde cero, leer dos o tres posts recientes del blog
-  (`../lnds-blog/content/posts/`) y calibrar antes de empezar.
+  (`lnds-blog/content/posts/`) y calibrar antes de empezar.
 - **Capítulos cortos, no monolíticos.** Si una sección pasa de
   unas 1500 palabras o un ejemplo de unas 60 líneas, pensar si
   conviene partir.
