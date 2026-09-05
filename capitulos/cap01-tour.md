@@ -418,8 +418,8 @@ unit USD
 unit EUR
 
 fn main() {
-  let precio : Real<USD> = 1.50<USD>
-  let total  : Real<USD> = precio + 2.00<USD>
+  let precio: Real<USD> = 1.50<USD>
+  let total: Real<USD> = precio + 2.00<USD>
   println("total = #{total}")
 }
 ```

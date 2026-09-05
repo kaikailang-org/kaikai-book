@@ -192,7 +192,7 @@ Construir literales:
 
 ```kai
 let primos = [2, 3, 5, 7, 11]
-let vacia : [Int] = []
+let vacia: [Int] = []
 ```
 
 kaikai trae también **literales de rango**, que para el sistema
@@ -299,8 +299,8 @@ mezclan: en kaikai, **un `String` no es una lista de `Char`**.
 Son tipos distintos:
 
 ```kai
-let s : String = "hola"
-let cs : [Char] = ['h', 'o', 'l', 'a']
+let s: String = "hola"
+let cs: [Char] = ['h', 'o', 'l', 'a']
 ```
 
 `s` y `cs` no son intercambiables. No puedes escribir

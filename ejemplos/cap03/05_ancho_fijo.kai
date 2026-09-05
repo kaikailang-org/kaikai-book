@@ -14,11 +14,11 @@ fn main() {
   println("tope = #{tope}")               # -2147483648
 
   # Int128 alcanza donde Int (64 bits) ya no llega.
-  let grande : Int128 = 9223372036854775808i128
+  let grande: Int128 = 9223372036854775808i128
   println("grande = #{grande}")
 
   # Entre Int y los anchos fijos se convierte con nombre y apellido.
-  let n : Int = 10
+  let n: Int = 10
   let n32 = int_to_int32(n)
   println("n32 + 1 = #{n32 + 1i32}")
   println("de vuelta = #{int32_to_int(n32) + 1}")

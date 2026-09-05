@@ -17,8 +17,8 @@ fn timeout_ms(t: Int<Milliseconds>) : Unit / Stdout =
   println("timeout = #{t}")
 
 fn main() {
-  let _uid : Int<UserId>  = 42<UserId>
-  let oid  : Int<OrderId> = 99<OrderId>
+  let _uid: Int<UserId>  = 42<UserId>
+  let oid: Int<OrderId> = 99<OrderId>
 
   cancelar_orden(oid)
 
@@ -26,8 +26,8 @@ fn main() {
   # UserId donde se espera un OrderId, aunque ambos son Int.
   # cancelar_orden(_uid)
 
-  let _espera_seg : Int<Seconds>      = 30<Seconds>
-  let espera_ms   : Int<Milliseconds> = 30<Milliseconds>
+  let _espera_seg: Int<Seconds>      = 30<Seconds>
+  let espera_ms: Int<Milliseconds> = 30<Milliseconds>
 
   timeout_ms(espera_ms)
 

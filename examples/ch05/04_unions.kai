@@ -31,8 +31,8 @@ fn describe(e: QueryError) : String =
 
 fn main() {
   # Implicit upcast: IdentityError <: QueryError
-  let e1 : QueryError = AccountNotFound
-  let e2 : QueryError = OverDailyLimit
+  let e1: QueryError = AccountNotFound
+  let e2: QueryError = OverDailyLimit
 
   println(describe(e1))
   println(describe(e2))

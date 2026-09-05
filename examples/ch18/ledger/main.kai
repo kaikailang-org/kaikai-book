@@ -19,7 +19,7 @@ import domain
 import store
 import persistence
 
-const LOG_PATH : String = "ledger.audit.log"
+const LOG_PATH: String = "ledger.audit.log"
 
 fn print_response(r: domain.Response) : Unit / Stdout = {
   println("  -> #{r}")

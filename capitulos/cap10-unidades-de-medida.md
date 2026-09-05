@@ -59,9 +59,9 @@ Para anotar un número con una unidad, usas paréntesis
 angulares en el literal:
 
 ```kai
-let precio : Real<USD> = 1.50<USD>
-let velocidad : Real<m / sec> = 9.81<m / sec>
-let timeout : Int<sec> = 30<sec>
+let precio: Real<USD> = 1.50<USD>
+let velocidad: Real<m / sec> = 9.81<m / sec>
+let timeout: Int<sec> = 30<sec>
 ```
 
 Tres cosas que vale fijar:
@@ -87,9 +87,9 @@ La aritmética entre valores con la misma unidad funciona
 como esperarías. Sumar dos `Real<USD>` da otro `Real<USD>`:
 
 ```kai
-let precio : Real<USD> = 1.50<USD>
-let propina : Real<USD> = 0.30<USD>
-let total : Real<USD> = precio + propina    # 1.80 USD
+let precio: Real<USD> = 1.50<USD>
+let propina: Real<USD> = 0.30<USD>
+let total: Real<USD> = precio + propina    # 1.80 USD
 ```
 
 Pero **mezclar unidades incompatibles es un error de
@@ -125,9 +125,9 @@ Multiplicar dos unidades produce una unidad compuesta. El
 ejemplo canónico es la fuerza:
 
 ```kai
-let masa : Real<kg> = 70.0<kg>
-let aceleracion : Real<m / sec^2> = 9.81<m / sec^2>
-let fuerza : Real<kg * m / sec^2> = masa * aceleracion
+let masa: Real<kg> = 70.0<kg>
+let aceleracion: Real<m / sec^2> = 9.81<m / sec^2>
+let fuerza: Real<kg * m / sec^2> = masa * aceleracion
 ```
 
 `kg * m / sec^2` es la unidad compuesta de fuerza. El
@@ -137,8 +137,8 @@ divides la fuerza por el área para obtener presión, la unidad
 final es `kg / (m * sec^2)`, todo derivado mecánicamente:
 
 ```kai
-let area : Real<m^2> = 4.0<m^2>
-let presion : Real<kg / (m * sec^2)> = fuerza / area
+let area: Real<m^2> = 4.0<m^2>
+let presion: Real<kg / (m * sec^2)> = fuerza / area
 ```
 
 El sistema de tipos hace **álgebra de unidades**. `m * m` se
@@ -190,8 +190,8 @@ con `USD`, `kg`, `m/sec`, lo que sea, **siempre y cuando los
 dos argumentos tengan la misma unidad**.
 
 ```kai
-let pp : Real<USD> = promedio(10.0<USD>, 20.0<USD>)   # 15 USD
-let pm : Real<kg>  = promedio(70.0<kg>, 80.0<kg>)     # 75 kg
+let pp: Real<USD> = promedio(10.0<USD>, 20.0<USD>)   # 15 USD
+let pm: Real<kg>  = promedio(70.0<kg>, 80.0<kg>)     # 75 kg
 ```
 
 Pero esto es error de tipo:
@@ -223,9 +223,9 @@ cociente `destino/origen`. Multiplicar por él cancela la
 unidad origen y deja la unidad destino:
 
 ```kai
-let monto_eur : Real<EUR> = 80.0<EUR>
-let tasa : Real<USD / EUR> = 1.10<USD / EUR>
-let monto_usd : Real<USD> = monto_eur * tasa    # 88 USD
+let monto_eur: Real<EUR> = 80.0<EUR>
+let tasa: Real<USD / EUR> = 1.10<USD / EUR>
+let monto_usd: Real<USD> = monto_eur * tasa    # 88 USD
 ```
 
 La aritmética se sigue: `EUR * (USD / EUR)` cancela `EUR` y
@@ -278,8 +278,8 @@ unit OrderId
 fn cancelar_orden(id: Int<OrderId>) : Unit / Stdout = ...
 fn enviar_email(uid: Int<UserId>) : Unit / Stdout = ...
 
-let user_id : Int<UserId>  = 42<UserId>
-let order_id : Int<OrderId> = 99<OrderId>
+let user_id: Int<UserId>  = 42<UserId>
+let order_id: Int<OrderId> = 99<OrderId>
 
 cancelar_orden(user_id)   # ERROR de tipo: UserId ≠ OrderId
 ```
@@ -343,19 +343,19 @@ Y el cálculo principal:
 
 ```kai
 fn main() {
-  let saldo_usd_1 : Real<USD> = 100.0<USD>
-  let saldo_usd_2 : Real<USD> = 50.0<USD>
-  let total_usd : Real<USD> = sumar(saldo_usd_1, saldo_usd_2)    # 150
+  let saldo_usd_1: Real<USD> = 100.0<USD>
+  let saldo_usd_2: Real<USD> = 50.0<USD>
+  let total_usd: Real<USD> = sumar(saldo_usd_1, saldo_usd_2)    # 150
 
-  let saldo_eur : Real<EUR> = 80.0<EUR>
-  let tasa_eur_usd : Real<USD / EUR> = 1.10<USD / EUR>
-  let eur_en_usd : Real<USD> = convertir(saldo_eur, tasa_eur_usd)
-  let total_global : Real<USD> = sumar(total_usd, eur_en_usd)     # 238
+  let saldo_eur: Real<EUR> = 80.0<EUR>
+  let tasa_eur_usd: Real<USD / EUR> = 1.10<USD / EUR>
+  let eur_en_usd: Real<USD> = convertir(saldo_eur, tasa_eur_usd)
+  let total_global: Real<USD> = sumar(total_usd, eur_en_usd)     # 238
 
-  let saldo_clp : Real<CLP> = 100000.0<CLP>
-  let tasa_clp_usd : Real<USD / CLP> = 0.0011<USD / CLP>
-  let clp_en_usd : Real<USD> = convertir(saldo_clp, tasa_clp_usd)
-  let total_final : Real<USD> = sumar(total_global, clp_en_usd)   # 348
+  let saldo_clp: Real<CLP> = 100000.0<CLP>
+  let tasa_clp_usd: Real<USD / CLP> = 0.0011<USD / CLP>
+  let clp_en_usd: Real<USD> = convertir(saldo_clp, tasa_clp_usd)
+  let total_final: Real<USD> = sumar(total_global, clp_en_usd)   # 348
 }
 ```
 

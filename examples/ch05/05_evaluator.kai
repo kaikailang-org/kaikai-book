@@ -83,7 +83,7 @@ fn print_result(r: Result[Real, EvalError]) : Unit / Stdout =
   }
 
 fn main() {
-  let env : Env = [("x", 9.0), ("y", 4.0)]
+  let env: Env = [("x", 9.0), ("y", 4.0)]
 
   print_result(eval(env, Add(Var("x"), Var("y"))))    # ok: 13
   print_result(eval(env, Sqrt(Var("x"))))             # ok: 3

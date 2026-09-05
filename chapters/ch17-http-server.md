@@ -346,8 +346,8 @@ import persistence
 import net.tcp
 import web
 
-const PORT : Int = 8080
-const LOG_PATH : String = "notes.log"
+const PORT: Int = 8080
+const LOG_PATH: String = "notes.log"
 
 fn main() : Unit / Console + NetTcp + File + Spawn + Cancel + Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] {
   let store_pid = store.start()

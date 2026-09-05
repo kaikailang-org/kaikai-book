@@ -10,10 +10,10 @@ fn event(p: Probability, description: String) : Unit / Stdout =
   println(description ++ " with prob " ++ real_to_string(p))
 
 fn main() {
-  let x : NonNeg = 16
+  let x: NonNeg = 16
   println("double(16) = #{double(x)}")
 
-  let pr : Probability = 0.3
+  let pr: Probability = 0.3
   event(pr, "rain tomorrow")
 
   # The next line does NOT compile: -5 doesn't satisfy NonNeg.

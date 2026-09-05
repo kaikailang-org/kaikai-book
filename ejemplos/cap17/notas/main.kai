@@ -34,8 +34,8 @@ import almacen
 import persistencia
 import web
 
-const PUERTO   : Int    = 8080
-const PATH_LOG : String = "notas.log"
+const PUERTO: Int    = 8080
+const PATH_LOG: String = "notas.log"
 
 # Arma la respuesta de cable para un request HTTP. Le pega al
 # almacén vía `almacen.preguntar` y loguea los comandos

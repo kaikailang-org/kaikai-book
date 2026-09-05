@@ -196,8 +196,8 @@ to hold. If you satisfy it with a literal, the compiler
 verifies at compile time:
 
 ```kai
-let x : NonNeg = 16        # OK: 16 >= 0
-let y : NonNeg = 0 - 5     # ERROR: -5 doesn't satisfy self >= 0
+let x: NonNeg = 16        # OK: 16 >= 0
+let y: NonNeg = 0 - 5     # ERROR: -5 doesn't satisfy self >= 0
 ```
 
 If you satisfy it with a dynamic value, the compiler inserts
@@ -238,7 +238,7 @@ or the compiler knows their ranges:
 
 ```kai
 divide(10, 0)              # compile ERROR: 0 != 0 is false
-let x : NonNeg = 0 - 5     # compile ERROR: -5 < 0
+let x: NonNeg = 0 - 5     # compile ERROR: -5 < 0
 ```
 
 The program doesn't even produce a binary. The strongest

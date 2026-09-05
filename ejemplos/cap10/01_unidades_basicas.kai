@@ -9,13 +9,13 @@ unit USD
 unit EUR
 
 fn main() {
-  let precio : Real<USD> = 1.50<USD>
-  let propina : Real<USD> = 0.30<USD>
-  let total : Real<USD> = precio + propina
+  let precio: Real<USD> = 1.50<USD>
+  let propina: Real<USD> = 0.30<USD>
+  let total: Real<USD> = precio + propina
   println("total = #{total}")
 
   # Las unidades se preservan en el tipo de retorno.
-  let valor_eur : Real<EUR> = 1.20<EUR>
+  let valor_eur: Real<EUR> = 1.20<EUR>
   println("valor_eur = #{valor_eur}")
 
   # Lo siguiente NO compila — USD + EUR es error de tipo.

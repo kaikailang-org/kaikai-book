@@ -7,7 +7,7 @@ fn signo(n: Int) : String =
 
 fn main() {
   let x = 42                  # tipo inferido: Int
-  let y : Real = 3.14         # con anotación explícita
+  let y: Real = 3.14         # con anotación explícita
   let mensaje = "x es #{x}, y es #{y}"
   println(mensaje)
 

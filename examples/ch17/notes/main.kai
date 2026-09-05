@@ -32,8 +32,8 @@ import store
 import persistence
 import web
 
-const PORT     : Int    = 8080
-const LOG_PATH : String = "notes.log"
+const PORT: Int    = 8080
+const LOG_PATH: String = "notes.log"
 
 # Build the wire response for one HTTP request.  Hits the
 # store via `store.ask` and logs mutating commands to the

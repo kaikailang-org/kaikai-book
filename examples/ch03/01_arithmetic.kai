@@ -5,8 +5,8 @@
 # On Int, `/` truncates. For a fractional result, use Real.
 
 fn main() {
-  let a : Int = 7
-  let b : Int = 2
+  let a: Int = 7
+  let b: Int = 2
 
   println("a + b = #{a + b}")
   println("a * b = #{a * b}")

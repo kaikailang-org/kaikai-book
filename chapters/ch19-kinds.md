@@ -617,8 +617,8 @@ fn dot[n: Dim](a: Vec[Real]<n>, b: Vec[Real]<n>, i: Int, acc: Real) : Real =
   if i < 0 { acc } else { dot(a, b, i - 1, acc + a[i] * b[i]) }
 
 fn main() : Unit / Stdout = {
-  let u : Vec[Real]<3> = [1.0, 2.0, 3.0]
-  let w : Vec[Real]<3> = [4.0, 5.0, 6.0]
+  let u: Vec[Real]<3> = [1.0, 2.0, 3.0]
+  let w: Vec[Real]<3> = [4.0, 5.0, 6.0]
   println(real_to_string(head(u)))
   println(real_to_string(dot(u, w, 2, 0.0)))
 }
@@ -640,7 +640,7 @@ out-of-range index, it is a type that cannot be formed.
 And the wrong index is caught where it is written:
 
 ```kai
-let a : Vec[Real]<3> = [1.0, 2.0]   # does not compile
+let a: Vec[Real]<3> = [1.0, 2.0]   # does not compile
 ```
 
 ```

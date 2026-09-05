@@ -185,7 +185,7 @@ Building literals:
 
 ```kai
 let primes = [2, 3, 5, 7, 11]
-let empty : [Int] = []
+let empty: [Int] = []
 ```
 
 kaikai also has **range literals**, which the type system
@@ -290,8 +290,8 @@ Worth pausing on something many languages mix up: in kaikai,
 types:
 
 ```kai
-let s : String = "hi"
-let cs : [Char] = ['h', 'i']
+let s: String = "hi"
+let cs: [Char] = ['h', 'i']
 ```
 
 `s` and `cs` are not interchangeable. You can't write `s[0]`

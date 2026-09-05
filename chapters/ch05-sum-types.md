@@ -306,8 +306,8 @@ That step is called **implicit upcast**: a variable typed
 conversion:
 
 ```kai
-let id_err : IdentityError = AccountNotFound
-let qe : QueryError        = id_err     # OK, no ceremony
+let id_err: IdentityError = AccountNotFound
+let qe: QueryError        = id_err     # OK, no ceremony
 ```
 
 This is what other languages force you to do with wrapper
@@ -389,7 +389,7 @@ fn handle_app(e: AppError) : String = "..."
 And a value of the innermost type:
 
 ```kai
-let id : IdentityError = AccountNotFound
+let id: IdentityError = AccountNotFound
 handle_app(id)       # ERROR: IdentityError is not a direct
                      # component of AppError.
 ```
@@ -400,7 +400,7 @@ chain. To go from `IdentityError` to `AppError` you must
 write the intermediate step explicit:
 
 ```kai
-let q : QueryError = id           # one step: IdentityError → QueryError
+let q: QueryError = id           # one step: IdentityError → QueryError
 handle_app(q)                      # another step: QueryError → AppError
 ```
 
@@ -645,7 +645,7 @@ expressions, and prints them:
 
 ```kai
 fn main() {
-  let env : Env = [("x", 9.0), ("y", 4.0)]
+  let env: Env = [("x", 9.0), ("y", 4.0)]
 
   print_result(eval(env, Add(Var("x"), Var("y"))))    # ok: 13
   print_result(eval(env, Sqrt(Var("x"))))             # ok: 3

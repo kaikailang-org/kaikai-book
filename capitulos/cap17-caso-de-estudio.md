@@ -348,8 +348,8 @@ import persistencia
 import net.tcp
 import web
 
-const PUERTO : Int = 8080
-const PATH_LOG : String = "notas.log"
+const PUERTO: Int = 8080
+const PATH_LOG: String = "notas.log"
 
 fn main() : Unit / Console + NetTcp + File + Spawn + Cancel + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
   let almacen_pid = almacen.arrancar()

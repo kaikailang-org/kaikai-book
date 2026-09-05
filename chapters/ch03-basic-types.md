@@ -161,12 +161,12 @@ truncates the remainder. To get a quotient with a fractional
 part, both operands have to be `Real`.
 
 ```kai
-let a : Int = 7
-let b : Int = 2
+let a: Int = 7
+let b: Int = 2
 println("a / b = #{a / b}")     # 3 — on Int, / truncates
 
-let x : Real = 7.0
-let y : Real = 2.0
+let x: Real = 7.0
+let y: Real = 2.0
 println("x / y = #{x / y}")     # 3.5 — on Real, fractional
                                 #       part is preserved
 ```
@@ -241,7 +241,7 @@ digits:
 
 ```kai
 let w = 42i32 + 7i32
-let big : Int128 = 9223372036854775808i128   # 2⁶³: out of
+let big: Int128 = 9223372036854775808i128   # 2⁶³: out of
                                              # Int's reach
 let mask = 0xFFi32                           # the suffix works on
 let bits = 0b1010u8                          # any base
@@ -350,8 +350,8 @@ let name = "kaikai"       # name : String
 If you want the type explicit, annotate with `:`:
 
 ```kai
-let x : Int  = 42
-let y : Real = 3.14
+let x: Int  = 42
+let y: Real = 3.14
 ```
 
 The annotation is more than decoration. It's there for two

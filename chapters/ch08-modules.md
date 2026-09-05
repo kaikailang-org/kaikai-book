@@ -83,8 +83,8 @@ constructing them:
 import geometry
 
 fn main() {
-  let a : geometry.Point = geometry.Point { x: 0.0, y: 0.0 }
-  let b : geometry.Point = geometry.Point { x: 3.0, y: 4.0 }
+  let a: geometry.Point = geometry.Point { x: 0.0, y: 0.0 }
+  let b: geometry.Point = geometry.Point { x: 3.0, y: 4.0 }
   println("distance = #{geometry.distance(a, b)}")
 }
 ```
@@ -163,7 +163,7 @@ In practice:
 
   ```kai
   # limits.kai
-  pub const MAX_PORT : Int = 65535
+  pub const MAX_PORT: Int = 65535
 
   # main.kai
   import limits
