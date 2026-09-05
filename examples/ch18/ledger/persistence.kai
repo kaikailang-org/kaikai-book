@@ -6,7 +6,6 @@
 # As in chapter 17, isolating the writes in an actor lets
 # the store keep responding while the disk is busy.
 
-import actor
 import fs.file
 
 pub type Event = Line(String)

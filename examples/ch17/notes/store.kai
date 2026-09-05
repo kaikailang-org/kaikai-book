@@ -8,7 +8,6 @@
 #     an `Actor.receive()` loop.
 #   - `ask` is the client-side synchronous wrapper.
 
-import actor
 import domain
 
 # The store's protocol: a command plus the Pid that wants the

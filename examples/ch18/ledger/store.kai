@@ -8,7 +8,6 @@
 #     a loop over `Actor.receive()`.
 #   - `ask` is the client-side synchronous wrapper.
 
-import actor
 import domain
 import balance
 

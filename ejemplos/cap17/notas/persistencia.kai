@@ -2,7 +2,6 @@
 # un archivo. Aislar la escritura a disco en su propio actor
 # permite que el almacén siga respondiendo sin esperar a I/O.
 
-import actor
 import fs.file
 
 pub type Evento = Linea(String)

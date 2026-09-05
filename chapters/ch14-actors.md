@@ -210,6 +210,7 @@ To start an actor that runs in its own fiber:
 
 ```kai
 import actor
+import spawn
 
 fn worker() : Unit / Actor[String] + Console {
   let t1 = Actor.receive()

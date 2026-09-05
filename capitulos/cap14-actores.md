@@ -212,6 +212,7 @@ Para arrancar un actor que corre en su propia fibra:
 
 ```kai
 import actor
+import spawn
 
 fn trabajador() : Unit / Actor[String] + Console {
   let t1 = Actor.receive()

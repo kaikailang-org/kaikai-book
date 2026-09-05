@@ -123,7 +123,6 @@ responde comandos. Su tipo de mensaje es el comando más el
 `Pid` para responder:
 
 ```kai
-import actor
 import dominio
 
 pub type AlmacenMsg = Pregunta(dominio.Comando, Pid[AlmacenResp])
@@ -261,7 +260,6 @@ función simple, no como un protocolo abierto.
 de log y las agrega a un archivo:
 
 ```kai
-import actor
 import fs.file
 
 pub type Evento = Linea(String)
@@ -344,7 +342,6 @@ strings de entrada y comparación de salida.
 ```kai
 import actor
 import spawn
-import fs.file
 import dominio
 import almacen
 import persistencia

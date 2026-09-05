@@ -237,15 +237,30 @@ Los tres comandos comparten dos propiedades importantes:
 `kai fmt` es el formateador canónico. Estilo `gofmt`:
 
 - Una sola forma correcta de imprimir cualquier archivo.
-- Sin opciones de configuración. El proyecto no quiere
-  guerras de estilo.
+- Una sola perilla, y no es de estilo: el ancho de línea. El
+  proyecto no quiere guerras de estilo.
 - Idempotente: formatear un archivo ya formateado no lo
   cambia.
 
-Tres formas de uso:
+El ancho manda la maqueta. Un constructo que cabe en su línea
+se queda ahí; uno que no cabe se corta en sus propios puntos
+—después del `=`, un argumento por línea, una etapa de pipe
+por línea— y un corte que tú ya escribiste en uno de esos
+puntos se respeta, así que una cadena de pipes maquetada a
+mano sobrevive al formateador. El default son 100 columnas;
+`--width N` lo cambia para una corrida, y la clave `width` de
+la tabla `[fmt]` de `kai.toml` lo fija para el paquete:
+
+```toml
+[fmt]
+width = 80
+```
+
+Cuatro formas de uso:
 
 ```
 $ kai fmt archivo.kai                # reescribe el archivo in-place
+$ kai fmt .                          # formatea el paquete completo
 $ kai fmt --check archivo.kai        # exit 0 si está formateado, 1 si no
 $ cat archivo.kai | kai fmt --stdin  # lee stdin, escribe en stdout
 ```
@@ -303,11 +318,14 @@ una lambda unaria solo proyecta sobre su parámetro.
 `and_then_to_map_nudge` avisa cuando un `and_then` es en
 realidad un `map`, y `match_option_to_combinator` hace lo
 propio con un `match` sobre `Option` que ya tiene combinador.
-El resto barre residuos: `redundant_if_bool`,
+`list_concat_literal_to_spread` pilla el `[h] ++ t`, que arma
+una lista de un elemento solo para concatenarla y tirarla — el
+spread `[h, ...t]` emite el cons directo y se ahorra la
+asignación. El resto barre residuos: `redundant_if_bool`,
 `redundant_match_catchall`, `dead_code_unused_priv`,
 `effect_over_declared` y `effect_ffi_without_extern`.
 
-Son nueve al día de hoy, y el número va a subir. Cada regla
+Son diez al día de hoy, y el número va a subir. Cada regla
 entra cuando se puede demostrar que las dos formas son
 equivalentes, porque un linter ruidoso es peor que ninguno.
 `kai info lint` lista el estado actual.
@@ -756,10 +774,9 @@ vemos a continuación.
 Para librerías que no estén en libc, la forma típica es:
 escribes un archivo C chico con las funciones que
 necesitas, y dejas que `kai build` invoque a su compilador
-C con ese archivo incluido. El gestor de paquetes no
-automatiza la compilación de C, así que lo conectas vía la
-variable de entorno `CFLAGS` que `kai` pasa al compilador C
-anfitrión.
+C con ese archivo incluido. Hay dos maneras de conectarlo, y
+cuál te toca depende de si esto es un programa suelto o algo
+que otra gente va a usar.
 
 Un ejemplo mínimo. El lado C:
 
@@ -785,7 +802,9 @@ fn main() : Unit / Console + Ffi {
 }
 ```
 
-Compilando:
+Para un programa suelto, lo conectas a mano vía la variable
+de entorno `CFLAGS`, que `kai` pasa al compilador C
+anfitrión:
 
 ```
 $ CFLAGS="shim.c" kai build app.kai -o app
@@ -798,8 +817,38 @@ el compilador C acepte: `-include` para exponer
 declaraciones, fuentes `.c` extra para compilar adentro,
 `-l<lib>` para enlazar contra librerías instaladas,
 `pkg-config --cflags --libs <paquete>` para usar la
-información de una librería del sistema. Cuando crece más
-allá de una línea, lo envuelves en un `Makefile`.
+información de una librería del sistema. Es la escotilla de
+escape, y mantiene precedencia sobre todo lo demás.
+
+Pero `CFLAGS` no viaja. Si tu binding es un paquete, quien lo
+use no tiene por qué saber que adentro hay un `.c`, y menos
+todavía adivinar la variable de entorno correcta. Para eso el
+manifiesto tiene la tabla `[native]`:
+
+```toml
+[native]
+sources = ["c/shim.c"]   # C vendorizado, relativo al paquete
+include = ["c"]          # directorios -I para compilar esas fuentes
+libs = ["sqlite3"]       # librerías del sistema, -l<nombre> al enlazar
+```
+
+Declarado eso, el consumidor escribe `kai build` a secas. La
+tabla la honran todos los verbos —`build`, `run`, `test`,
+`install`—, en los dos backends, y se propaga
+transitivamente: si A y B dependen del mismo paquete con
+shim, el shim se compila y se enlaza una sola vez.
+
+Es declarativo y nada más: `sources`, `include`, `libs`, sin
+build scripts ni flags libres. Un build script es código
+ajeno corriendo en la máquina de quien instala —superficie de
+ataque y un agujero de reproducibilidad—, y los flags libres
+convertirían el manifiesto en un sistema de construcción. La
+distinción que sí importa es entre `sources` y `libs`: una
+fuente vendorizada siempre funciona, porque el `.c` viaja con
+el paquete y compila en la máquina de destino; una librería
+del sistema puede no estar ahí sin culpa de nadie, y cuando
+el enlace falla el driver nombra el paquete y la librería que
+faltó.
 
 Funciona igual en los dos backends: el nativo también enlaza
 el objeto final con `cc`, así que tus fuentes C extra entran
@@ -970,7 +1019,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.111.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.114.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org

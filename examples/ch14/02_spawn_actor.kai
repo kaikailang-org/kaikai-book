@@ -6,6 +6,7 @@
 # and ends.
 
 import actor
+import spawn
 
 fn worker() : Unit / Actor[String] + Console {
   let t1 = Actor.receive()

@@ -2,7 +2,6 @@
 # to a file.  Isolating the file write in its own actor lets
 # the store keep responding without waiting on disk.
 
-import actor
 import fs.file
 
 pub type Event = Line(String)

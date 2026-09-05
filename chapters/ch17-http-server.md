@@ -122,7 +122,6 @@ and answers commands. Its message type is the command plus
 the `Pid` to reply to:
 
 ```kai
-import actor
 import domain
 
 pub type StoreMsg = Ask(domain.Command, Pid[StoreResp])
@@ -260,7 +259,6 @@ function, not an open protocol.
 lines and appends them to a file:
 
 ```kai
-import actor
 import fs.file
 
 pub type Event = Line(String)
@@ -342,7 +340,6 @@ strings and output comparison.
 ```kai
 import actor
 import spawn
-import fs.file
 import domain
 import store
 import persistence

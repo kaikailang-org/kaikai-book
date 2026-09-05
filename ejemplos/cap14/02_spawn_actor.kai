@@ -6,6 +6,7 @@
 # procesa. Después el padre le manda las tres tareas y termina.
 
 import actor
+import spawn
 
 fn trabajador() : Unit / Actor[String] + Console {
   let t1 = Actor.receive()
