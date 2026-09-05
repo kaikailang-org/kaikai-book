@@ -318,8 +318,8 @@ Ese paso se llama **upcast implícito**: una variable tipada
 conversión:
 
 ```kai
-let id_err : ErrorIdentidad = CuentaNoExiste
-let qb_err : ErrorConsulta  = id_err     # OK, sin ceremonia
+let id_err: ErrorIdentidad = CuentaNoExiste
+let qb_err: ErrorConsulta  = id_err     # OK, sin ceremonia
 ```
 
 Esto es lo que en otros lenguajes te obliga a escribir
@@ -403,7 +403,7 @@ fn manejar_app(e: ErrorApp) : String = "..."
 Y un valor del tipo más interno:
 
 ```kai
-let id : ErrorIdentidad = CuentaNoExiste
+let id: ErrorIdentidad = CuentaNoExiste
 manejar_app(id)        # ERROR: ErrorIdentidad no es componente directo
                        # de ErrorApp.
 ```
@@ -414,7 +414,7 @@ pasar de `ErrorIdentidad` a `ErrorApp` tienes que escribir el
 salto intermedio explícito:
 
 ```kai
-let q : ErrorConsulta = id           # un paso: ErrorIdentidad → ErrorConsulta
+let q: ErrorConsulta = id           # un paso: ErrorIdentidad → ErrorConsulta
 manejar_app(q)                        # otro paso: ErrorConsulta → ErrorApp
 ```
 
@@ -668,7 +668,7 @@ expresiones y las imprime:
 
 ```kai
 fn main() {
-  let env : Env = [("x", 9.0), ("y", 4.0)]
+  let env: Env = [("x", 9.0), ("y", 4.0)]
 
   imprimir(eval(env, Suma(Var("x"), Var("y"))))    # ok: 13
   imprimir(eval(env, Raiz(Var("x"))))              # ok: 3

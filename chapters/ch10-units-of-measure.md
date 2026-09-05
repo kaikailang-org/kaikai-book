@@ -58,9 +58,9 @@ To annotate a number with a unit, use angle brackets in the
 literal:
 
 ```kai
-let price : Real<USD> = 1.50<USD>
-let speed : Real<m / sec> = 9.81<m / sec>
-let timeout : Int<sec> = 30<sec>
+let price: Real<USD> = 1.50<USD>
+let speed: Real<m / sec> = 9.81<m / sec>
+let timeout: Int<sec> = 30<sec>
 ```
 
 Three things to pin down:
@@ -84,9 +84,9 @@ Arithmetic between values of the same unit works as you'd
 expect. Adding two `Real<USD>` gives another `Real<USD>`:
 
 ```kai
-let price : Real<USD> = 1.50<USD>
-let tip : Real<USD> = 0.30<USD>
-let total : Real<USD> = price + tip    # 1.80 USD
+let price: Real<USD> = 1.50<USD>
+let tip: Real<USD> = 0.30<USD>
+let total: Real<USD> = price + tip    # 1.80 USD
 ```
 
 But **mixing incompatible units is a compile error**. If you
@@ -122,9 +122,9 @@ Multiplying two units produces a composite unit. The classic
 example is force:
 
 ```kai
-let mass : Real<kg> = 70.0<kg>
-let acceleration : Real<m / sec^2> = 9.81<m / sec^2>
-let force : Real<kg * m / sec^2> = mass * acceleration
+let mass: Real<kg> = 70.0<kg>
+let acceleration: Real<m / sec^2> = 9.81<m / sec^2>
+let force: Real<kg * m / sec^2> = mass * acceleration
 ```
 
 `kg * m / sec^2` is the composite unit of force. The
@@ -134,8 +134,8 @@ divide force by area to get pressure, the final unit is `kg
 / (m * sec^2)`, all derived mechanically:
 
 ```kai
-let area : Real<m^2> = 4.0<m^2>
-let pressure : Real<kg / (m * sec^2)> = force / area
+let area: Real<m^2> = 4.0<m^2>
+let pressure: Real<kg / (m * sec^2)> = force / area
 ```
 
 The type system does **unit algebra**. `m * m` simplifies
@@ -186,8 +186,8 @@ a `Real<u>` — the "for any u" lets you use it with `USD`,
 have the same unit**.
 
 ```kai
-let pp : Real<USD> = average(10.0<USD>, 20.0<USD>)   # 15 USD
-let pm : Real<kg>  = average(70.0<kg>, 80.0<kg>)     # 75 kg
+let pp: Real<USD> = average(10.0<USD>, 20.0<USD>)   # 15 USD
+let pm: Real<kg>  = average(70.0<kg>, 80.0<kg>)     # 75 kg
 ```
 
 But this is a type error:
@@ -218,9 +218,9 @@ unit `dest/source`. Multiplying by it cancels the source
 unit and leaves the destination one:
 
 ```kai
-let eur_amount : Real<EUR> = 80.0<EUR>
-let rate : Real<USD / EUR> = 1.10<USD / EUR>
-let usd_amount : Real<USD> = eur_amount * rate    # 88 USD
+let eur_amount: Real<EUR> = 80.0<EUR>
+let rate: Real<USD / EUR> = 1.10<USD / EUR>
+let usd_amount: Real<USD> = eur_amount * rate    # 88 USD
 ```
 
 The arithmetic follows: `EUR * (USD / EUR)` cancels `EUR`
@@ -275,8 +275,8 @@ unit OrderId
 fn cancel_order(id: Int<OrderId>) : Unit / Stdout = ...
 fn send_email(uid: Int<UserId>) : Unit / Stdout = ...
 
-let user_id : Int<UserId>  = 42<UserId>
-let order_id : Int<OrderId> = 99<OrderId>
+let user_id: Int<UserId>  = 42<UserId>
+let order_id: Int<OrderId> = 99<OrderId>
 
 cancel_order(user_id)   # type ERROR: UserId ≠ OrderId
 ```
@@ -340,19 +340,19 @@ And the main calculation:
 
 ```kai
 fn main() {
-  let usd_balance_1 : Real<USD> = 100.0<USD>
-  let usd_balance_2 : Real<USD> = 50.0<USD>
-  let total_usd : Real<USD> = add(usd_balance_1, usd_balance_2)    # 150
+  let usd_balance_1: Real<USD> = 100.0<USD>
+  let usd_balance_2: Real<USD> = 50.0<USD>
+  let total_usd: Real<USD> = add(usd_balance_1, usd_balance_2)    # 150
 
-  let eur_balance : Real<EUR> = 80.0<EUR>
-  let eur_to_usd_rate : Real<USD / EUR> = 1.10<USD / EUR>
-  let eur_in_usd : Real<USD> = convert(eur_balance, eur_to_usd_rate)
-  let global_total : Real<USD> = add(total_usd, eur_in_usd)         # 238
+  let eur_balance: Real<EUR> = 80.0<EUR>
+  let eur_to_usd_rate: Real<USD / EUR> = 1.10<USD / EUR>
+  let eur_in_usd: Real<USD> = convert(eur_balance, eur_to_usd_rate)
+  let global_total: Real<USD> = add(total_usd, eur_in_usd)         # 238
 
-  let clp_balance : Real<CLP> = 100000.0<CLP>
-  let clp_to_usd_rate : Real<USD / CLP> = 0.0011<USD / CLP>
-  let clp_in_usd : Real<USD> = convert(clp_balance, clp_to_usd_rate)
-  let final_total : Real<USD> = add(global_total, clp_in_usd)        # 348
+  let clp_balance: Real<CLP> = 100000.0<CLP>
+  let clp_to_usd_rate: Real<USD / CLP> = 0.0011<USD / CLP>
+  let clp_in_usd: Real<USD> = convert(clp_balance, clp_to_usd_rate)
+  let final_total: Real<USD> = add(global_total, clp_in_usd)        # 348
 }
 ```
 

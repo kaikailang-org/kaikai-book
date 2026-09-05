@@ -38,8 +38,8 @@ fn servidor() : Unit / Actor[Request] + Actor[Reply] + Stdout = {
 fn main() : Unit / Stdout + Spawn + Cancel = {
   with_mailbox {       # mailbox de Reply: dónde caen las respuestas del server
     with_mailbox {     # mailbox de Request: efecto para Actor.send al server
-      let server_body : () -> Unit / Actor[Request] + Actor[Reply] + Stdout = () => servidor()
-      let server : Pid[Request] = spawn_actor(server_body)
+      let server_body: () -> Unit / Actor[Request] + Actor[Reply] + Stdout = () => servidor()
+      let server: Pid[Request] = spawn_actor(server_body)
 
       Actor.send(server, Query("dos+dos", Actor.self()))
       match Actor.receive() {

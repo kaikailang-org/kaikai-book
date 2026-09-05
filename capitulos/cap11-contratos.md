@@ -200,8 +200,8 @@ se cumpla. Si lo cumples con un literal, el compilador lo
 verifica en compile time:
 
 ```kai
-let x : NoNeg = 16        # OK: 16 >= 0
-let y : NoNeg = 0 - 5     # ERROR: -5 no satisface self >= 0
+let x: NoNeg = 16        # OK: 16 >= 0
+let y: NoNeg = 0 - 5     # ERROR: -5 no satisface self >= 0
 ```
 
 Si lo cumples con un valor dinámico, el compilador inserta una
@@ -242,7 +242,7 @@ son literales o el compilador conoce sus rangos:
 
 ```kai
 divide(10, 0)              # ERROR de compilación: 0 != 0 es falso
-let x : NoNeg = 0 - 5      # ERROR de compilación: -5 < 0
+let x: NoNeg = 0 - 5      # ERROR de compilación: -5 < 0
 ```
 
 El programa ni siquiera llega a generar binario, que es la

@@ -5,7 +5,7 @@
 import geometria.{Punto, distancia}
 
 fn main() {
-  let a : Punto = Punto { x: 0.0, y: 0.0 }
-  let b : Punto = Punto { x: 3.0, y: 4.0 }
+  let a: Punto = Punto { x: 0.0, y: 0.0 }
+  let b: Punto = Punto { x: 3.0, y: 4.0 }
   println("distancia = #{distancia(a, b)}")
 }

@@ -164,12 +164,12 @@ resto. Para obtener un cociente con parte fraccionaria, los
 dos operandos tienen que ser `Real`.
 
 ```kai
-let a : Int = 7
-let b : Int = 2
+let a: Int = 7
+let b: Int = 2
 println("a / b  = #{a / b}")     # 3: sobre Int, / trunca
 
-let x : Real = 7.0
-let y : Real = 2.0
+let x: Real = 7.0
+let y: Real = 2.0
 println("x / y = #{x / y}")      # 3.5: sobre Real, hay parte
                                  #       fraccionaria
 ```
@@ -246,7 +246,7 @@ dígitos:
 
 ```kai
 let w = 42i32 + 7i32
-let grande : Int128 = 9223372036854775808i128   # 2⁶³: fuera del
+let grande: Int128 = 9223372036854775808i128   # 2⁶³: fuera del
                                                 # alcance de Int
 let mascara = 0xFFi32                           # el sufijo vale en
 let bits    = 0b1010u8                          # cualquier base
@@ -355,8 +355,8 @@ let nombre = "kaikai"      # nombre : String
 Si quieres dejar el tipo explícito, lo anotas con `:`:
 
 ```kai
-let x : Int  = 42
-let y : Real = 3.14
+let x: Int  = 42
+let y: Real = 3.14
 ```
 
 La anotación no es solo decoración. Sirve para dos cosas:

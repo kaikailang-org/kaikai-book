@@ -85,7 +85,7 @@ fn imprimir(r: Result[Real, ErrorEval]) : Unit / Stdout =
   }
 
 fn main() {
-  let env : Env = [("x", 9.0), ("y", 4.0)]
+  let env: Env = [("x", 9.0), ("y", 4.0)]
 
   # x + y         = 13
   imprimir(eval(env, Suma(Var("x"), Var("y"))))

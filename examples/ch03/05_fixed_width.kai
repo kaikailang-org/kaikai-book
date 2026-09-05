@@ -14,11 +14,11 @@ fn main() {
   println("edge = #{edge}")               # -2147483648
 
   # Int128 reaches where Int (64 bits) cannot.
-  let big : Int128 = 9223372036854775808i128
+  let big: Int128 = 9223372036854775808i128
   println("big = #{big}")
 
   # Between Int and the fixed widths you convert by full name.
-  let n : Int = 10
+  let n: Int = 10
   let n32 = int_to_int32(n)
   println("n32 + 1 = #{n32 + 1i32}")
   println("back = #{int32_to_int(n32) + 1}")

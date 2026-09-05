@@ -83,8 +83,8 @@ para construirlos:
 import geometria
 
 fn main() {
-  let a : geometria.Punto = geometria.Punto { x: 0.0, y: 0.0 }
-  let b : geometria.Punto = geometria.Punto { x: 3.0, y: 4.0 }
+  let a: geometria.Punto = geometria.Punto { x: 0.0, y: 0.0 }
+  let b: geometria.Punto = geometria.Punto { x: 3.0, y: 4.0 }
   println("distancia = #{geometria.distancia(a, b)}")
 }
 ```
@@ -163,7 +163,7 @@ En la práctica, esto se traduce a:
 
   ```kai
   # limites.kai
-  pub const PUERTO_MAX : Int = 65535
+  pub const PUERTO_MAX: Int = 65535
 
   # main.kai
   import limites
