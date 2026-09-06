@@ -1,0 +1,7 @@
+# Dos módulos de este proyecto exportan `Lectura` y `MAX`. Ninguno
+# está mal: cada dominio nombra lo suyo con la palabra que le
+# corresponde. El que importa a los dos es quien desempata.
+
+pub type Lectura = { celsius: Real }
+
+pub const MAX: Int = 100

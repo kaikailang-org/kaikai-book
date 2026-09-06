@@ -1,0 +1,29 @@
+# El cuerpo de un `test` no lleva fila de efectos y no puede
+# declararla. Absorbe lo que una entrada de programa puede cargar:
+# los efectos builtin con handler por defecto y la capacidad `Ffi`
+# que el compilador sintetiza. Por eso este test llama a un
+# `extern "C"` directo, sin envolverlo en nada.
+
+# (`llabs` y no `abs`: sobre el backend C, un `extern "C"` que
+# redeclara `abs` choca con el prototipo de libc. El de 64 bits
+# calza sin pelear.)
+extern "C" fn llabs(x: Int) : Int / Ffi
+
+effect Reloj {
+  ahora() : Int
+}
+
+test "un test puede llamar un extern C directo" {
+  assert llabs(0 - 5) == 5
+}
+
+test "un efecto propio se maneja dentro del cuerpo" {
+  # `Reloj` no tiene handler en la entrada del runner: si lo
+  # invocas suelto, el test no compila. Se instala aquí.
+  let t = handle { Reloj.ahora() } with Reloj {
+    ahora(resume) -> resume(1234)
+  }
+  assert t == 1234
+}
+
+fn main() : Int = 0

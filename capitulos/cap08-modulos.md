@@ -137,6 +137,104 @@ módulo exporta" al namespace local. Es una decisión
 deliberada: el wildcard parece cómodo al escribir pero hace que
 el lector futuro no sepa de dónde vino un nombre.
 
+### Cuando dos módulos exportan el mismo nombre
+
+Tarde o temprano dos dependencias tuyas le ponen la misma
+palabra a cosas distintas. No es que una esté mal: cada dominio
+nombra lo suyo con el término que le corresponde, y `Lectura`
+es tan buen nombre para un sensor como para una alarma.
+
+```kai
+# ejemplos/cap08/07_colisiones/sensores.kai
+pub type Lectura = { celsius: Real }
+pub const MAX: Int = 100
+
+# ejemplos/cap08/07_colisiones/alarmas.kai
+pub type Lectura = { severidad: Int }
+pub const MAX: Int = 5
+```
+
+Si importas los dos y escribes `MAX` a secas, el compilador no
+elige por ti:
+
+```
+error: bare name 'MAX' is exported by multiple modules: sensores, alarmas
+  --> main.kai:5:26
+    |
+  5 |   Stdout.print("tope = #{MAX}")
+    |                          ^
+  = note: constant candidates: sensores.MAX, alarmas.MAX
+  = help: qualify the constant, e.g. `sensores.MAX`
+```
+
+Que sea un error es reciente y es lo correcto. Antes el
+compilador resolvía por orden de registro, lo que significa que
+*cuál* de los dos `MAX` obtenías dependía del orden de tus
+imports — la clase de trampa que se cobra el día que alguien
+ordena las líneas alfabéticamente y el programa cambia de
+significado sin que nadie toque una expresión.
+
+La salida es el calificador, y funciona en todas partes donde
+aparece un nombre: tipos, constructores (en expresión y en
+patrón), funciones, constantes, protocolos en la cabeza de un
+`impl` y dentro de `#[derive(...)]`, y efectos tanto en la fila
+como en la cabeza de un `handle` y en sus operaciones.
+
+```kai
+# ejemplos/cap08/07_colisiones/main.kai
+import sensores
+import alarmas
+
+fn main() : Unit / Stdout {
+  let t: sensores.Lectura = sensores.Lectura { celsius: 21.5 }
+  let a: alarmas.Lectura = alarmas.Lectura { severidad: 3 }
+
+  Stdout.print("#{t.celsius} grados (tope #{sensores.MAX})")
+  Stdout.print("severidad #{a.severidad} (tope #{alarmas.MAX})")
+}
+```
+
+```
+$ kai run ejemplos/cap08/07_colisiones/main.kai
+21.5 grados (tope 100)
+severidad 3 (tope 5)
+```
+
+El calificador es solo un desempate: `sensores.MAX` y `MAX`
+nombran la misma constante cuando no hay colisión, así que no
+tienes que calificar por si acaso. Y cada módulo se queda con
+su propia declaración: dos dependencias pueden declarar cada
+una su `effect Emit` sin pisarse, y `with ea.Emit` alcanza solo
+al de `ea`.
+
+Podrías esperar que un import selectivo —`import sensores.{MAX}`
+junto a `import alarmas`— sirviera de desempate para todo el
+archivo. Hoy no: el nombre sigue siendo ambiguo y el error es el
+mismo. Califica en el punto de uso.
+
+### Un import que no usas
+
+Un `import` que el archivo nunca menciona —ni como calificador
+ni a través de ningún nombre que el módulo exporte— es una
+advertencia:
+
+```
+warning: unused import `actor`
+```
+
+Hoy es advertencia y en la edición Orongo pasa a ser error,
+como en Go. La migración es mecánica: borrar la línea.
+
+Hay una excepción que vale conocer, porque si no parece un
+falso negativo. Un módulo que solo trae `impl` al scope se usa
+**por estar cargado**, no por nombrarse; ese import no se
+reporta aunque no aparezca en ninguna línea.
+
+Vale la pena mirar dos veces antes de borrar, eso sí: puede que
+el import esté de más, o puede que el nombre que ibas a usar lo
+estés sacando de otra parte sin darte cuenta. En los dos casos
+estás mejor sabiéndolo.
+
 ## 8.3 Visibilidad: el contrato del módulo
 
 `pub` es el contrato que tu módulo le hace al mundo. Todo lo

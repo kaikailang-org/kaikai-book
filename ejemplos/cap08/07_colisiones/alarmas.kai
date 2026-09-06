@@ -1,0 +1,3 @@
+pub type Lectura = { severidad: Int }
+
+pub const MAX: Int = 5

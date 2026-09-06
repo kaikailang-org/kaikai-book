@@ -1,0 +1,12 @@
+import sensores
+import alarmas
+
+fn main() : Unit / Stdout {
+  # El calificador dice de qué módulo viene cada nombre. Sin él,
+  # `MAX` es un error que nombra a los dos candidatos.
+  let t: sensores.Lectura = sensores.Lectura { celsius: 21.5 }
+  let a: alarmas.Lectura = alarmas.Lectura { severidad: 3 }
+
+  Stdout.print("#{t.celsius} grados (tope #{sensores.MAX})")
+  Stdout.print("severidad #{a.severidad} (tope #{alarmas.MAX})")
+}

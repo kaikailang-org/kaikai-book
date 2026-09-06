@@ -223,10 +223,59 @@ Los patrones que kaikai acepta:
 - **Wildcard**: `_`. Calza con cualquier cosa, no ata nada.
 - **Variable**: cualquier identificador no declarado. Calza
   con cualquier cosa y ata el valor a esa variable.
+- **Constantes**: `MAX`, `red.MAX`. Calzan con los valores
+  iguales a la constante. Un calificador elige la de un módulo
+  en particular.
 
 Los patrones se anidan: `Some(Punto { x, y })` calza con un
 `Some` que contiene un `Punto`, y desempaca `x` e `y` en una
 sola pasada.
+
+### Atar o comparar: la regla del identificador
+
+Las dos últimas entradas de esa lista merecen una segunda
+mirada, porque son la misma sintaxis haciendo cosas opuestas:
+
+```kai
+# ejemplos/cap05/06_patrones_constante.kai
+const PUERTO_HTTP: Int = 80
+const PUERTO_HTTPS: Int = 443
+
+fn esquema(p: Int) : String =
+  match p {
+    PUERTO_HTTP  -> "http"
+    PUERTO_HTTPS -> "https"
+    _            -> "desconocido"
+  }
+```
+
+`PUERTO_HTTP` acá no es una variable que se trague cualquier
+puerto y lo ate. Es una prueba de igualdad contra `80`. La regla
+es: **un identificador en un patrón ata, salvo que nombre una
+constante en scope; ahí compara.** No es cosa de mayúsculas: una
+constante en minúscula compara igual.
+
+Lo que significa que introducir una constante puede cambiar lo
+que un patrón ya escrito quiere decir. Si pusiste un brazo
+`limite -> ...` con la intención de atar, y después alguien
+declara `const limite`, ese brazo se convierte en una
+comparación sin que nadie lo toque.
+
+Para el sentido más común de esa equivocación el compilador te
+cubre. Una atadura pelada calza con todo, así que cualquier
+brazo posterior queda muerto, y lo dice:
+
+```
+error: unreachable match arm: previous arm matched every value
+  --> x.kai:4:5
+    |
+  4 |     _      -> "inalcanzable"
+    |     ^
+  = note: an earlier unguarded `_` or bare binding already covers this case
+```
+
+Si querías comparar y la constante no estaba en scope, este es
+el error que vas a ver, y apunta al lugar correcto.
 
 ### Guardas
 

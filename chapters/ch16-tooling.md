@@ -380,6 +380,40 @@ kai: warning: 'kai install' with no argument resolves dependencies; that is now 
 
 When `hanga-roa` closes, that form goes away.
 
+### Shipping completions with the binary
+
+A CLI is not usable from its binary alone — half of what makes
+one pleasant is the shell completing subcommands and flags. A
+package declares the scripts it ships and `kai install` puts
+each where its shell already looks:
+
+```toml
+[completions]
+zsh  = "completions/_foo"
+bash = "completions/foo.bash"
+fish = "completions/foo.fish"
+```
+
+Paths are relative to the package; the destination filename
+comes from the manifest's `name`, not from the source path, so
+the file lands under the name the shell searches for. The three
+directories live under `$KAIKAI_HOME/share`, and `install.sh`
+wires them into the shell's search path once — so every later
+`kai install` works with no per-package step. When that wiring
+is missing, `kai install` prints the line to add; it never
+edits a startup file behind your back.
+
+One detail with a story behind it: zsh gets its directory
+**prepended** to `fpath`, not appended. Appended, a stock
+function of the same name still wins — zsh ships an `_mh` that
+claims `mark` and then suppresses even filename completion when
+MH isn't installed.
+
+Like `[native]`, it's declarative and bounded: three shells, one
+fixed destination each, no hooks. A path that escapes the
+package or names a missing file is skipped with a warning and
+the binary still installs.
+
 Don't confuse `kai update` with `kai upgrade`: `update`
 refreshes your package's **dependencies**; `upgrade` updates
 the **compiler itself** to the latest release (downloads,

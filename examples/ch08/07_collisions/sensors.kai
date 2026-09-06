@@ -1,0 +1,7 @@
+# Two modules in this project export `Reading` and `MAX`. Neither
+# is wrong: each domain names its own thing with the word that
+# fits. Whoever imports both is the one who breaks the tie.
+
+pub type Reading = { celsius: Real }
+
+pub const MAX: Int = 100

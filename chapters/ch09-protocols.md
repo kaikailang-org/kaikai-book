@@ -107,6 +107,13 @@ Three details worth pinning down:
   both import. It's a practical limitation, not a type-system
   one.
 
+- **The name can be qualified.** When two of your imports
+  export a protocol with the same name, say which one you mean
+  — `impl drawing.Render for Box`, and the same inside a
+  derive, `#[derive(protocols.Show)]`. It's the general rule
+  from §8.2: the qualifier is a tiebreaker, and a bare name is
+  fine whenever nothing collides.
+
 ## 9.3 The five stdlib protocols
 
 kaikai ships five protocols in `stdlib/protocols.kai` you'll
