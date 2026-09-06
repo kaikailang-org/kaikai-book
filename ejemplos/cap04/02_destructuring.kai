@@ -3,7 +3,7 @@
 
 type Punto = { x: Int, y: Int }
 
-fn describir(p: Punto) : String = {
+fn describir(p: Punto) : String {
   let Punto { x, y } = p
   "(#{x}, #{y})"
 }

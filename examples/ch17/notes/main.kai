@@ -38,7 +38,7 @@ const LOG_PATH: String = "notes.log"
 # Build the wire response for one HTTP request.  Hits the
 # store via `store.ask` and logs mutating commands to the
 # persistence actor before replying.
-fn handle_request(raw: String, store_pid: Pid[store.StoreMsg], log_pid: Pid[persistence.Event]) : String / Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] = {
+fn handle_request(raw: String, store_pid: Pid[store.StoreMsg], log_pid: Pid[persistence.Event]) : String / Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] {
   let reply = match web.parse_request(raw) {
     Err(msg) -> domain.ClientError(msg)
     Ok(req)  -> match web.route(req) {
@@ -78,14 +78,14 @@ fn read_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
 # spawning, but the spawn body still carries Actor[StoreMsg]
 # (sends to the store) and Actor[Event] (sends to persistence)
 # because those mailboxes are owned by *other* fibers.
-fn serve_connection(conn: Conn, store_pid: Pid[store.StoreMsg], log_pid: Pid[persistence.Event]) : Unit / NetTcp + Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] + Cancel = {
+fn serve_connection(conn: Conn, store_pid: Pid[store.StoreMsg], log_pid: Pid[persistence.Event]) : Unit / NetTcp + Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] + Cancel {
   let raw  = read_request(conn)
   let wire = handle_request(raw, store_pid, log_pid)
   let _    = NetTcp.send(conn, web.string_to_bytes(wire))
   NetTcp.close(conn)
 }
 
-fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel = {
+fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel {
   # Outer mailbox: lets `main` send `StoreMsg` to the store
   # actor.  (Strictly, only Actor.send is needed here, but the
   # handler shape requires the mailbox to exist.)

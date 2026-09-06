@@ -18,7 +18,7 @@ impl Container for List {
   }
 }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   println("box:  #{peek(Box(7))}")
   println("list: #{peek([3, 4, 5])}")
 }

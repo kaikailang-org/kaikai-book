@@ -13,7 +13,7 @@ import core.string
 fn upper(s: String) : String =
   string.from_chars(list.map(string.chars(s), char_unicode.to_upper))
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   Stdout.print(upper("café"))
   Stdout.print(upper("привет"))
   Stdout.print(upper("omega"))

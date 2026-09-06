@@ -489,7 +489,7 @@ claras, el patrón natural es:
 fn check_identidad(req: Req) : Result[Cuenta, ErrorIdentidad] = ...
 fn check_auth(c: Cuenta) : Result[Aprobado, ErrorAuth] = ...
 
-fn consultar_saldo(req: Req) : Result[Saldo, ErrorConsulta] = {
+fn consultar_saldo(req: Req) : Result[Saldo, ErrorConsulta] {
   let cuenta = check_identidad(req)!     # ErrorIdentidad <: ErrorConsulta
   let app    = check_auth(cuenta)!       # ErrorAuth     <: ErrorConsulta
   Ok(cargar_saldo(app))

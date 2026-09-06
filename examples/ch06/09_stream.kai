@@ -8,7 +8,7 @@
 
 import stream
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   # map and filter are lazy: neither builds an intermediate list.
   # `stream.foldl` is the sink that walks the stream once and
   # accumulates the result.

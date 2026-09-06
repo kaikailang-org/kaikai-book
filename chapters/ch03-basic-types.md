@@ -466,7 +466,7 @@ and their values are discarded — except where you bind them
 with `let`.
 
 ```kai
-fn square_plus_one(x: Int) : Int = {
+fn square_plus_one(x: Int) : Int {
   let square = x * x
   square + 1
 }
@@ -500,7 +500,7 @@ fn sign(n: Int) : String =
 Long form, with `{ ... }`:
 
 ```kai
-fn square_plus_one(x: Int) : Int = {
+fn square_plus_one(x: Int) : Int {
   let square = x * x
   square + 1
 }
@@ -534,7 +534,7 @@ duplicate the logic.
 **3.3.** Given the function:
 
 ```kai
-fn total_price(units: Int, unit_price: Int) : Int = {
+fn total_price(units: Int, unit_price: Int) : Int {
   let subtotal = units * unit_price
   let tax = subtotal * 19 / 100
   subtotal + tax

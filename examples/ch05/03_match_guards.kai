@@ -10,7 +10,7 @@ fn sign(n: Int) : String =
 # Guards with bindings and patterns
 type Point = { x: Int, y: Int }
 
-fn quadrant(p: Point) : String = {
+fn quadrant(p: Point) : String {
   let Point { x, y } = p
   if x == 0 and y == 0 { "origin" }
   else if x > 0 and y > 0 { "I" }

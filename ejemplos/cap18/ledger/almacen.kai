@@ -123,7 +123,7 @@ fn aplicar_movs(cs: [dominio.Cuenta], ms: [dominio.Movimiento]) : [dominio.Cuent
 
 # Recursión manual sobre la lista de cuentas: por cada cuenta,
 # si su id coincide con el del movimiento, le aplicamos el delta.
-fn aplicar_uno(cs: [dominio.Cuenta], m: dominio.Movimiento) : [dominio.Cuenta] = {
+fn aplicar_uno(cs: [dominio.Cuenta], m: dominio.Movimiento) : [dominio.Cuenta] {
   let (id_buscado, delta) = delta_de(m)
   recorrer_cuentas(cs, id_buscado, delta)
 }
@@ -151,7 +151,7 @@ fn delta_de(m: dominio.Movimiento) : (Int<CuentaId>, Real<USD>) = match m {
 # instalado por spawn_actor) como Actor[AlmacenResp] (usado
 # solo por `Actor.send` — el mailbox es propiedad de la fibra
 # que llama).
-pub fn almacen_loop(s: Estado) : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] = {
+pub fn almacen_loop(s: Estado) : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] {
   match Actor.receive() {
     Pregunta(c, cliente) -> {
       let (resp, s2) = procesar(c, s)
@@ -163,7 +163,7 @@ pub fn almacen_loop(s: Estado) : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] =
 
 # Helper del lado del cliente. El que llama debe tener un
 # mailbox Actor[AlmacenResp] (la respuesta cae ahí).
-pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respuesta / Actor[AlmacenMsg] + Actor[AlmacenResp] = {
+pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respuesta / Actor[AlmacenMsg] + Actor[AlmacenResp] {
   Actor.send(almacen, Pregunta(c, Actor.self()))
   match Actor.receive() {
     Respondido(r) -> r

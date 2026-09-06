@@ -22,7 +22,7 @@ fn tree_sum[r: Region](t: Tree<r>) : Int =
 fn build[r: Region](t: Tree<r>, n: Int) : Tree<r> =
   if n == 0 { t } else { build(insert(t, n), n - 1) }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let total = region { r ->
     let tree = build(Leaf, 100)
     tree_sum(tree)

@@ -181,7 +181,7 @@ unit s
 fn area_de[u: Measure](ancho: Real<u>, alto: Real<u>) : Real<u^2> =
   ancho * alto
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let a1 = area_de(3.0<m>, 4.0<m>)      # Real<m^2>
   let a2 = area_de(3.0<s>, 4.0<s>)      # Real<s^2>
   println("#{a1}")
@@ -218,7 +218,7 @@ imperial ft
 
 fn velocidad(d: Real<m>, t: Real<s>) : Real<m/s> = d / t
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let v = velocidad(100.0<m>, 9.58<s>)
   println("#{v}")
 
@@ -271,7 +271,7 @@ fn suma(xs: [Int]) : Int = match xs {
   [h, ...t] -> h + suma(t)
 }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let total = region {
     let a = [1, 2, 3, 4, 5]        # construida en la arena
     let b = [10, 20, 30]           # construida en la arena
@@ -320,7 +320,7 @@ fn sumar[r: Region](t: Arbol<r>) : Int =
 fn construir[r: Region](t: Arbol<r>, n: Int) : Arbol<r> =
   if n == 0 { t } else { construir(insertar(t, n), n - 1) }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let total = region { r ->
     let arbol = construir(Hoja, 100)
     sumar(arbol)
@@ -391,7 +391,7 @@ import money
 import decimal as dec
 import decimal_proto
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let a: Money[dec.Decimal]<USD> = 10.50<USD>
   let b: Money[dec.Decimal]<USD> = 4.50<USD>
   let total = a + b                       # misma moneda: Money[Decimal]<USD>
@@ -482,7 +482,7 @@ desde un buffer:
 #[derive(Layout)]
 type Paquete = { magia: U32<be>, puerto: U16<be> }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let bytes = Paquete { magia: 0<be>, puerto: 0<be> }.to_bytes()
   match paquete_from_bytes(bytes, 0) {
     Ok(p)  -> println("puerto #{p.value.puerto}")
@@ -528,7 +528,7 @@ fn primera_linea(h: FileHandle<read>) : String / File =
     Err(e) -> e
   }
 
-fn main() : Unit / Stdout + File = {
+fn main() : Unit / Stdout + File {
   let ruta = "/tmp/kai_perm_demo.txt"
   match File.open_write(ruta) {
     Ok(h) -> {
@@ -563,7 +563,7 @@ sirve donde se piden menos, nunca al revés. `read + write` incluye
 `FileHandle<read>` puro **no** compila donde se exige `<write>`.
 
 ```kai
-fn escribe(h: FileHandle<read>) : Unit / File = {
+fn escribe(h: FileHandle<read>) : Unit / File {
   let _ = File.write_chunk(h, "x")   # no compila: <read> no
   ()                                 # subsume a <write>
 }
@@ -617,7 +617,7 @@ fn punto[n: Dim](v: Vec[Real]<n>) : Real = v[0]
 fn dot[n: Dim](a: Vec[Real]<n>, b: Vec[Real]<n>, i: Int, acc: Real) : Real =
   if i < 0 { acc } else { dot(a, b, i - 1, acc + a[i] * b[i]) }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let u: Vec[Real]<3> = [1.0, 2.0, 3.0]
   let w: Vec[Real]<3> = [4.0, 5.0, 6.0]
   println("#{punto(u)}")
@@ -702,7 +702,7 @@ impl Contenedor for List {
   }
 }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   println("caja:  #{primero(Caja(7))}")
   println("lista: #{primero([3, 4, 5])}")
 }

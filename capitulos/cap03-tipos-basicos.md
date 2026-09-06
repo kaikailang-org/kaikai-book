@@ -470,7 +470,7 @@ orden y sus valores se descartan, salvo cuando los atas con
 `let`.
 
 ```kai
-fn cuadrado_mas_uno(x: Int) : Int = {
+fn cuadrado_mas_uno(x: Int) : Int {
   let cuadrado = x * x
   cuadrado + 1
 }
@@ -505,7 +505,7 @@ fn signo(n: Int) : String =
 Forma larga, con `{ ... }` y bindings intermedios:
 
 ```kai
-fn cuadrado_mas_uno(x: Int) : Int = {
+fn cuadrado_mas_uno(x: Int) : Int {
   let cuadrado = x * x
   cuadrado + 1
 }
@@ -551,7 +551,7 @@ primera, no repetir la lógica.
 **3.3.** Dada la función:
 
 ```kai
-fn precio_total(unidades: Int, precio_unitario: Int) : Int = {
+fn precio_total(unidades: Int, precio_unitario: Int) : Int {
   let subtotal = unidades * precio_unitario
   let iva = subtotal * 19 / 100
   subtotal + iva

@@ -8,7 +8,7 @@ import encoding.json.{json_decode, json_encode}
 #[derive(Json)]
 type Nota = { titulo: String, prioridad: Int, etiqueta: Option[String] }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let n = Nota { titulo: "comprar pan", prioridad: 1, etiqueta: None }
   let texto = json_encode(to_json(n))
   println(texto)

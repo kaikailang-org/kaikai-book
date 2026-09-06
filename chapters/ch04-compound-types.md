@@ -134,7 +134,7 @@ Accessing with `.` is fine for one or two fields. When you
 need several at once, **destructuring** is cleaner:
 
 ```kai
-fn distance_squared(a: Point, b: Point) : Int = {
+fn distance_squared(a: Point, b: Point) : Int {
   let Point { x: ax, y: ay } = a
   let Point { x: bx, y: by } = b
   let dx = ax - bx
@@ -148,7 +148,7 @@ and just give the field name — binding the field to a variable
 of the same name:
 
 ```kai
-fn describe(p: Point) : String = {
+fn describe(p: Point) : String {
   let Point { x, y } = p
   "(#{x}, #{y})"
 }
@@ -422,7 +422,7 @@ amortized O(1), and the whole assembly is O(n).
 import string_builder
 import core.list
 
-fn join(names: [String]) : String = {
+fn join(names: [String]) : String {
   let sb = list.foldl(names, string_builder.new(),
                       (b, n) => string_builder.append(b, "#{n}, "))
   string_builder.build(sb)
@@ -623,7 +623,7 @@ count how many distinct words there are.
 import collections.hashmap as hashmap
 import collections.hashset as hashset
 
-fn word_frequencies(words: [String]) : hashmap.HashMap[String, Int] / Mutable = {
+fn word_frequencies(words: [String]) : hashmap.HashMap[String, Int] / Mutable {
   let m = hashmap.empty()
   count(m, words)
   m
@@ -638,7 +638,7 @@ fn count(m: hashmap.HashMap[String, Int], words: [String]) : Unit / Mutable = ma
   }
 }
 
-fn main() : Unit / Stdout + Mutable = {
+fn main() : Unit / Stdout + Mutable {
   let text = ["sun", "sea", "sun", "wind", "sea", "sun"]
   let m = word_frequencies(text)
   match m["sun"] {

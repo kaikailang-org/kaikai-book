@@ -474,7 +474,7 @@ is:
 fn check_identity(req: Req) : Result[Account, IdentityError] = ...
 fn check_auth(c: Account) : Result[Approved, AuthError] = ...
 
-fn query_balance(req: Req) : Result[Balance, QueryError] = {
+fn query_balance(req: Req) : Result[Balance, QueryError] {
   let acc = check_identity(req)!     # IdentityError <: QueryError
   let app = check_auth(acc)!         # AuthError <: QueryError
   Ok(load_balance(app))

@@ -13,7 +13,7 @@ import core.string
 fn arriba(s: String) : String =
   string.from_chars(list.map(string.chars(s), char_unicode.to_upper))
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   Stdout.print(arriba("café"))
   Stdout.print(arriba("привет"))
   Stdout.print(arriba("omega"))

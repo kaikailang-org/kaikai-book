@@ -5,13 +5,13 @@ fn is_even(n: Int) : Bool = n % 2 == 0
 
 # `|>` — apply: LHS is the first arg of the call on the right.
 # `xs |> f` ≡ `f(xs)`.
-fn example_apply() : Int = {
+fn example_apply() : Int {
   let xs = [1, 2, 3, 4, 5]
   xs |> list.sum
 }
 
 # `|` — map over lists: `xs | f` ≡ `list.map(xs, f)`.
-fn example_map() : Int = {
+fn example_map() : Int {
   let xs = [1, 2, 3, 4, 5]
   let doubles = xs | double
   list.sum(doubles)
@@ -21,14 +21,14 @@ fn example_map() : Int = {
 # Each element produces a list; all are concatenated.
 fn neighbors(n: Int) : [Int] = [n - 1, n, n + 1]
 
-fn example_flat_map() : Int = {
+fn example_flat_map() : Int {
   let xs = [10, 20, 30]
   let extended = xs || neighbors
   list.length(extended)
 }
 
 # `|?` — filter over lists: `xs |? p` ≡ `list.filter(xs, p)`.
-fn example_filter() : Int = {
+fn example_filter() : Int {
   let xs = [1, 2, 3, 4, 5, 6]
   let evens = xs |? is_even
   list.sum(evens)

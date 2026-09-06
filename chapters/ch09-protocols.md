@@ -232,7 +232,7 @@ import encoding.json.{json_decode, json_encode}
 #[derive(Json)]
 type Note = { title: String, priority: Int, tag: Option[String] }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let n = Note { title: "buy bread", priority: 1, tag: None }
   println(json_encode(to_json(n)))
 
@@ -426,7 +426,7 @@ available: `show(a)` dispatches to the `impl Show` of
 whatever concrete type arrives at each call.
 
 ```kai
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   Stdout.print(show_two(1, 2))      # 1 and 2
   Stdout.print(show_two("x", "y"))  # x and y
 }

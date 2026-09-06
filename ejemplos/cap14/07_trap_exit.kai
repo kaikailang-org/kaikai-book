@@ -15,13 +15,13 @@ fn hijo_ok(padre: Pid[String]) : Unit / Actor[String] + Link =
   Link.link(padre)
   # El cuerpo devuelve Unit: la fibra termina bien -> "Normal".
 
-fn hijo_crash(padre: Pid[String]) : Unit / Actor[String] + Link + Cancel = {
+fn hijo_crash(padre: Pid[String]) : Unit / Actor[String] + Link + Cancel {
   Link.link(padre)
   Cancel.raise()
   # Cancel.raise() desenrolla el cuerpo -> "Crashed".
 }
 
-fn supervisar() : Unit / Actor[String] + Spawn + Console + Link + Cancel = {
+fn supervisar() : Unit / Actor[String] + Spawn + Console + Link + Cancel {
   spawn.set_trap_exit(true)
   let yo = Actor.self()
 
@@ -32,7 +32,7 @@ fn supervisar() : Unit / Actor[String] + Spawn + Console + Link + Cancel = {
   Stdout.print("murió un hijo: " ++ Actor.receive())
 }
 
-fn main() : Int / Spawn + Console + Cancel + Link = {
+fn main() : Int / Spawn + Console + Cancel + Link {
   with_mailbox { supervisar() }
   0
 }

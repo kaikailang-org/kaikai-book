@@ -2,7 +2,7 @@
 
 type Point = { x: Int, y: Int }
 
-fn describe(p: Point) : String = {
+fn describe(p: Point) : String {
   let Point { x, y } = p
   "(#{x}, #{y})"
 }
