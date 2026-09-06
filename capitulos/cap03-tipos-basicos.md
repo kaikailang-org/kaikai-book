@@ -455,7 +455,7 @@ intentas usar el resultado del `if`:
 
 ```kai
 let r = if x > 0 { 42 }
-println(int_to_string(r))   # error: r es Unit, no Int
+let n: Int = r              # error: expected Int, found Unit
 ```
 
 La regla práctica es simple: si **te interesa el valor**, escribe

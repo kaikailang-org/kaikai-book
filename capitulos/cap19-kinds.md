@@ -620,8 +620,8 @@ fn dot[n: Dim](a: Vec[Real]<n>, b: Vec[Real]<n>, i: Int, acc: Real) : Real =
 fn main() : Unit / Stdout = {
   let u: Vec[Real]<3> = [1.0, 2.0, 3.0]
   let w: Vec[Real]<3> = [4.0, 5.0, 6.0]
-  println(real_to_string(punto(u)))
-  println(real_to_string(dot(u, w, 2, 0.0)))
+  println("#{punto(u)}")
+  println("#{dot(u, w, 2, 0.0)}")
 }
 ```
 

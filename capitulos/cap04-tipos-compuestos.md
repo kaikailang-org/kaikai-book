@@ -154,7 +154,7 @@ variable del mismo nombre:
 ```kai
 fn describir(p: Punto) : String = {
   let Punto { x, y } = p
-  "(" ++ int_to_string(x) ++ ", " ++ int_to_string(y) ++ ")"
+  "(#{x}, #{y})"
 }
 ```
 

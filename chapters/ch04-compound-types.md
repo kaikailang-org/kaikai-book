@@ -150,7 +150,7 @@ of the same name:
 ```kai
 fn describe(p: Point) : String = {
   let Point { x, y } = p
-  "(" ++ int_to_string(x) ++ ", " ++ int_to_string(y) ++ ")"
+  "(#{x}, #{y})"
 }
 ```
 
