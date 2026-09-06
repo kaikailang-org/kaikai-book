@@ -88,15 +88,21 @@ tipos algebraicos, pipes, una fibra, un efecto. Es la pista de
 aterrizaje, no el manual.
 
 Materia prima: los cinco programas de
-`../kaikai/examples/quickstart/`.
+`kaikai/examples/quickstart/`.
 
 - 1.1 Hola, kaikai
 - 1.2 Tipos algebraicos y `match`: FizzBuzz
 - 1.3 Una calculadora con AST recursivo
 - 1.4 Un efecto propio con su handler
 - 1.5 Dos fibras cooperativas
-- 1.6 Cómo instalar y correr `kai`
-- 1.7 Cómo está organizado el resto del libro
+- 1.6 Tipos a la medida con protocolos
+- 1.7 Unidades de medida
+- 1.8 Programación por contrato
+- 1.9 Pruebas en el mismo archivo
+- 1.10 Holes: agujeros que compilan
+- 1.11 Dependencias y proyectos: `kai.toml`
+- 1.12 Cómo instalar y correr `kai`
+- 1.13 Cómo está organizado el resto del libro
 - *Sin ejercicios*: el lector aún no tiene herramientas para
   inventar.
 
@@ -107,41 +113,37 @@ Por qué el lenguaje toma las decisiones que toma. Lectura corta
 necesita ablandar algunas asunciones antes de seguir.
 
 - 2.1 Expresiones, no sentencias
-- 2.2 Inmutabilidad por defecto, mutación como efecto
+- 2.2 Inmutabilidad por defecto
 - 2.3 `Option` y `Result` en vez de `null` y excepciones
-- 2.4 Funciones puras y efectos visibles en el tipo
-- 2.5 Pattern matching como herramienta de control de flujo
-- 2.6 El tipo no es la única etiqueta: efectos, unidades,
-      monedas y regiones como familias con álgebra propia
-      (anticipa los kinds del cap. 19)
-- 2.7 Una breve genealogía: ML, Haskell, Erlang, Elixir, Koka,
-      Effekt; qué tomó kaikai de cada uno
+- 2.4 Pattern matching como herramienta de control de flujo
+- 2.5 Funciones puras y efectos visibles
+- 2.6 El tipo no es la única etiqueta
+- 2.7 Una breve genealogía
 - *3 ejercicios* de comprensión, no de código.
 
 ### Parte II: El lenguaje
 
 #### Capítulo 3 · Tipos básicos y expresiones
 
-- 3.1 `Int`, `Real`, `Bool`, `Char`, `String`, `Unit`
+- 3.1 Los siete tipos primitivos
 - 3.2 Literales e interpolación de strings
-- 3.3 Operadores aritméticos, lógicos, de comparación
-- 3.4 Más números: anchos fijos (`Int32`…`Int128`) y precisión
-      arbitraria (`BigInt`, `DecimalBig`, `Rational`)
+- 3.3 Operadores aritméticos, lógicos y de comparación
+- 3.4 Más números: anchos fijos y precisión arbitraria
 - 3.5 `let` y la propagación local de tipos
 - 3.6 `if` como expresión
 - 3.7 Bloques y el valor de un bloque
-- 3.8 La diferencia entre `=` y `{ ... }` en el cuerpo de una
-      función
+- 3.8 Tres formas de cuerpo de función
 - *5 ejercicios*
 
 #### Capítulo 4 · Tipos compuestos
 
-- 4.1 Records y construcción literal
-- 4.2 Acceso a campos, sugar posicional
-- 4.3 Listas: construcción, recorrido, patrones
-- 4.4 Strings como entidades aparte (no listas de chars)
-- 4.5 `Option[T]` y `Result[E, T]`: uso cotidiano
-- 4.6 Tuples y cuándo usarlas vs. records
+- 4.1 Records
+- 4.2 Acceso a campos y destructuring
+- 4.3 Listas
+- 4.4 Strings, no listas de chars
+- 4.5 `Option` y `Result`: el día a día
+- 4.6 Tuplas
+- 4.7 Mapas y conjuntos hash
 - *6 ejercicios*
 
 #### Capítulo 5 · Sum types, uniones y `match`
@@ -151,24 +153,22 @@ los tipos algebraicos son la herramienta central, no un adorno.
 
 - 5.1 Tipos suma con `|`
 - 5.2 Constructores con y sin payload
-- 5.3 Recursividad en tipos: la lista, el árbol, la expresión
+- 5.3 Recursión en tipos
 - 5.4 `match`: patrones, guardas, exhaustividad
-- 5.5 Uniones de tipos existentes (`type T = A | B`) y subtipado
-      por componentes
-- 5.6 Errores como uniones, sin wrapper sums
-- 5.7 Caso de estudio: evaluador de expresiones aritméticas con
-      manejo de errores
+- 5.5 Uniones de tipos existentes
+- 5.6 Errores como uniones, sin wrappers
+- 5.7 Caso de estudio: evaluador con errores tipados
 - *6 ejercicios*
 
 #### Capítulo 6 · Funciones y pipelines
 
-- 6.1 Declaración, parámetros, tipo de retorno
-- 6.2 Lambdas: `x => ...`, `(a, b) => ...`, placeholder `.`
+- 6.1 Declaración
+- 6.2 Lambdas
 - 6.3 Funciones de orden superior
-- 6.4 `|>` (apply) vs `|` (map): dos tubos, dos intenciones
-- 6.5 Trailing lambdas y otros sugars de m7b
+- 6.4 Pipes: `|>`, `|`, `||`
+- 6.5 Trailing lambdas y otros azúcares
 - 6.6 Recursión y TCO obligatoria
-- 6.7 Caso de estudio: pipeline de transformación de datos
+- 6.7 Caso de estudio: pipeline de transformación
 - *5 ejercicios*
 
 #### Capítulo 7 · Pruebas, propiedades y benchmarks
@@ -179,13 +179,11 @@ Las tres viven al lado del código que prueban, en el mismo
 archivo, y se ejecutan vía el driver `kai`.
 
 - 7.1 `test "..." { ... }` y `assert`
-- 7.2 `kai test` y el ciclo de feedback corto
-- 7.3 `check "..." with x: T { ... }`: property-based
+- 7.2 `kai test` y el ciclo corto de retroalimentación
+- 7.3 `check "..."`: propiedades
 - 7.4 `bench "..." { ... }`: medir, no adivinar
-- 7.5 Cuándo usar cuál (regla mental: caso fijo → `test`,
-       invariante → `check`, rendimiento → `bench`)
-- 7.6 Caso de estudio: tests + checks para el evaluador del
-       capítulo 5
+- 7.5 Cuándo usar cuál
+- 7.6 Caso de estudio: pruebas para un mini-evaluador
 - *5 ejercicios*
 
 #### Capítulo 8 · Módulos, imports, organización del código
@@ -195,20 +193,15 @@ Varios proyectos se componen vía el package manager. Este
 capítulo recorre las tres escalas.
 
 - 8.1 Un archivo, un módulo
-- 8.2 `import`, visibilidad (`pub`)
-- 8.3 Nombres calificados y resolución
-- 8.4 El stdlib que viene gratis (`stdlib/core/`)
-- 8.5 Proyectos con `kai.toml`: `name`, `version`,
-       `[dependencies]`
-- 8.6 Dependencias git: tags, branches, commits, paths
-       locales para desarrollo
-- 8.7 Lockfile y reproducibilidad: cómo `kai.lock` cierra el
-       contrato entre tu máquina y la del próximo desarrollador
-- 8.8 Selección de versiones: minimum-version selection (MVS),
-       por qué no hay diamond-dependency hell
-- 8.9 Cache local y `kai install`
-- 8.10 Caso de estudio: refactorizar un proyecto monolítico
-       en un proyecto principal + dos dependencias locales
+- 8.2 `import` y nombres calificados
+- 8.3 Visibilidad: el contrato del módulo
+- 8.4 El stdlib que ya tienes
+- 8.5 Proyectos: `kai.toml`
+- 8.6 Dependencias: git, path, lock
+- 8.7 Selección de versiones: MVS
+- 8.8 Cache y `kai fetch`
+- 8.9 Caso de estudio: refactor de un proyecto monolítico
+- 8.10 Filosofía: simple y previsible
 - *6 ejercicios*
 
 #### Capítulo 9 · Protocolos
@@ -218,10 +211,12 @@ escogió kaikai y por qué.
 
 - 9.1 Por qué hay protocolos
 - 9.2 Declarar un `protocol` y `impl`
-- 9.3 `Show`, `Eq`, `Ord`, `Hash`, `Serialize` del stdlib
-- 9.4 `#derive(...)` y cuándo usarlo
-- 9.5 Por qué no hay typeclasses al estilo Haskell
-- 9.6 Operadores: `+`, `==`, `<` como protocolos
+- 9.3 Los cinco protocolos del stdlib
+- 9.4 `#[derive(...)]` y cuándo usarlo
+- 9.5 Protocolos propios
+- 9.6 Por qué no hay typeclasses al estilo Haskell
+- 9.7 Cotas de protocolo en funciones genéricas
+- 9.8 Operadores: `+`, `==`, `<` como protocolos
 - *5 ejercicios*
 
 #### Capítulo 10 · Unidades de medida y branded types
@@ -232,15 +227,13 @@ familia clásica (física, finanzas, tiempo) y los branded types
 (`String<UserId>`), que es donde más impacto tiene en código
 web/fintech del día a día.
 
-- 10.1 `unit` y literales anotados (`1.50<USD>`)
-- 10.2 Tipos dimensionados: `Real<USD>`, `Int<Seconds>`
-- 10.3 Aritmética con unidades: qué se permite y qué no
-- 10.4 Álgebra de unidades: producto, cociente, potencia
-       (`m/s^2`, `kg * m / s^2`)
-- 10.5 Unidades genéricas
-- 10.6 Conversiones explícitas
-- 10.7 Branded types: `String<UserId>` vs `String<OrderId>`
-- 10.8 Caso de estudio: cartera de monedas con `Money<C>`
+- 10.1 `unit` y literales anotados
+- 10.2 Aritmética con unidades
+- 10.3 Álgebra de unidades: producto, cociente, potencia
+- 10.4 Unidades genéricas
+- 10.5 Conversiones explícitas
+- 10.6 Branded types
+- 10.7 Caso de estudio: cartera multi-moneda
 - *5 ejercicios*
 
 #### Capítulo 11 · Programación por contrato y refinement types
@@ -256,23 +249,12 @@ runtime" que arrancan los efectos y que continúan UoM.
 - 11.1 Por qué contratos y refinements van juntos
 - 11.2 `requires` y `ensures` en una firma
 - 11.3 `result` y los nombres en alcance dentro del `ensures`
-- 11.4 Refinement types: `Int where >= 0`, `Real where 0.0 <=
-       self <= 1.0`
-- 11.5 Cuándo el compilador puede probarlo, cuándo se posterga
-       a runtime
-- 11.6 Comparación con pruebas (cap. 7) y con tipos suma
-       (cap. 5): tres formas de garantía
-- 11.7 La familia Design by Contract: Eiffel, Ada 2012, D; qué
-       toma kaikai de cada uno y dónde se aparta. Cubre el
-       paralelo con Eiffel (`old` no necesario por inmutabilidad,
-       sin invariants de clase porque no hay clases), con Ada
-       2012 (misma forma anotacional `with Pre =>` /
-       `requires`, subtypes con predicados → refinements), y
-       con SPARK (kaikai descarta SMT solving a propósito).
-- 11.8 Lo que kaikai **no** hace: SMT solving, refinements
-       arbitrarios. Y por qué no.
-- 11.9 Caso de estudio: cuenta bancaria con saldo no negativo
-       y operaciones contractadas
+- 11.4 Refinement types
+- 11.5 Cuándo se prueba estáticamente, cuándo en runtime
+- 11.6 Tres formas de garantía
+- 11.7 La familia Design by Contract
+- 11.8 Lo que kaikai no hace, y por qué
+- 11.9 Caso de estudio: cuenta bancaria
 - *6 ejercicios*
 
 ### Parte III: Lo distintivo
@@ -283,24 +265,20 @@ El capítulo más largo y más importante del libro. Acá pagamos la
 deuda con LYAH: tono cálido, repetir cuando hace falta, un
 concepto a la vez. Pero sin diluir.
 
-- 12.1 La fricción que los efectos resuelven (excepciones,
-       async/await infeccioso, inyección de dependencias)
+- 12.1 La fricción que los efectos resuelven
 - 12.2 Declarar un `effect`
 - 12.3 Llamar a una operación: la firma cambia
 - 12.4 Manejar un efecto con `handle ... with`
 - 12.5 `resume`: el handler decide qué pasa después
-- 12.6 Handlers con estado: el patrón `State[T]`
-- 12.7 `var`, `Ref[T]` y `Array[T]`: azúcar sobre `State`, y el
-       efecto `Mutable` para mutación observable
+- 12.6 Handlers con estado: el patrón `State`
+- 12.7 `var`, `Ref[T]` y `Array[T]`: dos mecanismos distintos
 - 12.8 Componer efectos: handlers anidados
-- 12.9 Instancias nombradas: `with Eff as x`, capability
-       values, varias instancias del mismo efecto
+- 12.9 Instancias nombradas: el handler como valor
 - 12.10 Alias de filas de efectos
-- 12.11 Tu propio handler por defecto: el patrón envoltorio
-- 12.12 Handlers por defecto del runtime
-- 12.13 Caso de estudio: procesador de configuración con
-        `Log + State + Fail`
-- 12.14 Filosofía: tres ideas que cargan el sistema
+- 12.11 Default handlers: el efecto trae el suyo
+- 12.12 Los handlers del stdlib son código kaikai
+- 12.13 Caso de estudio: procesador de configuración
+- 12.14 Filosofía: tres ideas que vale recordar
 - *9 ejercicios*
 
 #### Capítulo 13 · Concurrencia y memoria
@@ -309,25 +287,27 @@ Perceus y fibras juntos. Cada uno explica al otro: la mutación
 visible vive bajo `Mutable`, las fibras son aisladas porque la
 memoria es por-fibra.
 
-- 13.1 El modelo: fibras aisladas, RC por fibra
-- 13.2 Perceus en una página: por qué no hay GC ni borrow checker
-- 13.3 `fiber_spawn`, `fiber_yield`, `fiber_await`
-- 13.4 Cancelación cooperativa con el efecto `Cancel`
-- 13.5 Nurseries y concurrencia estructurada
-- 13.6 Memoria mutable por fibra (`var`, `Ref[T]`, `Array[T]`
-       interactúan con la aislación)
+- 13.1 El modelo: fibras aisladas
+- 13.2 Perceus en una página
+- 13.3 Crear y esperar fibras: las operaciones básicas
+- 13.4 Nurseries: concurrencia estructurada
+- 13.5 Cancelación cooperativa
+- 13.6 Memoria mutable por fibra
 - 13.7 Por qué las fibras no pueden escapar de su nursery
-- 13.8 Caso de estudio: servidor concurrente de eco
+- 13.8 Caso de estudio: repartir trabajo entre fibras
+- 13.9 Filosofía: dos invariantes que vale recordar
 - *6 ejercicios*
 
 #### Capítulo 14 · Actores
 
-- 14.1 `Actor[Msg]`: efecto parametrizado
-- 14.2 `spawn_actor`, `with_mailbox`
-- 14.3 `send`, `receive`, `self`
-- 14.4 Link y monitor: supervisión al estilo BEAM
-- 14.5 Patrones request/reply
-- 14.6 Caso de estudio: actor supervisado con reintentos
+- 14.1 `Actor[Msg]`: el efecto
+- 14.2 `with_mailbox`: dar mailbox a la fibra actual
+- 14.3 `spawn_actor`: crear un actor nuevo
+- 14.4 Policies de mailbox: qué pasa cuando se llena
+- 14.5 Patrón request/reply
+- 14.6 Supervisión: links y monitores
+- 14.7 Caso de estudio: supervisor con reintentos
+- 14.8 Filosofía: actores son una biblioteca
 - *5 ejercicios*
 
 #### Capítulo 15 · Holes y kaikai con agentes IA
@@ -349,28 +329,18 @@ un jefe*, *Kimun*): la IA no reemplaza al programador, lo
 apalanca si las herramientas están bien diseñadas. kaikai es
 un experimento en esa dirección.
 
-- 15.1 Holes tipados: `?` y `?nombre` para dejar agujeros que
-       compilan
-- 15.2 Conversación con el compilador: tipo esperado,
-       bindings en alcance, candidatos
-- 15.3 Diseñar de arriba hacia abajo: empezar por la firma,
-       holes para los cuerpos, completar uno por uno
-- 15.4 Programa parcial: avanzar con holes mientras el resto
-       del archivo compila
-- 15.5 La apuesta LLM: por qué un lenguaje nuevo se diseña
-       pensando en agentes
-- 15.6 De qué sirve la información de tipos, efectos y holes
-       cuando el que escribe el código no eres tú
-- 15.7 `--holes-json`: salida estructurada del compilador
-- 15.8 Más allá de holes: `kai type --json`, contraejemplos
-       de `match` no exhaustivo, diagnósticos en JSON
-- 15.9 Un loop de trabajo con un agente: investigar,
-       planificar, ejecutar (siguiendo lo que ya describí en
-       el blog)
-- 15.10 Lo que el lenguaje **no** automatiza: juicio, gusto,
-        arquitectura
+- 15.1 Holes tipados: `?` y `?nombre`
+- 15.2 La conversación con el compilador
+- 15.3 Diseño top-down: empieza por la firma
+- 15.4 Programas parciales: avanzar con el resto compilando
+- 15.5 Holes en patrones: el match incompleto
+- 15.6 La apuesta LLM: lenguaje diseñado para agentes
+- 15.7 La salida JSON de los holes
+- 15.8 Más allá de holes: información rica como interfaz
+- 15.9 Un loop de trabajo con un agente
+- 15.10 Lo que el lenguaje no automatiza
 - 15.11 Caso de estudio: completar una función no trivial
-        dejando holes y dejando que el agente itere
+- 15.12 Filosofía: tres ideas que vale recordar
 - *5 ejercicios* (un par requieren acceso a un LLM; los otros se
   resuelven a mano leyendo la salida del compilador)
 
@@ -378,23 +348,19 @@ un experimento en esa dirección.
 
 #### Capítulo 16 · Tooling: el binario `kai`
 
-- 16.1 `kai run`, `kai build` (perfiles `--release` / `--debug`)
-- 16.2 `kai test`, `kai check`, `kai bench`
-- 16.3 `kai fmt`
-- 16.4 `kai lint`: linter estilo Clippy, consciente de tipos
-       y efectos
-- 16.5 `kai init`, `kai add`, `kai install`, `kai update` (y
-       `kai upgrade` para el compilador mismo)
-- 16.6 `kai watch` para el ciclo edit-save-run
-- 16.7 `kai lsp` e integración con editores
-- 16.8 `kai info`: documentación interactiva en línea de
-       comandos, con salida JSON para agentes.
-- 16.9 `kai doc`: la referencia del stdlib
+- 16.1 Compilar y correr: `kai run`, `kai build`
+- 16.2 Tests, propiedades y benchmarks
+- 16.3 Formateo: `kai fmt`
+- 16.4 El linter: `kai lint`
+- 16.5 Gestión de paquetes: `init`, `add`, `fetch`, `update`
+- 16.6 Modo de desarrollo: `kai watch`
+- 16.7 Integración con editores: `kai lsp`
+- 16.8 Documentación interactiva: `kai info`
+- 16.9 La referencia del stdlib: `kai doc`
 - 16.10 Dos backends: nativo y C
-- 16.11 Estructura típica de un proyecto kaikai
+- 16.11 Estructura típica de un proyecto
 - 16.12 Hablar con C: `extern "C"` y el efecto `Ffi`
-- 16.13 Ediciones: estabilidad sin estancamiento. `edition`
-        en `kai.toml`, multi-edición, `#[unstable]`.
+- 16.13 Ediciones: estabilidad sin estancamiento
 - 16.14 Filosofía: tres principios del tooling
 - *Sin ejercicios*: capítulo de referencia.
 
@@ -409,6 +375,16 @@ en 4–6 módulos.
 El énfasis es **concurrencia y modularidad**: sum types,
 match, actores, fibras, módulos. Cubre la mayor parte del
 libro pero deja afuera UoM y contratos.
+
+- 17.1 La forma del programa
+- 17.2 El dominio: tipos puros
+- 17.3 El almacén: actor con estado
+- 17.4 Persistencia: actor de escritura
+- 17.5 Parser HTTP
+- 17.6 El main: armar todas las piezas
+- 17.7 Lo que está ocurriendo, en términos del libro
+- 17.8 Cómo extenderlo
+- 17.9 Lo que muestra este caso
 
 #### Capítulo 18 · Caso de estudio: ledger contable
 
@@ -431,6 +407,17 @@ Tamaño objetivo: similar al cap. 17. Mismo patrón general
 (dominio puro, actores con estado, persistencia) aplicado a
 fintech.
 
+- 18.1 La forma del programa
+- 18.2 El dominio: unidades, branding, tipos algebraicos
+- 18.3 La invariante central: cuadre
+- 18.4 El almacén: actor con invariantes
+- 18.5 El log de auditoría
+- 18.6 El main: ejecutar un escenario
+- 18.7 Lo que hace este caso distinto del cap. 17
+- 18.8 Cómo extenderlo
+- 18.9 Por qué fintech es un buen banco de pruebas
+- 18.10 Filosofía: el cierre del libro
+
 #### Capítulo 19 · Kinds: un catálogo de álgebras
 
 Capítulo final, avanzado. Nombra el mecanismo general que el
@@ -439,19 +426,18 @@ unificación. No se necesita para escribir kaikai productivo;
 cierra el libro mostrando que unidades, efectos, monedas y
 regiones son cinco entradas del mismo catálogo.
 
-- 19.1 Qué es un kind: una familia de habitantes con su álgebra
-- 19.2 Las theories: álgebras de unificación decidibles, de
-       catálogo cerrado
-- 19.3 El catálogo completo: Type, Effect, Measure, Currency,
-       Region (`stdlib/core/kinds.kai`)
-- 19.4 La misma forma, tres kinds: genéricas sobre unidades,
-       regiones y monedas
-- 19.5 Kinds propios: `kind ... : AbelianGroup | Module`
-- 19.6 Region en profundidad: arenas, `region { r -> }`,
-       deep-copy-out, cuándo no usarlo
-- 19.7 Money/Currency: por qué `USD*EUR` no compila
-- 19.8 Filosofía: theory cerrada, modelos abiertos; sin HKT ni
-       typeclasses
+- 19.1 Qué es un kind
+- 19.2 Las theories: álgebras de unificación
+- 19.3 El catálogo completo
+- 19.4 Cuantificar sobre cualquier kind
+- 19.5 Kinds propios
+- 19.6 Region: memoria como habitante
+- 19.7 Dinero: el álgebra que falta a propósito
+- 19.8 Layout: el orden de los bytes
+- 19.9 Perm: permisos que el tipo persigue
+- 19.10 Dim: la forma como índice
+- 19.11 Shape: el contenedor como habitante
+- 19.12 Theory cerrada, modelos abiertos
 - *5 ejercicios*
 
 ### Apéndices
