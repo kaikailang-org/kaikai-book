@@ -109,6 +109,57 @@ Three details worth recalling:
   `kai run` and `kai build` discard them. They're only
   compiled and executed under `kai test`.
 
+### What effects a test may carry
+
+A `test` body — like a `bench` or a `check` body — carries no
+effect row and cannot declare one. So the question is what it's
+allowed to do inside, and the answer is: whatever a program entry
+may. It absorbs the builtin effects that come with a default
+handler (`Stdout`, `File`, `Clock`, …) plus the `Ffi` capability
+the compiler synthesises. That's why a test can call an
+`extern "C"` fn with nothing wrapped around it:
+
+```kai
+# examples/ch07/06_effects_in_tests.kai
+extern "C" fn llabs(x: Int) : Int / Ffi
+
+test "a test can call an extern C fn directly" {
+  assert llabs(0 - 5) == 5
+}
+```
+
+An effect of **your own** is another story, and this is where
+people trip. There's no handler for it at the runner's entry, so
+calling it bare doesn't compile:
+
+```
+error: effect not handled: Clock
+  --> x.kai:6:21
+    |
+  6 |   assert Clock.now() == 1234
+    |                    ^
+  = note: enclosing row: (empty)
+```
+
+That last note is the clue: the row surrounding the test is
+empty, and there's nowhere to declare one. The way out is to
+install the handler inside the body — which is usually what you
+wanted anyway, since now the test decides what the clock returns
+instead of depending on the real one:
+
+```kai
+test "a user-declared effect is handled inside the body" {
+  let t = handle { Clock.now() } with Clock {
+    now(resume) -> resume(1234)
+  }
+  assert t == 1234
+}
+```
+
+Seen that way the restriction works in your favor: a test that
+needs an effect of yours forces you to say what you're replacing
+it with, right where it's read.
+
 ## 7.2 `kai test` and the short feedback loop
 
 The command is straightforward:

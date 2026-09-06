@@ -381,6 +381,42 @@ kai: warning: 'kai install' with no argument resolves dependencies; that is now 
 
 Cuando `hanga-roa` se cierre, esa forma desaparece.
 
+### Repartir completions junto al binario
+
+Un CLI no se usa solo con su binario: la mitad de lo que lo
+hace grato es que el shell complete subcomandos y flags. Un
+paquete declara los scripts que trae y `kai install` deja cada
+uno donde su shell ya lo busca:
+
+```toml
+[completions]
+zsh  = "completions/_foo"
+bash = "completions/foo.bash"
+fish = "completions/foo.fish"
+```
+
+Las rutas son relativas al paquete; el nombre del archivo de
+destino sale del campo `name` del manifiesto, no de la ruta de
+origen, así que el archivo aterriza con el nombre que el shell
+busca. Los tres directorios viven bajo `$KAIKAI_HOME/share`, y
+`install.sh` los engancha una sola vez a la ruta de búsqueda
+del shell — así cualquier `kai install` posterior funciona sin
+paso adicional. Cuando falta ese enganche, `kai install`
+imprime la línea que hay que agregar; nunca edita un archivo de
+arranque a tus espaldas.
+
+Un detalle con historia detrás: a zsh el directorio se le
+**antepone** al `fpath`, no se le agrega al final. Agregado,
+una función de fábrica con el mismo nombre le gana igual — zsh
+trae un `_mh` que se apropia de `mark` y después suprime hasta
+la completación de nombres de archivo cuando MH no está
+instalado.
+
+Como `[native]`, es declarativo y acotado: tres shells, un
+destino fijo cada uno, sin hooks. Una ruta que se escapa del
+paquete o que nombra un archivo inexistente se salta con una
+advertencia y el binario se instala igual.
+
 No confundas `kai update` con `kai upgrade`: `update` refresca
 las **dependencias** de tu paquete; `upgrade` actualiza el
 **compilador mismo** al último release (descarga, verifica el

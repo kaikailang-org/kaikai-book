@@ -1,0 +1,12 @@
+import sensors
+import alarms
+
+fn main() : Unit / Stdout {
+  # The qualifier says which module each name comes from. Without
+  # it, `MAX` is an error that names both candidates.
+  let t: sensors.Reading = sensors.Reading { celsius: 21.5 }
+  let a: alarms.Reading = alarms.Reading { severity: 3 }
+
+  Stdout.print("#{t.celsius} degrees (max #{sensors.MAX})")
+  Stdout.print("severity #{a.severity} (max #{alarms.MAX})")
+}

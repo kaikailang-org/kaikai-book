@@ -109,6 +109,57 @@ Tres detalles que vale recordar:
   `kai run` y `kai build` los descartan. Solo se compilan y se
   ejecutan bajo `kai test`.
 
+### Qué efectos puede cargar un test
+
+Un cuerpo de `test` —igual que uno de `bench` o de `check`— no
+lleva fila de efectos y tampoco puede declararla. La pregunta
+entonces es qué tiene permitido hacer adentro, y la respuesta es:
+lo mismo que una entrada de programa. Absorbe los efectos builtin
+que traen handler por defecto (`Stdout`, `File`, `Clock`…) más la
+capacidad `Ffi` que el compilador sintetiza. Por eso un test puede
+llamar a un `extern "C"` sin envolverlo en nada:
+
+```kai
+# ejemplos/cap07/06_efectos_en_test.kai
+extern "C" fn llabs(x: Int) : Int / Ffi
+
+test "un test puede llamar un extern C directo" {
+  assert llabs(0 - 5) == 5
+}
+```
+
+Un efecto **tuyo** es otra historia, y aquí es donde se tropieza.
+No hay handler para él en la entrada del runner, así que invocarlo
+suelto no compila:
+
+```
+error: effect not handled: Reloj
+  --> x.kai:6:21
+    |
+  6 |   assert Reloj.ahora() == 1234
+    |                     ^
+  = note: enclosing row: (empty)
+```
+
+Esa última nota es la pista: la fila que rodea al test está
+vacía, y no hay dónde declarar una. La salida es instalar el
+handler dentro del cuerpo, que además suele ser lo que querías —
+el test decide qué devuelve el reloj en vez de depender del de
+verdad:
+
+```kai
+test "un efecto propio se maneja dentro del cuerpo" {
+  let t = handle { Reloj.ahora() } with Reloj {
+    ahora(resume) -> resume(1234)
+  }
+  assert t == 1234
+}
+```
+
+Visto así, la restricción trabaja a favor: un test que necesita un
+efecto tuyo te obliga a decir con qué lo estás reemplazando, ahí
+mismo donde se lee.
+
 ## 7.2 `kai test` y el ciclo corto de retroalimentación
 
 El comando es directo:

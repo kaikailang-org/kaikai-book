@@ -1,0 +1,21 @@
+# A constant in pattern position doesn't bind: it compares. The arm
+# matches when the value equals the constant.
+#
+# The full rule: an identifier in a pattern binds, unless it names a
+# constant in scope, in which case it's an equality test.
+
+const HTTP_PORT: Int = 80
+const HTTPS_PORT: Int = 443
+
+fn scheme(p: Int) : String =
+  match p {
+    HTTP_PORT  -> "http"
+    HTTPS_PORT -> "https"
+    _          -> "unknown"
+  }
+
+fn main() : Unit / Stdout {
+  Stdout.print(scheme(80))
+  Stdout.print(scheme(443))
+  Stdout.print(scheme(9000))
+}

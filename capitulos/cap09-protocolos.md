@@ -98,6 +98,8 @@ Tres detalles que conviene fijar:
 
 - **La regla orphan**: solo puedes implementar un protocolo `P` para un tipo `T` si `P` se declara en tu módulo **o** `T` se declara en tu módulo. Esto evita que dos paquetes externos definan implementaciones conflictivas para tipos que ambos importan. Es una limitación práctica, no del sistema de tipos.
 
+- **El nombre se puede calificar.** Cuando dos de tus imports exportan un protocolo con el mismo nombre, dices cuál: `impl dibujo.Render for Caja`, y lo mismo dentro de un derive, `#[derive(protocols.Show)]`. Es la regla general del §8.2: el calificador es un desempate, y el nombre pelado está bien mientras nada colisione.
+
 ## 9.3 Los cinco protocolos del stdlib
 
 kaikai trae cinco protocolos en `stdlib/protocols.kai` que

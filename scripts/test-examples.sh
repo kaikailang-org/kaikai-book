@@ -83,6 +83,7 @@ build|ejemplos/cap05/02_recursivos.kai|ok
 build|ejemplos/cap05/03_match_guardas.kai|ok
 build|ejemplos/cap05/04_uniones.kai|ok
 build|ejemplos/cap05/05_evaluador.kai|ok
+run|ejemplos/cap05/06_patrones_constante.kai|ok
 
 # Capítulo 6 — funciones
 build|ejemplos/cap06/01_funciones.kai|ok
@@ -101,6 +102,7 @@ test|ejemplos/cap07/02_assert_falla.kai|fail
 check|ejemplos/cap07/03_check_propiedades.kai|ok
 bench|ejemplos/cap07/04_bench_basico.kai|ok
 test|ejemplos/cap07/05_evaluador_pruebas.kai|ok
+test|ejemplos/cap07/06_efectos_en_test.kai|ok
 
 # Capítulo 8 — módulos (proyectos multi-archivo)
 project|ejemplos/cap08/01_un_archivo|ok
@@ -110,6 +112,7 @@ project|ejemplos/cap08/03_qualified|ok
 project|ejemplos/cap08/04_alias|ok
 project|ejemplos/cap08/05_proyecto|ok
 project|ejemplos/cap08/06_priv|ok
+project|ejemplos/cap08/07_colisiones|ok
 
 # Capítulo 9 — protocolos
 build|ejemplos/cap09/01_protocolo_basico.kai|ok
@@ -239,6 +242,7 @@ build|examples/ch05/02_recursive.kai|ok
 build|examples/ch05/03_match_guards.kai|ok
 build|examples/ch05/04_unions.kai|ok
 build|examples/ch05/05_evaluator.kai|ok
+run|examples/ch05/06_constant_patterns.kai|ok
 
 # Chapter 6
 build|examples/ch06/01_functions.kai|ok
@@ -257,6 +261,7 @@ test|examples/ch07/02_assert_fails.kai|fail
 check|examples/ch07/03_check_properties.kai|ok
 bench|examples/ch07/04_basic_bench.kai|ok
 test|examples/ch07/05_evaluator_tests.kai|ok
+test|examples/ch07/06_effects_in_tests.kai|ok
 
 # Chapter 8
 project|examples/ch08/01_one_file|ok
@@ -266,6 +271,7 @@ project|examples/ch08/03_qualified|ok
 project|examples/ch08/04_alias|ok
 project|examples/ch08/05_project|ok
 project|examples/ch08/06_priv|ok
+project|examples/ch08/07_collisions|ok
 
 # Chapter 9
 build|examples/ch09/01_basic_protocol.kai|ok

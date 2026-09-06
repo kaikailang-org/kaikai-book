@@ -214,9 +214,56 @@ Patterns kaikai accepts:
 - **Wildcard**: `_`. Matches anything, binds nothing.
 - **Variable**: any undeclared identifier. Matches anything
   and binds the value to that variable.
+- **Constants**: `MAX`, `net.MAX`. Match values equal to the
+  constant. A qualifier picks a particular module's.
 
 Patterns nest: `Some(Point { x, y })` matches a `Some` that
 contains a `Point`, unpacking `x` and `y` in one pass.
+
+### Binding or comparing: the identifier rule
+
+The last two entries in that list deserve a second look,
+because they're the same syntax doing opposite things:
+
+```kai
+# examples/ch05/06_constant_patterns.kai
+const HTTP_PORT: Int = 80
+const HTTPS_PORT: Int = 443
+
+fn scheme(p: Int) : String =
+  match p {
+    HTTP_PORT  -> "http"
+    HTTPS_PORT -> "https"
+    _          -> "unknown"
+  }
+```
+
+`HTTP_PORT` here is not a variable that swallows any port and
+binds it. It's an equality test against `80`. The rule is:
+**an identifier in a pattern binds, unless it names a constant
+in scope — then it compares.** Not a matter of capitalization;
+a lowercase constant compares just the same.
+
+Which means introducing a constant can change what an existing
+pattern means. If you write a `limit -> ...` arm meaning to
+bind, and someone later declares `const limit`, that arm
+quietly turns into a comparison.
+
+The compiler has your back on the more common direction of that
+mistake. A bare binding matches everything, so any arm after it
+is dead, and it says so:
+
+```
+error: unreachable match arm: previous arm matched every value
+  --> x.kai:4:5
+    |
+  4 |     _      -> "unreachable"
+    |     ^
+  = note: an earlier unguarded `_` or bare binding already covers this case
+```
+
+If you meant to compare and the constant wasn't in scope, this
+is the error you'll get, and it points at the right place.
 
 ### Guards
 

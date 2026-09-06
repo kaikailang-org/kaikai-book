@@ -158,6 +158,16 @@ effect Io {
 }
 ```
 
+Dos dependencias pueden declarar cada una un efecto con el mismo
+nombre sin pisarse: son efectos distintos que comparten una
+palabra. Cuando importas los dos, dices cuál con un calificador,
+y va en todos los lugares donde va el nombre: en la fila
+(`/ trazas.Trace`), en la cabeza del handler
+(`handle { ... } with trazas.Trace`) y en la operación misma
+(`trazas.Trace.log(msg)`). Así `with ea.Emit` alcanza solo al de
+`ea` y el de `eb` queda intacto. La regla general está en §8.2;
+el nombre pelado sirve mientras nada colisione.
+
 ## 12.3 Llamar a una operación: la firma cambia
 
 Para usar una operación, llamas al método del efecto:

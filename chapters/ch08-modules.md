@@ -137,6 +137,102 @@ module exports" into the local namespace. This is deliberate:
 wildcards look convenient at write-time but make future
 readers unable to trace where a name came from.
 
+### When two modules export the same name
+
+Sooner or later two of your dependencies put the same word on
+different things. Neither is wrong: each domain names its own
+concern with the term that fits, and `Reading` is as good a name
+for a sensor as it is for an alarm.
+
+```kai
+# examples/ch08/07_collisions/sensors.kai
+pub type Reading = { celsius: Real }
+pub const MAX: Int = 100
+
+# examples/ch08/07_collisions/alarms.kai
+pub type Reading = { severity: Int }
+pub const MAX: Int = 5
+```
+
+Import both and write a bare `MAX`, and the compiler refuses to
+choose for you:
+
+```
+error: bare name 'MAX' is exported by multiple modules: sensors, alarms
+  --> main.kai:5:26
+    |
+  5 |   Stdout.print("max = #{MAX}")
+    |                         ^
+  = note: constant candidates: sensors.MAX, alarms.MAX
+  = help: qualify the constant, e.g. `sensors.MAX`
+```
+
+That this is an error is recent, and it is the right call.
+Resolution used to go by registration order, which means *which*
+`MAX` you got depended on the order of your imports — the kind of
+trap that collects the day somebody sorts the lines
+alphabetically and the program changes meaning without a single
+expression being touched.
+
+The way out is the qualifier, and it works everywhere a name
+appears: types, constructors (in expression and in pattern
+position), functions, constants, protocols in an `impl` head and
+inside `#[derive(...)]`, and effects in a row, in a `handle`
+head, and on their operations.
+
+```kai
+# examples/ch08/07_collisions/main.kai
+import sensors
+import alarms
+
+fn main() : Unit / Stdout {
+  let t: sensors.Reading = sensors.Reading { celsius: 21.5 }
+  let a: alarms.Reading = alarms.Reading { severity: 3 }
+
+  Stdout.print("#{t.celsius} degrees (max #{sensors.MAX})")
+  Stdout.print("severity #{a.severity} (max #{alarms.MAX})")
+}
+```
+
+```
+$ kai run examples/ch08/07_collisions/main.kai
+21.5 degrees (max 100)
+severity 3 (max 5)
+```
+
+The qualifier is only a tiebreaker: `sensors.MAX` and `MAX` name
+the same constant whenever there is no collision, so there's no
+need to qualify defensively. And each module keeps its own
+declaration: two dependencies may each declare their own
+`effect Emit` without colliding, and `with ea.Emit` reaches only
+`ea`'s.
+
+You might expect a selective import — `import sensors.{MAX}`
+alongside `import alarms` — to settle it for the whole file.
+Today it doesn't: the name stays ambiguous and the error is the
+same. Qualify at the use site.
+
+### An import you don't use
+
+An `import` the file never mentions — neither as a qualifier nor
+through any name the module exports — is a warning:
+
+```
+warning: unused import `actor`
+```
+
+A warning today, an error at the Orongo edition, as in Go. The
+migration is mechanical: delete the line.
+
+There's one exception worth knowing, because otherwise it reads
+like a false negative. A module that only brings `impl`s into
+scope is used **by being loaded**, not by being named; that
+import is never reported even though it appears nowhere else.
+
+Do look twice before deleting, though. Either the import is
+genuinely dead, or the name you meant to take from it is quietly
+coming from somewhere else. You're better off knowing which.
+
 ## 8.3 Visibility: the module's contract
 
 `pub` is the contract your module offers to the world.

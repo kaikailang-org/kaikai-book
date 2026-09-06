@@ -162,6 +162,16 @@ effect Io {
 }
 ```
 
+Two dependencies may each declare an effect with the same name
+without colliding — they're different effects that happen to
+share a word. When you import both, say which one you mean with
+a qualifier, and it goes everywhere the name does: in the row
+(`/ tracing.Trace`), in the handler head
+(`handle { ... } with tracing.Trace`), and on the operation
+itself (`tracing.Trace.log(msg)`). Then `with ea.Emit` reaches
+only `ea`'s, and `eb`'s stays untouched. §8.2 has the general
+rule; a bare name is fine whenever nothing collides.
+
 ## 12.3 Calling an operation: the signature changes
 
 To use an operation, call the effect as if it were a

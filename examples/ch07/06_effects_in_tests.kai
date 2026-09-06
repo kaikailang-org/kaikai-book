@@ -1,0 +1,29 @@
+# A `test` body carries no effect row and cannot declare one. It
+# absorbs what a program entry may carry: the default-handled
+# builtin effects plus the `Ffi` capability the compiler
+# synthesises. That's why this test calls an `extern "C"` fn
+# directly, with nothing wrapped around it.
+
+# (`llabs`, not `abs`: on the C backend an `extern "C"` that
+# redeclares `abs` collides with libc's prototype. The 64-bit one
+# fits without a fight.)
+extern "C" fn llabs(x: Int) : Int / Ffi
+
+effect Clock {
+  now() : Int
+}
+
+test "a test can call an extern C fn directly" {
+  assert llabs(0 - 5) == 5
+}
+
+test "a user-declared effect is handled inside the body" {
+  # `Clock` has no handler at the runner's entry: call it bare and
+  # the test does not compile. It gets installed right here.
+  let t = handle { Clock.now() } with Clock {
+    now(resume) -> resume(1234)
+  }
+  assert t == 1234
+}
+
+fn main() : Int = 0
