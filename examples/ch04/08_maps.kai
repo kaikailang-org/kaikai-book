@@ -8,7 +8,7 @@ import collections.hashmap as hashmap
 import collections.hashset as hashset
 
 # Count how many times each word appears in a list.
-fn word_frequencies(words: [String]) : hashmap.HashMap[String, Int] / Mutable = {
+fn word_frequencies(words: [String]) : hashmap.HashMap[String, Int] / Mutable {
   let m = hashmap.empty()
   count(m, words)
   m
@@ -26,7 +26,7 @@ fn count(m: hashmap.HashMap[String, Int], words: [String]) : Unit / Mutable = ma
   }
 }
 
-fn main() : Unit / Stdout + Mutable = {
+fn main() : Unit / Stdout + Mutable {
   let text = ["sun", "sea", "sun", "wind", "sea", "sun"]
   let m = word_frequencies(text)
 

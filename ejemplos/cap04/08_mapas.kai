@@ -8,7 +8,7 @@ import collections.hashmap as hashmap
 import collections.hashset as hashset
 
 # Cuenta cuántas veces aparece cada palabra de una lista.
-fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] / Mutable = {
+fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] / Mutable {
   let m = hashmap.empty()
   contar(m, palabras)
   m
@@ -26,7 +26,7 @@ fn contar(m: hashmap.HashMap[String, Int], palabras: [String]) : Unit / Mutable 
   }
 }
 
-fn main() : Unit / Stdout + Mutable = {
+fn main() : Unit / Stdout + Mutable {
   let texto = ["sol", "mar", "sol", "viento", "mar", "sol"]
   let m = frecuencias(texto)
 

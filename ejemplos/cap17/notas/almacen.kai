@@ -66,7 +66,7 @@ fn unir_con_coma(xs: [String]) : String = match xs {
 # (el mailbox propio del actor, instalado por spawn_actor) como
 # Actor[AlmacenResp] (usado solo por `Actor.send` — el mailbox
 # es propiedad de la fibra que llama).
-pub fn almacen_loop(notas: [dominio.Nota], next_id: Int) : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] = {
+pub fn almacen_loop(notas: [dominio.Nota], next_id: Int) : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] {
   match Actor.receive() {
     Pregunta(comando, cliente) -> {
       let (resp, notas_nuevas, id_nuevo) = procesar(comando, notas, next_id)
@@ -78,7 +78,7 @@ pub fn almacen_loop(notas: [dominio.Nota], next_id: Int) : Unit / Actor[AlmacenM
 
 # Helper del lado del cliente. El que llama debe tener un
 # mailbox Actor[AlmacenResp] (la respuesta cae ahí).
-pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respuesta / Actor[AlmacenMsg] + Actor[AlmacenResp] = {
+pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respuesta / Actor[AlmacenMsg] + Actor[AlmacenResp] {
   Actor.send(almacen, Pregunta(c, Actor.self()))
   match Actor.receive() {
     Respondido(r) -> r

@@ -10,7 +10,7 @@ imperial ft
 
 fn speed(d: Real<m>, t: Real<s>) : Real<m/s> = d / t
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let v = speed(100.0<m>, 9.58<s>)
   println("#{v}")
 

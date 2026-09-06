@@ -497,7 +497,7 @@ distinguish: `"Normal"` or `"Crashed"` lands in the mailbox.
 
 ```kai
 # examples/ch14/07_trap_exit.kai (excerpt)
-fn supervise() : Unit / Actor[String] + Spawn + Console + Link + Cancel = {
+fn supervise() : Unit / Actor[String] + Spawn + Console + Link + Cancel {
   spawn.set_trap_exit(true)
   let me = Actor.self()
 

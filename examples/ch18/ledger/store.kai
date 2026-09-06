@@ -117,7 +117,7 @@ fn apply_movs(cs: [domain.Account], ms: [domain.Movement]) : [domain.Account] = 
 
 # Manual recursion over the account list: for each account,
 # if its id matches the movement's, apply the delta.
-fn apply_one(cs: [domain.Account], m: domain.Movement) : [domain.Account] = {
+fn apply_one(cs: [domain.Account], m: domain.Movement) : [domain.Account] {
   let (target_id, delta) = delta_of(m)
   walk_accounts(cs, target_id, delta)
 }
@@ -144,7 +144,7 @@ fn delta_of(m: domain.Movement) : (Int<AccountId>, Real<USD>) = match m {
 # Actor[StoreMsg] (own mailbox, installed by spawn_actor)
 # and Actor[StoreResp] (used by `Actor.send` only — the
 # caller's fiber owns that mailbox).
-pub fn store_loop(s: State) : Unit / Actor[StoreMsg] + Actor[StoreResp] = {
+pub fn store_loop(s: State) : Unit / Actor[StoreMsg] + Actor[StoreResp] {
   match Actor.receive() {
     Ask(c, client) -> {
       let (resp, s2) = process(c, s)
@@ -156,7 +156,7 @@ pub fn store_loop(s: State) : Unit / Actor[StoreMsg] + Actor[StoreResp] = {
 
 # Client-side helper. The caller must own an
 # Actor[StoreResp] mailbox (the reply lands there).
-pub fn ask(store: Pid[StoreMsg], c: domain.Command) : domain.Response / Actor[StoreMsg] + Actor[StoreResp] = {
+pub fn ask(store: Pid[StoreMsg], c: domain.Command) : domain.Response / Actor[StoreMsg] + Actor[StoreResp] {
   Actor.send(store, Ask(c, Actor.self()))
   match Actor.receive() {
     Reply(r) -> r

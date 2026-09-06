@@ -22,7 +22,7 @@ import persistencia
 
 const PATH_LOG: String = "ledger.audit.log"
 
-fn imprimir(r: dominio.Respuesta) : Unit / Stdout = {
+fn imprimir(r: dominio.Respuesta) : Unit / Stdout {
   println("  -> #{r}")
 }
 
@@ -44,7 +44,7 @@ fn paso(
   registrar_evento(log_pid, r)
 }
 
-fn main() : Int / Stdout + File + Spawn + Cancel = {
+fn main() : Int / Stdout + File + Spawn + Cancel {
   persistencia.reset_log(PATH_LOG)
 
   # `paso()` toca tres efectos Actor[T]:

@@ -40,7 +40,7 @@ const PATH_LOG: String = "notas.log"
 # Arma la respuesta de cable para un request HTTP. Le pega al
 # almacén vía `almacen.preguntar` y loguea los comandos
 # mutantes al actor de persistencia antes de responder.
-fn manejar_request(raw: String, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: Pid[persistencia.Evento]) : String / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] = {
+fn manejar_request(raw: String, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: Pid[persistencia.Evento]) : String / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
   let resp = match web.parsear_request(raw) {
     Err(msg) -> dominio.ErrorCliente(msg)
     Ok(req)  -> match web.enrutar(req) {
@@ -76,14 +76,14 @@ fn leer_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
 # pero el cuerpo del spawn sigue llevando Actor[AlmacenMsg]
 # (envíos al almacén) y Actor[Evento] (envíos a persistencia)
 # porque esos mailboxes son propiedad de *otras* fibras.
-fn atender_conexion(conn: Conn, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: Pid[persistencia.Evento]) : Unit / NetTcp + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] + Cancel = {
+fn atender_conexion(conn: Conn, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: Pid[persistencia.Evento]) : Unit / NetTcp + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] + Cancel {
   let raw  = leer_request(conn)
   let wire = manejar_request(raw, almacen_pid, log_pid)
   let _    = NetTcp.send(conn, web.string_to_bytes(wire))
   NetTcp.close(conn)
 }
 
-fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel = {
+fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel {
   # Mailbox externo: permite que `main` mande `AlmacenMsg` al
   # actor almacén. (Estrictamente, acá solo hace falta
   # Actor.send, pero la forma del handler exige que el mailbox

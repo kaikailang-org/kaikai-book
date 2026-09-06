@@ -8,7 +8,7 @@ type Employee = {
   salary: Int,
 }
 
-fn distance(a: Point, b: Point) : Int = {
+fn distance(a: Point, b: Point) : Int {
   let dx = a.x - b.x
   let dy = a.y - b.y
   dx * dx + dy * dy

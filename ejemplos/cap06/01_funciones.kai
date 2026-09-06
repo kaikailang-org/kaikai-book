@@ -5,7 +5,7 @@
 fn doble(x: Int) : Int = x * 2
 
 # Cuerpo largo: bloque con `let`s y expresión final.
-fn cuadrado_mas_uno(x: Int) : Int = {
+fn cuadrado_mas_uno(x: Int) : Int {
   let cuadrado = x * x
   cuadrado + 1
 }

@@ -25,7 +25,7 @@ import actor
 type Request = Query(String, Pid[Reply])
 type Reply   = Answer(String)
 
-fn servidor() : Unit / Actor[Request] + Actor[Reply] + Stdout = {
+fn servidor() : Unit / Actor[Request] + Actor[Reply] + Stdout {
   match Actor.receive() {
     Query(p, cliente) -> {
       Stdout.print("servidor: recibí '#{p}'")
@@ -35,7 +35,7 @@ fn servidor() : Unit / Actor[Request] + Actor[Reply] + Stdout = {
   }
 }
 
-fn main() : Unit / Stdout + Spawn + Cancel = {
+fn main() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {       # mailbox de Reply: dónde caen las respuestas del server
     with_mailbox {     # mailbox de Request: efecto para Actor.send al server
       let server_body: () -> Unit / Actor[Request] + Actor[Reply] + Stdout = () => servidor()

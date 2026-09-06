@@ -138,7 +138,7 @@ necesitas varios campos a la vez, **destructuring** es más
 limpio:
 
 ```kai
-fn distancia_cuadrada(a: Punto, b: Punto) : Int = {
+fn distancia_cuadrada(a: Punto, b: Punto) : Int {
   let Punto { x: ax, y: ay } = a
   let Punto { x: bx, y: by } = b
   let dx = ax - bx
@@ -152,7 +152,7 @@ omitir el `:` y dejar solo el nombre, atando el campo a una
 variable del mismo nombre:
 
 ```kai
-fn describir(p: Punto) : String = {
+fn describir(p: Punto) : String {
   let Punto { x, y } = p
   "(#{x}, #{y})"
 }
@@ -433,7 +433,7 @@ agregar es amortizado O(1), y todo el armado es O(n).
 import string_builder
 import core.list
 
-fn unir(nombres: [String]) : String = {
+fn unir(nombres: [String]) : String {
   let sb = list.foldl(nombres, string_builder.new(),
                       (b, n) => string_builder.append(b, "#{n}, "))
   string_builder.build(sb)
@@ -637,7 +637,7 @@ una lista, primero con un `HashMap`, y de paso usar un
 import collections.hashmap as hashmap
 import collections.hashset as hashset
 
-fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] / Mutable = {
+fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] / Mutable {
   let m = hashmap.empty()
   contar(m, palabras)
   m
@@ -652,7 +652,7 @@ fn contar(m: hashmap.HashMap[String, Int], palabras: [String]) : Unit / Mutable 
   }
 }
 
-fn main() : Unit / Stdout + Mutable = {
+fn main() : Unit / Stdout + Mutable {
   let texto = ["sol", "mar", "sol", "viento", "mar", "sol"]
   let m = frecuencias(texto)
   match m["sol"] {

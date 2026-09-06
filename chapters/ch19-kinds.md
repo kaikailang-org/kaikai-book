@@ -184,7 +184,7 @@ unit s
 fn area_of[u: Measure](width: Real<u>, height: Real<u>) : Real<u^2> =
   width * height
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let a1 = area_of(3.0<m>, 4.0<m>)      # Real<m^2>
   let a2 = area_of(3.0<s>, 4.0<s>)      # Real<s^2>
   println("#{a1}")
@@ -221,7 +221,7 @@ imperial ft
 
 fn speed(d: Real<m>, t: Real<s>) : Real<m/s> = d / t
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let v = speed(100.0<m>, 9.58<s>)
   println("#{v}")
 
@@ -273,7 +273,7 @@ fn sum(xs: [Int]) : Int = match xs {
   [h, ...t] -> h + sum(t)
 }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let total = region {
     let a = [1, 2, 3, 4, 5]        # built in the arena
     let b = [10, 20, 30]           # built in the arena
@@ -321,7 +321,7 @@ fn tree_sum[r: Region](t: Tree<r>) : Int =
 fn build[r: Region](t: Tree<r>, n: Int) : Tree<r> =
   if n == 0 { t } else { build(insert(t, n), n - 1) }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let total = region { r ->
     let tree = build(Leaf, 100)
     tree_sum(tree)
@@ -391,7 +391,7 @@ import money
 import decimal as dec
 import decimal_proto
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let a: Money[dec.Decimal]<USD> = 10.50<USD>
   let b: Money[dec.Decimal]<USD> = 4.50<USD>
   let total = a + b                       # same currency: Money[Decimal]<USD>
@@ -480,7 +480,7 @@ from a buffer:
 #[derive(Layout)]
 type Packet = { magic: U32<be>, port: U16<be> }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let bytes = Packet { magic: 0<be>, port: 0<be> }.to_bytes()
   match packet_from_bytes(bytes, 0) {
     Ok(p)  -> println("port #{p.value.port}")
@@ -526,7 +526,7 @@ fn first_line(h: FileHandle<read>) : String / File =
     Err(e) -> e
   }
 
-fn main() : Unit / Stdout + File = {
+fn main() : Unit / Stdout + File {
   let path = "/tmp/kai_perm_demo.txt"
   match File.open_write(path) {
     Ok(h) -> {
@@ -562,7 +562,7 @@ matters: a plain `FileHandle<read>` does **not** compile where
 `<write>` is demanded.
 
 ```kai
-fn writes(h: FileHandle<read>) : Unit / File = {
+fn writes(h: FileHandle<read>) : Unit / File {
   let _ = File.write_chunk(h, "x")   # does not compile: <read>
   ()                                 # does not subsume <write>
 }
@@ -616,7 +616,7 @@ fn head[n: Dim](v: Vec[Real]<n>) : Real = v[0]
 fn dot[n: Dim](a: Vec[Real]<n>, b: Vec[Real]<n>, i: Int, acc: Real) : Real =
   if i < 0 { acc } else { dot(a, b, i - 1, acc + a[i] * b[i]) }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let u: Vec[Real]<3> = [1.0, 2.0, 3.0]
   let w: Vec[Real]<3> = [4.0, 5.0, 6.0]
   println("#{head(u)}")
@@ -701,7 +701,7 @@ impl Container for List {
   }
 }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   println("box:  #{peek(Box(7))}")
   println("list: #{peek([3, 4, 5])}")
 }

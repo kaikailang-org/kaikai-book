@@ -16,7 +16,7 @@ fn label[T: Show + Eq](a: T, b: T) : String =
   if eq(a, b) { "equal: #{show(a)}" }
   else { "#{show(a)} and #{show(b)}" }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   Stdout.print(show(larger(3, 7)))
   Stdout.print(show(larger("a", "b")))
   Stdout.print(render(Circle { radius: 5 }))

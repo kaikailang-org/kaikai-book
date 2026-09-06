@@ -1,7 +1,7 @@
 # Un bloque `{ ... }` es una expresión.
 # Su valor es el de la última expresión adentro.
 
-fn cuadrado_mas_uno(x: Int) : Int = {
+fn cuadrado_mas_uno(x: Int) : Int {
   let cuadrado = x * x
   cuadrado + 1                # valor del bloque
 }

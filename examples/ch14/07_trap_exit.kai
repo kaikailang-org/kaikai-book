@@ -16,13 +16,13 @@ fn child_ok(parent: Pid[String]) : Unit / Actor[String] + Link =
   Link.link(parent)
   # The body returns Unit: the fiber ends cleanly -> "Normal".
 
-fn child_crash(parent: Pid[String]) : Unit / Actor[String] + Link + Cancel = {
+fn child_crash(parent: Pid[String]) : Unit / Actor[String] + Link + Cancel {
   Link.link(parent)
   Cancel.raise()
   # Cancel.raise() unwinds the body -> "Crashed".
 }
 
-fn supervise() : Unit / Actor[String] + Spawn + Console + Link + Cancel = {
+fn supervise() : Unit / Actor[String] + Spawn + Console + Link + Cancel {
   spawn.set_trap_exit(true)
   let me = Actor.self()
 
@@ -33,7 +33,7 @@ fn supervise() : Unit / Actor[String] + Spawn + Console + Link + Cancel = {
   Stdout.print("a child died: " ++ Actor.receive())
 }
 
-fn main() : Int / Spawn + Console + Cancel + Link = {
+fn main() : Int / Spawn + Console + Cancel + Link {
   with_mailbox { supervise() }
   0
 }

@@ -21,7 +21,7 @@ import persistence
 
 const LOG_PATH: String = "ledger.audit.log"
 
-fn print_response(r: domain.Response) : Unit / Stdout = {
+fn print_response(r: domain.Response) : Unit / Stdout {
   println("  -> #{r}")
 }
 
@@ -43,7 +43,7 @@ fn step(
   record_event(log_pid, r)
 }
 
-fn main() : Int / Stdout + File + Spawn + Cancel = {
+fn main() : Int / Stdout + File + Spawn + Cancel {
   persistence.reset_log(LOG_PATH)
 
   # `step()` touches three Actor[T] effects:

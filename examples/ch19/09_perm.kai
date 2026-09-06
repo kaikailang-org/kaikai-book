@@ -10,7 +10,7 @@ fn first_line(h: FileHandle<read>) : String / File =
     Err(e) -> e
   }
 
-fn main() : Unit / Stdout + File = {
+fn main() : Unit / Stdout + File {
   let path = "/tmp/kai_perm_demo.txt"
   match File.open_write(path) {
     Ok(h) -> {

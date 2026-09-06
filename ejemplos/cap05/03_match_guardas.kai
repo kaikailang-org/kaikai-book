@@ -10,7 +10,7 @@ fn signo(n: Int) : String =
 # Guardas con bindings y patrones
 type Punto = { x: Int, y: Int }
 
-fn cuadrante(p: Punto) : String = {
+fn cuadrante(p: Punto) : String {
   let Punto { x, y } = p
   if x == 0 and y == 0 { "origen" }
   else if x > 0 and y > 0 { "I" }

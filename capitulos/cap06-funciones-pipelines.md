@@ -35,7 +35,7 @@ La segunda es un bloque `{ ... }` con `let`s intermedios y la
 expresión final implícita:
 
 ```kai
-fn cuadrado_mas_uno(x: Int) : Int = {
+fn cuadrado_mas_uno(x: Int) : Int {
   let cuadrado = x * x
   cuadrado + 1
 }

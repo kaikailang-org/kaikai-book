@@ -34,7 +34,7 @@ The second is a block `{ ... }` with intermediate `let`s and
 the implicit final expression:
 
 ```kai
-fn square_plus_one(x: Int) : Int = {
+fn square_plus_one(x: Int) : Int {
   let square = x * x
   square + 1
 }

@@ -22,7 +22,7 @@ fn sumar[r: Region](t: Arbol<r>) : Int =
 fn construir[r: Region](t: Arbol<r>, n: Int) : Arbol<r> =
   if n == 0 { t } else { construir(insertar(t, n), n - 1) }
 
-fn main() : Unit / Stdout = {
+fn main() : Unit / Stdout {
   let total = region { r ->
     let arbol = construir(Hoja, 100)
     sumar(arbol)
