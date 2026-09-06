@@ -24,7 +24,7 @@ pub fn string_to_bytes(s: String) : [Int] =
 fn byte_to_str(b: Int) : String = "#{int_to_char(b)}"
 
 pub fn bytes_to_string(bs: [Int]) : String =
-  string_concat_all(list.map(bs, byte_to_str))
+  string_join(list.map(bs, byte_to_str), "")
 
 pub fn parse_request(raw: String) : Result[HttpReq, String] = {
   match string.split(raw, "\r\n\r\n") {

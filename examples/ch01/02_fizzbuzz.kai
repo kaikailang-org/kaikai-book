@@ -30,7 +30,7 @@ fn label(c: Tag) : String {
     Both     -> "FizzBuzz"
     Fizz     -> "Fizz"
     Buzz     -> "Buzz"
-    Other(n) -> int_to_string(n)
+    Other(n) -> "#{n}"
   }
 }
 

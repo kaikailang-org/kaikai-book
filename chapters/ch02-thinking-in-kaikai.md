@@ -164,7 +164,7 @@ it declares the cell, writes it, and a bare name reads it.
 ```kai
 var n := 0
 n := n + 1
-println(int_to_string(n))   # 1
+println("#{n}")   # 1
 ```
 
 What's worth noticing: `var` is not really a new
@@ -328,7 +328,7 @@ you want to distinguish the three possible shapes, you write:
 match x {
   None              -> "not present"
   Some(Err(reason)) -> "failed: " ++ reason
-  Some(Ok(value))   -> "ok: " ++ int_to_string(value)
+  Some(Ok(value))   -> "ok: #{value}"
 }
 ```
 

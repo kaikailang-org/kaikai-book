@@ -75,7 +75,7 @@ type Punto = { x: Int, y: Int }
 
 impl Show for Punto {
   fn show(p: Punto) : String =
-    "(" ++ int_to_string(p.x) ++ ", " ++ int_to_string(p.y) ++ ")"
+    "(#{p.x}, #{p.y})"
 }
 ```
 
@@ -289,17 +289,17 @@ type Triangulo = { base: Int, altura: Int }
 
 impl Drawable for Circulo {
   fn dibujar(c: Circulo) : String =
-    "Círculo de radio " ++ int_to_string(c.radio)
+    "Círculo de radio #{c.radio}"
 }
 
 impl Drawable for Cuadrado {
   fn dibujar(c: Cuadrado) : String =
-    "Cuadrado de lado " ++ int_to_string(c.lado)
+    "Cuadrado de lado #{c.lado}"
 }
 
 impl Drawable for Triangulo {
   fn dibujar(t: Triangulo) : String =
-    "Triángulo " ++ int_to_string(t.base) ++ "x" ++ int_to_string(t.altura)
+    "Triángulo #{t.base}x#{t.altura}"
 }
 ```
 

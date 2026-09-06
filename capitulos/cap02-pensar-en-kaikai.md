@@ -165,7 +165,7 @@ la lee.
 ```kai
 var n := 0
 n := n + 1
-println(int_to_string(n))   # 1
+println("#{n}")   # 1
 ```
 
 Aquí está la cosa interesante: `var` no es realmente una
@@ -329,7 +329,7 @@ y quieres distinguir las tres formas posibles, lo escribes así:
 match x {
   None              -> "no había"
   Some(Err(razón))  -> "falló: " ++ razón
-  Some(Ok(valor))   -> "ok: " ++ int_to_string(valor)
+  Some(Ok(valor))   -> "ok: #{valor}"
 }
 ```
 

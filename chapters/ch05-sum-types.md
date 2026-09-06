@@ -671,13 +671,13 @@ collapsed into a single symbol.
 fn describe(e: EvalError) : String =
   match e {
     DivByZero        -> "division by zero"
-    NegativeSqrt(v)  -> "sqrt of negative (" ++ real_to_string(v) ++ ")"
+    NegativeSqrt(v)  -> "sqrt of negative (#{v})"
     Undefined(name)  -> "undefined variable: " ++ name
   }
 
 fn print_result(r: Result[Real, EvalError]) : Unit =
   match r {
-    Ok(v)  -> println("ok: " ++ real_to_string(v))
+    Ok(v)  -> println("ok: #{v}")
     Err(e) -> println("error: " ++ describe(e))
   }
 ```

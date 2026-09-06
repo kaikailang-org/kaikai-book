@@ -83,7 +83,7 @@ fn label(c: Tag) : String {
     Both     -> "FizzBuzz"
     Fizz     -> "Fizz"
     Buzz     -> "Buzz"
-    Other(n) -> int_to_string(n)
+    Other(n) -> "#{n}"
   }
 }
 
@@ -169,7 +169,7 @@ fn eval(e: Expr) : Int {
 
 fn main() {
   let e = Add(Lit(2), Mul(Lit(3), Lit(4)))
-  println(int_to_string(eval(e)))
+  println("#{eval(e)}")
 }
 ```
 

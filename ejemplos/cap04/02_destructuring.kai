@@ -5,7 +5,7 @@ type Punto = { x: Int, y: Int }
 
 fn describir(p: Punto) : String = {
   let Punto { x, y } = p
-  "(" ++ int_to_string(x) ++ ", " ++ int_to_string(y) ++ ")"
+  "(#{x}, #{y})"
 }
 
 fn clasificar(p: Punto) : String =

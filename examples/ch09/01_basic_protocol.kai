@@ -7,7 +7,7 @@ type Point = { x: Int, y: Int }
 # Manual implementation: format as Cartesian "(x, y)".
 impl Show for Point {
   fn show(p: Point) : String =
-    "(" ++ int_to_string(p.x) ++ ", " ++ int_to_string(p.y) ++ ")"
+    "(#{p.x}, #{p.y})"
 }
 
 fn main() {

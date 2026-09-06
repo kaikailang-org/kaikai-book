@@ -13,7 +13,7 @@ type Probabilidad = Real where self >= 0.0 and self <= 1.0
 fn doblar(n: NoNeg) : NoNeg = n + n
 
 fn evento(p: Probabilidad, descripcion: String) : Unit / Stdout =
-  println(descripcion ++ " con prob " ++ real_to_string(p))
+  println("#{descripcion} con prob #{p}")
 
 fn main() {
   let x: NoNeg = 16

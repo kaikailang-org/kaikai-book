@@ -7,7 +7,7 @@ type Probability = Real where self >= 0.0 and self <= 1.0
 fn double(n: NonNeg) : NonNeg = n + n
 
 fn event(p: Probability, description: String) : Unit / Stdout =
-  println(description ++ " with prob " ++ real_to_string(p))
+  println("#{description} with prob #{p}")
 
 fn main() {
   let x: NonNeg = 16

@@ -74,13 +74,13 @@ fn eval(env: Env, e: Expr) : Result[Real, ErrorEval] =
 fn describir(e: ErrorEval) : String =
   match e {
     DivCero            -> "división por cero"
-    RaizNegativa(v)    -> "raíz de número negativo (" ++ real_to_string(v) ++ ")"
+    RaizNegativa(v)    -> "raíz de número negativo (#{v})"
     NoDefinida(nombre) -> "variable no definida: " ++ nombre
   }
 
 fn imprimir(r: Result[Real, ErrorEval]) : Unit / Stdout =
   match r {
-    Ok(v)  -> println("ok: " ++ real_to_string(v))
+    Ok(v)  -> println("ok: #{v}")
     Err(e) -> println("error: " ++ describir(e))
   }
 
