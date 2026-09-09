@@ -174,6 +174,11 @@ trap that collects the day somebody sorts the lines
 alphabetically and the program changes meaning without a single
 expression being touched.
 
+The error is the same for every class of name. Above it's a
+constant, but a contested type, effect, or protocol produces the
+same report, candidates named, with the help line swapping the
+word: `type candidates`, `effect candidates`.
+
 The way out is the qualifier, and it works everywhere a name
 appears: types, constructors (in expression and in pattern
 position), functions, constants, protocols in an `impl` head and
@@ -207,10 +212,27 @@ declaration: two dependencies may each declare their own
 `effect Emit` without colliding, and `with ea.Emit` reaches only
 `ea`'s.
 
-You might expect a selective import — `import sensors.{MAX}`
-alongside `import alarms` — to settle it for the whole file.
-Today it doesn't: the name stays ambiguous and the error is the
-same. Qualify at the use site.
+The other way out is the selective import, which settles it for
+the whole file instead of at every use:
+
+```kai
+import sensors.{MAX}    # a bare `MAX` is now sensors'
+import alarms
+
+# MAX        -> 100
+# sensors.MAX -> 100
+# alarms.MAX  ->   5
+```
+
+Naming `MAX` in the selective import takes it out of the
+dispute: the bare name becomes `sensors`', and the other stays
+available qualified. Nothing is hidden.
+
+Pick based on how even the split is. If the file is ninety
+percent sensors and touches alarms twice, the selective import
+removes noise. If it uses both equally, qualifying at the use
+site reads more honestly: the reader sees where each name comes
+from without scrolling up to the imports.
 
 ### An import you don't use
 

@@ -174,6 +174,12 @@ imports — la clase de trampa que se cobra el día que alguien
 ordena las líneas alfabéticamente y el programa cambia de
 significado sin que nadie toque una expresión.
 
+El error es el mismo para cualquier clase de nombre. Arriba es
+una constante, pero un tipo, un efecto o un protocolo en disputa
+dan el mismo reporte, con los candidatos nombrados y la línea de
+ayuda cambiando la palabra: `type candidates`, `effect
+candidates`.
+
 La salida es el calificador, y funciona en todas partes donde
 aparece un nombre: tipos, constructores (en expresión y en
 patrón), funciones, constantes, protocolos en la cabeza de un
@@ -207,10 +213,27 @@ su propia declaración: dos dependencias pueden declarar cada
 una su `effect Emit` sin pisarse, y `with ea.Emit` alcanza solo
 al de `ea`.
 
-Podrías esperar que un import selectivo —`import sensores.{MAX}`
-junto a `import alarmas`— sirviera de desempate para todo el
-archivo. Hoy no: el nombre sigue siendo ambiguo y el error es el
-mismo. Califica en el punto de uso.
+La otra salida es el import selectivo, que desempata para todo
+el archivo en vez de hacerlo en cada uso:
+
+```kai
+import sensores.{MAX}    # `MAX` a secas es la de sensores
+import alarmas
+
+# MAX        -> 100
+# sensores.MAX -> 100
+# alarmas.MAX  ->   5
+```
+
+Nombrar `MAX` en el import selectivo lo saca de la disputa: el
+nombre pelado pasa a ser el de `sensores`, y el otro sigue
+disponible calificado. Nada se esconde.
+
+Elige según qué tan parejo sea el reparto. Si el archivo es
+noventa por ciento sensores y toca alarmas dos veces, el import
+selectivo saca ruido. Si los usa por igual, calificar los dos en
+el punto de uso deja el texto más honesto: el lector ve de dónde
+sale cada nombre sin subir a mirar los imports.
 
 ### Un import que no usas
 
