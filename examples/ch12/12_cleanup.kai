@@ -14,7 +14,7 @@ effect Conn {
 }
 
 fn report() : String / Conn + Fail {
-  let row = Conn.query("SELECT total FROM sales")
+  let _ = Conn.query("SELECT total FROM sales")
   Fail.fail("network dropped before the second query")
 }
 

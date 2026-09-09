@@ -410,9 +410,9 @@ fn main() : Unit / Stdout {
 
 ```
 $ kai run ejemplos/cap19/05_dinero.kai
-total  = 15.0 USD
-triple = 45.0 USD
-euros  = 13.800 EUR
+total  = 15.00 USD
+triple = 45.00 USD
+euros  = 13.8000 EUR
 ```
 
 Sumar la misma moneda, sí. Escalar por un número, sí: el escalado
