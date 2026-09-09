@@ -43,15 +43,21 @@ that the program aborts with a clear message:
 
 ```
 $ kai run examples/ch15/01_basic_hole.kai
-panic: unfilled hole: ?formula at line 1 col 27, expected Real
+panic: unfilled hole: ?formula at line 6 col 34
 ```
 
 It isn't a compile-time error but a **deferred promise**:
 you left a gap that you'll fill later, and the system stays
-with you until you do. The panic carries everything an agent
-(human or AI) needs in order to fill it: the hole's name, its
-exact location, and the type the compiler inferred it should
-have.
+with you until you do. The panic gives you just enough to find
+it: the hole's name and its exact location.
+
+The type the compiler inferred doesn't ride in the panic, and
+it's the first thing you'll want. It lives in the structured
+report §15.7 puts to work: `kai build --holes-json` over this
+same file returns `"expected_type": "Real"` alongside what's in
+scope and a list of candidates. The panic is for when the
+program surprises you at runtime; the report is for when you
+sit down to fill the gap.
 
 The difference between `?` and `?name` is that the name
 helps identify the hole in messages and, more importantly,

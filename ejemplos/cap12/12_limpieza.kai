@@ -14,7 +14,7 @@ effect Conexion {
 }
 
 fn reporte() : String / Conexion + Fail {
-  let fila = Conexion.consultar("SELECT total FROM ventas")
+  let _ = Conexion.consultar("SELECT total FROM ventas")
   Fail.fail("se cortó la red antes del segundo query")
 }
 

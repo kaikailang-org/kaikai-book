@@ -410,9 +410,9 @@ fn main() : Unit / Stdout {
 
 ```
 $ kai run examples/ch19/05_money.kai
-total  = 15.0 USD
-triple = 45.0 USD
-euros  = 13.800 EUR
+total  = 15.00 USD
+triple = 45.00 USD
+euros  = 13.8000 EUR
 ```
 
 Adding the same currency: yes. Scaling by a number: yes — the

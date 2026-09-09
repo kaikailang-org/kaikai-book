@@ -42,15 +42,21 @@ programa aborta con un mensaje claro:
 
 ```
 $ kai run ejemplos/cap15/01_hole_basico.kai
-panic: unfilled hole: ?formula at line 1 col 27, expected Real
+panic: unfilled hole: ?formula at line 6 col 35
 ```
 
 No es un error de compilación, sino una **promesa diferida**:
 te dejaste un agujero que vas a llenar después, y el sistema te
-acompaña hasta entonces. El mensaje del panic trae todo lo
-que el agente (humano o IA) necesita para rellenarlo: el
-nombre del hole, su posición exacta, y el tipo que el
-compilador infirió que debería tener.
+acompaña hasta entonces. El panic te da lo justo para ubicarlo:
+el nombre del hole y su posición exacta.
+
+El tipo que el compilador infirió no viaja en el panic, y es lo
+primero que vas a querer. Vive en el reporte estructurado, que
+el §15.7 usa en serio: `kai build --holes-json` sobre este mismo
+archivo devuelve `"expected_type": "Real"` junto con lo que hay
+en scope y una lista de candidatos. El panic es para cuando el
+programa te sorprende corriendo; el reporte, para cuando te
+sientas a llenar el agujero.
 
 La diferencia entre `?` y `?nombre` es que el nombre te sirve
 para identificar el hole en mensajes y, sobre todo, para hacer

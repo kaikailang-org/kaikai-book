@@ -38,10 +38,22 @@ done
 #   ruta:   relativa a $ROOT (archivo o directorio para project)
 #   expect: ok | fail | run_panic
 #
-# Casos especiales documentados:
+# Casos especiales documentados. Cada expect distinto de `ok` tiene que
+# aparecer acá con su motivo: un XFAIL sin razón escrita termina tapando
+# un bug, que es justo lo que pasó con cap13/03.
 #   - cap07/02_assert_*: el test demuestra un assert que falla → expect=fail
-#   - cap15/*: holes que abortan en runtime → expect=run_panic
-#   - cap14/03,05 + cap17 + cap18: bugs/refactors pendientes en 0.68 → expect=fail
+#   - cap16/01_estado_*: el ejemplo demuestra que el Int que devuelve
+#     main es el código de salida; sale con 1 a propósito → expect=fail
+#   - cap19/06_usd_por_eur: no compila a propósito, Currency no tiene
+#     producto → expect=fail
+#   - cap15/01: hole que aborta en runtime → expect=run_panic
+#   - cap13/03_cancel: BUG DEL LENGUAJE, no del ejemplo. Una fibra no
+#     hereda el handler del padre para un efecto propio, así que el
+#     `handle ... with Fail` que rodea al nursery nunca corre y la fibra
+#     aborta con `effect not handled in fiber: Fail`. El ejemplo está
+#     escrito en la forma que la doc promete (structured-concurrency.md:
+#     "handlers inherited from the parent fiber's evidence chain at spawn
+#     time"). Se revierte a expect=ok cuando cierre lnds/kaikai#1950.
 # ============================================================
 
 read -r -d '' MANIFEST <<'EOF' || true
