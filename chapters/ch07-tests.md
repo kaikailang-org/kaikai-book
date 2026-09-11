@@ -521,6 +521,92 @@ The second is ~9x more expensive than the first. That's the
 information you need if you later decide the evaluator is a
 bottleneck: you know what baseline you're measuring against.
 
+### Who tests the tests?
+
+So far everything is green: four tests, two checks, zero
+failures. But a green run proves one thing only — that the tests
+passed. It doesn't prove they would have failed had the code been
+wrong, and that is what you actually want from a suite.
+
+`kai mutate` measures it head-on. It breaks the code on purpose,
+one construct at a time — a `match` arm that disappears, a `>=`
+that becomes `>`, a `false` that becomes `true` — and runs your
+tests against each broken version. If any test fails, the mutant
+is killed: something noticed. If they all pass, the mutant
+survives, and that's a hole.
+
+```
+$ kai mutate --module examples/ch07/05_evaluator_tests.kai \
+             --oracle 'kai test examples/ch07/05_evaluator_tests.kai'
+```
+
+`--oracle` is the command that decides whether the code is
+healthy: anything that exits 0 when all is well. The default is
+`kai test` over the package; here I point it at this one file
+because `examples/ch07` also holds `02_assert_fails.kai`, which
+fails on purpose, and with it in the count every mutant would be
+killed without anything having really noticed.
+
+Trimming the 22 lines of killed mutants leaves the interesting
+part:
+
+```
+survivors — the suite did not notice these:
+
+examples/ch07/05_evaluator_tests.kai	40	15	literal
+    40c40
+    <     Err(_) -> false
+    ---
+    >     Err(_) -> true
+examples/ch07/05_evaluator_tests.kai	46	15	literal
+    46c46
+    <     Ok(_)  -> false
+    ---
+    >     Ok(_)  -> true
+
+24 mutants in 19s: 22 killed, 0 did not compile, 2 survived
+```
+
+Twenty-four mutants, two survivors, and both sit in the same
+awkward place: not in the evaluator but in the tests' own
+helpers. Line 40 is the `Err` branch of `must_yield`. No test
+hands `must_yield` an expression that fails, so nobody finds out
+if that branch says `true` — and a `must_yield` that accepts
+errors lets through any regression in `eval` that starts
+returning `Err` where it shouldn't. Line 46 is the same hole
+backwards: nobody hands `must_fail` an expression that evaluates
+fine.
+
+Closing them costs two one-line tests:
+
+```kai
+test "must_yield rejects an error" {
+  assert not must_yield(Div(Lit(10), Lit(0)), 0)
+}
+
+test "must_fail rejects a result" {
+  assert not must_fail(Lit(1))
+}
+```
+
+With them — the same evaluator, in
+`examples/ch07/07_mutants.kai` — the run ends like this:
+
+```
+24 mutants in 19s: 24 killed, 0 did not compile, 0 survived
+```
+
+Notice what it doesn't report: a percentage. `kai mutate` hands
+you survivors, each with file, line and diff, because a survivor
+is something you can fix this afternoon and a "92% mutation
+score" is a number nobody fixes. Nor is it something to run on
+every commit: each mutant costs a run of your tests. It's a
+review tool, for when you wonder whether that very green suite is
+looking at anything.
+
+A green test says your code passed. A surviving mutant says what
+your tests stopped looking at.
+
 ### What the file doesn't show
 
 The mechanism is direct. The file declares functions, declares
