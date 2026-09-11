@@ -496,18 +496,32 @@ Antes del código, una restricción que conviene tener clara,
 porque decide la forma de la solución: **los handlers de
 efectos son locales a la fibra**. Si instalas un handler de
 `State` en el `main` y una fibra hija ejecuta `State.get()`,
-esa operación no encuentra handler y el programa aborta:
+el programa ni siquiera compila:
 
 ```
-kai: effect not handled in fiber: State
+error: effect not handled in spawned fiber: State
+  --> main.kai:6:23
+    |
+  6 |       let f = n.spawn(() => State.get())
+    |                       ^
+  = note: a fiber does not inherit the parent's handlers
+  = help: handle the effect inside the spawned body: `handle { ... } with State { ... }`
 ```
 
-No es un descuido del runtime, es el mismo invariante de
+No es un descuido del compilador, es el mismo invariante de
 aislación que sostiene todo el capítulo. Una capacidad es
 parte del contexto de una fibra, y una fibra no hereda el
-contexto de quien la creó. Lo único que cruza un `spawn` en
-una dirección son los valores que capturas en el lambda, y en
-la otra el valor de retorno que recoge `await`.
+contexto de quien la creó. Lo que tú le pasas a través de un
+`spawn` son los valores que capturas en el lambda, de ida, y el
+valor de retorno que recoge `await`, de vuelta. Las capacidades
+que sí resuelven dentro de una hija son de dos clases, y
+ninguna es tuya: las que el runtime provee por fibra (`Stdout`,
+`Clock`) y las que son de la fibra por construcción (`Cancel`,
+`Spawn`, `Actor`).
+
+Hasta la versión 0.116 esto compilaba y reventaba en runtime,
+cuando la fibra llegaba a la operación. Ahora el compilador lo
+ataja en la línea del `spawn`, que es donde está el error.
 
 Así que la "cola compartida" que uno escribiría en Go con un
 canal, o en Java con un `BlockingQueue`, aquí no se escribe
