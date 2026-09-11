@@ -1,8 +1,13 @@
-# Cancelación con cleanup. Cuando una fibra hermana falla, el
+# Cancelación con cleanup. Cuando una fibra hermana se cae, el
 # nursery cancela las demás. Una fibra que tiene cosas que
 # limpiar (cerrar archivos, soltar conexiones, escribir un log)
 # instala un handler de `Cancel`. El handler corre el cleanup y
 # no llama a `resume`: la fibra se desenrolla.
+#
+# Una fibra no hereda los handlers de quien la lanza, así que la
+# que se rinde maneja su propio `Fail` dentro del cuerpo lanzado y
+# lo convierte en `Cancel.raise()`: eso es lo que el nursery lee
+# como una hija caída.
 
 import spawn
 
@@ -40,16 +45,17 @@ effect Fail {
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
-  handle {
-    nursery { n ->
-      n.spawn(() => trabajador_largo("A"))
-      n.spawn(() => trabajador_largo("B"))
-      let r = n.spawn(() => renunciar(0))
-      n.await(r)
-    }
-  } with Fail {
-    fail(motivo, resume) -> {
-      println("main: el nursery falló porque #{motivo}")
-    }
+  nursery { n ->
+    n.spawn(() => trabajador_largo("A"))
+    n.spawn(() => trabajador_largo("B"))
+    let r = n.spawn(() => handle {
+      renunciar(0)
+    } with Fail {
+      fail(motivo, resume) -> {
+        println("la fibra se rinde: #{motivo}")
+        Cancel.raise()
+      }
+    })
+    n.await(r)
   }
 }

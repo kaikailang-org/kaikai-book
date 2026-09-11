@@ -494,19 +494,33 @@ at the end.
 Before the code, a constraint worth having straight, because
 it decides the shape of the solution: **effect handlers are
 fiber-local**. Install a `State` handler in `main`, have a
-child fiber run `State.get()`, and that operation finds no
-handler — the program aborts:
+child fiber run `State.get()`, and the program doesn't even
+compile:
 
 ```
-kai: effect not handled in fiber: State
+error: effect not handled in spawned fiber: State
+  --> main.kai:6:23
+    |
+  6 |       let f = n.spawn(() => State.get())
+    |                       ^
+  = note: a fiber does not inherit the parent's handlers
+  = help: handle the effect inside the spawned body: `handle { ... } with State { ... }`
 ```
 
-This isn't a runtime oversight, it's the same isolation
+This isn't a compiler oversight, it's the same isolation
 invariant that holds up the whole chapter. A capability is
 part of a fiber's context, and a fiber does not inherit the
-context of whoever created it. The only things that cross a
-`spawn` are the values you capture in the lambda on the way
-in, and the return value `await` collects on the way out.
+context of whoever created it. What you hand across a `spawn`
+is the values you capture in the lambda on the way in, and the
+return value `await` collects on the way out. The capabilities
+that do resolve inside a child come in two kinds, and neither
+is yours: the ones the runtime supplies per fiber (`Stdout`,
+`Clock`), and the ones that belong to the fiber by construction
+(`Cancel`, `Spawn`, `Actor`).
+
+Through version 0.116 this compiled and blew up at runtime,
+when the fiber reached the operation. Now the compiler stops
+it on the `spawn` line, which is where the mistake is.
 
 So the "shared queue" you'd write in Go with a channel, or in
 Java with a `BlockingQueue`, isn't written that way here. You

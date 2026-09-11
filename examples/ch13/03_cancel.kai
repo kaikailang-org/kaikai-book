@@ -1,8 +1,13 @@
-# Cancellation with cleanup. When a sibling fiber fails, the
+# Cancellation with cleanup. When a sibling fiber goes down, the
 # nursery cancels the others. A fiber that has things to clean
 # up (close files, release connections, write a log) installs
 # a handler for `Cancel`. The handler runs the cleanup and
 # does NOT call `resume`: the fiber unwinds.
+#
+# A fiber doesn't inherit the handlers of whoever spawns it, so
+# the one that gives up handles its own `Fail` inside the spawned
+# body and turns it into `Cancel.raise()`: that's what the nursery
+# reads as a child going down.
 
 import spawn
 
@@ -40,16 +45,17 @@ effect Fail {
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
-  handle {
-    nursery { n ->
-      n.spawn(() => long_worker("A"))
-      n.spawn(() => long_worker("B"))
-      let r = n.spawn(() => quit(0))
-      n.await(r)
-    }
-  } with Fail {
-    fail(reason, resume) -> {
-      println("main: nursery failed because #{reason}")
-    }
+  nursery { n ->
+    n.spawn(() => long_worker("A"))
+    n.spawn(() => long_worker("B"))
+    let r = n.spawn(() => handle {
+      quit(0)
+    } with Fail {
+      fail(reason, resume) -> {
+        println("the fiber gives up: #{reason}")
+        Cancel.raise()
+      }
+    })
+    n.await(r)
   }
 }
