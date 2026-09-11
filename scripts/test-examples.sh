@@ -111,6 +111,7 @@ check|ejemplos/cap07/03_check_propiedades.kai|ok
 bench|ejemplos/cap07/04_bench_basico.kai|ok
 test|ejemplos/cap07/05_evaluador_pruebas.kai|ok
 test|ejemplos/cap07/06_efectos_en_test.kai|ok
+test|ejemplos/cap07/07_mutantes.kai|ok
 
 # Capítulo 8 — módulos (proyectos multi-archivo)
 project|ejemplos/cap08/01_un_archivo|ok
@@ -270,6 +271,7 @@ check|examples/ch07/03_check_properties.kai|ok
 bench|examples/ch07/04_basic_bench.kai|ok
 test|examples/ch07/05_evaluator_tests.kai|ok
 test|examples/ch07/06_effects_in_tests.kai|ok
+test|examples/ch07/07_mutants.kai|ok
 
 # Chapter 8
 project|examples/ch08/01_one_file|ok

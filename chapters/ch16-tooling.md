@@ -230,6 +230,26 @@ The three commands share two important properties:
 - **The blocks don't land in the production binary.** `kai
   run` and `kai build` drop them entirely.
 
+A fourth command runs none of those blocks: it puts them to the
+test. `kai mutate` breaks the code on purpose, one construct at a
+time, runs your tests against each broken version, and reports
+the **survivors** — the mutants no test noticed:
+
+```
+$ kai mutate                                 # the package's modules, judged by `kai test`
+$ kai mutate --module src/parser.kai         # a single file
+$ kai mutate --limit 20 --operator arm       # a first look, cheapest operator first
+$ kai mutate --oracle './run-tests.sh'       # any command that exits 0 when all is well
+$ kai mutate --list                          # the sites, without running anything
+```
+
+There are six operators: `arm` drops a `match` arm, `compare`
+shifts a comparison boundary (`>=` to `>`), `connect` swaps `and`
+for `or`, `negate` inverts a condition, `literal` perturbs a
+literal, and `call` elides a call. Every mutant costs one run of
+the oracle, so start with `--module` and `--limit`. §7.6 runs it
+over the evaluator and finds two holes.
+
 ## 16.3 Formatting: `kai fmt`
 
 `kai fmt` is the canonical formatter. `gofmt` style:

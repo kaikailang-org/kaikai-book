@@ -529,6 +529,91 @@ información que necesitas si más adelante decides que el
 evaluador es un cuello de botella: sabes contra qué línea
 base estás midiendo.
 
+### ¿Quién prueba las pruebas?
+
+Hasta aquí todo está verde: cuatro tests, dos checks, cero
+fallas. Pero una corrida verde prueba una sola cosa, que las
+pruebas pasaron. No prueba que habrían fallado si el código
+estuviera mal, y eso es lo que de verdad le pides a una suite.
+
+`kai mutate` lo mide de frente. Rompe el código a propósito, una
+construcción a la vez —un brazo de `match` que desaparece, un
+`>=` que se vuelve `>`, un `false` que se vuelve `true`—, y corre
+tus pruebas contra cada versión rota. Si alguna prueba falla, el
+mutante muere: algo lo notó. Si todas pasan, el mutante
+sobrevive, y eso es un hueco.
+
+```
+$ kai mutate --module ejemplos/cap07/05_evaluador_pruebas.kai \
+             --oracle 'kai test ejemplos/cap07/05_evaluador_pruebas.kai'
+```
+
+El `--oracle` es el comando que decide si el código está sano:
+cualquiera que salga con 0 cuando todo anda bien. Por defecto es
+`kai test` sobre el paquete; aquí lo apunto a este archivo porque
+en `ejemplos/cap07` vive también `02_assert_falla.kai`, que falla
+a propósito, y con él en la cuenta todo mutante moriría sin que
+nada lo hubiera notado de verdad.
+
+Recorto las 22 líneas de mutantes muertos y queda lo interesante:
+
+```
+survivors — the suite did not notice these:
+
+ejemplos/cap07/05_evaluador_pruebas.kai	49	15	literal
+    49c49
+    <     Err(_) -> false
+    ---
+    >     Err(_) -> true
+ejemplos/cap07/05_evaluador_pruebas.kai	55	15	literal
+    55c55
+    <     Ok(_)  -> false
+    ---
+    >     Ok(_)  -> true
+
+24 mutants in 20s: 22 killed, 0 did not compile, 2 survived
+```
+
+Veinticuatro mutantes, dos sobrevivientes, y los dos están en el
+mismo lugar incómodo: no en el evaluador, sino en los helpers de
+las pruebas. La línea 49 es la rama `Err` de `debe_dar`. Ningún
+test le pasa a `debe_dar` una expresión que falla, así que nadie
+se entera si esa rama dice `true`. Y un `debe_dar` que acepta
+errores deja pasar cualquier regresión de `eval` que empiece a
+devolver `Err` donde no debe. La línea 55 es el mismo hueco al
+revés: nadie le pasa a `debe_fallar` una expresión que evalúa
+bien.
+
+Cerrarlos cuesta dos tests de una línea:
+
+```kai
+test "debe_dar no acepta un error" {
+  assert not debe_dar(Div(Lit(10), Lit(0)), 0)
+}
+
+test "debe_fallar no acepta un resultado" {
+  assert not debe_fallar(Lit(1))
+}
+```
+
+Con ellos —es el mismo evaluador, en
+`ejemplos/cap07/07_mutantes.kai`— la corrida termina así:
+
+```
+24 mutants in 20s: 24 killed, 0 did not compile, 0 survived
+```
+
+Fíjate en lo que no reporta: un porcentaje. `kai mutate` entrega
+sobrevivientes, cada uno con archivo, línea y diff, porque un
+sobreviviente es algo que puedes arreglar esta tarde y un "92% de
+cobertura de mutación" es un número que nadie arregla. Tampoco es
+algo para correr en cada commit: cada mutante cuesta una corrida
+de tus pruebas. Es una herramienta de revisión, para cuando te
+preguntes si esa suite tan verde está mirando algo.
+
+Una prueba verde dice que tu código pasó. Un mutante que
+sobrevive dice qué dejaron de mirar tus pruebas.
+
 ### Lo que el archivo no muestra
 
 El mecanismo es directo. El archivo declara funciones, declara

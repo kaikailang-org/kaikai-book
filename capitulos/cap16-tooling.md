@@ -232,6 +232,28 @@ Los tres comandos comparten dos propiedades importantes:
 - **Los bloques no llegan al binario de producción.** `kai run`
   y `kai build` los descartan completamente.
 
+Un cuarto comando no corre ninguno de esos bloques: los pone a
+prueba. `kai mutate` rompe el código a propósito, una
+construcción a la vez, corre tus tests contra cada versión rota y
+te reporta los **sobrevivientes**, los mutantes que ninguna
+prueba notó:
+
+```
+$ kai mutate                                # módulos del paquete, contra `kai test`
+$ kai mutate --module src/parser.kai        # un solo archivo
+$ kai mutate --limit 20 --operator arm      # un primer vistazo, lo más barato primero
+$ kai mutate --oracle './correr-pruebas.sh' # cualquier comando que salga con 0 si todo anda bien
+$ kai mutate --list                         # los sitios, sin correr nada
+```
+
+Los operadores son seis: `arm` saca un brazo de `match`,
+`compare` mueve el borde de una comparación (`>=` a `>`),
+`connect` cambia `and` por `or`, `negate` invierte una condición,
+`literal` perturba un literal y `call` elide una llamada. Cada
+mutante cuesta una corrida del oráculo, así que conviene empezar
+con `--module` y `--limit`. El §7.6 lo corre sobre el evaluador y
+encuentra dos huecos.
+
 ## 16.3 Formateo: `kai fmt`
 
 `kai fmt` es el formateador canónico. Estilo `gofmt`:
