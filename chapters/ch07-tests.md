@@ -345,11 +345,24 @@ and reports four numbers: the median, the MAD (median absolute
 deviation), the mean, and the range.
 
 Look at the first two lines, because they teach you how to read
-the report: the median is 0. Not because the operation is free,
-but because it is cheaper than the clock's resolution — which is
-why the report also carries the mean. When median and mean
-disagree that much, the mean is the number to compare against;
-when they agree, as in `fib(15)`, the measurement is solid.
+the report: the median and the MAD are both 0. That doesn't mean
+the operation is free. It means **you didn't measure it**: each
+iteration costs less than the clock's resolution, so the clock
+returned zero every time.
+
+And when that happens, the mean is no use either. The only thing
+keeping it off zero is scheduler noise — which is where ranges
+like `[0, 1000]` come from. Two rows reading `median 0 / MAD 0`
+can show wildly different means with no difference in work
+between them; comparing those means is reading noise.
+
+So `median 0 / MAD 0` is not a measurement, it's a warning that
+you need to measure differently: make each iteration do more
+work, or write a program that repeats the operation in a loop,
+consumes the result so the optimizer can't delete it, and time
+that whole program. A solid measurement looks like `fib(15)`:
+median and mean in the same order of magnitude, with the MAD
+small next to both.
 
 What matters about benchmarks isn't the absolute number — it
 depends on the machine and on what else is running — but the
@@ -525,14 +538,20 @@ case (three nesting levels). On my machine:
   deep expression (3 levels): 1000 iter / median 1000 ns / MAD 0 ns / mean 574 ns / range [0, 2000]
 ```
 
-The second costs roughly an order of magnitude more than the
-first. That's the information you need if you later decide the
-evaluator is a bottleneck: you know what baseline you're
-measuring against.
+Read those two rows with the rule above in hand. The literal one
+reads `median 0 / MAD 0`: evaluating `Lit(42)` is cheaper than
+the clock, so that row measured nothing and its mean is noise.
+The deep-expression row did measure: median and mean in the same
+order of magnitude.
 
-The exact numbers are from my machine and one run; yours will
-differ. What doesn't change between runs is the order of
-magnitude, and that's what you compare.
+So this pair does **not** entitle you to say "the second costs N
+times the first": that would require comparing two measurable
+things, and one of them isn't. It tells you something else, just
+as useful: the cheap case is below what the bench can resolve,
+and the expensive one is what's worth watching if the evaluator
+starts to weigh. If you really need the ratio between them, take
+`bench` out of the picture and time a program that repeats the
+operation and consumes the result.
 
 ### Who tests the tests?
 
