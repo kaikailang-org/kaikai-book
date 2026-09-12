@@ -6,7 +6,7 @@ fn duplicar(x: Int) : Int = x * 2
 
 fn promedio(a: Int, b: Int) : Int = ?formula
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   # duplicar funciona, podemos probarlo:
   println("duplicar(5) = #{duplicar(5)}")
   # promedio todavía no, pero el archivo compila igual.

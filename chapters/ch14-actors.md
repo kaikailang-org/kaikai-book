@@ -173,7 +173,7 @@ handler and hands control to its body:
 ```kai
 import actor
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   with_mailbox {
     Actor.send(Actor.self(), "hello")
     Actor.send(Actor.self(), "world")
@@ -221,7 +221,7 @@ fn worker() : Unit / Actor[String] + Console {
   Stdout.print("working: " ++ t3)
 }
 
-fn main() : Unit / Console + Spawn + Cancel + Actor[String] {
+fn main() : Unit / Console + Spawn + Cancel {
   with_mailbox {
     let pid = spawn_actor(() => worker())
     Actor.send(pid, "task-1")
@@ -269,7 +269,7 @@ mailbox, gives up after a `Duration`, and returns an `Option`:
 import actor
 import time
 
-fn main() : Unit / Console + Spawn + Cancel + Clock + Actor[String] {
+fn main() : Unit / Stdout + Spawn + Cancel + Clock + Actor[String] {
   with_mailbox {
     match receive_timeout(time.millis(10)) {
       Some(m) -> Stdout.print("received: " ++ m)
@@ -334,7 +334,7 @@ arrives with no room:
 ```kai
 import actor
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   with_mailbox_policy(Bounded(2, DropOldest)) {
     Actor.send(Actor.self(), "a")
     Actor.send(Actor.self(), "b")
@@ -378,7 +378,7 @@ import actor
 type Request = Query(String, Pid[Reply])
 type Reply   = Answer(String)
 
-fn server() : Unit / Actor[Request] + Actor[Reply] + Console {
+fn server() : Unit / Actor[Request] + Actor[Reply] + Stdout {
   match Actor.receive() {
     Query(q, client) -> {
       Stdout.print("server: got '#{q}'")
@@ -388,7 +388,7 @@ fn server() : Unit / Actor[Request] + Actor[Reply] + Console {
   }
 }
 
-fn main() : Unit / Console + Spawn + Cancel + Actor[Reply] {
+fn main() : Unit / Console + Spawn + Cancel {
   with_mailbox {
     let s = spawn_actor(() => server())
 
@@ -599,7 +599,7 @@ fn attempt(me: Pid[BatchResult], batch: [(Int, Int)])
   Actor.receive()
 }
 
-fn supervisor() : Unit / Console + Spawn + Cancel + Actor[BatchResult] {
+fn supervisor() : Unit / Console + Spawn + Cancel {
   with_mailbox {
     let me = Actor.self()
     let first_batch  = [(10, 2), (20, 4), (30, 0)]

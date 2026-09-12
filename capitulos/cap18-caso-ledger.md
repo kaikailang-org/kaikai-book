@@ -300,7 +300,7 @@ una secuencia de operaciones para mostrar el sistema en
 acción.
 
 ```kai
-fn main() : Unit / Console + File + Spawn + Cancel + ... {
+fn main() : Int / Stdout + File + Spawn + Cancel {
   let almacen_pid = almacen.arrancar()
   let log_pid     = persistencia.arrancar(PATH_LOG)
 

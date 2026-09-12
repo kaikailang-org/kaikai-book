@@ -175,7 +175,7 @@ en la que ya estás. `with_mailbox` instala el handler de
 ```kai
 import actor
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   with_mailbox {
     Actor.send(Actor.self(), "hola")
     Actor.send(Actor.self(), "mundo")
@@ -223,7 +223,7 @@ fn trabajador() : Unit / Actor[String] + Console {
   Stdout.print("trabajando: " ++ t3)
 }
 
-fn main() : Unit / Console + Spawn + Cancel + Actor[String] {
+fn main() : Unit / Console + Spawn + Cancel {
   with_mailbox {
     let pid = spawn_actor(() => trabajador())
     Actor.send(pid, "tarea-1")
@@ -271,7 +271,7 @@ rindiéndose tras una `Duration` y devuelve un `Option`:
 import actor
 import time
 
-fn main() : Unit / Console + Spawn + Cancel + Clock + Actor[String] {
+fn main() : Unit / Stdout + Spawn + Cancel + Clock + Actor[String] {
   with_mailbox {
     match receive_timeout(time.millis(10)) {
       Some(m) -> Stdout.print("recibido: " ++ m)
@@ -336,7 +336,7 @@ ya no hay espacio:
 ```kai
 import actor
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   with_mailbox_policy(Bounded(2, DropOldest)) {
     Actor.send(Actor.self(), "a")
     Actor.send(Actor.self(), "b")
@@ -380,7 +380,7 @@ import actor
 type Request = Query(String, Pid[Reply])
 type Reply   = Answer(String)
 
-fn servidor() : Unit / Actor[Request] + Actor[Reply] + Console {
+fn servidor() : Unit / Actor[Request] + Actor[Reply] + Stdout {
   match Actor.receive() {
     Query(p, cliente) -> {
       Stdout.print("servidor: recibí '#{p}'")
@@ -390,7 +390,7 @@ fn servidor() : Unit / Actor[Request] + Actor[Reply] + Console {
   }
 }
 
-fn main() : Unit / Console + Spawn + Cancel + Actor[Reply] {
+fn main() : Unit / Console + Spawn + Cancel {
   with_mailbox {
     let server = spawn_actor(() => servidor())
 
@@ -595,7 +595,7 @@ fn intento(me: Pid[ResultadoLote], lote: [(Int, Int)])
   Actor.receive()
 }
 
-fn supervisor() : Unit / Console + Spawn + Cancel + Actor[ResultadoLote] {
+fn supervisor() : Unit / Console + Spawn + Cancel {
   with_mailbox {
     let me = Actor.self()
     let primer_lote = [(10, 2), (20, 4), (30, 0)]

@@ -119,6 +119,13 @@ launched on the common path. For larger programs there's a
 cache (chapter 8 §8.8 covers the package cache; the per-file
 compilation cache is another story).
 
+That "less than a second" is the steady state, which is the one
+you live in: the chapter-17 case study — 420 lines across five
+modules — builds in about 0.6 seconds. The first time, with a
+cold cache, costs several times that; on my machine, 4.1
+seconds for that same project. Worth knowing before you time a
+cold build and draw the wrong conclusion.
+
 To put it in perspective: a Rust program of comparable
 size can take 30 seconds to compile, where a kaikai program
 of the same size takes less than a second — an order of
@@ -749,7 +756,7 @@ The simplest case is binding a libc function directly:
 ```kai
 extern "C" fn llabs(n: Int) : Int / Ffi
 
-fn main() : Unit / Console + Ffi {
+fn main() : Unit / Stdout + Ffi {
   print("|-7| = #{llabs(0 - 7)}")
 }
 ```
@@ -849,7 +856,7 @@ The kaikai side:
 ```kai
 extern "C" fn my_double(x: Int) : Int / Ffi
 
-fn main() : Unit / Console + Ffi {
+fn main() : Unit / Stdout + Ffi {
   print("double(21) = #{my_double(21)}")
 }
 ```

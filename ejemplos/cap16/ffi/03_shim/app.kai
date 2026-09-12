@@ -6,6 +6,6 @@
 
 extern "C" fn my_double(x: Int) : Int / Ffi
 
-fn main() : Unit / Console + Ffi {
+fn main() : Unit / Stdout + Ffi {
   print("doble(21) = #{my_double(21)}")
 }

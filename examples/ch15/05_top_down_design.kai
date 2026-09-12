@@ -34,7 +34,7 @@ fn evaluate(e: Expr) : Int {
 # right thing, this would run untouched.
 fn compute(s: String) : Int = evaluate(parse(tokenize(s)))
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   # We test only the completed part: evaluate a hand-built
   # AST.
   let ast = Sum(Lit(3), Mul(Lit(4), Lit(5)))

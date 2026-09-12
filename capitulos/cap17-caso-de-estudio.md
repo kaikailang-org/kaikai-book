@@ -351,7 +351,7 @@ import web
 const PUERTO: Int = 8080
 const PATH_LOG: String = "notas.log"
 
-fn main() : Unit / Console + NetTcp + File + Spawn + Cancel + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
+fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel {
   let almacen_pid = almacen.arrancar()
   let log_pid     = persistencia.arrancar(PATH_LOG)
 
@@ -373,7 +373,7 @@ Cuatro líneas de "negocio":
 4. Entrar al bucle de aceptación.
 
 La fila de efectos del `main` lista todo lo que el programa
-usa: `Console` para imprimir, `NetTcp` para sockets, `File` para
+usa: `Stdout` para imprimir, `NetTcp` para sockets, `File` para
 escribir, `Spawn + Cancel` para fibras, `Actor[X]` para cada uno
 de los tres canales de mensajes. La firma no oculta nada: si
 el `main` hiciera más cosas, su fila crecería en consecuencia.

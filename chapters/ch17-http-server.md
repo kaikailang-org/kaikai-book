@@ -349,7 +349,7 @@ import web
 const PORT: Int = 8080
 const LOG_PATH: String = "notes.log"
 
-fn main() : Unit / Console + NetTcp + File + Spawn + Cancel + Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] {
+fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel {
   let store_pid = store.start()
   let log_pid   = persistence.start(LOG_PATH)
 
@@ -371,7 +371,7 @@ Four lines of "business":
 4. Enter the accept loop.
 
 `main`'s effect row lists everything the program uses:
-`Console` to print, `NetTcp` for sockets, `File` to write,
+`Stdout` to print, `NetTcp` for sockets, `File` to write,
 `Spawn + Cancel` for fibers, `Actor[X]` for each of the
 three message channels. The signature hides nothing: if
 `main` did more things, its row would grow accordingly.

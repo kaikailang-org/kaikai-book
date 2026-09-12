@@ -5,7 +5,7 @@
 
 fn circle_area(r: Real) : Real = ?formula
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   # This line will hit the hole. It aborts with
   # `panic: unfilled hole: ?formula`.
   println("area = #{circle_area(3.0)}")
