@@ -372,11 +372,10 @@ Cuatro líneas de "negocio":
 3. Abrir un socket TCP en el puerto.
 4. Entrar al bucle de aceptación.
 
-La fila de efectos del `main` lista todo lo que el programa
-usa: `Stdout` para imprimir, `NetTcp` para sockets, `File` para
-escribir, `Spawn + Cancel` para fibras, `Actor[X]` para cada uno
-de los tres canales de mensajes. La firma no oculta nada: si
-el `main` hiciera más cosas, su fila crecería en consecuencia.
+La fila de efectos del `main` lista lo que el programa deja
+vivo al salir: `Stdout` para imprimir, `NetTcp` para sockets,
+`File` para escribir, `Spawn + Cancel` para fibras. Si el
+`main` hiciera más cosas, su fila crecería en consecuencia.
 
 El bucle de aceptación abre un nursery y por cada conexión
 nueva lanza una fibra. Ojo: `n` no es un valor de tipo
