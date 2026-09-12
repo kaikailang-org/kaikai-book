@@ -647,11 +647,22 @@ el resultado parcial, y al terminar lo devuelves.
   garantizada puedes dar el paso a programar con recursión.
 - **Es una garantía del lenguaje, no una optimización
   oportunista.** Algunos lenguajes optimizan TCO cuando se
-  acuerdan; kaikai te lo promete. Si una llamada recursiva
-  está en cola, el compilador la convierte. Punto.
-- **El compilador te avisa si crees que escribiste TCO pero
-  no.** Hay un flag para verificar esto, así no te enteras
-  por sorpresa cuando tu programa muere en producción.
+  acuerdan; kaikai te lo promete. Pero fíjate en el alcance
+  exacto: la garantía cubre la **llamada a sí misma**. Una
+  función cuya última expresión se llama a sí misma usa stack
+  constante, y eso es obligatorio, no una heurística.
+- **La recursión mutua no entra en esa promesa.** Si `es_par`
+  termina llamando a `es_impar` y viceversa, las dos llamadas
+  están en posición de cola y aun así el compilador no
+  garantiza convertirlas. A suficiente profundidad el programa
+  muere con `kai: fiber stack overflow`. Cuando necesites ese
+  patrón, fúndelo en una sola función con un parámetro que
+  distinga el caso, y vuelves a estar en terreno garantizado.
+- **No hay quien te avise antes de tiempo.** El compilador no
+  marca la recursión que creías en cola y no lo está: te
+  enteras cuando el programa revienta el stack. Por eso la
+  forma con acumulador se escribe desde el principio y no
+  cuando duele.
 
 En la práctica, la mayoría de las funciones recursivas que
 escribas para procesar listas o árboles van a ser de la

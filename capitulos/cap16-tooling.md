@@ -165,10 +165,15 @@ binario. Todo el trabajo que un `build` gasta *después* de
 saber que el programa es correcto se lo salta, y por eso termina
 en una fracción de lo que tarda una compilación completa.
 
-El diagnóstico y el código de salida son **idénticos** a los de
-`kai build`: la misma verificación corre en ambos, `typecheck`
-apenas se baja del tren antes. Si `typecheck` calla, el
-front-end está limpio.
+El diagnóstico es el mismo: la misma verificación corre en
+ambos, `typecheck` apenas se baja del tren antes. Si
+`typecheck` calla, el front-end está limpio.
+
+El código de salida no es el mismo, y conviene saberlo si vas a
+automatizar. Los dos salen con 0 cuando el programa está sano,
+pero ante un error `kai build` sale siempre con 1, mientras que
+`typecheck` distingue la clase de error con códigos propios.
+Compara contra 0, nunca contra un número en particular.
 
 Un límite honesto, porque el nombre promete un poco de más:
 `typecheck` cubre el front-end, no el pipeline entero. Un puñado

@@ -460,7 +460,7 @@ pub effect Monitor {
 
 `Pid[Nothing]` es el PID visto sin su tipo de mensaje: `Nothing`
 es el tipo vacío, así que un PID así no puede recibir nada. Es
-la forma de decir "acá solo me interesa la identidad del actor,
+la forma de decir "aquí solo me interesa la identidad del actor,
 no su protocolo", porque `link` y `monitor` no mandan ni
 reciben mensajes, solo registran observación sobre su vida.
 

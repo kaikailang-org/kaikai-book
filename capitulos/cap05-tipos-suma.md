@@ -249,7 +249,7 @@ fn esquema(p: Int) : String =
   }
 ```
 
-`PUERTO_HTTP` acá no es una variable que se trague cualquier
+`PUERTO_HTTP` aquí no es una variable que se trague cualquier
 puerto y lo ate. Es una prueba de igualdad contra `80`. La regla
 es: **un identificador en un patrón ata, salvo que nombre una
 constante en scope; ahí compara.** No es cosa de mayúsculas: una

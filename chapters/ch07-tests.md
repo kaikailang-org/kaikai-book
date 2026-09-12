@@ -332,16 +332,24 @@ bench "fib(15)" {
 
 ```
 $ kai bench examples/ch07/04_basic_bench.kai
-  arithmetic: 2 + 3 * 4: 1000 iter / 7 ns/iter
-  fib(10): recursion without memo: 1000 iter / 92 ns/iter
-  fib(15): cost grows exponentially: 1000 iter / 1063 ns/iter
-  list.sum [1..100]: 1000 iter / 4305 ns/iter
+  arithmetic: 2 + 3 * 4: 1000 iter / median 0 ns / MAD 0 ns / mean 29 ns / range [0, 1000]
+  fib(10): recursion without memo: 1000 iter / median 0 ns / MAD 0 ns / mean 200 ns / range [0, 1000]
+  fib(15): cost grows exponentially: 1000 iter / median 2000 ns / MAD 0 ns / mean 2281 ns / range [2000, 8000]
+  list.sum [1..100]: 1000 iter / median 2000 ns / MAD 0 ns / mean 2098 ns / range [2000, 3000]
 
 4 benches
 ```
 
-Each bench runs 1000 iterations (configurable with
-`KAI_BENCH_ITERS`) and reports nanoseconds per iteration.
+Each bench runs 1000 iterations (configurable with `--iters N`)
+and reports four numbers: the median, the MAD (median absolute
+deviation), the mean, and the range.
+
+Look at the first two lines, because they teach you how to read
+the report: the median is 0. Not because the operation is free,
+but because it is cheaper than the clock's resolution — which is
+why the report also carries the mean. When median and mean
+disagree that much, the mean is the number to compare against;
+when they agree, as in `fib(15)`, the measurement is solid.
 
 What matters about benchmarks isn't the absolute number — it
 depends on the machine and on what else is running — but the
@@ -513,13 +521,18 @@ Two benches: the cheap case (a literal) and a more complex
 case (three nesting levels). On my machine:
 
 ```
-literal:                       1000 iter / 15  ns/iter
-deep expression (3 levels):    1000 iter / 134 ns/iter
+  literal: 1000 iter / median 0 ns / MAD 0 ns / mean 52 ns / range [0, 1000]
+  deep expression (3 levels): 1000 iter / median 1000 ns / MAD 0 ns / mean 574 ns / range [0, 2000]
 ```
 
-The second is ~9x more expensive than the first. That's the
-information you need if you later decide the evaluator is a
-bottleneck: you know what baseline you're measuring against.
+The second costs roughly an order of magnitude more than the
+first. That's the information you need if you later decide the
+evaluator is a bottleneck: you know what baseline you're
+measuring against.
+
+The exact numbers are from my machine and one run; yours will
+differ. What doesn't change between runs is the order of
+magnitude, and that's what you compare.
 
 ### Who tests the tests?
 

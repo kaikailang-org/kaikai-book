@@ -223,24 +223,22 @@ quieras y en cualquier posición del literal: `[...a, ...b]`
 funciona, y `[...a, 9, ...b, 10]` también.
 
 Échale mano cuando estés poniendo un elemento adelante. De
-`[h] ++ t` sale la misma lista, así que esto no es una regla de
-corrección: es que una de las dos asigna memoria y la otra no.
+`[h] ++ t` sale exactamente la misma lista:
 
 ```kai
-fn anteponer(h: Int, t: [Int]) : [Int] = [h, ...t]     # emite el cons
-fn anteponer_lento(h: Int, t: [Int]) : [Int] = [h] ++ t # arma [h] primero
+fn anteponer(h: Int, t: [Int]) : [Int] = [h, ...t]
+fn anteponer_concat(h: Int, t: [Int]) : [Int] = [h] ++ t
 ```
 
-Medido sobre 3M de iteraciones con una cola de ocho elementos,
-`[h] ++ t` corre a 1,33x el tiempo de `[h, ...t]` en el backend
-nativo y a 1,4x en el backend C. La diferencia es esa lista
-intermedia de un elemento, una asignación por llamada, y crece
-con el largo del literal. `kai lint` marca la forma como
-`list_concat_literal_to_spread`.
+La diferencia es de lectura, no de resultado. `[h, ...t]` dice
+"una lista que empieza con `h` y sigue con `t`", que es la misma
+forma del patrón `[h, ...t]` con que la vas a descomponer
+después; `[h] ++ t` dice "pega estas dos listas", y construye
+una lista de un elemento solo para pegarla. `kai lint` marca la
+segunda forma como `list_concat_literal_to_spread`.
 
 Nada de esto es un argumento contra `++`. Concatenar dos listas
-que ya existen es exactamente para lo que está; lo que sobra es
-construir una lista solo para concatenarla y botarla.
+que ya existen es exactamente para lo que está.
 
 Y para descomponerlas, los patrones de `match`:
 

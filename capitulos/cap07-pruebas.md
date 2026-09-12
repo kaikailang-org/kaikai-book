@@ -332,16 +332,25 @@ bench "fib(15)" {
 
 ```
 $ kai bench ejemplos/cap07/04_bench_basico.kai
-  aritmética: 2 + 3 * 4: 1000 iter / 7 ns/iter
-  fib(10): recursión sin memo: 1000 iter / 92 ns/iter
-  fib(15): el costo crece exponencial: 1000 iter / 1063 ns/iter
-  list.sum [1..100]: 1000 iter / 4305 ns/iter
+  aritmética: 2 + 3 * 4: 1000 iter / median 0 ns / MAD 0 ns / mean 30 ns / range [0, 1000]
+  fib(10): recursión sin memo: 1000 iter / median 0 ns / MAD 0 ns / mean 211 ns / range [0, 1000]
+  fib(15): el costo crece exponencial: 1000 iter / median 2000 ns / MAD 0 ns / mean 2466 ns / range [2000, 4000]
+  list.sum [1..100]: 1000 iter / median 2000 ns / MAD 0 ns / mean 2362 ns / range [2000, 7000]
 
 4 benches
 ```
 
-Cada bench corre 1000 iteraciones (configurable con
-`KAI_BENCH_ITERS`) y reporta nanosegundos por iteración.
+Cada bench corre 1000 iteraciones (configurable con `--iters N`)
+y reporta cuatro números: la mediana, la MAD (desviación
+absoluta mediana), la media y el rango.
+
+Fíjate en las dos primeras líneas, porque enseñan a leer el
+reporte: la mediana sale en 0. No es que la operación sea
+gratis, es que es más barata que la resolución del reloj, y por
+eso el reporte trae también la media. Cuando la mediana y la
+media discrepan tanto, el número que te sirve para comparar es
+la media; cuando ambas coinciden, como en `fib(15)`, la medición
+es sólida.
 
 Lo importante de los benchmarks no es el número absoluto
 (depende de la máquina y de qué más esté corriendo), sino la
@@ -520,14 +529,18 @@ Dos benchmarks: el caso barato (un literal) y un caso más
 complejo (tres niveles de anidamiento). En mi máquina:
 
 ```
-literal:                       1000 iter / 15  ns/iter
-expresión profunda (3 niveles): 1000 iter / 134 ns/iter
+  literal: 1000 iter / median 0 ns / MAD 0 ns / mean 59 ns / range [0, 1000]
+  expresión profunda (3 niveles): 1000 iter / median 1000 ns / MAD 0 ns / mean 608 ns / range [0, 2000]
 ```
 
-El segundo es ~9 veces más caro que el primero. Esa es la
-información que necesitas si más adelante decides que el
-evaluador es un cuello de botella: sabes contra qué línea
-base estás midiendo.
+El segundo cuesta alrededor de un orden de magnitud más que el
+primero. Esa es la información que necesitas si más adelante
+decides que el evaluador es un cuello de botella: sabes contra
+qué línea base estás midiendo.
+
+Los números exactos son de mi máquina y de una corrida; los
+tuyos van a diferir. Lo que no cambia entre corridas es el
+orden de magnitud, y eso es lo que se compara.
 
 ### ¿Quién prueba las pruebas?
 
