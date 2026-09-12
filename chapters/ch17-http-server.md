@@ -370,11 +370,10 @@ Four lines of "business":
 3. Open a TCP socket on the port.
 4. Enter the accept loop.
 
-`main`'s effect row lists everything the program uses:
-`Stdout` to print, `NetTcp` for sockets, `File` to write,
-`Spawn + Cancel` for fibers, `Actor[X]` for each of the
-three message channels. The signature hides nothing: if
-`main` did more things, its row would grow accordingly.
+`main`'s effect row lists what the program still has live on
+the way out: `Stdout` to print, `NetTcp` for sockets, `File`
+to write, `Spawn + Cancel` for fibers. If `main` did more
+things, its row would grow accordingly.
 
 The accept loop opens a nursery and spawns a fiber per
 connection. Note: `n` is not a `Nursery` value that can
