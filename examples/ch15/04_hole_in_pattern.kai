@@ -16,7 +16,7 @@ fn area(s: Shape) : Real {
   }
 }
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   println("circle 3 -> #{area(Circle(3.0))}")
   println("square 4 -> #{area(Square(4.0))}")
 }

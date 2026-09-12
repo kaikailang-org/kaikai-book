@@ -302,7 +302,7 @@ executes a sequence of operations to show the system in
 action.
 
 ```kai
-fn main() : Unit / Console + File + Spawn + Cancel + ... {
+fn main() : Int / Stdout + File + Spawn + Cancel {
   let store_pid = store.start()
   let log_pid   = persistence.start(LOG_PATH)
 

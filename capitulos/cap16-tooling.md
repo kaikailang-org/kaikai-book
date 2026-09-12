@@ -120,6 +120,14 @@ linker externo en el camino común. Para programas grandes hay
 un cache (cap. 8 §8.8 cubre el cache de paquetes; el cache de
 compilación del propio archivo `.kai` es otra historia).
 
+Ese "menos de un segundo" es el estado estacionario, que es el
+que vas a vivir: el caso de estudio del cap. 17 —420 líneas en
+cinco módulos— compila en unos 0,6 segundos. La primera vez,
+con el cache frío, cuesta varias veces eso; en mi máquina, 4,1
+segundos para ese mismo proyecto. Vale saberlo antes de
+cronometrar una compilación en frío y sacar la conclusión
+equivocada.
+
 Si quieres un sentido del tiempo: un programa de Rust de
 tamaño comparable puede tardar 30 segundos en compilar. Un
 programa de kaikai del mismo tamaño tarda menos de un
@@ -756,7 +764,7 @@ El caso más simple es atarse a una función de libc directo:
 ```kai
 extern "C" fn llabs(n: Int) : Int / Ffi
 
-fn main() : Unit / Console + Ffi {
+fn main() : Unit / Stdout + Ffi {
   print("|-7| = #{llabs(0 - 7)}")
 }
 ```
@@ -860,7 +868,7 @@ El lado kaikai:
 ```kai
 extern "C" fn my_double(x: Int) : Int / Ffi
 
-fn main() : Unit / Console + Ffi {
+fn main() : Unit / Stdout + Ffi {
   print("doble(21) = #{my_double(21)}")
 }
 ```

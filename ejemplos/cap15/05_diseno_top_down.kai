@@ -34,7 +34,7 @@ fn evaluar(e: Expr) : Int {
 # devolvieran lo correcto, esto correría sin tocarse.
 fn calcular(s: String) : Int = evaluar(parsear(tokenizar(s)))
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   # Probamos solo la parte completada: evaluar un AST
   # construido a mano.
   let ast = Suma(Lit(3), Mul(Lit(4), Lit(5)))

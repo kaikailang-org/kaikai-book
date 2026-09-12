@@ -10,7 +10,7 @@
 import actor
 import time
 
-fn main() : Unit / Console + Spawn + Cancel + Clock + Actor[String] {
+fn main() : Unit / Stdout + Spawn + Cancel + Clock + Actor[String] {
   with_mailbox {
     # Empty mailbox: the deadline elapses before anything arrives.
     match receive_timeout(time.millis(10)) {

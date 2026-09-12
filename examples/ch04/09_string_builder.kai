@@ -9,6 +9,6 @@ fn join(names: [String]) : String {
   string_builder.build(sb)
 }
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   println(join(["ana", "ben", "cleo"]))
 }

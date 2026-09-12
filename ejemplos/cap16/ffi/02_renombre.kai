@@ -6,6 +6,6 @@
 
 extern "C"("abs") fn c_abs(n: I32) : I32 / Ffi
 
-fn main() : Unit / Console + Ffi {
+fn main() : Unit / Stdout + Ffi {
   print("|-7| = #{c_abs(0 - 7)}")
 }

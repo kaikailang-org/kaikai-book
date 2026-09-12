@@ -153,7 +153,7 @@ compila. Puedes correr tests sobre `evaluar` con ASTs hechos a
 mano, antes de implementar `parsear` o `tokenizar`:
 
 ```kai
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   let ast = Suma(Lit(3), Mul(Lit(4), Lit(5)))
   println("3 + 4*5 = #{evaluar(ast)}")
 }
@@ -196,7 +196,7 @@ fn duplicar(x: Int) : Int = x * 2
 
 fn promedio(a: Int, b: Int) : Int = ?formula
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   println("duplicar(5) = #{duplicar(5)}")
   # promedio no está, pero el archivo compila.
 }

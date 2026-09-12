@@ -9,6 +9,6 @@ fn unir(nombres: [String]) : String {
   string_builder.build(sb)
 }
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   println(unir(["ana", "ben", "cleo"]))
 }

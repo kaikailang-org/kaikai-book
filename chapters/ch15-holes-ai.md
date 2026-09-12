@@ -155,7 +155,7 @@ file compiles. You can run tests against `evaluate` with
 hand-built ASTs, before implementing `parse` or `tokenize`:
 
 ```kai
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   let ast = Sum(Lit(3), Mul(Lit(4), Lit(5)))
   println("3 + 4*5 = #{evaluate(ast)}")
 }
@@ -198,7 +198,7 @@ fn double(x: Int) : Int = x * 2
 
 fn average(a: Int, b: Int) : Int = ?formula
 
-fn main() : Unit / Console {
+fn main() : Unit / Stdout {
   println("double(5) = #{double(5)}")
   # average isn't done, but the file still compiles.
 }
