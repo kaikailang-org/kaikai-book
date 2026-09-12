@@ -474,6 +474,21 @@ This gives kaikai user-defined control flow. `while` is an
 ordinary stdlib function from `loop`; it just looks like a
 keyword.
 
+### Block as a lambda
+
+`{ x -> body }` is an alternative lambda form that reads better
+when the body spans several lines:
+
+```kai
+xs | { n ->
+  let squared = n * n
+  squared + 1
+}
+```
+
+It is the same thing as `(n) => { let squared = n * n; squared +
+1 }`, with less visual noise.
+
 ### Tuple patterns as the parameter
 
 A block lambda's parameter may be a **tuple pattern**. If what
@@ -562,12 +577,22 @@ Why does this matter, really?
   take the leap to programming with recursion.
 - **It's a language guarantee, not an opportunistic
   optimization.** Some languages optimize TCO when they
-  remember; kaikai promises it. If a recursive call is in tail
-  position, the compiler converts it — there's no heuristic
-  deciding whether to bother.
-- **The compiler warns you if you think you wrote TCO but
-  didn't.** There's a flag for that, so you don't find out by
-  surprise when your program dies in production.
+  remember; kaikai promises it. But note the exact scope: the
+  guarantee covers the **call to itself**. A function whose
+  final expression calls itself runs in constant stack, and
+  that is mandatory, not a heuristic.
+- **Mutual recursion is not part of that promise.** If
+  `is_even` ends by calling `is_odd` and vice versa, both calls
+  sit in tail position and the compiler still doesn't guarantee
+  converting them. Deep enough, the program dies with `kai:
+  fiber stack overflow`. When you need that pattern, fold it
+  into a single function with a parameter telling the cases
+  apart, and you're back on guaranteed ground.
+- **Nothing warns you in advance.** The compiler doesn't flag
+  recursion you thought was in tail position and isn't — you
+  find out when the program blows the stack. That's why the
+  accumulator form is what you write from the start, not what
+  you reach for once it hurts.
 
 In practice, most recursive functions you write to process
 lists or trees will have the shape `match xs { [] -> base;

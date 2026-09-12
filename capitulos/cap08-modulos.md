@@ -424,7 +424,7 @@ kai-pkg: wrote kai.toml for package 'miapp'
 ```
 
 `kai init` escribe el `kai.toml` esqueleto. Después agregas
-archivos `.kai` y los importas como vimos en §8.2.
+archivos `.kai` y los importas como en §8.2.
 
 ## 8.6 Dependencias: git, path, lock
 

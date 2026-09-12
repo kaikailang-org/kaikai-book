@@ -2,11 +2,11 @@
 
 Este apéndice resume los efectos que el stdlib expone. Es
 material de referencia: ante una firma `: Unit / X` en la
-documentación de una función, vienes acá a confirmar qué
+documentación de una función, vienes aquí a confirmar qué
 provee `X`.
 
 La especificación completa vive en
-`github.com/kaikailang-org/kaikai/docs/effects-stdlib.md`. Acá
+`github.com/kaikailang-org/kaikai/docs/effects-stdlib.md`. Aquí
 mostramos la declaración del efecto y para qué sirve.
 
 ## D.1 IO básico
