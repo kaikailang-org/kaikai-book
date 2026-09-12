@@ -205,14 +205,12 @@ Encima de `procesar` viene el **bucle del actor**, que la
 conecta a `Actor.receive()`:
 
 ```kai
-fn bucle(notas: [dominio.Nota], proximo_id: Int)
-    : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] {
+pub fn almacen_loop(notas: [dominio.Nota], next_id: Int) : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] {
   match Actor.receive() {
     Pregunta(comando, cliente) -> {
-      let (resp, notas_nuevas, id_nuevo) =
-        procesar(comando, notas, proximo_id)
+      let (resp, notas_nuevas, id_nuevo) = procesar(comando, notas, next_id)
       Actor.send(cliente, Respondido(resp))
-      bucle(notas_nuevas, id_nuevo)
+      almacen_loop(notas_nuevas, id_nuevo)
     }
   }
 }
@@ -229,15 +227,9 @@ actor puede correr indefinidamente. Y la firma declara los dos
 efectos que el actor produce: `Actor[AlmacenMsg]` para recibir,
 `Actor[AlmacenResp]` para responder.
 
-El helper `arrancar` arma todo:
-
-```kai
-pub fn arrancar() : Pid[AlmacenMsg] / Spawn + Cancel + Actor[AlmacenMsg] + Actor[AlmacenResp] {
-  spawn_actor(() => bucle([], 1))
-}
-```
-
-Y un wrapper sincrónico para clientes:
+El módulo no trae un helper que arranque el actor: de eso se
+encarga el `main` con `spawn_actor`, y lo vemos en §17.6. Lo
+que sí exporta es un wrapper sincrónico para clientes:
 
 ```kai
 pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando)
@@ -264,19 +256,17 @@ import fs.file
 
 pub type Evento = Linea(String)
 
-fn bucle(path: String) : Unit / Actor[Evento] + File {
+pub fn persistencia_loop(path: String) : Unit / Actor[Evento] + File {
   match Actor.receive() {
     Linea(s) -> {
       file.append(path, s ++ "\n")
-      bucle(path)
+      persistencia_loop(path)
     }
   }
 }
 
-pub fn arrancar(path: String)
-    : Pid[Evento] / Spawn + Cancel + Actor[Evento] + File {
-  file.write(path, "")    # trunca al inicio
-  spawn_actor(() => bucle(path))
+pub fn reset_log(path: String) : Unit / File {
+  file.write(path, "")
 }
 ```
 
@@ -342,35 +332,57 @@ strings de entrada y comparación de salida.
 ```kai
 import actor
 import spawn
+import loop
+import net.tcp
 import dominio
 import almacen
 import persistencia
-import net.tcp
 import web
 
 const PUERTO: Int = 8080
 const PATH_LOG: String = "notas.log"
 
 fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel {
-  let almacen_pid = almacen.arrancar()
-  let log_pid     = persistencia.arrancar(PATH_LOG)
-
-  match NetTcp.listen("0.0.0.0", PUERTO) {
-    Err(msg) -> println("error al levantar el servidor: " ++ msg)
-    Ok(listener) -> {
-      println("servidor escuchando en puerto #{PUERTO}")
-      aceptar_loop(listener, almacen_pid, log_pid)
+  with_mailbox {
+    with_mailbox {
+      persistencia.reset_log(PATH_LOG)
+      nursery { n ->
+        let almacen_body: () -> Unit / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] = () => almacen.almacen_loop([], 1)
+        let log_body:     () -> Unit / Actor[persistencia.Evento] + File = () => persistencia.persistencia_loop(PATH_LOG)
+        let almacen_pid = spawn_actor(almacen_body)
+        let log_pid     = spawn_actor(log_body)
+        match NetTcp.listen("0.0.0.0", PUERTO) {
+          Err(msg) -> println("error al arrancar el servidor: " ++ msg)
+          Ok(listener) -> {
+            println("servidor escuchando en puerto #{PUERTO}")
+            forever(() => match NetTcp.accept(listener) {
+              Err(_)   -> ()
+              Ok(conn) -> {
+                let _ = n.spawn(() => with_mailbox(() => atender_conexion(conn, almacen_pid, log_pid)))
+                ()
+              }
+            })
+          }
+        }
+      }
     }
   }
+  0
 }
 ```
 
-Cuatro líneas de "negocio":
+Leído de afuera hacia adentro:
 
-1. Arrancar el almacén (actor que mantiene las notas).
-2. Arrancar el persistor (actor que escribe el log).
-3. Abrir un socket TCP en el puerto.
-4. Entrar al bucle de aceptación.
+1. Los dos `with_mailbox` anidados le dan a `main` los buzones
+   que necesita para hablarle al almacén y al persistor. De paso
+   son la razón de que la firma no liste ningún `Actor[X]`: un
+   efecto manejado deja de estar en la fila.
+2. `reset_log` deja el archivo de auditoría en blanco.
+3. El `nursery` abre el scope donde van a vivir las fibras hijas.
+4. `spawn_actor` levanta los dos actores, cada uno con su cuerpo
+   declarado con tipo explícito.
+5. `NetTcp.listen` abre el socket y `forever` entra al bucle de
+   aceptación.
 
 La fila de efectos del `main` lista lo que el programa deja
 vivo al salir: `Stdout` para imprimir, `NetTcp` para sockets,
@@ -390,7 +402,7 @@ nursery { n ->
   forever(() => match NetTcp.accept(listener) {
     Err(_)   -> ()
     Ok(conn) -> {
-      let _ = n.spawn(() => manejar_conexion(conn, almacen_pid, log_pid))
+      let _ = n.spawn(() => with_mailbox(() => atender_conexion(conn, almacen_pid, log_pid)))
       ()
     }
   })
@@ -405,26 +417,18 @@ también terminan. No hay handlers de conexión zombies.
 Y por cada conexión, el handler:
 
 ```kai
-fn manejar_conexion(conn, almacen_pid, log_pid) {
-  let raw = leer_request(conn)
-  let resp = match web.parsear_request(raw) {
-    Err(msg) -> dominio.ErrorCliente(msg)
-    Ok(req)  -> match web.enrutar(req) {
-      Err(r)        -> r
-      Ok(comando)   -> {
-        registrar(log_pid, comando)
-        almacen.preguntar(almacen_pid, comando)
-      }
-    }
-  }
-  NetTcp.send(conn, string_to_bytes(web.serializar_respuesta(resp)))
+fn atender_conexion(conn: Conn, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: Pid[persistencia.Evento]) : Unit / NetTcp + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] + Cancel {
+  let raw  = leer_request(conn)
+  let wire = manejar_request(raw, almacen_pid, log_pid)
+  let _    = NetTcp.send(conn, web.string_to_bytes(wire))
   NetTcp.close(conn)
 }
 ```
 
-Lee bytes, parsea HTTP, enruta a un comando, registra en el
-log, consulta al almacén, serializa la respuesta, escribe al
-socket, cierra. Cada paso es una función pura o un mensaje a
+Son cuatro líneas porque el trabajo vive en `manejar_request`:
+parsea HTTP, enruta a un comando, registra en el log, consulta
+al almacén y serializa la respuesta. Aquí quedan las dos puntas
+que tocan el socket, leer y escribir, más el cierre. Cada paso es una función pura o un mensaje a
 un actor. No aparece memoria compartida en ninguna parte, ni
 hace falta un solo lock.
 

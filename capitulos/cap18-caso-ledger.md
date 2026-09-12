@@ -271,11 +271,11 @@ reconstruir cualquier estado intermedio.
 ```kai
 pub type Evento = Linea(String)
 
-fn bucle(path: String) : Unit / Actor[Evento] + File {
+pub fn persistencia_loop(path: String) : Unit / Actor[Evento] + File {
   match Actor.receive() {
     Linea(s) -> {
       file.append(path, s ++ "\n")
-      bucle(path)
+      persistencia_loop(path)
     }
   }
 }
@@ -301,31 +301,50 @@ acción.
 
 ```kai
 fn main() : Int / Stdout + File + Spawn + Cancel {
-  let almacen_pid = almacen.arrancar()
-  let log_pid     = persistencia.arrancar(PATH_LOG)
+  persistencia.reset_log(PATH_LOG)
 
-  paso(almacen_pid, log_pid, dominio.CrearCuenta("caja"))
-  paso(almacen_pid, log_pid, dominio.CrearCuenta("ventas"))
-  paso(almacen_pid, log_pid, dominio.CrearCuenta("gastos"))
+  # `paso()` toca tres efectos Actor[T], así que `main` anida
+  # tres `with_mailbox` para cerrarlos antes de llegar a su
+  # propia fila.
+  with_mailbox {
+    with_mailbox {
+      with_mailbox {
+        let almacen_body: () -> Unit / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] = () => almacen.almacen_loop(almacen.estado_inicial())
+        let log_body:     () -> Unit / Actor[persistencia.Evento] + File = () => persistencia.persistencia_loop(PATH_LOG)
+        let almacen_pid = spawn_actor(almacen_body)
+        let log_pid     = spawn_actor(log_body)
 
-  paso(almacen_pid, log_pid, dominio.Registrar("venta de tarjeta", [
-    dominio.Debito(1<CuentaId>, 50.0<USD>),
-    dominio.Credito(2<CuentaId>, 50.0<USD>),
-  ]))
+        println("== creando cuentas ==")
+        paso(almacen_pid, log_pid, dominio.CrearCuenta("caja"))
+        paso(almacen_pid, log_pid, dominio.CrearCuenta("ventas"))
+        paso(almacen_pid, log_pid, dominio.CrearCuenta("gastos"))
 
-  paso(almacen_pid, log_pid, dominio.Registrar("café del equipo", [
-    dominio.Debito(3<CuentaId>, 8.0<USD>),
-    dominio.Credito(1<CuentaId>, 8.0<USD>),
-  ]))
+        println("== registrando una venta ==")
+        paso(almacen_pid, log_pid, dominio.Registrar("venta de tarjeta", [
+          dominio.Debito(1<CuentaId>, 50.0<USD>),
+          dominio.Credito(2<CuentaId>, 50.0<USD>),
+        ]))
 
-  # Intento descuadrado: el almacén lo rechaza.
-  paso(almacen_pid, log_pid, dominio.Registrar("error", [
-    dominio.Debito(1<CuentaId>, 100.0<USD>),
-    dominio.Credito(2<CuentaId>, 50.0<USD>),
-  ]))
+        println("== pagando un gasto ==")
+        paso(almacen_pid, log_pid, dominio.Registrar("café del equipo", [
+          dominio.Debito(3<CuentaId>, 8.0<USD>),
+          dominio.Credito(1<CuentaId>, 8.0<USD>),
+        ]))
 
-  paso(almacen_pid, log_pid, dominio.ConsultarSaldo(1<CuentaId>))
-  ...
+        println("== intento descuadrado (debe fallar) ==")
+        paso(almacen_pid, log_pid, dominio.Registrar("error", [
+          dominio.Debito(1<CuentaId>, 100.0<USD>),
+          dominio.Credito(2<CuentaId>, 50.0<USD>),
+        ]))
+
+        println("== saldos finales ==")
+        paso(almacen_pid, log_pid, dominio.ConsultarSaldo(1<CuentaId>))
+        paso(almacen_pid, log_pid, dominio.ConsultarSaldo(2<CuentaId>))
+        paso(almacen_pid, log_pid, dominio.ConsultarSaldo(3<CuentaId>))
+      }
+    }
+  }
+  0
 }
 ```
 
