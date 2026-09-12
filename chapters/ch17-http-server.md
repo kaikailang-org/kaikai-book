@@ -205,13 +205,12 @@ On top of `process` sits the **actor loop** that connects it
 to `Actor.receive()`:
 
 ```kai
-fn loop(notes: [domain.Note], next_id: Int)
-    : Unit / Actor[StoreMsg] + Actor[StoreResp] {
+pub fn store_loop(notes: [domain.Note], next_id: Int) : Unit / Actor[StoreMsg] + Actor[StoreResp] {
   match Actor.receive() {
     Ask(command, client) -> {
-      let (resp, new_notes, new_id) = process(command, notes, next_id)
-      Actor.send(client, Replied(resp))
-      loop(new_notes, new_id)
+      let (reply, new_notes, new_id) = process(command, notes, next_id)
+      Actor.send(client, Replied(reply))
+      store_loop(new_notes, new_id)
     }
   }
 }
@@ -228,15 +227,9 @@ can run indefinitely. And the signature declares the two
 effects the actor produces: `Actor[StoreMsg]` to receive,
 `Actor[StoreResp]` to reply.
 
-The `start` helper wires it together:
-
-```kai
-pub fn start() : Pid[StoreMsg] / Spawn + Cancel + Actor[StoreMsg] + Actor[StoreResp] {
-  spawn_actor(() => loop([], 1))
-}
-```
-
-And a synchronous wrapper for clients:
+The module ships no helper to start the actor: `main` does
+that with `spawn_actor`, and §17.6 shows how. What it does
+export is a synchronous wrapper for clients:
 
 ```kai
 pub fn ask(store: Pid[StoreMsg], c: domain.Command)
@@ -263,18 +256,17 @@ import fs.file
 
 pub type Event = Line(String)
 
-fn loop(path: String) : Unit / Actor[Event] + File {
+pub fn persistence_loop(path: String) : Unit / Actor[Event] + File {
   match Actor.receive() {
     Line(s) -> {
       file.append(path, s ++ "\n")
-      loop(path)
+      persistence_loop(path)
     }
   }
 }
 
-pub fn start(path: String) : Pid[Event] / Spawn + Cancel + Actor[Event] + File {
-  file.write(path, "")    # truncate at start
-  spawn_actor(() => loop(path))
+pub fn reset_log(path: String) : Unit / File {
+  file.write(path, "")
 }
 ```
 
@@ -340,35 +332,57 @@ strings and output comparison.
 ```kai
 import actor
 import spawn
+import loop
+import net.tcp
 import domain
 import store
 import persistence
-import net.tcp
 import web
 
 const PORT: Int = 8080
 const LOG_PATH: String = "notes.log"
 
 fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel {
-  let store_pid = store.start()
-  let log_pid   = persistence.start(LOG_PATH)
-
-  match NetTcp.listen("0.0.0.0", PORT) {
-    Err(msg) -> println("failed to start the server: " ++ msg)
-    Ok(listener) -> {
-      println("server listening on port #{PORT}")
-      accept_loop(listener, store_pid, log_pid)
+  with_mailbox {
+    with_mailbox {
+      persistence.reset_log(LOG_PATH)
+      nursery { n ->
+        let store_body: () -> Unit / Actor[store.StoreMsg] + Actor[store.StoreResp] = () => store.store_loop([], 1)
+        let log_body:   () -> Unit / Actor[persistence.Event] + File = () => persistence.persistence_loop(LOG_PATH)
+        let store_pid = spawn_actor(store_body)
+        let log_pid   = spawn_actor(log_body)
+        match NetTcp.listen("0.0.0.0", PORT) {
+          Err(msg) -> println("failed to start the server: " ++ msg)
+          Ok(listener) -> {
+            println("server listening on port #{PORT}")
+            forever(() => match NetTcp.accept(listener) {
+              Err(_)   -> ()
+              Ok(conn) -> {
+                let _ = n.spawn(() => with_mailbox(() => serve_connection(conn, store_pid, log_pid)))
+                ()
+              }
+            })
+          }
+        }
+      }
     }
   }
+  0
 }
 ```
 
-Four lines of "business":
+Read from the outside in:
 
-1. Start the store (actor that holds the notes).
-2. Start the persister (actor that writes the log).
-3. Open a TCP socket on the port.
-4. Enter the accept loop.
+1. The two nested `with_mailbox` blocks give `main` the
+   mailboxes it needs to talk to the store and the persister.
+   They are also why the signature lists no `Actor[X]`: a
+   handled effect leaves the row.
+2. `reset_log` starts the audit file empty.
+3. The `nursery` opens the scope the child fibers will live in.
+4. `spawn_actor` starts the two actors, each with its body
+   declared at an explicit type.
+5. `NetTcp.listen` opens the socket and `forever` enters the
+   accept loop.
 
 `main`'s effect row lists what the program still has live on
 the way out: `Stdout` to print, `NetTcp` for sockets, `File`
@@ -387,7 +401,7 @@ nursery { n ->
   forever(() => match NetTcp.accept(listener) {
     Err(_)   -> ()
     Ok(conn) -> {
-      let _ = n.spawn(() => handle_connection(conn, store_pid, log_pid))
+      let _ = n.spawn(() => with_mailbox(() => serve_connection(conn, store_pid, log_pid)))
       ()
     }
   })
@@ -402,26 +416,18 @@ child fibers end too. No zombie connection handlers.
 And per connection, the handler:
 
 ```kai
-fn handle_connection(conn, store_pid, log_pid) {
-  let raw = read_request(conn)
-  let resp = match web.parse_request(raw) {
-    Err(msg) -> domain.ClientError(msg)
-    Ok(req)  -> match web.route(req) {
-      Err(r)       -> r
-      Ok(command)  -> {
-        record(log_pid, command)
-        store.ask(store_pid, command)
-      }
-    }
-  }
-  NetTcp.send(conn, string_to_bytes(web.serialize_response(resp)))
+fn serve_connection(conn: Conn, store_pid: Pid[store.StoreMsg], log_pid: Pid[persistence.Event]) : Unit / NetTcp + Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] + Cancel {
+  let raw  = read_request(conn)
+  let wire = handle_request(raw, store_pid, log_pid)
+  let _    = NetTcp.send(conn, web.string_to_bytes(wire))
   NetTcp.close(conn)
 }
 ```
 
-Read bytes, parse HTTP, route to a command, log it, ask
-the store, serialize the response, write to the socket,
-close. Each step is either a pure function or a message to an
+Four lines, because the work lives in `handle_request`: parse
+HTTP, route to a command, log it, ask the store, serialize the
+response. What stays here are the two ends that touch the
+socket — read and write — plus the close. Each step is either a pure function or a message to an
 actor, so there's no shared memory and nothing to lock.
 
 ## 17.7 How this maps to the book

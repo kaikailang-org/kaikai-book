@@ -273,11 +273,11 @@ event lets you reconstruct any intermediate state.
 ```kai
 pub type Event = Line(String)
 
-fn loop(path: String) : Unit / Actor[Event] + File {
+pub fn persistence_loop(path: String) : Unit / Actor[Event] + File {
   match Actor.receive() {
     Line(s) -> {
       file.append(path, s ++ "\n")
-      loop(path)
+      persistence_loop(path)
     }
   }
 }
@@ -303,31 +303,50 @@ action.
 
 ```kai
 fn main() : Int / Stdout + File + Spawn + Cancel {
-  let store_pid = store.start()
-  let log_pid   = persistence.start(LOG_PATH)
+  persistence.reset_log(LOG_PATH)
 
-  step(store_pid, log_pid, domain.CreateAccount("cash"))
-  step(store_pid, log_pid, domain.CreateAccount("sales"))
-  step(store_pid, log_pid, domain.CreateAccount("expenses"))
+  # `step()` touches three Actor[T] effects, so `main` nests
+  # three `with_mailbox` blocks to close them before reaching
+  # its own row.
+  with_mailbox {
+    with_mailbox {
+      with_mailbox {
+        let store_body: () -> Unit / Actor[store.StoreMsg] + Actor[store.StoreResp] = () => store.store_loop(store.initial_state())
+        let log_body:   () -> Unit / Actor[persistence.Event] + File = () => persistence.persistence_loop(LOG_PATH)
+        let store_pid = spawn_actor(store_body)
+        let log_pid   = spawn_actor(log_body)
 
-  step(store_pid, log_pid, domain.Register("card sale", [
-    domain.Debit(1<AccountId>, 50.0<USD>),
-    domain.Credit(2<AccountId>, 50.0<USD>),
-  ]))
+        println("== creating accounts ==")
+        step(store_pid, log_pid, domain.CreateAccount("cash"))
+        step(store_pid, log_pid, domain.CreateAccount("sales"))
+        step(store_pid, log_pid, domain.CreateAccount("expenses"))
 
-  step(store_pid, log_pid, domain.Register("team coffee", [
-    domain.Debit(3<AccountId>, 8.0<USD>),
-    domain.Credit(1<AccountId>, 8.0<USD>),
-  ]))
+        println("== recording a sale ==")
+        step(store_pid, log_pid, domain.Register("card sale", [
+          domain.Debit(1<AccountId>, 50.0<USD>),
+          domain.Credit(2<AccountId>, 50.0<USD>),
+        ]))
 
-  # Unbalanced attempt: the store rejects it.
-  step(store_pid, log_pid, domain.Register("error", [
-    domain.Debit(1<AccountId>, 100.0<USD>),
-    domain.Credit(2<AccountId>, 50.0<USD>),
-  ]))
+        println("== paying an expense ==")
+        step(store_pid, log_pid, domain.Register("team coffee", [
+          domain.Debit(3<AccountId>, 8.0<USD>),
+          domain.Credit(1<AccountId>, 8.0<USD>),
+        ]))
 
-  step(store_pid, log_pid, domain.QueryBalance(1<AccountId>))
-  ...
+        println("== unbalanced attempt (should fail) ==")
+        step(store_pid, log_pid, domain.Register("error", [
+          domain.Debit(1<AccountId>, 100.0<USD>),
+          domain.Credit(2<AccountId>, 50.0<USD>),
+        ]))
+
+        println("== final balances ==")
+        step(store_pid, log_pid, domain.QueryBalance(1<AccountId>))
+        step(store_pid, log_pid, domain.QueryBalance(2<AccountId>))
+        step(store_pid, log_pid, domain.QueryBalance(3<AccountId>))
+      }
+    }
+  }
+  0
 }
 ```
 
