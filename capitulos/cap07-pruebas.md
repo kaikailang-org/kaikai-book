@@ -345,12 +345,24 @@ y reporta cuatro números: la mediana, la MAD (desviación
 absoluta mediana), la media y el rango.
 
 Fíjate en las dos primeras líneas, porque enseñan a leer el
-reporte: la mediana sale en 0. No es que la operación sea
-gratis, es que es más barata que la resolución del reloj, y por
-eso el reporte trae también la media. Cuando la mediana y la
-media discrepan tanto, el número que te sirve para comparar es
-la media; cuando ambas coinciden, como en `fib(15)`, la medición
-es sólida.
+reporte: la mediana y la MAD salen en 0. Eso no significa que la
+operación sea gratis. Significa que **no la mediste**: cada
+iteración cuesta menos que la resolución del reloj, así que el
+reloj devolvió cero todas las veces.
+
+Y cuando eso pasa, la media tampoco sirve. Lo único que la
+separa de cero es el ruido del scheduler, que es de donde salen
+rangos como `[0, 1000]`. Dos filas con `median 0 / MAD 0` pueden
+mostrar medias muy distintas sin que haya ninguna diferencia de
+trabajo entre ellas; compararlas es leer ruido.
+
+Así que `median 0 / MAD 0` no es una medición, es un aviso de
+que hay que medir de otra forma: haz que cada iteración trabaje
+más, o escribe un programa que repita la operación en un loop,
+consuma el resultado para que el optimizador no pueda borrarlo,
+y cronometra el programa completo. Una medición sólida se ve
+como la de `fib(15)`: mediana y media en el mismo orden, y la
+MAD chica al lado de ambas.
 
 Lo importante de los benchmarks no es el número absoluto
 (depende de la máquina y de qué más esté corriendo), sino la
@@ -533,14 +545,20 @@ complejo (tres niveles de anidamiento). En mi máquina:
   expresión profunda (3 niveles): 1000 iter / median 1000 ns / MAD 0 ns / mean 608 ns / range [0, 2000]
 ```
 
-El segundo cuesta alrededor de un orden de magnitud más que el
-primero. Esa es la información que necesitas si más adelante
-decides que el evaluador es un cuello de botella: sabes contra
-qué línea base estás midiendo.
+Lee esas dos filas con la regla de arriba en la mano. La del
+literal trae `median 0 / MAD 0`: evaluar `Lit(42)` es más barato
+que el reloj, así que esa fila no midió nada y su media es
+ruido. La de la expresión profunda sí midió: mediana y media en
+el mismo orden.
 
-Los números exactos son de mi máquina y de una corrida; los
-tuyos van a diferir. Lo que no cambia entre corridas es el
-orden de magnitud, y eso es lo que se compara.
+Así que este par **no** te autoriza a decir "el segundo cuesta
+N veces el primero": para eso tendrías que comparar dos cosas
+medibles, y una de las dos no lo es. Te dice algo distinto y
+igual de útil: que el caso barato está por debajo de lo que el
+bench resuelve, y que el caro es el que tiene sentido vigilar si
+el evaluador empieza a pesar. Si de verdad necesitas la razón
+entre ambos, saca el `bench` del medio y cronometra un programa
+que repita la operación y consuma el resultado.
 
 ### ¿Quién prueba las pruebas?
 
