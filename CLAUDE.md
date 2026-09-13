@@ -288,6 +288,37 @@ Esto se hace **al momento de escribir** la afirmación, no al
 final del capítulo. Cada bloque ejecutable se prueba apenas se
 introduce.
 
+#### En qué backend se valida
+
+**El backend que cuenta es `native`.** Es el que usa `kai run` —el
+banner del compilador lo confirma con `native p2: active`— y por lo
+tanto es el que obtiene un lector que copia un snippet y lo corre.
+La promesa del libro se cumple o se rompe ahí.
+
+`scripts/test-examples.sh` arranca con `KAI_BACKEND=c` por default.
+Ese default no es una razón para validar en C: es sólo un default.
+
+```
+$ KAI_BACKEND=native scripts/test-examples.sh   # el que importa
+$ KAI_BACKEND=c      scripts/test-examples.sh   # secundario
+```
+
+Se corre native primero y ese es el número que se reporta. Si
+además se corre el backend C, se dice cuál es cuál; nunca se
+presenta el resultado de C como "la suite" a secas.
+
+El motivo es concreto, no ceremonial. Al reemplazar `Console` por
+`Stdout` en los ejemplos, la suite en C reportó 224 OK mientras
+cuatro ejemplos de actores fallaban en native con
+`effect not handled in fiber: Stderr`: el camino de supervisión de
+actores del stdlib levanta `Stderr` por dentro, así que ningún grep
+del código de usuario lo podía anticipar. El backend C esconde esa
+clase de falla.
+
+Corolario: cuando el cambio toca efectos, los ejemplos se verifican
+**corriéndolos**, no sólo compilándolos. Un `build` limpio no prueba
+que el programa corra.
+
 #### Cuando el ejemplo no compila o produce el output equivocado
 
 No asumir nada. Diagnosticar:
