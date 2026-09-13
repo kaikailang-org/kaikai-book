@@ -177,11 +177,12 @@ El diagnóstico es el mismo: la misma verificación corre en
 ambos, `typecheck` apenas se baja del tren antes. Si
 `typecheck` calla, el front-end está limpio.
 
-El código de salida no es el mismo, y conviene saberlo si vas a
-automatizar. Los dos salen con 0 cuando el programa está sano,
-pero ante un error `kai build` sale siempre con 1, mientras que
-`typecheck` distingue la clase de error con códigos propios.
-Compara contra 0, nunca contra un número en particular.
+El código de salida también es el mismo, y eso importa si vas a
+automatizar. Los dos salen con 0 cuando el programa está sano y
+con 1 ante cualquier error del front-end, sea de tipos, de
+parseo o de nombres. `typecheck` no inventa códigos propios para
+distinguir clases de error: lo que sale por consola y el número
+con que termina son los que `kai build` habría dado.
 
 Un límite honesto, porque el nombre promete un poco de más:
 `typecheck` cubre el front-end, no el pipeline entero. Un puñado
