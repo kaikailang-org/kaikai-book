@@ -579,10 +579,14 @@ because `examples/ch07` also holds `02_assert_fails.kai`, which
 fails on purpose, and with it in the count every mutant would be
 killed without anything having really noticed.
 
-Trimming the 22 lines of killed mutants leaves the interesting
-part:
+The whole run fits on a screen:
 
 ```
+killed    examples/ch07/05_evaluator_tests.kai:32  literal
+SURVIVED  examples/ch07/05_evaluator_tests.kai:40  literal
+SURVIVED  examples/ch07/05_evaluator_tests.kai:46  literal
+killed    examples/ch07/05_evaluator_tests.kai:47  literal
+
 survivors — the suite did not notice these:
 
 examples/ch07/05_evaluator_tests.kai	40	15	literal
@@ -596,12 +600,27 @@ examples/ch07/05_evaluator_tests.kai	46	15	literal
     ---
     >     Ok(_)  -> true
 
-24 mutants in 19s: 22 killed, 0 did not compile, 2 survived
+24 mutants in 17s: 2 killed, 20 did not compile, 2 survived
 ```
 
-Twenty-four mutants, two survivors, and both sit in the same
-awkward place: not in the evaluator but in the tests' own
-helpers. Line 40 is the `Err` branch of `must_yield`. No test
+Twenty-four mutants, and only four of them reached the tests.
+The other twenty never compiled — which is not a failing of the
+tool but the type system doing its work ahead of the suite.
+Dropping a `match` arm leaves the match non-exhaustive; eliding a
+call leaves a `!` sitting on something that isn't a `Result`.
+Both are compile errors in kaikai, so those mutants die before
+any test gets a say. `kai mutate` counts them in a bucket of
+their own for exactly that reason: a mutant that doesn't compile
+tells you nothing about what your tests are watching. In a
+language with exhaustive matching and strong types that bucket
+fills up fast, and it's worth knowing before you read the
+result — mutation ends up measuring a smaller target than you
+might expect.
+
+The four that did compile are the ones that talk. Two died and
+two survived, and both survivors sit in the same awkward place:
+not in the evaluator but in the tests' own helpers. Line 40 is
+the `Err` branch of `must_yield`. No test
 hands `must_yield` an expression that fails, so nobody finds out
 if that branch says `true` — and a `must_yield` that accepts
 errors lets through any regression in `eval` that starts
@@ -625,8 +644,11 @@ With them — the same evaluator, in
 `examples/ch07/07_mutants.kai` — the run ends like this:
 
 ```
-24 mutants in 19s: 24 killed, 0 did not compile, 0 survived
+24 mutants in 16s: 4 killed, 20 did not compile, 0 survived
 ```
+
+The same four mutants that compile, all four now caught. Zero
+survivors is as much as you can ask for.
 
 Notice what it doesn't report: a percentage. `kai mutate` hands
 you survivors, each with file, line and diff, because a survivor
