@@ -174,11 +174,12 @@ The diagnostics are the same: the same checking runs in both,
 `typecheck` just gets off the train earlier. If `typecheck` is
 silent, the front-end is clean.
 
-The exit code is not the same, which matters if you're
-scripting it. Both exit 0 on a healthy program, but on an error
-`kai build` always exits 1, while `typecheck` distinguishes the
-class of error with codes of its own. Compare against 0, never
-against a particular number.
+The exit code is the same too, which matters if you're scripting
+it. Both exit 0 on a healthy program and 1 on any front-end
+error, whether it's a type error, a parse error or an unknown
+name. `typecheck` invents no codes of its own to tell error
+classes apart: what it prints and the number it exits with are
+what `kai build` would have given you.
 
 One honest limit, because the name promises a touch more:
 `typecheck` covers the front-end, not the whole pipeline. A
