@@ -407,16 +407,13 @@ Cancelación cooperativa. El scheduler inyecta `Cancel.raise()`
 en una fibra cancelada en el próximo punto de yield. La fibra
 puede instalar un handler de `Cancel` para limpieza (cap. 13).
 
-### `Fail`: retirado del stdlib
+### No hay un efecto `Fail`
 
-`Fail` fue un efecto del stdlib (`fail(msg: String) : Nothing`)
-con handler por defecto que imprimía un banner y salía con
-código 1. **Desde kaikai 0.106 ya no está.** El retiro ratifica
-lo que el stdlib ya practicaba: toda API que puede fallar
-devuelve `Result` y propaga con `!` postfijo. No quedaba una
-sola fila `/ Fail` en el stdlib.
+kaikai no trae un efecto `Fail`. Toda API que puede fallar
+devuelve `Result` y propaga con `!` postfijo: no hay una sola
+fila `/ Fail` en el stdlib.
 
-Qué usar en su lugar, según qué necesitas:
+Qué usar, según qué necesitas:
 
 | Necesitas | Usa |
 |---|---|

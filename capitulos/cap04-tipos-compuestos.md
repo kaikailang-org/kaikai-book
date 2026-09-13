@@ -428,13 +428,12 @@ codepoints alcanzan, pero rara vez los necesitas.)
 
 El mismo cuidado aparece al pasar de minúsculas a mayúsculas y de
 vuelta. `core.char` trae `to_upper`, `to_lower`, `is_upper` e
-`is_lower` para ASCII. Desde la versión 0.109 su hermano
-`core.char_unicode` extiende los cuatro a los alfabetos cuyo
-mapeo es un desplazamiento uniforme de codepoint: Latin-1,
-Latin Extended-A, griego y cirílico. Lo que cae fuera de esa
-regla pasa sin cambios, y kaikai prefiere decírtelo con el
-nombre del módulo antes que fingir cobertura completa de
-Unicode:
+`is_lower` para ASCII. Su hermano `core.char_unicode` extiende los
+cuatro a los alfabetos cuyo mapeo es un desplazamiento uniforme de
+codepoint: Latin-1, Latin Extended-A, griego y cirílico. Lo que
+cae fuera de esa regla pasa sin cambios, y kaikai prefiere
+decírtelo con el nombre del módulo antes que fingir cobertura
+completa de Unicode:
 
 ```kai
 import core.char

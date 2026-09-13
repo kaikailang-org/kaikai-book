@@ -518,9 +518,9 @@ is yours: the ones the runtime supplies per fiber (`Stdout`,
 `Clock`), and the ones that belong to the fiber by construction
 (`Cancel`, `Spawn`, `Actor`).
 
-Through version 0.116 this compiled and blew up at runtime,
-when the fiber reached the operation. Now the compiler stops
-it on the `spawn` line, which is where the mistake is.
+The compiler stops it on the `spawn` line, which is where the
+mistake is, rather than letting it blow up at runtime when the
+fiber reaches the operation.
 
 So the "shared queue" you'd write in Go with a channel, or in
 Java with a `BlockingQueue`, isn't written that way here. You
@@ -608,10 +608,10 @@ lines executing instructions at the same instant, on different
 cores.
 
 kaikai gives you both. Fibers are the concurrency mechanism:
-lightweight, cooperative, tied to a nursery. And as of version
-0.104 the runtime spreads them by default across as many OS
-threads as the machine has cores, with an M:N scheduler that
-steals work between threads. Nothing to request, nothing to
+lightweight, cooperative, tied to a nursery. And the runtime
+spreads them by default across as many OS threads as the
+machine has cores, with an M:N scheduler that steals work
+between threads. Nothing to request, nothing to
 configure: the program you wrote back in §13.3 already uses
 your sixteen cores if you have them.
 

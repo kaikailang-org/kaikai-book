@@ -1017,21 +1017,18 @@ lo declaraste tú y no lleva bloque `default`, una función que
 produce `/ Fail` obliga a ser manejada en algún lado antes de
 `main`, o el compilador rechaza con un mensaje claro.
 
-Vale la pena decir de dónde viene ese ejemplo. Hasta la versión
-0.105, `Fail` era un efecto del stdlib **con** default: el runtime
-imprimía un banner y salía con código 1. En 0.106 lo retiraron.
-El argumento fue que no aportaba nada que `Result[a, e]` con `!`
-postfijo no diera mejor (de hecho, no quedaba una sola fila
-`/ Fail` en todo el stdlib) y que su forma, una operación que
-devuelve `Nothing`, era justamente la que *no* podía expresar la
-falla interesante: aquella en la que el consumidor elige si saltear
-o abortar. Para eso el efecto tiene que devolver `Unit` y dejar que
-el handler decida si llama a `resume`. El apéndice D tiene la tabla
-completa de reemplazos.
+Vale la pena decir por qué `Fail` vive acá, declarado en el propio
+archivo, y no en el stdlib. Un efecto de falla no aporta nada que
+`Result[a, e]` con `!` postfijo no dé mejor: no hay una sola fila
+`/ Fail` en todo el stdlib. Y su forma —una operación que devuelve
+`Nothing`— es justamente la que *no* puede expresar la falla
+interesante, aquella en la que el consumidor elige si saltear o
+abortar. Para eso el efecto tiene que devolver `Unit` y dejar que
+el handler decida si llama a `resume`. El apéndice D tiene la
+tabla completa.
 
-Que `Fail` sobreviva en este capítulo como efecto declarado en el
-propio archivo no es nostalgia: sigue siendo la forma más corta de
-mostrar qué significa una operación que no vuelve.
+Como ejemplo, en cambio, es inmejorable: sigue siendo la forma más
+corta de mostrar qué significa una operación que no vuelve.
 
 Lo mismo vale para `State[T]`, `Reader[T]`, `Writer[W]`: efectos
 genéricos en los que **no existe** una implementación razonable

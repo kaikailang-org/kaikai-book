@@ -167,12 +167,12 @@ error: bare name 'MAX' is exported by multiple modules: sensors, alarms
   = help: qualify the constant, e.g. `sensors.MAX`
 ```
 
-That this is an error is recent, and it is the right call.
-Resolution used to go by registration order, which means *which*
-`MAX` you got depended on the order of your imports — the kind of
-trap that collects the day somebody sorts the lines
-alphabetically and the program changes meaning without a single
-expression being touched.
+Choosing for you would be worse than the error. Any tie-break
+rule — import order, say — would make *which* `MAX` you get
+depend on how the lines happen to be sorted, and that is the kind
+of trap that collects the day somebody sorts them alphabetically
+and the program changes meaning without a single expression being
+touched.
 
 The error is the same for every class of name. Above it's a
 constant, but a contested type, effect, or protocol produces the

@@ -416,12 +416,12 @@ kaikai pays the cost of decoding. (Graphemes like an "é" built from
 codepoints fall short, but you rarely need them.)
 
 The same care shows up in case folding. `core.char` ships
-`to_upper`, `to_lower`, `is_upper` and `is_lower` for ASCII. Since
-0.109 its sibling `core.char_unicode` extends all four to the
-alphabets whose mapping is a uniform codepoint offset: Latin-1,
-Latin Extended-A, Greek and Cyrillic. Whatever falls outside that
-rule passes through untouched, and kaikai would rather tell you so
-in the module's name than pretend to full Unicode coverage:
+`to_upper`, `to_lower`, `is_upper` and `is_lower` for ASCII. Its
+sibling `core.char_unicode` extends all four to the alphabets
+whose mapping is a uniform codepoint offset: Latin-1, Latin
+Extended-A, Greek and Cyrillic. Whatever falls outside that rule
+passes through untouched, and kaikai would rather tell you so in
+the module's name than pretend to full Unicode coverage:
 
 ```kai
 import core.char
