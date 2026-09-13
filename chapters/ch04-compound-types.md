@@ -345,14 +345,25 @@ paper over: the difference between **bytes** and **Unicode
 codepoints**. They are not the same thing the moment you leave
 ASCII, and each function's name tells you which unit it works in.
 
-- `length(s)` (and its explicit synonym `byte_length(s)`) counts
-  **bytes**, in O(1). For `"á"` it returns 2, because "á" takes
-  two bytes in UTF-8; for `"☃"`, 3.
-- `char_count(s)` counts **Unicode codepoints** — the honest
-  length in characters. For `"á"` it returns 1; for `"☃"`, also 1.
-- `chars(s)` decodes the buffer and returns the **codepoints** as
-  `[Char]`. `bytes(s)` returns the **bytes** as `[Char]`, one per
-  byte (a multibyte codepoint is split into its bytes).
+Take `"café"` and measure it all four ways.
+
+- `length(s)` counts **bytes**, in O(1). For `"café"` it returns 5,
+  not 4: the `é` takes two bytes in UTF-8. `byte_length(s)` is the
+  same number with the unit said out loud, for when the code reads
+  better if nobody has to assume.
+- `char_count(s)` counts **Unicode codepoints**. For `"café"` it
+  returns 4 — the length a reader would say aloud.
+- `chars(s)` decodes the buffer and hands back the codepoints as
+  `[Char]`; `from_chars` puts them back together.
+- `bytes(s)` hands back the raw octets as `[Byte]`, one per byte,
+  splitting any multibyte codepoint into pieces; `from_bytes` is
+  its inverse.
+
+Notice that the two views have **different types**: `[Char]` is
+characters, `[Byte]` is octets. That is not cosmetic. It means you
+cannot cross them by accident — handing `from_chars` the result of
+`bytes(s)` does not compile, because an octet is not a character
+and the compiler knows it.
 
 ```kai
 import core.string
@@ -364,6 +375,7 @@ fn main() {
   println("codepoints: #{string.char_count(s)}")          # 4
   println("chars:      #{list.length(string.chars(s))}")  # 4
   println("bytes list: #{list.length(string.bytes(s))}")  # 5
+  println("round trip: #{string.from_bytes(string.bytes(s))}")
 }
 ```
 
@@ -373,6 +385,7 @@ bytes:      5
 codepoints: 4
 chars:      4
 bytes list: 5
+round trip: café
 ```
 
 The mental rule is short: **`length` and `slice` reason in bytes;

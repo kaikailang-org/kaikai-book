@@ -12,8 +12,12 @@ fn main() {
   println("bytes:      #{string.length(s)}")       # 5
   println("codepoints: #{string.char_count(s)}")   # 4
 
-  # chars decodes the UTF-8 view into codepoints;
-  # bytes hands back the raw bytes, one per byte.
+  # chars decodes the UTF-8 view into codepoints ([Char]);
+  # bytes hands back the raw octets, one per byte ([Byte]).
   println("chars:      #{list.length(string.chars(s))}")  # 4
   println("bytes list: #{list.length(string.bytes(s))}")  # 5
+
+  # from_bytes is the inverse of bytes. The types don't cross:
+  # handing these octets to from_chars would not compile.
+  println("round trip: #{string.from_bytes(string.bytes(s))}")
 }

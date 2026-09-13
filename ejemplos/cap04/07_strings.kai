@@ -12,8 +12,12 @@ fn main() {
   println("bytes:      #{string.length(s)}")       # 5
   println("codepoints: #{string.char_count(s)}")   # 4
 
-  # chars decodifica la vista UTF-8 a codepoints;
-  # bytes entrega los bytes crudos, uno por byte.
+  # chars decodifica la vista UTF-8 a codepoints ([Char]);
+  # bytes entrega los octetos crudos, uno por byte ([Byte]).
   println("chars:      #{list.length(string.chars(s))}")  # 4
   println("bytes list: #{list.length(string.bytes(s))}")  # 5
+
+  # from_bytes es el inverso de bytes. Los tipos no se cruzan:
+  # pasarle estos octetos a from_chars no compilaría.
+  println("de vuelta:  #{string.from_bytes(string.bytes(s))}")
 }

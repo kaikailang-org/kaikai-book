@@ -356,14 +356,25 @@ diferencia entre **bytes** y **codepoints Unicode**. No son lo
 mismo apenas sales del ASCII, y el nombre de cada función te dice
 en qué unidad trabaja.
 
-- `length(s)` (y su sinónimo explícito `byte_length(s)`) cuenta
-  **bytes**, en O(1). Para `"á"` devuelve 2, porque "á" ocupa dos
-  bytes en UTF-8; para `"☃"` devuelve 3.
-- `char_count(s)` cuenta **codepoints Unicode**: el largo honesto
-  en caracteres. Para `"á"` devuelve 1; para `"☃"`, 1 también.
-- `chars(s)` decodifica el buffer y devuelve los **codepoints**
-  como `[Char]`. `bytes(s)` devuelve los **bytes** como `[Char]`,
-  uno por byte (un codepoint multibyte se parte en sus bytes).
+Tomemos `"café"` y midámoslo de las cuatro maneras.
+
+- `length(s)` cuenta **bytes**, en O(1). Para `"café"` devuelve 5,
+  no 4: la `é` ocupa dos bytes en UTF-8. `byte_length(s)` es el
+  mismo número con el nombre dicho en voz alta, para cuando el
+  código quede más claro si la unidad no se sobreentiende.
+- `char_count(s)` cuenta **codepoints Unicode**. Para `"café"`
+  devuelve 4, que es el largo que un lector diría en voz alta.
+- `chars(s)` decodifica el buffer y entrega los codepoints como
+  `[Char]`; `from_chars` los vuelve a armar.
+- `bytes(s)` entrega los octetos crudos como `[Byte]`, uno por
+  byte, partiendo en pedazos cualquier codepoint multibyte;
+  `from_bytes` es su inverso.
+
+Fíjate en que las dos vistas tienen **tipos distintos**: `[Char]`
+son caracteres, `[Byte]` son octetos. No es un detalle cosmético.
+Significa que no puedes cruzarlas por descuido — pasarle a
+`from_chars` el resultado de `bytes(s)` no compila, porque un
+octeto no es un carácter y el compilador lo sabe.
 
 ```kai
 import core.string
@@ -375,6 +386,7 @@ fn main() {
   println("codepoints: #{string.char_count(s)}")          # 4
   println("chars:      #{list.length(string.chars(s))}")  # 4
   println("bytes list: #{list.length(string.bytes(s))}")  # 5
+  println("de vuelta:  #{string.from_bytes(string.bytes(s))}")
 }
 ```
 
@@ -384,6 +396,7 @@ bytes:      5
 codepoints: 4
 chars:      4
 bytes list: 5
+de vuelta:  café
 ```
 
 La regla mental es corta: **`length` y `slice` razonan en bytes;
