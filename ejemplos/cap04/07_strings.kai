@@ -20,4 +20,10 @@ fn main() {
   # from_bytes es el inverso de bytes. Los tipos no se cruzan:
   # pasarle estos octetos a from_chars no compilaría.
   println("de vuelta:  #{string.from_bytes(string.bytes(s))}")
+
+  # slice(s, desde, largo) corta por BYTES, no por caracteres.
+  # La `é` ocupa los bytes 3 y 4, así que cortarla completa
+  # significa pedir esos dos.
+  println("slice(0,3): #{string.slice(s, 0, 3)}")
+  println("slice(3,2): #{string.slice(s, 3, 2)}")
 }

@@ -386,18 +386,34 @@ codepoints: 4
 chars:      4
 bytes list: 5
 round trip: café
+slice(0,3): caf
+slice(3,2): é
 ```
+
+Those last two lines introduce the operation that takes a piece out
+of a string:
+
+```
+slice(s: String, from: Int, len: Int) : String
+```
+
+`from` and `len` are counted **in bytes**, like `length`. That is
+why `slice(s, 3, 2)` gives you the `é`: it occupies bytes 3 and 4,
+and you have to ask for both. Asking for one is allowed — nothing
+stops you — but `slice(s, 0, 4)` cuts the `é` in half and hands
+back four bytes that are no longer valid UTF-8. That is the price
+of a cut costing O(1): kaikai lets you cut wherever you like and
+does not check that the cut lands on a codepoint boundary.
 
 The mental rule is short: **`length` and `slice` reason in bytes;
 `char_count` and `chars` reason in codepoints.** That `length` is
-cheap and byte-based I decided deliberately — the representation is
-UTF-8 and the `slice`/`char_at` family indexes by byte, so
-`length` reports the unit those cuts use. When what you care about
-is the character count rather than the byte count, you ask for
-`char_count` or `chars` and kaikai pays the cost of decoding.
-(Graphemes like an "é" built from `e` plus a combining accent are
-yet another layer; there even codepoints fall short, but you rarely
-need them.)
+cheap and byte-based I decided deliberately: the representation is
+UTF-8 and `slice` indexes by byte, so `length` reports the unit
+those cuts use. When what you care about is the character count
+rather than the byte count, you ask for `char_count` or `chars` and
+kaikai pays the cost of decoding. (Graphemes like an "é" built from
+`e` plus a combining accent are yet another layer; there even
+codepoints fall short, but you rarely need them.)
 
 The same care shows up in case folding. `core.char` ships
 `to_upper`, `to_lower`, `is_upper` and `is_lower` for ASCII. Since
@@ -406,6 +422,32 @@ alphabets whose mapping is a uniform codepoint offset: Latin-1,
 Latin Extended-A, Greek and Cyrillic. Whatever falls outside that
 rule passes through untouched, and kaikai would rather tell you so
 in the module's name than pretend to full Unicode coverage:
+
+```kai
+import core.char
+import core.char_unicode
+import core.list
+import core.string
+
+fn upper(s: String) : String =
+  string.from_chars(list.map(string.chars(s), char_unicode.to_upper))
+
+fn main() : Unit / Stdout {
+  Stdout.print(upper("café"))
+  Stdout.print(upper("привет"))
+  Stdout.print(upper("omega"))
+  Stdout.print(upper("ωμεγα"))
+  Stdout.print(upper("ωμέγα"))
+  Stdout.print(upper("☃ 42"))
+  Stdout.print("#{char.to_upper('k')}")
+}
+```
+
+`upper` is all it takes: decode the string to codepoints with
+`chars`, apply `to_upper` to each one with `map`, and put the string
+back together with `from_chars`. The last line reaches for
+`core.char` rather than `core.char_unicode`, because ASCII needs no
+more than that.
 
 ```
 $ kai run examples/ch04/10_case_folding.kai

@@ -1,4 +1,4 @@
-# Plegado de mayúsculas más allá del ASCII.
+# Pasar a mayúsculas más allá del ASCII.
 #
 # `core.char` cubre el ASCII. `core.char_unicode` agrega los
 # alfabetos cuyo mapeo mayúscula/minúscula es un desplazamiento
