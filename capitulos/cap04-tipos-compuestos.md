@@ -397,27 +397,69 @@ codepoints: 4
 chars:      4
 bytes list: 5
 de vuelta:  café
+slice(0,3): caf
+slice(3,2): é
 ```
+
+Las dos últimas líneas estrenan la operación que saca un pedazo de
+un string:
+
+```
+slice(s: String, desde: Int, largo: Int) : String
+```
+
+`desde` y `largo` se cuentan **en bytes**, igual que `length`. Por
+eso `slice(s, 3, 2)` devuelve la `é`: ocupa los bytes 3 y 4, y hay
+que pedir los dos. Pedir uno solo también se puede —nadie te
+detiene— pero `slice(s, 0, 4)` parte la `é` por la mitad y devuelve
+cuatro bytes que ya no son UTF-8 válido. Ese es el precio de que
+cortar cueste O(1): kaikai te deja cortar donde quieras y no revisa
+que el corte caiga en un borde de codepoint.
 
 La regla mental es corta: **`length` y `slice` razonan en bytes;
 `char_count` y `chars` razonan en codepoints.** Que `length` sea
-barato y por byte lo decidí a conciencia. La representación
-es UTF-8 y el indexado de `slice` y `char_at` es por byte, así que
-`length` devuelve la unidad que esos cortes usan. Cuando lo que te
-importa es el conteo de caracteres y no el de bytes, pides
-`char_count` o `chars` y kaikai paga el costo de decodificar.
-(Grafemas como "é" compuesta de `e` + tilde combinante son otra
-capa todavía; ahí ni los codepoints alcanzan, pero rara vez los
-necesitas.)
+barato y por byte lo decidí a conciencia: la representación es
+UTF-8 y `slice` indexa por byte, así que `length` devuelve la
+unidad que esos cortes usan. Cuando lo que te importa es el conteo
+de caracteres y no el de bytes, pides `char_count` o `chars` y
+kaikai paga el costo de decodificar. (Grafemas como "é" compuesta
+de `e` + tilde combinante son otra capa todavía; ahí ni los
+codepoints alcanzan, pero rara vez los necesitas.)
 
-El mismo cuidado aparece en el plegado de mayúsculas. `core.char`
-trae `to_upper`, `to_lower`, `is_upper` e `is_lower` para ASCII.
-Desde la versión 0.109 su hermano `core.char_unicode` extiende los
-cuatro a los alfabetos cuyo mapeo es un desplazamiento uniforme de
-codepoint: Latin-1, Latin Extended-A, griego y cirílico. Lo que
-cae fuera de esa regla pasa sin cambios, y kaikai prefiere
-decírtelo con el nombre del módulo antes que fingir cobertura
-completa de Unicode:
+El mismo cuidado aparece al pasar de minúsculas a mayúsculas y de
+vuelta. `core.char` trae `to_upper`, `to_lower`, `is_upper` e
+`is_lower` para ASCII. Desde la versión 0.109 su hermano
+`core.char_unicode` extiende los cuatro a los alfabetos cuyo
+mapeo es un desplazamiento uniforme de codepoint: Latin-1,
+Latin Extended-A, griego y cirílico. Lo que cae fuera de esa
+regla pasa sin cambios, y kaikai prefiere decírtelo con el
+nombre del módulo antes que fingir cobertura completa de
+Unicode:
+
+```kai
+import core.char
+import core.char_unicode
+import core.list
+import core.string
+
+fn arriba(s: String) : String =
+  string.from_chars(list.map(string.chars(s), char_unicode.to_upper))
+
+fn main() : Unit / Stdout {
+  Stdout.print(arriba("café"))
+  Stdout.print(arriba("привет"))
+  Stdout.print(arriba("omega"))
+  Stdout.print(arriba("ωμεγα"))
+  Stdout.print(arriba("ωμέγα"))
+  Stdout.print(arriba("☃ 42"))
+  Stdout.print("#{char.to_upper('k')}")
+}
+```
+
+`arriba` es todo lo que hace falta: decodifica el string a
+codepoints con `chars`, aplica `to_upper` a cada uno con `map`, y
+vuelve a armar el string con `from_chars`. La última línea usa
+`core.char` en vez de `core.char_unicode`, porque para ASCII basta.
 
 ```
 $ kai run ejemplos/cap04/10_mayusculas.kai
@@ -432,8 +474,8 @@ K
 
 La línea `ΩΜέΓΑ` marca el borde: `ωμεγα` se pliega entero, pero en
 `ωμέγα` la `έ` se queda abajo porque su mayúscula no está a un
-desplazamiento fijo. Para plegado completo de Unicode necesitas
-tablas, y esas todavía no viven en el stdlib.
+desplazamiento fijo. Para cubrir Unicode entero necesitas tablas
+de conversión, y esas todavía no viven en el stdlib.
 
 Para concatenar, ya lo viste en el capítulo 3, usas `++`:
 

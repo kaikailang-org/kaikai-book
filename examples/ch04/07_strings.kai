@@ -20,4 +20,10 @@ fn main() {
   # from_bytes is the inverse of bytes. The types don't cross:
   # handing these octets to from_chars would not compile.
   println("round trip: #{string.from_bytes(string.bytes(s))}")
+
+  # slice(s, from, len) cuts by BYTES, not by characters.
+  # The `é` occupies bytes 3 and 4, so taking it whole means
+  # asking for those two.
+  println("slice(0,3): #{string.slice(s, 0, 3)}")
+  println("slice(3,2): #{string.slice(s, 3, 2)}")
 }
