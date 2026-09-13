@@ -47,7 +47,7 @@ dependencia es un compilador de C cualquiera:
 $ cc stage0/*.c -o kaic0
 ```
 
-Sin frameworks, sin generadores, sin librerías exóticas. C
+Sin frameworks, sin generadores, sin bibliotecas exóticas. C
 plano. El archivo `stage0/runtime.h` es el runtime de los
 programas compilados: contadores de referencia, primitivas de
 listas y strings, panic. Todo eso entra en unos pocos miles de
