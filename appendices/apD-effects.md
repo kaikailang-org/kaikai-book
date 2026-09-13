@@ -405,16 +405,13 @@ Cooperative cancellation. The scheduler injects
 point. The fiber can install a `Cancel` handler for cleanup
 (chapter 13).
 
-### `Fail`: retired from the stdlib
+### There is no `Fail` effect
 
-`Fail` was a stdlib effect (`fail(msg: String) : Nothing`) with
-a default handler that printed a banner and exited 1. **As of
-kaikai 0.106 it is gone.** The removal ratifies what the stdlib
-already practiced: every fallible API returns `Result` and
-propagates with postfix `!`. Not one `/ Fail` row was left
-across the stdlib.
+kaikai ships no `Fail` effect. Every fallible API returns
+`Result` and propagates with postfix `!`: there is not one
+`/ Fail` row across the stdlib.
 
-What to reach for instead, by what you need:
+What to reach for, by what you need:
 
 | You need | Use |
 |---|---|

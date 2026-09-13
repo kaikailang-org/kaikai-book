@@ -124,13 +124,9 @@ error: unknown escape sequence '\q'; write '\\q' for a literal backslash
     |         ^
 ```
 
-That the list is short and explicit is recent. Through 0.110
-the compiler decoded nothing: it handed the raw text to the
-backend and let the C compiler decide, so the escape set was
-C99's by accident of inheritance — a `\q` quietly dropped its
-backslash. Decoding now lives in one place in the compiler,
-with the same rules for strings, `Char`, triple-quoted bodies,
-and interpolation.
+That the list is short and explicit is deliberate. Decoding
+lives in one place in the compiler, with the same rules for
+strings, `Char`, triple-quoted bodies, and interpolation.
 
 `Char` values use single quotes: `'a'`, `'\n'`, `'\u{2603}'`. A
 `Char` is not a `String` of length one — they are distinct

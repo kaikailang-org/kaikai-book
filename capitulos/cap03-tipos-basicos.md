@@ -126,14 +126,10 @@ error: unknown escape sequence '\q'; write '\\q' for a literal backslash
     |         ^
 ```
 
-Que esa lista sea corta y explícita es reciente. Hasta la
-versión 0.110 el compilador no decodificaba nada: le pasaba el
-texto crudo al backend y dejaba que el compilador de C
-decidiera, así que el juego de escapes era el de C99 por
-herencia accidental — un `\q` perdía el backslash sin decir
-nada. Hoy la decodificación vive en un solo lugar del
-compilador, con las mismas reglas para strings, `Char`, triple
-comilla e interpolación.
+Que esa lista sea corta y explícita es deliberado. La
+decodificación vive en un solo lugar del compilador, con las
+mismas reglas para strings, `Char`, triple comilla e
+interpolación.
 
 Los `Char` se escriben con comilla simple: `'a'`, `'\n'`,
 `'\u{2603}'`. Un `Char` no es un `String` de longitud uno, son

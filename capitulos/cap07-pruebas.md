@@ -15,14 +15,12 @@ construyes un binario para producción.
 Lo habitual es escribirlas en el mismo archivo del código que
 prueban, pero el lenguaje no te obliga: un `aritmetica_test.kai`
 que importe `aritmetica` y declare sus `test` compila y corre
-igual. Desde la versión 0.110 el driver además lo encuentra
-solo: `kai test ./...` recorre los `*_test.kai` del paquete
-aunque nadie los importe, los corre como unidad aparte, y si
-alguno falla el proceso sale con código distinto de cero.
-Desde 0.111 eso vale también para una **biblioteca**, un
-paquete que por definición no declara punto de entrada: antes
-`kai test` moría buscando un `main` que no existía y la única
-vía era nombrar el archivo a mano.
+igual. El driver además lo encuentra solo: `kai test ./...`
+recorre los `*_test.kai` del paquete aunque nadie los importe,
+los corre como unidad aparte, y si alguno falla el proceso sale
+con código distinto de cero. Eso vale también para una
+**biblioteca**, un paquete que por definición no declara punto
+de entrada.
 
 Este capítulo recorre las tres, explica cuándo usar cuál, y
 cierra con un caso de estudio: un mini-evaluador con tests

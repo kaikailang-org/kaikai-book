@@ -15,14 +15,12 @@ are stripped out when you build a binary for production.
 The usual thing is to write them in the same file as the code
 they exercise, but the language doesn't force it: an
 `arithmetic_test.kai` that imports `arithmetic` and declares its
-`test` blocks compiles and runs fine. Since 0.110 the driver
-finds it on its own, too: `kai test ./...` walks the package's
-`*_test.kai` files even when nothing imports them, runs each as
-its own unit, and exits non-zero if any of them fails. Since
-0.111 that holds for a **library** as well — a package that by
-definition declares no entry point: `kai test` used to die
-looking for a `main` that wasn't there, leaving file mode as
-the only way in.
+`test` blocks compiles and runs fine. The driver finds it on its
+own, too: `kai test ./...` walks the package's `*_test.kai`
+files even when nothing imports them, runs each as its own unit,
+and exits non-zero if any of them fails. That holds for a
+**library** as well — a package that by definition declares no
+entry point.
 
 This chapter walks through the three, explains when to use
 which, and closes with a case study: a mini-evaluator with

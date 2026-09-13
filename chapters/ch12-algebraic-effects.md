@@ -1033,20 +1033,18 @@ declared it yourself and it carries no `default` block, a function
 producing `/ Fail` must be handled somewhere before `main`, or the
 compiler rejects with a clear message.
 
-Where that example comes from is worth saying. Through 0.105,
-`Fail` was a stdlib effect **with** a default: the runtime printed
-a banner and exited 1. In 0.106 it was retired. The argument was
-that it added nothing `Result[a, e]` with postfix `!` didn't give
-you better — there wasn't a single `/ Fail` row left in the whole
-stdlib — and that its shape, an operation returning `Nothing`, was
-precisely the one that *couldn't* express the interesting failure:
-the one where the consumer picks whether to skip or abort. For that
-the op has to return `Unit` and let the handler decide whether to
-call `resume`. Appendix D has the full replacement table.
+Why `Fail` lives here, declared in the file itself rather than in
+the stdlib, is worth saying. A failure effect adds nothing
+`Result[a, e]` with postfix `!` doesn't give you better: there
+isn't a single `/ Fail` row in the whole stdlib. And its shape —
+an operation returning `Nothing` — is precisely the one that
+*can't* express the interesting failure, the one where the
+consumer picks whether to skip or abort. For that the op has to
+return `Unit` and let the handler decide whether to call `resume`.
+Appendix D has the full table.
 
-That `Fail` survives in this chapter as an effect declared in the
-file itself isn't nostalgia: it's still the shortest way to show
-what an operation that never returns means.
+As an example, though, it's unbeatable: still the shortest way to
+show what an operation that never returns means.
 
 The same applies to `State[T]`, `Reader[T]`, `Writer[W]`: generic
 effects where **no** reasonable implementation exists without

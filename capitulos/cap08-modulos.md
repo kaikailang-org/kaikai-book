@@ -167,11 +167,11 @@ error: bare name 'MAX' is exported by multiple modules: sensores, alarmas
   = help: qualify the constant, e.g. `sensores.MAX`
 ```
 
-Que sea un error es reciente y es lo correcto. Antes el
-compilador resolvía por orden de registro, lo que significa que
-*cuál* de los dos `MAX` obtenías dependía del orden de tus
-imports — la clase de trampa que se cobra el día que alguien
-ordena las líneas alfabéticamente y el programa cambia de
+Elegir por ti sería peor que el error. Cualquier regla de
+desempate —el orden de los imports, digamos— haría que *cuál* de
+los dos `MAX` obtienes dependa de cómo quedaron ordenadas las
+líneas, y esa es la clase de trampa que se cobra el día que
+alguien las ordena alfabéticamente y el programa cambia de
 significado sin que nadie toque una expresión.
 
 El error es el mismo para cualquier clase de nombre. Arriba es

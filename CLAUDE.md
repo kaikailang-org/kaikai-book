@@ -230,6 +230,16 @@ y nombres de archivos siempre en su forma original (inglés).
   generado aparte. Evitar dependencias de herramientas exóticas.
 - **Pies de figura y de código numerados** (Figura 2.3, Listado
   4.1) para poder citar.
+- **kaikai no tiene historia.** El libro describe el lenguaje
+  como es hoy, no cómo llegó a serlo. Nada de "desde la versión
+  0.110…", "hasta 0.116 esto compilaba", "que sea un error es
+  reciente", ni secciones dedicadas a algo que se retiró. El
+  lector no estuvo ahí: la historia del compilador no le enseña
+  el lenguaje, y sugiere una base de usuarios que no existe.
+  Cuando el argumento detrás de un cambio sí vale la pena —por
+  qué el compilador rechaza algo, por ejemplo— se escribe en
+  presente, como propiedad del diseño, sin contar contra qué se
+  decidió.
 
 ## Referencia al lenguaje
 

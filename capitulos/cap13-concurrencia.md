@@ -519,9 +519,9 @@ ninguna es tuya: las que el runtime provee por fibra (`Stdout`,
 `Clock`) y las que son de la fibra por construcción (`Cancel`,
 `Spawn`, `Actor`).
 
-Hasta la versión 0.116 esto compilaba y reventaba en runtime,
-cuando la fibra llegaba a la operación. Ahora el compilador lo
-ataja en la línea del `spawn`, que es donde está el error.
+El compilador lo ataja en la línea del `spawn`, que es donde
+está el error, en vez de dejarlo reventar en runtime cuando la
+fibra llega a la operación.
 
 Así que la "cola compartida" que uno escribiría en Go con un
 canal, o en Java con un `BlockingQueue`, aquí no se escribe
@@ -608,12 +608,12 @@ que dos de esas líneas ejecuten instrucciones en el mismo
 instante, en núcleos distintos.
 
 kaikai te da las dos. Las fibras son el mecanismo de
-concurrencia: livianas, cooperativas, atadas a un nursery. Y
-desde la versión 0.104 el runtime las reparte por defecto
-sobre tantos hilos del sistema como núcleos tenga la máquina,
-con un scheduler M:N que roba trabajo entre hilos. No hay que
-pedirlo ni configurar nada: el programa que escribiste en
-§13.3 ya usa tus dieciséis núcleos si los tienes.
+concurrencia: livianas, cooperativas, atadas a un nursery. Y el
+runtime las reparte por defecto sobre tantos hilos del sistema
+como núcleos tenga la máquina, con un scheduler M:N que roba
+trabajo entre hilos. No hay que pedirlo ni configurar nada: el
+programa que escribiste en §13.3 ya usa tus dieciséis núcleos si
+los tienes.
 
 Lo que **no** cambia con el número de hilos es la semántica:
 

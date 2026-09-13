@@ -390,11 +390,10 @@ pero no resueltas en `kai.lock`. En la práctica, después de
 clonar un proyecto kaikai, basta con `kai run` para que
 descargue lo que falte.
 
-`fetch` es un nombre reciente. Hasta 0.110 esa resolución se
-llamaba `kai install`, con la semántica de npm; 0.111 le
-devolvió a `install` el sentido que un usuario de Rust o de Go
-espera —**instalar un binario en el PATH**— y movió la
-resolución a `fetch`, el nombre que ambos ecosistemas ya usan:
+Los dos nombres reparten el trabajo como lo espera un usuario de
+Rust o de Go: `fetch` resuelve dependencias, e `install` hace lo
+que su nombre dice en esos ecosistemas —**poner un binario en el
+PATH**—, no lo que significa en npm:
 
 ```
 $ kai install .                        # compila el paquete del cwd e instala su binario
@@ -1091,7 +1090,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.117.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.118.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org
