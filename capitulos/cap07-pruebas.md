@@ -309,7 +309,7 @@ entrada, lo que sale duplica el valor", entonces necesitas un
 
 ## 7.4 `bench "..." { ... }`: medir, no adivinar
 
-La tercera construcción es para **performance**. `bench` toma
+La tercera construcción es para **rendimiento**. `bench` toma
 un bloque y mide cuánto tarda en ejecutarse, repetido muchas
 veces para sacar promedio:
 
@@ -407,7 +407,7 @@ tres en el mismo archivo: tests para los casos
 contractuales (los del cliente, los de borde, los que
 históricamente fallaron), checks para las invariantes
 algebraicas que el código preserva, y benchmarks para las
-pocas funciones críticas donde la performance importa.
+pocas funciones críticas donde el rendimiento importa.
 
 Una nota sobre el orden de escritura. La secuencia natural
 suele ser:
@@ -428,7 +428,7 @@ suele ser:
 No al revés. Empezar con un `check` cuando todavía no sabes
 qué propiedades vas a preservar te lleva a propiedades vagas
 que pasan por accidente. Empezar con un `bench` antes de que
-la performance importe es optimización prematura. Tests
+el rendimiento importe es optimización prematura. Tests
 primero.
 
 ## 7.6 Caso de estudio: pruebas para un mini-evaluador
@@ -525,7 +525,7 @@ conmutatividad (por ejemplo, agregando un efecto secundario
 al evaluar `Suma` que dependa del orden), los `check`s
 detectan el contraejemplo de inmediato.
 
-### Benchmarks para las decisiones de performance
+### Benchmarks para las decisiones de rendimiento
 
 ```kai
 bench "literal" {

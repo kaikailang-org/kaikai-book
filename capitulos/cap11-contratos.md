@@ -210,7 +210,7 @@ no se puede deducir estáticamente.
 
 Las funciones que aceptan tipos refinados **se benefician de
 la garantía sin verificarla**. Si tu firma dice `n: NoNeg`,
-adentro puedes asumir `n >= 0` sin escribir un `if`. Eso es
+adentro puedes suponer `n >= 0` sin escribir un `if`. Eso es
 exactamente lo que un contrato `requires n >= 0` hace, pero
 codificado en el tipo en vez de en la firma.
 

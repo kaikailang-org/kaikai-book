@@ -585,7 +585,7 @@ información estructurada en vez de prosa diagnóstica:
   responda "¿esta función toca el disco?" sin parsear código.
 - `kai build --library-mode`: compila sin requerir un
   `fn main`. Útil para analizar paquetes que se van a usar
-  como librería.
+  como biblioteca.
 
 Las tres formas comparten propósito: hacer que la
 información que el compilador ya tiene viva fuera del
@@ -752,7 +752,7 @@ proyecto crece, esta estructura paga.
 
 ## 16.12 Hablar con C: `extern "C"` y el efecto `Ffi`
 
-Tarde o temprano vas a necesitar una librería que ya existe
+Tarde o temprano vas a necesitar una biblioteca que ya existe
 en C: un driver de base de datos, un framework gráfico, un
 paquete numérico. La interfaz de funciones foráneas
 (**FFI**) de kaikai es cómo la llamas desde código kaikai
@@ -843,7 +843,7 @@ vemos a continuación.
 
 ### Enlazar contra tu propio código C
 
-Para librerías que no estén en libc, la forma típica es:
+Para bibliotecas que no estén en libc, la forma típica es:
 escribes un archivo C chico con las funciones que
 necesitas, y dejas que `kai build` invoque a su compilador
 C con ese archivo incluido. Hay dos maneras de conectarlo, y
@@ -887,9 +887,9 @@ doble(21) = 42
 El valor de `CFLAGS` te deja inyectar cualquier cosa que
 el compilador C acepte: `-include` para exponer
 declaraciones, fuentes `.c` extra para compilar adentro,
-`-l<lib>` para enlazar contra librerías instaladas,
+`-l<lib>` para enlazar contra bibliotecas instaladas,
 `pkg-config --cflags --libs <paquete>` para usar la
-información de una librería del sistema. Es la escotilla de
+información de una biblioteca del sistema. Es la escotilla de
 escape, y mantiene precedencia sobre todo lo demás.
 
 Pero `CFLAGS` no viaja. Si tu binding es un paquete, quien lo
@@ -901,7 +901,7 @@ manifiesto tiene la tabla `[native]`:
 [native]
 sources = ["c/shim.c"]   # C vendorizado, relativo al paquete
 include = ["c"]          # directorios -I para compilar esas fuentes
-libs = ["sqlite3"]       # librerías del sistema, -l<nombre> al enlazar
+libs = ["sqlite3"]       # bibliotecas del sistema, -l<nombre> al enlazar
 ```
 
 Declarado eso, el consumidor escribe `kai build` a secas. La
@@ -917,9 +917,9 @@ ataque y un agujero de reproducibilidad—, y los flags libres
 convertirían el manifiesto en un sistema de construcción. La
 distinción que sí importa es entre `sources` y `libs`: una
 fuente vendorizada siempre funciona, porque el `.c` viaja con
-el paquete y compila en la máquina de destino; una librería
+el paquete y compila en la máquina de destino; una biblioteca
 del sistema puede no estar ahí sin culpa de nadie, y cuando
-el enlace falla el driver nombra el paquete y la librería que
+el enlace falla el driver nombra el paquete y la biblioteca que
 faltó.
 
 Funciona igual en los dos backends: el nativo también enlaza
@@ -997,13 +997,13 @@ Fuera de alcance, rechazado en tiempo de compilación:
 ### Cuándo agarrar FFI
 
 La regla honesta: **solo cuando realmente necesites la
-librería C**. Cada `extern "C"` es un hueco en las
-garantías del lado kaikai. El compilador no puede chequear
+biblioteca C**. Cada `extern "C"` es un hueco en las
+garantías del lado kaikai. El compilador no puede verificar
 qué hace la función C con sus argumentos, no puede probar
 sus efectos, no puede razonar sobre su modelo de memoria.
 El efecto `Ffi` al menos hace visible el hueco en la
 firma, pero el peso de auditoría de esa firma es
-"confiar en quien escribió la librería C" más "confiar
+"confiar en quien escribió la biblioteca C" más "confiar
 en el compilador C".
 
 Para computación pura, prefiere una implementación kaikai.
@@ -1012,11 +1012,11 @@ stdlib (`Stdout`, `File`, `NetTcp`, etc.): esos ya están
 conectados a C por dentro pero en una forma que los
 diseñadores del lenguaje controlan. FFI es la herramienta
 correcta para atar ecosistemas C existentes que no quieres
-reescribir: drivers, toolkits nativos de UI, librerías
+reescribir: drivers, toolkits nativos de UI, bibliotecas
 específicas de hardware.
 
 Una pequeña heurística: si te encuentras escribiendo
-muchos `extern "C"` para envolver algo, y la librería tiene
+muchos `extern "C"` para envolver algo, y la biblioteca tiene
 una API C estable, eso es candidato a empaquetar como un
 binding kaikai reutilizable que el resto del ecosistema
 pueda importar, en vez de repetir las declaraciones en cada
@@ -1048,7 +1048,7 @@ versiones, está todo lo que no toca tu código fuente:
 representación interna de variantes, layout de stacks de
 fibras, formato del caché en disco, texto exacto de los
 diagnósticos, fases del typer, internals del Perceus,
-performance.
+rendimiento.
 
 Ahora la parte que hay que tener clara hoy: **el contrato
 se sella cuando la edición se cierra, no antes.**
