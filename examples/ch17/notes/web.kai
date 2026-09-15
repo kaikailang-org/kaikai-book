@@ -12,11 +12,14 @@ pub type HttpReq = { method: String, path: String, body: String }
 # accepts. Inlined so the whole chain fits in the reader's head,
 # without pulling in `net.http`.
 fn string_to_bytes_loop(s: String, i: Int, n: Int, acc: [Int]) : [Int] =
-  if i >= n { list_reverse(acc) }
-  else { match char_at(s, i) {
-    Some(c) -> string_to_bytes_loop(s, i + 1, n, [char_to_int(c), ...acc])
-    None    -> list_reverse(acc)
-  } }
+  if i >= n {
+    list_reverse(acc)
+  } else {
+    match char_at(s, i) {
+      Some(c) -> string_to_bytes_loop(s, i + 1, n, [char_to_int(c), ...acc])
+      None -> list_reverse(acc)
+    }
+  }
 
 pub fn string_to_bytes(s: String) : [Int] =
   string_to_bytes_loop(s, 0, string_length(s), [])
@@ -32,7 +35,7 @@ pub fn parse_request(raw: String) : Result[HttpReq, String] {
       let body = string.join(body_parts, "\r\n\r\n")
       match string.split(head, "\r\n") {
         [first, ..._] -> parse_first_line(first, body)
-        []            -> Err("empty request")
+        [] -> Err("empty request")
       }
     }
     _ -> Err("request missing header separator")
@@ -42,7 +45,7 @@ pub fn parse_request(raw: String) : Result[HttpReq, String] {
 fn parse_first_line(line: String, body: String) : Result[HttpReq, String] {
   match string.split(line, " ") {
     [method, path, ..._] -> Ok(HttpReq { method: method, path: path, body: body })
-    _                     -> Err("malformed first line: '#{line}'")
+    _ -> Err("malformed first line: '#{line}'")
   }
 }
 
@@ -53,7 +56,7 @@ pub fn route(req: HttpReq) : Result[domain.Command, domain.Reply] {
     if req.path == "/notes" {
       Ok(domain.List)
     } else {
-      route_id(req.path, (id) => domain.Get(id))
+      route_id(req.path, id => domain.Get(id))
     }
   } else if req.method == "POST" {
     if req.path == "/notes" {
@@ -62,7 +65,7 @@ pub fn route(req: HttpReq) : Result[domain.Command, domain.Reply] {
       Err(domain.NotFound)
     }
   } else if req.method == "DELETE" {
-    route_id(req.path, (id) => domain.Delete(id))
+    route_id(req.path, id => domain.Delete(id))
   } else {
     Err(domain.NotFound)
   }
@@ -72,19 +75,19 @@ fn route_id(path: String, f: (Int) -> domain.Command) : Result[domain.Command, d
   # The stdlib's `drop_prefix` fuses the check with the cut: None
   # when the path doesn't start with the prefix, the rest when it does.
   match string.drop_prefix(path, "/notes/") {
-    None         -> Err(domain.NotFound)
+    None -> Err(domain.NotFound)
     Some(suffix) -> match string.to_int(suffix) {
       Some(n) -> Ok(f(n))
-      None    -> Err(domain.ClientError("invalid id in path: '#{path}'"))
+      None -> Err(domain.ClientError("invalid id in path: '#{path}'"))
     }
   }
 }
 
 # Serialise a domain Reply into HTTP bytes.
 pub fn serialize_reply(r: domain.Reply) : String = match r {
-  domain.Stored(body)     -> response(200, "OK", body)
-  domain.Created(note)    -> response(201, "Created", "#{note}")
-  domain.NotFound         -> response(404, "Not Found", "")
+  domain.Stored(body) -> response(200, "OK", body)
+  domain.Created(note) -> response(201, "Created", "#{note}")
+  domain.NotFound -> response(404, "Not Found", "")
   domain.ClientError(msg) -> response(400, "Bad Request", msg)
   domain.ServerError(msg) -> response(500, "Internal Error", msg)
 }
@@ -97,7 +100,7 @@ fn response(status: Int, reason: String, body: String) : String {
 test "parse GET /notes" {
   let raw = "GET /notes HTTP/1.1\r\nHost: x\r\n\r\n"
   let ok = match parse_request(raw) {
-    Ok(r)  -> r.method == "GET" and r.path == "/notes"
+    Ok(r) -> r.method == "GET" and r.path == "/notes"
     Err(_) -> false
   }
   assert ok
@@ -107,7 +110,7 @@ test "route POST /notes" {
   let req = HttpReq { method: "POST", path: "/notes", body: "hi" }
   let ok = match route(req) {
     Ok(domain.Create(c)) -> c == "hi"
-    _                     -> false
+    _ -> false
   }
   assert ok
 }

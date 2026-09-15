@@ -8,25 +8,25 @@
 
 type Cuenta = {
   titular: String,
-  saldo: Int,
+  saldo: Int
 }
 
 fn abrir(titular: String, deposito_inicial: Int) : Cuenta
   requires deposito_inicial >= 0
-  ensures  result.saldo == deposito_inicial
+  ensures result.saldo == deposito_inicial
 =
   Cuenta { titular: titular, saldo: deposito_inicial }
 
 fn depositar(c: Cuenta, monto: Int) : Cuenta
   requires monto > 0
-  ensures  result.saldo == c.saldo + monto
+  ensures result.saldo == c.saldo + monto
 =
   Cuenta { ...c, saldo: c.saldo + monto }
 
 fn retirar(c: Cuenta, monto: Int) : Cuenta
   requires monto > 0
   requires c.saldo >= monto
-  ensures  result.saldo == c.saldo - monto
+  ensures result.saldo == c.saldo - monto
 =
   Cuenta { ...c, saldo: c.saldo - monto }
 

@@ -14,23 +14,22 @@ import actor
 
 #[derive(Show)]
 type BatchResult
-  = Done(Int)             # successful total
-  | Failed(String)        # reason for the failure
+  = Done(Int)  # successful total
+  | Failed(String)  # reason for the failure
 
 # Processes the list. If it finds a zero divisor, returns
 # Failed. If it reaches the end, returns Done with the total.
 fn process(tasks: [(Int, Int)], acc: Int) : BatchResult {
   match tasks {
-    []                 -> Done(acc)
-    [(a, 0), ..._]     -> Failed("division by zero at (#{a}, 0)")
-    [(a, b), ...rest]  -> process(rest, acc + (a / b))
+    [] -> Done(acc)
+    [(a, 0), ..._] -> Failed("division by zero at (#{a}, 0)")
+    [(a, b), ...rest] -> process(rest, acc + a / b)
   }
 }
 
 # The worker computes the batch result and sends it to the
 # supervisor.
-fn worker(supervisor: Pid[BatchResult], tasks: [(Int, Int)])
-    : Unit / Actor[BatchResult] + Console {
+fn worker(supervisor: Pid[BatchResult], tasks: [(Int, Int)]) : Unit / Actor[BatchResult] + Console {
   let r = process(tasks, 0)
   Stdout.print("worker: batch ended as #{r}")
   Actor.send(supervisor, r)
@@ -38,8 +37,10 @@ fn worker(supervisor: Pid[BatchResult], tasks: [(Int, Int)])
 
 # An attempt: spawns a worker, waits for its result, returns
 # it.
-fn attempt(me: Pid[BatchResult], batch: [(Int, Int)])
-    : BatchResult / Console + Spawn + Cancel + Actor[BatchResult] {
+fn attempt(
+  me: Pid[BatchResult],
+  batch: [(Int, Int)]
+) : BatchResult / Console + Spawn + Cancel + Actor[BatchResult] {
   let _ = spawn_actor(() => worker(me, batch))
   Actor.receive()
 }
@@ -53,15 +54,15 @@ fn attempt(me: Pid[BatchResult], batch: [(Int, Int)])
 fn supervisor() : Unit / Console + Spawn + Cancel {
   with_mailbox {
     let me = Actor.self()
-    let first_batch  = [(10, 2), (20, 4), (30, 0)]   # will fail
+    let first_batch = [(10, 2), (20, 4), (30, 0)]  # will fail
     let second_batch = [(10, 2), (20, 4), (30, 5)]
     match attempt(me, first_batch) {
-      Done(total)     -> Stdout.print("supervisor: success on first try, total=#{total}")
-      Failed(reason)  -> {
+      Done(total) -> Stdout.print("supervisor: success on first try, total=#{total}")
+      Failed(reason) -> {
         Stdout.print("supervisor: first try failed (#{reason}), retrying")
         match attempt(me, second_batch) {
-          Done(total)     -> Stdout.print("supervisor: success on second try, total=#{total}")
-          Failed(reason)  -> Stdout.print("supervisor: second try failed too (#{reason}), giving up")
+          Done(total) -> Stdout.print("supervisor: success on second try, total=#{total}")
+          Failed(reason) -> Stdout.print("supervisor: second try failed too (#{reason}), giving up")
         }
       }
     }

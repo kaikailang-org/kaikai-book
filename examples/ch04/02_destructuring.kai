@@ -12,7 +12,7 @@ fn classify(p: Point) : String =
     Point { x: 0, y: 0 } -> "origin"
     Point { x: 0, y: _ } -> "Y axis"
     Point { x: _, y: 0 } -> "X axis"
-    Point { x, y }       -> "point at (#{x}, #{y})"
+    Point { x, y } -> "point at (#{x}, #{y})"
   }
 
 fn main() {

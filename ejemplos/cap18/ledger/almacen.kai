@@ -19,23 +19,24 @@ import cuadre
 # Protocolo del almacén: el comando más el Pid del que pide
 # la respuesta. El almacén lee `Pregunta`, calcula, manda de
 # vuelta `Respondido`.
-pub type AlmacenMsg  = Pregunta(dominio.Comando, Pid[AlmacenResp])
+pub type AlmacenMsg = Pregunta(dominio.Comando, Pid[AlmacenResp])
+
 pub type AlmacenResp = Respondido(dominio.Respuesta)
 
 # Estado del almacén: cuentas conocidas, transacciones
 # registradas, contadores de próximos IDs.
 pub type Estado = {
-  cuentas:        [dominio.Cuenta],
-  transacciones:  [dominio.Transaccion],
+  cuentas: [dominio.Cuenta],
+  transacciones: [dominio.Transaccion],
   proxima_cuenta: Int<CuentaId>,
-  proxima_tx:     Int<TransaccionId>,
+  proxima_tx: Int<TransaccionId>
 }
 
 pub fn estado_inicial() : Estado = Estado {
-  cuentas:        [],
-  transacciones:  [],
+  cuentas: [],
+  transacciones: [],
   proxima_cuenta: 1<CuentaId>,
-  proxima_tx:     1<TransaccionId>,
+  proxima_tx: 1<TransaccionId>
 }
 
 # Lógica pura. Recibe el comando y el estado actual, devuelve
@@ -43,38 +44,41 @@ pub fn estado_inicial() : Estado = Estado {
 pub fn procesar(c: dominio.Comando, s: Estado) : (dominio.Respuesta, Estado) = match c {
   CrearCuenta(nombre) -> {
     let nueva = dominio.Cuenta {
-      id:     s.proxima_cuenta,
+      id: s.proxima_cuenta,
       nombre: nombre,
-      saldo:  0.0<USD>,
+      saldo: 0.0<USD>
     }
     let s2 = Estado {
-      cuentas:        [nueva, ...s.cuentas],
-      transacciones:  s.transacciones,
+      cuentas: [nueva, ...s.cuentas],
+      transacciones: s.transacciones,
       proxima_cuenta: s.proxima_cuenta + 1<CuentaId>,
-      proxima_tx:     s.proxima_tx,
+      proxima_tx: s.proxima_tx
     }
     (dominio.CuentaCreada(nueva), s2)
   }
   Registrar(desc, movs) ->
     if not cuadre.cuadra(movs) {
-      (dominio.ErrorDescuadre(
-        "débitos #{cuadre.total_debitos(movs)}, créditos #{cuadre.total_creditos(movs)}"
-      ), s)
+      (
+        dominio.ErrorDescuadre(
+          "débitos #{cuadre.total_debitos(movs)}, créditos #{cuadre.total_creditos(movs)}"
+        ),
+        s
+      )
     } else {
       match verificar_cuentas(movs, s.cuentas) {
         Some(id_faltante) -> (dominio.ErrorCuentaInexistente(id_faltante), s)
         None -> {
           let tx = dominio.Transaccion {
-            id:          s.proxima_tx,
+            id: s.proxima_tx,
             descripcion: desc,
-            movimientos: movs,
+            movimientos: movs
           }
           let cuentas_nuevas = aplicar_movs(s.cuentas, movs)
           let s2 = Estado {
-            cuentas:        cuentas_nuevas,
-            transacciones:  [tx, ...s.transacciones],
+            cuentas: cuentas_nuevas,
+            transacciones: [tx, ...s.transacciones],
             proxima_cuenta: s.proxima_cuenta,
-            proxima_tx:     s.proxima_tx + 1<TransaccionId>,
+            proxima_tx: s.proxima_tx + 1<TransaccionId>
           }
           (dominio.TransaccionRegistrada(tx), s2)
         }
@@ -83,41 +87,42 @@ pub fn procesar(c: dominio.Comando, s: Estado) : (dominio.Respuesta, Estado) = m
   ConsultarSaldo(id_buscado) ->
     match buscar_cuenta(s.cuentas, id_buscado) {
       Some(c) -> (dominio.SaldoActual(c.saldo), s)
-      None    -> (dominio.ErrorCuentaInexistente(id_buscado), s)
+      None -> (dominio.ErrorCuentaInexistente(id_buscado), s)
     }
-  Listar ->
-    (dominio.ListaCuentas(s.cuentas), s)
+  Listar -> (dominio.ListaCuentas(s.cuentas), s)
 }
 
 # Verifica que cada cuenta mencionada en los movimientos
 # exista. Si falta una, devuelve su id; si todas existen, None.
-fn verificar_cuentas(ms: [dominio.Movimiento], cuentas: [dominio.Cuenta]) : Option[Int<CuentaId>] = match ms {
-  []           -> None
-  [m, ...rest] -> {
-    let id_buscado = id_de(m)
-    match buscar_cuenta(cuentas, id_buscado) {
-      None    -> Some(id_buscado)
-      Some(_) -> verificar_cuentas(rest, cuentas)
+fn verificar_cuentas(ms: [dominio.Movimiento], cuentas: [dominio.Cuenta]) : Option[Int<CuentaId>] =
+  match ms {
+    [] -> None
+    [m, ...rest] -> {
+      let id_buscado = id_de(m)
+      match buscar_cuenta(cuentas, id_buscado) {
+        None -> Some(id_buscado)
+        Some(_) -> verificar_cuentas(rest, cuentas)
+      }
     }
   }
-}
 
 fn id_de(m: dominio.Movimiento) : Int<CuentaId> = match m {
-  dominio.Debito(id_buscado, _)  -> id_buscado
+  dominio.Debito(id_buscado, _) -> id_buscado
   dominio.Credito(id_buscado, _) -> id_buscado
 }
 
-pub fn buscar_cuenta(cs: [dominio.Cuenta], id_buscado: Int<CuentaId>) : Option[dominio.Cuenta] = match cs {
-  []           -> None
-  [c, ...rest] -> if c.id == id_buscado { Some(c) } else { buscar_cuenta(rest, id_buscado) }
-}
+pub fn buscar_cuenta(cs: [dominio.Cuenta], id_buscado: Int<CuentaId>) : Option[dominio.Cuenta] =
+  match cs {
+    [] -> None
+    [c, ...rest] -> if c.id == id_buscado { Some(c) } else { buscar_cuenta(rest, id_buscado) }
+  }
 
 # Aplica los movimientos al saldo de cada cuenta. Los débitos
 # suman al saldo, los créditos restan. (Convención del demo;
 # en contabilidad real depende del tipo de cuenta — activo
 # vs pasivo — pero la idea es la misma.)
 fn aplicar_movs(cs: [dominio.Cuenta], ms: [dominio.Movimiento]) : [dominio.Cuenta] = match ms {
-  []           -> cs
+  [] -> cs
   [m, ...rest] -> aplicar_movs(aplicar_uno(cs, m), rest)
 }
 
@@ -128,8 +133,12 @@ fn aplicar_uno(cs: [dominio.Cuenta], m: dominio.Movimiento) : [dominio.Cuenta] {
   recorrer_cuentas(cs, id_buscado, delta)
 }
 
-fn recorrer_cuentas(cs: [dominio.Cuenta], id_buscado: Int<CuentaId>, delta: Real<USD>) : [dominio.Cuenta] = match cs {
-  []           -> []
+fn recorrer_cuentas(
+  cs: [dominio.Cuenta],
+  id_buscado: Int<CuentaId>,
+  delta: Real<USD>
+) : [dominio.Cuenta] = match cs {
+  [] -> []
   [c, ...rest] -> {
     let actualizada = if c.id == id_buscado {
       dominio.Cuenta { id: c.id, nombre: c.nombre, saldo: c.saldo + delta }
@@ -141,7 +150,7 @@ fn recorrer_cuentas(cs: [dominio.Cuenta], id_buscado: Int<CuentaId>, delta: Real
 }
 
 fn delta_de(m: dominio.Movimiento) : (Int<CuentaId>, Real<USD>) = match m {
-  dominio.Debito(id_buscado, n)  -> (id_buscado, n)
+  dominio.Debito(id_buscado, n) -> (id_buscado, n)
   dominio.Credito(id_buscado, n) -> (id_buscado, 0.0<USD> - n)
 }
 
@@ -163,7 +172,9 @@ pub fn almacen_loop(s: Estado) : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] {
 
 # Helper del lado del cliente. El que llama debe tener un
 # mailbox Actor[AlmacenResp] (la respuesta cae ahí).
-pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respuesta / Actor[AlmacenMsg] + Actor[AlmacenResp] {
+pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respuesta / Actor[
+  AlmacenMsg
+] + Actor[AlmacenResp] {
   Actor.send(almacen, Pregunta(c, Actor.self()))
   match Actor.receive() {
     Respondido(r) -> r
@@ -174,7 +185,7 @@ test "crear cuenta la agrega al estado" {
   let (r, s2) = procesar(dominio.CrearCuenta("caja"), estado_inicial())
   let ok = match r {
     dominio.CuentaCreada(c) -> c.nombre == "caja"
-    _                        -> false
+    _ -> false
   }
   assert ok
   assert list.length(s2.cuentas) == 1
@@ -182,16 +193,16 @@ test "crear cuenta la agrega al estado" {
 
 test "registrar transacción descuadrada falla" {
   let s = Estado {
-    cuentas:        [dominio.Cuenta { id: 1<CuentaId>, nombre: "a", saldo: 0.0<USD> }],
-    transacciones:  [],
+    cuentas: [dominio.Cuenta { id: 1<CuentaId>, nombre: "a", saldo: 0.0<USD> }],
+    transacciones: [],
     proxima_cuenta: 2<CuentaId>,
-    proxima_tx:     1<TransaccionId>,
+    proxima_tx: 1<TransaccionId>
   }
-  let movs = [dominio.Debito(1<CuentaId>, 100.0<USD>)]   # solo débito, no cuadra
+  let movs = [dominio.Debito(1<CuentaId>, 100.0<USD>)]  # solo débito, no cuadra
   let (r, _) = procesar(dominio.Registrar("test", movs), s)
   let ok = match r {
     dominio.ErrorDescuadre(_) -> true
-    _                          -> false
+    _ -> false
   }
   assert ok
 }
@@ -199,27 +210,27 @@ test "registrar transacción descuadrada falla" {
 test "registrar transacción que cuadra actualiza saldos" {
   let s = Estado {
     cuentas: [
-      dominio.Cuenta { id: 1<CuentaId>, nombre: "caja",   saldo: 0.0<USD> },
-      dominio.Cuenta { id: 2<CuentaId>, nombre: "ventas", saldo: 0.0<USD> },
+      dominio.Cuenta { id: 1<CuentaId>, nombre: "caja", saldo: 0.0<USD> },
+      dominio.Cuenta { id: 2<CuentaId>, nombre: "ventas", saldo: 0.0<USD> }
     ],
-    transacciones:  [],
+    transacciones: [],
     proxima_cuenta: 3<CuentaId>,
-    proxima_tx:     1<TransaccionId>,
+    proxima_tx: 1<TransaccionId>
   }
   let movs = [
-    dominio.Debito(1<CuentaId>, 50.0<USD>),     # +50 a caja
-    dominio.Credito(2<CuentaId>, 50.0<USD>),    # -50 a ventas
+    dominio.Debito(1<CuentaId>, 50.0<USD>),  # +50 a caja
+    dominio.Credito(2<CuentaId>, 50.0<USD>)  # -50 a ventas
   ]
   let (r, s2) = procesar(dominio.Registrar("venta", movs), s)
   let ok = match r {
     dominio.TransaccionRegistrada(_) -> true
-    _                                 -> false
+    _ -> false
   }
   assert ok
   let caja = buscar_cuenta(s2.cuentas, 1<CuentaId>)
   let saldo_caja = match caja {
     Some(c) -> c.saldo
-    None    -> 0.0<USD>
+    None -> 0.0<USD>
   }
   assert saldo_caja == 50.0<USD>
 }

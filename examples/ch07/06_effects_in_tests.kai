@@ -20,7 +20,9 @@ test "a test can call an extern C fn directly" {
 test "a user-declared effect is handled inside the body" {
   # `Clock` has no handler at the runner's entry: call it bare and
   # the test does not compile. It gets installed right here.
-  let t = handle { Clock.now() } with Clock {
+  let t = handle {
+    Clock.now()
+  } with Clock {
     now(resume) -> resume(1234)
   }
   assert t == 1234

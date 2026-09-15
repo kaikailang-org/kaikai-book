@@ -14,14 +14,18 @@ import dominio
 # Protocolo del almacén: un comando más el Pid del que pide la
 # respuesta. El almacén lee `Pregunta`, calcula, y manda de
 # vuelta `Respondido`.
-pub type AlmacenMsg  = Pregunta(dominio.Comando, Pid[AlmacenResp])
+pub type AlmacenMsg = Pregunta(dominio.Comando, Pid[AlmacenResp])
+
 pub type AlmacenResp = Respondido(dominio.Respuesta)
 
 # Pura: dado un comando y el estado, devuelve la respuesta, la
 # nueva lista de notas y el próximo id. Testeable sin arrancar
 # fibras.
-pub fn procesar(c: dominio.Comando, notas: [dominio.Nota], next_id: Int)
-    : (dominio.Respuesta, [dominio.Nota], Int) = {
+pub fn procesar(c: dominio.Comando, notas: [dominio.Nota], next_id: Int) : (
+  dominio.Respuesta,
+  [dominio.Nota],
+  Int
+) {
   match c {
     Listar -> {
       let cuerpos = list.map(notas, .cuerpo)
@@ -29,7 +33,7 @@ pub fn procesar(c: dominio.Comando, notas: [dominio.Nota], next_id: Int)
     }
     Obtener(id_buscado) -> match buscar_nota(notas, id_buscado) {
       Some(nota) -> (dominio.Guardado(nota.cuerpo), notas, next_id)
-      None       -> (dominio.NoEncontrado, notas, next_id)
+      None -> (dominio.NoEncontrado, notas, next_id)
     }
     Crear(cuerpo) -> {
       let nota = dominio.Nota { id: next_id, cuerpo: cuerpo }
@@ -37,7 +41,7 @@ pub fn procesar(c: dominio.Comando, notas: [dominio.Nota], next_id: Int)
     }
     Borrar(id_buscado) -> match buscar_nota(notas, id_buscado) {
       Some(_) -> {
-        let restantes = list.filter(notas, (nota) => nota.id != id_buscado)
+        let restantes = list.filter(notas, nota => nota.id != id_buscado)
         (dominio.Guardado("borrada"), restantes, next_id)
       }
       None -> (dominio.NoEncontrado, notas, next_id)
@@ -46,17 +50,17 @@ pub fn procesar(c: dominio.Comando, notas: [dominio.Nota], next_id: Int)
 }
 
 fn buscar_nota(notas: [dominio.Nota], id_buscado: Int) : Option[dominio.Nota] = match notas {
-  []           -> None
+  [] -> None
   [h, ...rest] -> if h.id == id_buscado { Some(h) } else { buscar_nota(rest, id_buscado) }
 }
 
 fn serializar_lista(cuerpos: [String]) : String = match cuerpos {
-  []           -> "[]"
+  [] -> "[]"
   [h, ...rest] -> "[" ++ h ++ unir_con_coma(rest) ++ "]"
 }
 
 fn unir_con_coma(xs: [String]) : String = match xs {
-  []           -> ""
+  [] -> ""
   [h, ...rest] -> ", " ++ h ++ unir_con_coma(rest)
 }
 
@@ -66,7 +70,9 @@ fn unir_con_coma(xs: [String]) : String = match xs {
 # (el mailbox propio del actor, instalado por spawn_actor) como
 # Actor[AlmacenResp] (usado solo por `Actor.send` — el mailbox
 # es propiedad de la fibra que llama).
-pub fn almacen_loop(notas: [dominio.Nota], next_id: Int) : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] {
+pub fn almacen_loop(notas: [dominio.Nota], next_id: Int) : Unit / Actor[AlmacenMsg] + Actor[
+  AlmacenResp
+] {
   match Actor.receive() {
     Pregunta(comando, cliente) -> {
       let (resp, notas_nuevas, id_nuevo) = procesar(comando, notas, next_id)
@@ -78,7 +84,9 @@ pub fn almacen_loop(notas: [dominio.Nota], next_id: Int) : Unit / Actor[AlmacenM
 
 # Helper del lado del cliente. El que llama debe tener un
 # mailbox Actor[AlmacenResp] (la respuesta cae ahí).
-pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respuesta / Actor[AlmacenMsg] + Actor[AlmacenResp] {
+pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respuesta / Actor[
+  AlmacenMsg
+] + Actor[AlmacenResp] {
   Actor.send(almacen, Pregunta(c, Actor.self()))
   match Actor.receive() {
     Respondido(r) -> r
@@ -89,7 +97,7 @@ test "crear y obtener" {
   let (r1, n1, id1) = procesar(dominio.Crear("primera"), [], 1)
   let creado_ok = match r1 {
     dominio.Creado(_) -> true
-    _                  -> false
+    _ -> false
   }
   assert creado_ok
   assert id1 == 2
@@ -97,7 +105,7 @@ test "crear y obtener" {
   let (r2, _, _) = procesar(dominio.Obtener(1), n1, id1)
   let obtener_ok = match r2 {
     dominio.Guardado(c) -> c == "primera"
-    _                    -> false
+    _ -> false
   }
   assert obtener_ok
 }
@@ -106,7 +114,7 @@ test "obtener nota inexistente" {
   let (r, _, _) = procesar(dominio.Obtener(99), [], 1)
   let ok = match r {
     dominio.NoEncontrado -> true
-    _                     -> false
+    _ -> false
   }
   assert ok
 }
@@ -114,10 +122,10 @@ test "obtener nota inexistente" {
 test "borrar reduce la lista" {
   let (_, n1, id1) = procesar(dominio.Crear("a"), [], 1)
   let (_, n2, id2) = procesar(dominio.Crear("b"), n1, id1)
-  let (r, n3, _)   = procesar(dominio.Borrar(1), n2, id2)
+  let (r, n3, _) = procesar(dominio.Borrar(1), n2, id2)
   let ok = match r {
     dominio.Guardado(_) -> true
-    _                    -> false
+    _ -> false
   }
   assert ok
   assert list.length(n3) == 1

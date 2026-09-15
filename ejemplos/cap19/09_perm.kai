@@ -6,7 +6,7 @@
 # Solo necesita <read>: acepta también un <read + write>.
 fn primera_linea(h: FileHandle<read>) : String / File =
   match File.read_chunk(h, 64) {
-    Ok(s)  -> s
+    Ok(s) -> s
     Err(e) -> e
   }
 

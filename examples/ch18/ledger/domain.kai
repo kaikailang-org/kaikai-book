@@ -15,13 +15,14 @@ pub unit USD
 # Branded identifiers so the compiler won't let you pass a
 # AccountId where a TransactionId is expected.
 pub unit AccountId
+
 pub unit TransactionId
 
 #[derive(Show)]
 pub type Account = {
-  id:      Int<AccountId>,
-  name:    String,
-  balance: Real<USD>,        # accumulated balance of the account
+  id: Int<AccountId>,
+  name: String,
+  balance: Real<USD>  # accumulated balance of the account
 }
 
 # A movement is one line of a transaction: an account and an
@@ -30,21 +31,21 @@ pub type Account = {
 # us add "debit amount" with "credit amount".
 #[derive(Show)]
 pub type Movement
-  = Debit(Int<AccountId>, Real<USD>)     # charge to the account
-  | Credit(Int<AccountId>, Real<USD>)    # credit to the account
+  = Debit(Int<AccountId>, Real<USD>)  # charge to the account
+  | Credit(Int<AccountId>, Real<USD>)  # credit to the account
 
 #[derive(Show)]
 pub type Transaction = {
-  id:           Int<TransactionId>,
-  description:  String,
-  movements:    [Movement],
+  id: Int<TransactionId>,
+  description: String,
+  movements: [Movement]
 }
 
 # Commands the ledger accepts. Create an account, register a
 # transaction, query an account balance, list accounts.
 pub type Command
-  = CreateAccount(String)                            # name of new account
-  | Register(String, [Movement])                     # description + movs
+  = CreateAccount(String)  # name of new account
+  | Register(String, [Movement])  # description + movs
   | QueryBalance(Int<AccountId>)
   | ListAccounts
 
@@ -55,6 +56,6 @@ pub type Response
   | TransactionRegistered(Transaction)
   | CurrentBalance(Real<USD>)
   | Accounts([Account])
-  | UnbalancedError(String)              # movements don't balance
+  | UnbalancedError(String)  # movements don't balance
   | UnknownAccount(Int<AccountId>)
   | InvalidAmount(String)

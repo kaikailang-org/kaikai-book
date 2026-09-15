@@ -6,8 +6,8 @@ type Tree
   | Node(Int, Tree, Tree)
 
 fn height(t: Tree) : Int {
-  case Leaf            -> 0
-  case Node(_, l, r)   -> 1 + max_int(height(l), height(r))
+  case Leaf -> 0
+  case Node(_, l, r) -> 1 + max_int(height(l), height(r))
 }
 
 fn max_int(a: Int, b: Int) : Int =
@@ -22,10 +22,10 @@ type Expr
 
 fn eval(e: Expr) : Int =
   match e {
-    Lit(n)     -> n
-    Add(a, b)  -> eval(a) + eval(b)
-    Mul(a, b)  -> eval(a) * eval(b)
-    Neg(x)     -> -eval(x)
+    Lit(n) -> n
+    Add(a, b) -> eval(a) + eval(b)
+    Mul(a, b) -> eval(a) * eval(b)
+    Neg(x) -> -eval(x)
   }
 
 fn main() {

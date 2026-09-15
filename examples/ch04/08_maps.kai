@@ -15,11 +15,11 @@ fn word_frequencies(words: [String]) : hashmap.HashMap[String, Int] / Mutable {
 }
 
 fn count(m: hashmap.HashMap[String, Int], words: [String]) : Unit / Mutable = match words {
-  []           -> ()
+  [] -> ()
   [w, ...rest] -> {
     let current = match m[w] {
       Some(n) -> n
-      None    -> 0
+      None -> 0
     }
     hashmap.put(m, w, current + 1)
     count(m, rest)
@@ -33,7 +33,7 @@ fn main() : Unit / Stdout + Mutable {
   # Indexing m[key]: returns an Option, None when the key is absent.
   match m["sun"] {
     Some(n) -> Stdout.print("sun appears #{n} times")
-    None    -> Stdout.print("sun does not appear")
+    None -> Stdout.print("sun does not appear")
   }
   Stdout.print("distinct words: #{hashmap.size(m)}")
 
@@ -44,6 +44,9 @@ fn main() : Unit / Stdout + Mutable {
 }
 
 fn mark(s: hashset.HashSet[String], words: [String]) : Unit / Mutable = match words {
-  []           -> ()
-  [w, ...rest] -> { hashset.add(s, w); mark(s, rest) }
+  [] -> ()
+  [w, ...rest] -> {
+    hashset.add(s, w)
+    mark(s, rest)
+  }
 }

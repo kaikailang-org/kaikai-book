@@ -14,14 +14,14 @@ effect State[T] {
 
 fn sum(xs: [Int]) : Int {
   handle {
-    list.foreach(xs, (x) => State.set(State.get() + x))
+    list.foreach(xs, x => State.set(State.get() + x))
     State.get()
   } with State[Int](0) {
-    get(resume)    -> resume(state)         # return the state, unchanged
-    set(v, resume) -> resume((), v)         # return (), state becomes v
-    return(x)      -> x                      # drop the final state
+    get(resume) -> resume(state)  # return the state, unchanged
+    set(v, resume) -> resume((), v)  # return (), state becomes v
+    return(x) -> x
   }
-}
+}  # drop the final state
 
 fn main() : Unit / Stdout {
   println("sum([1,2,3,4,5]) = #{sum([1,2,3,4,5])}")

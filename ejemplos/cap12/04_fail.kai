@@ -22,12 +22,12 @@ fn dividir(a: Int, b: Int) : Int / Fail {
 fn main() : Unit / Stdout {
   let r = handle {
     let x = dividir(10, 2)
-    let y = dividir(20, 0)        # acá `Fail.fail` se invoca
-    x + y                          # nunca se evalúa
+    let y = dividir(20, 0)  # acá `Fail.fail` se invoca
+    x + y  # nunca se evalúa
   } with Fail {
     fail(motivo, resume) -> {
       println("falló: " ++ motivo)
-      0                            # valor de reemplazo
+      0  # valor de reemplazo
     }
   }
   println("resultado: #{r}")

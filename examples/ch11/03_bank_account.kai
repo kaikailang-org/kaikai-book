@@ -3,25 +3,25 @@
 
 type Account = {
   holder: String,
-  balance: Int,
+  balance: Int
 }
 
 fn open(holder: String, initial_deposit: Int) : Account
   requires initial_deposit >= 0
-  ensures  result.balance == initial_deposit
+  ensures result.balance == initial_deposit
 =
   Account { holder: holder, balance: initial_deposit }
 
 fn deposit(c: Account, amount: Int) : Account
   requires amount > 0
-  ensures  result.balance == c.balance + amount
+  ensures result.balance == c.balance + amount
 =
   Account { ...c, balance: c.balance + amount }
 
 fn withdraw(c: Account, amount: Int) : Account
   requires amount > 0
   requires c.balance >= amount
-  ensures  result.balance == c.balance - amount
+  ensures result.balance == c.balance - amount
 =
   Account { ...c, balance: c.balance - amount }
 

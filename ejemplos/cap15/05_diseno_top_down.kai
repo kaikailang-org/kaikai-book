@@ -24,9 +24,9 @@ fn parsear(ts: [Token]) : Expr = ?ast
 # Pieza 3: evaluar (completa).
 fn evaluar(e: Expr) : Int {
   match e {
-    Lit(n)        -> n
-    Suma(a, b)    -> evaluar(a) + evaluar(b)
-    Mul(a, b)     -> evaluar(a) * evaluar(b)
+    Lit(n) -> n
+    Suma(a, b) -> evaluar(a) + evaluar(b)
+    Mul(a, b) -> evaluar(a) * evaluar(b)
   }
 }
 

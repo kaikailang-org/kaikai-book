@@ -15,7 +15,7 @@ effect State[T] {
 # cada paso. La firma lo declara con `Log + State[Int]`.
 
 fn acumular(xs: [Int]) : Int / Log + State[Int] {
-  list.foreach(xs, (x) => {
+  list.foreach(xs, x => {
     Log.log("sumando #{x}")
     State.set(State.get() + x)
   })
@@ -27,9 +27,9 @@ fn main() : Unit / Stdout {
     handle {
       acumular([10, 20, 30])
     } with State[Int](0) {
-      get(resume)    -> resume(state)
+      get(resume) -> resume(state)
       set(v, resume) -> resume((), v)
-      return(x)      -> x
+      return(x) -> x
     }
   } with Log {
     log(msg, resume) -> {

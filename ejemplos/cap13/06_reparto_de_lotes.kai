@@ -15,7 +15,7 @@ import core.list
 
 fn procesar_lote(id: Int, lote: [String]) : [String] / Spawn =
   match lote {
-    []           -> []
+    [] -> []
     [t, ...rest] -> {
       spawn.yield()
       ["worker #{id}: #{t}", ...procesar_lote(id, rest)]
@@ -24,8 +24,11 @@ fn procesar_lote(id: Int, lote: [String]) : [String] / Spawn =
 
 fn imprimir(xs: [String]) : Unit / Stdout =
   match xs {
-    []           -> ()
-    [x, ...rest] -> { println(x) imprimir(rest) }
+    [] -> ()
+    [x, ...rest] -> {
+      println(x)
+      imprimir(rest)
+    }
   }
 
 fn main() : Unit / Stdout + Spawn + Cancel {

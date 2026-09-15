@@ -13,11 +13,14 @@ pub type ReqHttp = { metodo: String, path: String, cuerpo: String }
 # acepta `NetTcp`. Inline para que toda la cadena quepa en la
 # cabeza del lector, sin depender de `net.http`.
 fn string_to_bytes_loop(s: String, i: Int, n: Int, acc: [Int]) : [Int] =
-  if i >= n { list_reverse(acc) }
-  else { match char_at(s, i) {
-    Some(c) -> string_to_bytes_loop(s, i + 1, n, [char_to_int(c), ...acc])
-    None    -> list_reverse(acc)
-  } }
+  if i >= n {
+    list_reverse(acc)
+  } else {
+    match char_at(s, i) {
+      Some(c) -> string_to_bytes_loop(s, i + 1, n, [char_to_int(c), ...acc])
+      None -> list_reverse(acc)
+    }
+  }
 
 pub fn string_to_bytes(s: String) : [Int] =
   string_to_bytes_loop(s, 0, string_length(s), [])
@@ -33,7 +36,7 @@ pub fn parsear_request(raw: String) : Result[ReqHttp, String] {
       let cuerpo = string.join(cuerpo_partes, "\r\n\r\n")
       match string.split(head, "\r\n") {
         [primera, ..._] -> parsear_primera_linea(primera, cuerpo)
-        []              -> Err("request vacío")
+        [] -> Err("request vacío")
       }
     }
     _ -> Err("request sin separador de headers")
@@ -43,7 +46,7 @@ pub fn parsear_request(raw: String) : Result[ReqHttp, String] {
 fn parsear_primera_linea(linea: String, cuerpo: String) : Result[ReqHttp, String] {
   match string.split(linea, " ") {
     [metodo, path, ..._] -> Ok(ReqHttp { metodo: metodo, path: path, cuerpo: cuerpo })
-    _                     -> Err("primera línea mal formada: '#{linea}'")
+    _ -> Err("primera línea mal formada: '#{linea}'")
   }
 }
 
@@ -54,7 +57,7 @@ pub fn enrutar(req: ReqHttp) : Result[dominio.Comando, dominio.Respuesta] {
     if req.path == "/notas" {
       Ok(dominio.Listar)
     } else {
-      enrutar_id(req.path, (n) => dominio.Obtener(n))
+      enrutar_id(req.path, n => dominio.Obtener(n))
     }
   } else if req.metodo == "POST" {
     if req.path == "/notas" {
@@ -63,20 +66,23 @@ pub fn enrutar(req: ReqHttp) : Result[dominio.Comando, dominio.Respuesta] {
       Err(dominio.NoEncontrado)
     }
   } else if req.metodo == "DELETE" {
-    enrutar_id(req.path, (n) => dominio.Borrar(n))
+    enrutar_id(req.path, n => dominio.Borrar(n))
   } else {
     Err(dominio.NoEncontrado)
   }
 }
 
-fn enrutar_id(path: String, f: (Int) -> dominio.Comando) : Result[dominio.Comando, dominio.Respuesta] {
+fn enrutar_id(path: String, f: (Int) -> dominio.Comando) : Result[
+  dominio.Comando,
+  dominio.Respuesta
+] {
   # `drop_prefix` del stdlib fusiona el chequeo con el corte: None
   # si el path no empieza con el prefijo, el resto si sí.
   match string.drop_prefix(path, "/notas/") {
-    None         -> Err(dominio.NoEncontrado)
+    None -> Err(dominio.NoEncontrado)
     Some(sufijo) -> match string.to_int(sufijo) {
       Some(n) -> Ok(f(n))
-      None    -> Err(dominio.ErrorCliente("id inválido en path: '#{path}'"))
+      None -> Err(dominio.ErrorCliente("id inválido en path: '#{path}'"))
     }
   }
 }
@@ -84,9 +90,9 @@ fn enrutar_id(path: String, f: (Int) -> dominio.Comando) : Result[dominio.Comand
 # Serializa una Respuesta de dominio a bytes HTTP.
 pub fn serializar_respuesta(r: dominio.Respuesta) : String = match r {
   dominio.Guardado(cuerpo) -> respuesta(200, "OK", cuerpo)
-  dominio.Creado(nota)     -> respuesta(201, "Created", "#{nota}")
-  dominio.NoEncontrado     -> respuesta(404, "Not Found", "")
-  dominio.ErrorCliente(m)  -> respuesta(400, "Bad Request", m)
+  dominio.Creado(nota) -> respuesta(201, "Created", "#{nota}")
+  dominio.NoEncontrado -> respuesta(404, "Not Found", "")
+  dominio.ErrorCliente(m) -> respuesta(400, "Bad Request", m)
   dominio.ErrorServidor(m) -> respuesta(500, "Internal Error", m)
 }
 
@@ -98,7 +104,7 @@ fn respuesta(status: Int, razon: String, cuerpo: String) : String {
 test "parsear GET /notas" {
   let raw = "GET /notas HTTP/1.1\r\nHost: x\r\n\r\n"
   let ok = match parsear_request(raw) {
-    Ok(r)  -> r.metodo == "GET" and r.path == "/notas"
+    Ok(r) -> r.metodo == "GET" and r.path == "/notas"
     Err(_) -> false
   }
   assert ok
@@ -108,7 +114,7 @@ test "enrutar POST /notas" {
   let req = ReqHttp { metodo: "POST", path: "/notas", cuerpo: "hola" }
   let ok = match enrutar(req) {
     Ok(dominio.Crear(c)) -> c == "hola"
-    _                     -> false
+    _ -> false
   }
   assert ok
 }

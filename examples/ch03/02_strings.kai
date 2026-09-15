@@ -2,7 +2,7 @@
 
 fn main() {
   let name = "kaikai"
-  let age  = 1
+  let age = 1
 
   # Interpolation with #{...}
   println("Hello, #{name}. The language is #{age} year old.")

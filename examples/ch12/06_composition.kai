@@ -16,7 +16,7 @@ effect State[T] {
 # `Log + State[Int]`.
 
 fn accumulate(xs: [Int]) : Int / Log + State[Int] {
-  list.foreach(xs, (x) => {
+  list.foreach(xs, x => {
     Log.log("adding #{x}")
     State.set(State.get() + x)
   })
@@ -28,9 +28,9 @@ fn main() : Unit / Stdout {
     handle {
       accumulate([10, 20, 30])
     } with State[Int](0) {
-      get(resume)    -> resume(state)
+      get(resume) -> resume(state)
       set(v, resume) -> resume((), v)
-      return(x)      -> x
+      return(x) -> x
     }
   } with Log {
     log(msg, resume) -> {

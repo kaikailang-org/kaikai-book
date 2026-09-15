@@ -10,8 +10,8 @@ type Shape
 
 fn area(s: Shape) : Real =
   match s {
-    Circle(r)        -> 3.14159 * r * r
-    Rectangle(w, h)  -> w * h
+    Circle(r) -> 3.14159 * r * r
+    Rectangle(w, h) -> w * h
     Triangle(a, b, c) -> {
       let s = (a + b + c) / 2.0
       s
@@ -20,9 +20,9 @@ fn area(s: Shape) : Real =
 
 fn name(c: Color) : String =
   match c {
-    Red   -> "red"
+    Red -> "red"
     Green -> "green"
-    Blue  -> "blue"
+    Blue -> "blue"
   }
 
 fn main() {

@@ -1,11 +1,14 @@
 # One kind per unit system: habitants of different kinds never
 # unify, even when both measure length.
 
-kind Metric   : AbelianGroup with metric
+kind Metric : AbelianGroup with metric
+
 kind Imperial : AbelianGroup with imperial
 
 metric m
+
 metric s
+
 imperial ft
 
 fn speed(d: Real<m>, t: Real<s>) : Real<m/s> = d / t

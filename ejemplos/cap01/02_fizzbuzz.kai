@@ -19,17 +19,22 @@ type Tag
   | Other(Int)
 
 fn classify(n: Int) : Tag {
-  if n % 15 == 0     { Both }
-  else if n % 3 == 0 { Fizz }
-  else if n % 5 == 0 { Buzz }
-  else               { Other(n) }
+  if n % 15 == 0 {
+    Both
+  } else if n % 3 == 0 {
+    Fizz
+  } else if n % 5 == 0 {
+    Buzz
+  } else {
+    Other(n)
+  }
 }
 
 fn label(c: Tag) : String {
   match c {
-    Both     -> "FizzBuzz"
-    Fizz     -> "Fizz"
-    Buzz     -> "Buzz"
+    Both -> "FizzBuzz"
+    Fizz -> "Fizz"
+    Buzz -> "Buzz"
     Other(n) -> "#{n}"
   }
 }

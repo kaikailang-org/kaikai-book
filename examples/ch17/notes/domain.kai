@@ -22,8 +22,8 @@ pub type Command
 # `Stored` arm is named (rather than `Ok`) so the chapter's
 # pattern matches do not shadow `Result.Ok`.
 pub type Reply
-  = Stored(String)                  # 200, body = String
-  | Created(Note)                   # 201, body = serialized note
-  | NotFound                        # 404
-  | ClientError(String)             # 400
-  | ServerError(String)             # 500
+  = Stored(String)  # 200, body = String
+  | Created(Note)  # 201, body = serialized note
+  | NotFound  # 404
+  | ClientError(String)  # 400
+  | ServerError(String)  # 500

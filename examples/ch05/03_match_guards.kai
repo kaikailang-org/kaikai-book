@@ -2,9 +2,9 @@
 
 fn sign(n: Int) : String =
   match n {
-    0           -> "zero"
-    k if k > 0  -> "positive"
-    _           -> "negative"
+    0 -> "zero"
+    k if k > 0 -> "positive"
+    _ -> "negative"
   }
 
 # Guards with bindings and patterns
@@ -12,12 +12,19 @@ type Point = { x: Int, y: Int }
 
 fn quadrant(p: Point) : String {
   let Point { x, y } = p
-  if x == 0 and y == 0 { "origin" }
-  else if x > 0 and y > 0 { "I" }
-  else if x < 0 and y > 0 { "II" }
-  else if x < 0 and y < 0 { "III" }
-  else if x > 0 and y < 0 { "IV" }
-  else { "on an axis" }
+  if x == 0 and y == 0 {
+    "origin"
+  } else if x > 0 and y > 0 {
+    "I"
+  } else if x < 0 and y > 0 {
+    "II"
+  } else if x < 0 and y < 0 {
+    "III"
+  } else if x > 0 and y < 0 {
+    "IV"
+  } else {
+    "on an axis"
+  }
 }
 
 fn main() {

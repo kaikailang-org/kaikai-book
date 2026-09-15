@@ -20,18 +20,18 @@ fn main() {
         add(a, b, target)
         println("target = #{target.get()}")
       } with Cell(0) as target {
-        get(resume)    -> resume(state)
+        get(resume) -> resume(state)
         set(v, resume) -> resume((), v)
-        return(x)      -> x
+        return(x) -> x
       }
     } with Cell(20) as b {
-      get(resume)    -> resume(state)
+      get(resume) -> resume(state)
       set(v, resume) -> resume((), v)
-      return(x)      -> x
+      return(x) -> x
     }
   } with Cell(10) as a {
-    get(resume)    -> resume(state)
+    get(resume) -> resume(state)
     set(v, resume) -> resume((), v)
-    return(x)      -> x
+    return(x) -> x
   }
 }

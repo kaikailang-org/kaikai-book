@@ -8,6 +8,7 @@
 # donde no.
 
 type NoNeg = Int where self >= 0
+
 type Probabilidad = Real where self >= 0.0 and self <= 1.0
 
 fn doblar(n: NoNeg) : NoNeg = n + n

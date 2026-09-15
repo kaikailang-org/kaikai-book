@@ -2,6 +2,7 @@
 # verifica en aritmética y desaparecen en runtime.
 
 unit USD
+
 unit EUR
 
 fn main() {

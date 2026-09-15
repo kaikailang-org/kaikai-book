@@ -5,15 +5,17 @@
 # verifica que la aritmética sea dimensionalmente consistente.
 
 unit m
+
 unit sec
+
 unit kg
 
 fn main() {
-  let velocidad: Real<m / sec> = 9.81<m / sec>
+  let velocidad: Real<m / sec> = 9.81<m/sec>
   println("v = #{velocidad}")
 
   # Unidad compuesta: aceleración.
-  let g: Real<m / sec^2> = 9.81<m / sec^2>
+  let g: Real<m / sec^2> = 9.81<m/sec^2>
   println("g = #{g}")
 
   # Producto de unidades: F = m * a tiene unidad kg*m/sec^2.

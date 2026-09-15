@@ -13,7 +13,7 @@ fn clasificar(p: Punto) : String =
     Punto { x: 0, y: 0 } -> "origen"
     Punto { x: 0, y: _ } -> "eje Y"
     Punto { x: _, y: 0 } -> "eje X"
-    Punto { x, y }       -> "punto en (#{x}, #{y})"
+    Punto { x, y } -> "punto en (#{x}, #{y})"
   }
 
 fn main() {

@@ -4,7 +4,8 @@
 # and "composing existing types".
 
 type IdentityError = AccountNotFound | KycExpired | Frozen
-type AuthError     = InsufficientBalance | OverDailyLimit
+
+type AuthError = InsufficientBalance | OverDailyLimit
 
 # Union of two already-declared types.
 type QueryError = IdentityError | AuthError
@@ -12,21 +13,21 @@ type QueryError = IdentityError | AuthError
 fn id_str(e: IdentityError) : String =
   match e {
     AccountNotFound -> "account not found"
-    KycExpired      -> "KYC expired"
-    Frozen          -> "frozen account"
+    KycExpired -> "KYC expired"
+    Frozen -> "frozen account"
   }
 
 fn auth_str(e: AuthError) : String =
   match e {
     InsufficientBalance -> "insufficient balance"
-    OverDailyLimit      -> "over daily limit"
+    OverDailyLimit -> "over daily limit"
   }
 
 # Match with narrowing: each component delegates to its handler.
 fn describe(e: QueryError) : String =
   match e {
     ie : IdentityError -> "id: " ++ id_str(ie)
-    ae : AuthError     -> "auth: " ++ auth_str(ae)
+    ae : AuthError -> "auth: " ++ auth_str(ae)
   }
 
 fn main() {

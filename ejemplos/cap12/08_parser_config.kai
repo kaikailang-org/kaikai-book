@@ -28,14 +28,14 @@ type Entrada = { clave: String, valor: String }
 fn parsear(linea: String) : Entrada / Fail {
   match string.split(linea, "=") {
     [c, v] -> Entrada { clave: c, valor: v }
-    _      -> Fail.fail("línea inválida: '#{linea}'")
+    _ -> Fail.fail("línea inválida: '#{linea}'")
   }
 }
 
 # Procesa una lista de líneas: parsea, registra cada una, y
 # lleva la cuenta vía State. Falla si alguna no parsea.
 fn procesar(lineas: [String]) : Int / Log + State[Int] + Fail {
-  list.foreach(lineas, (l) => {
+  list.foreach(lineas, l => {
     let e = parsear(l)
     Log.log("#{e.clave} = #{e.valor}")
     State.set(State.get() + 1)
@@ -49,9 +49,9 @@ fn main() : Unit / Stdout {
       handle {
         procesar(["nombre=ada", "edad=42", "rol=admin"])
       } with State[Int](0) {
-        get(resume)    -> resume(state)
+        get(resume) -> resume(state)
         set(v, resume) -> resume((), v)
-        return(x)      -> x
+        return(x) -> x
       }
     } with Log {
       log(msg, resume) -> {

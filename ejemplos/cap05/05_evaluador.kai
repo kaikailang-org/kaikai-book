@@ -31,41 +31,48 @@ type ErrorEval = ErrorAritmetico | ErrorAmbiente
 type Env = [(String, Real)]
 
 fn lookup(env: Env, nombre: String) : Result[Real, ErrorEval] {
-  case [], _                          -> Err(NoDefinida(nombre))
-  case [(k, v), ...], n when k == n   -> Ok(v)
-  case [_, ...resto], n               -> lookup(resto, n)
+  case [], _ -> Err(NoDefinida(nombre))
+  case [(k, v), ...], n when k == n -> Ok(v)
+  case [_, ...resto], n -> lookup(resto, n)
 }
 
 # Aproximación entera de raíz cuadrada (para no depender de
 # math.sqrt). Solo para Reales >= 0.
+# El caso negativo lo protege el caller con `requires`.
 fn raiz(x: Real) : Real =
-  if x < 0.0 { 0.0 }      # protegido por el caller con `requires`
-  else { raiz_loop(x, x / 2.0 + 1.0, 20) }
+  if x < 0.0 {
+    0.0
+  } else {
+    raiz_loop(x, x / 2.0 + 1.0, 20)
+  }
 
 fn raiz_loop(x: Real, guess: Real, fuel: Int) : Real =
-  if fuel <= 0 { guess }
-  else { raiz_loop(x, (guess + x / guess) / 2.0, fuel - 1) }
+  if fuel <= 0 {
+    guess
+  } else {
+    raiz_loop(x, (guess + x / guess) / 2.0, fuel - 1)
+  }
 
 fn eval(env: Env, e: Expr) : Result[Real, ErrorEval] =
   match e {
-    Lit(n)      -> Ok(n)
+    Lit(n) -> Ok(n)
     Var(nombre) -> lookup(env, nombre)
-    Suma(a, b)  -> {
+    Suma(a, b) -> {
       let va = eval(env, a)!
       let vb = eval(env, b)!
       Ok(va + vb)
     }
-    Mul(a, b)   -> {
+    Mul(a, b) -> {
       let va = eval(env, a)!
       let vb = eval(env, b)!
       Ok(va * vb)
     }
-    Div(a, b)   -> {
+    Div(a, b) -> {
       let va = eval(env, a)!
       let vb = eval(env, b)!
       if vb == 0.0 { Err(DivCero) } else { Ok(va / vb) }
     }
-    Raiz(x)     -> {
+    Raiz(x) -> {
       let v = eval(env, x)!
       if v < 0.0 { Err(RaizNegativa(v)) } else { Ok(raiz(v)) }
     }
@@ -73,14 +80,14 @@ fn eval(env: Env, e: Expr) : Result[Real, ErrorEval] =
 
 fn describir(e: ErrorEval) : String =
   match e {
-    DivCero            -> "división por cero"
-    RaizNegativa(v)    -> "raíz de número negativo (#{v})"
+    DivCero -> "división por cero"
+    RaizNegativa(v) -> "raíz de número negativo (#{v})"
     NoDefinida(nombre) -> "variable no definida: " ++ nombre
   }
 
 fn imprimir(r: Result[Real, ErrorEval]) : Unit / Stdout =
   match r {
-    Ok(v)  -> println("ok: #{v}")
+    Ok(v) -> println("ok: #{v}")
     Err(e) -> println("error: " ++ describir(e))
   }
 

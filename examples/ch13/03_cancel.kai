@@ -48,14 +48,16 @@ fn main() : Unit / Stdout + Spawn + Cancel {
   nursery { n ->
     n.spawn(() => long_worker("A"))
     n.spawn(() => long_worker("B"))
-    let r = n.spawn(() => handle {
-      quit(0)
-    } with Fail {
-      fail(reason, resume) -> {
-        println("the fiber gives up: #{reason}")
-        Cancel.raise()
+    let r = n.spawn(
+      () => handle {
+        quit(0)
+      } with Fail {
+        fail(reason, resume) -> {
+          println("the fiber gives up: #{reason}")
+          Cancel.raise()
+        }
       }
-    })
+    )
     n.await(r)
   }
 }

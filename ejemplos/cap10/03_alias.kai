@@ -4,12 +4,15 @@
 # de la unidad de fuerza. Lo usas como cualquier unidad básica.
 
 unit m
+
 unit sec
+
 unit kg
-unit Newton = kg * m / sec^2
+
+unit Newton = kg*m/sec^2
 
 fn main() {
-  let g: Real<m / sec^2> = 9.81<m / sec^2>
+  let g: Real<m / sec^2> = 9.81<m/sec^2>
   let masa: Real<kg> = 70.0<kg>
   let fuerza: Real<Newton> = masa * g
   println("F = #{fuerza}")

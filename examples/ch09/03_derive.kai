@@ -8,13 +8,13 @@
 #[derive(Show)]
 type Person = {
   name: String,
-  age: Int,
+  age: Int
 }
 
 #[derive(Show, Eq)]
 type Point = {
   x: Int,
-  y: Int,
+  y: Int
 }
 
 fn main() {
@@ -30,6 +30,6 @@ fn main() {
 
   let pq_eq = eq(p, q)
   let pr_eq = eq(p, r)
-  println("p == q: #{pq_eq}")    # true
-  println("p == r: #{pr_eq}")    # false
+  println("p == q: #{pq_eq}")  # true
+  println("p == r: #{pr_eq}")  # false
 }

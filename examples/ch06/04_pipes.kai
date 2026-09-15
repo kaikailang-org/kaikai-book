@@ -1,6 +1,7 @@
 # Four pipe operators: `|>`, `|`, `||`, `|?`.
 
 fn double(n: Int) : Int = n * 2
+
 fn is_even(n: Int) : Bool = n % 2 == 0
 
 # `|>` — apply: LHS is the first arg of the call on the right.

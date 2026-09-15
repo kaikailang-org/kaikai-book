@@ -11,7 +11,7 @@ fn main() {
 
   # En el borde del ancho, la suma envuelve: no hay promoción.
   let tope = 2147483647i32 + 1i32
-  println("tope = #{tope}")               # -2147483648
+  println("tope = #{tope}")  # -2147483648
 
   # Int128 alcanza donde Int (64 bits) ya no llega.
   let grande: Int128 = 9223372036854775808i128

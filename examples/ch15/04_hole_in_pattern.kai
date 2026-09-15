@@ -10,9 +10,9 @@ type Shape
 
 fn area(s: Shape) : Real {
   match s {
-    Circle(r)        -> 3.14 * r * r
-    Square(l)        -> l * l
-    Triangle(b, h)   -> ?triangle_formula
+    Circle(r) -> 3.14 * r * r
+    Square(l) -> l * l
+    Triangle(b, h) -> ?triangle_formula
   }
 }
 

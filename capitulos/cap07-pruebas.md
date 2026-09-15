@@ -587,24 +587,24 @@ nada lo hubiera notado de verdad.
 La corrida entera cabe en pantalla:
 
 ```
-killed    ejemplos/cap07/05_evaluador_pruebas.kai:41  negate
-killed    ejemplos/cap07/05_evaluador_pruebas.kai:41  literal
-SURVIVED  ejemplos/cap07/05_evaluador_pruebas.kai:49  literal
-SURVIVED  ejemplos/cap07/05_evaluador_pruebas.kai:55  literal
-killed    ejemplos/cap07/05_evaluador_pruebas.kai:56  literal
+killed    ejemplos/cap07/05_evaluador_pruebas.kai:42  negate
+killed    ejemplos/cap07/05_evaluador_pruebas.kai:42  literal
+SURVIVED  ejemplos/cap07/05_evaluador_pruebas.kai:50  literal
+SURVIVED  ejemplos/cap07/05_evaluador_pruebas.kai:56  literal
+killed    ejemplos/cap07/05_evaluador_pruebas.kai:57  literal
 
 survivors — the suite did not notice these:
 
-ejemplos/cap07/05_evaluador_pruebas.kai	49	15	literal
-    49c49
+ejemplos/cap07/05_evaluador_pruebas.kai	50	15	literal
+    50c50
     <     Err(_) -> false
     ---
     >     Err(_) -> true
-ejemplos/cap07/05_evaluador_pruebas.kai	55	15	literal
-    55c55
-    <     Ok(_)  -> false
+ejemplos/cap07/05_evaluador_pruebas.kai	56	14	literal
+    56c56
+    <     Ok(_) -> false
     ---
-    >     Ok(_)  -> true
+    >     Ok(_) -> true
 
 24 mutants in 18s: 3 killed, 19 did not compile, 2 survived
 ```
@@ -627,11 +627,11 @@ esperaría.
 Los cinco que sí compilaron son los que hablan. Tres murieron y
 dos sobrevivieron, y los dos sobrevivientes están en el mismo
 lugar incómodo: no en el evaluador, sino en los helpers de
-las pruebas. La línea 49 es la rama `Err` de `debe_dar`. Ningún
+las pruebas. La línea 50 es la rama `Err` de `debe_dar`. Ningún
 test le pasa a `debe_dar` una expresión que falla, así que nadie
 se entera si esa rama dice `true`. Y un `debe_dar` que acepta
 errores deja pasar cualquier regresión de `eval` que empiece a
-devolver `Err` donde no debe. La línea 55 es el mismo hueco al
+devolver `Err` donde no debe. La línea 56 es el mismo hueco al
 revés: nadie le pasa a `debe_fallar` una expresión que evalúa
 bien.
 

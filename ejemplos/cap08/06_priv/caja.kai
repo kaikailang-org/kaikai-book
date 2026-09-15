@@ -5,8 +5,8 @@
 # operaciones que el módulo controla) viven adentro.
 
 pub type Cuenta = {
-  nombre:     String,
-  priv saldo: Real,
+  nombre: String,
+  priv saldo: Real
 }
 
 pub fn abrir(nombre: String) : Cuenta =

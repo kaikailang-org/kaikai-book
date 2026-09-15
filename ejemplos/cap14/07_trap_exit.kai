@@ -13,7 +13,8 @@ import spawn
 
 fn hijo_ok(padre: Pid[String]) : Unit / Actor[String] + Link =
   Link.link(padre)
-  # El cuerpo devuelve Unit: la fibra termina bien -> "Normal".
+
+# El cuerpo devuelve Unit: la fibra termina bien -> "Normal".
 
 fn hijo_crash(padre: Pid[String]) : Unit / Actor[String] + Link + Cancel {
   Link.link(padre)

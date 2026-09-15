@@ -7,7 +7,7 @@
 
 fn divide(a: Int, b: Int) : Int
   requires b != 0
-  ensures  result * b + (a % b) == a
+  ensures result * b + a % b == a
 = a / b
 
 fn main() {

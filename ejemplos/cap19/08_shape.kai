@@ -13,7 +13,7 @@ impl Contenedor for Caja {
 
 impl Contenedor for List {
   fn primero(xs: [Int]) : Int = match xs {
-    []         -> 0
+    [] -> 0
     [h, ..._t] -> h
   }
 }

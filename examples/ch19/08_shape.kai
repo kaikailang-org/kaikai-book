@@ -13,7 +13,7 @@ impl Container for Box {
 
 impl Container for List {
   fn peek(xs: [Int]) : Int = match xs {
-    []         -> 0
+    [] -> 0
     [h, ..._t] -> h
   }
 }
