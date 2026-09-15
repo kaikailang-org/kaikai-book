@@ -1090,7 +1090,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.118.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.119.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org
