@@ -68,20 +68,15 @@ pub fn route(req: HttpReq) : Result[domain.Command, domain.Reply] {
   }
 }
 
-fn drop_prefix(s: String, prefix: String) : String {
-  let n = string.length(prefix)
-  string.slice(s, n, string.length(s) - n)
-}
-
 fn route_id(path: String, f: (Int) -> domain.Command) : Result[domain.Command, domain.Reply] {
-  if string.starts_with(path, "/notes/") {
-    let suffix = drop_prefix(path, "/notes/")
-    match string.to_int(suffix) {
+  # The stdlib's `drop_prefix` fuses the check with the cut: None
+  # when the path doesn't start with the prefix, the rest when it does.
+  match string.drop_prefix(path, "/notes/") {
+    None         -> Err(domain.NotFound)
+    Some(suffix) -> match string.to_int(suffix) {
       Some(n) -> Ok(f(n))
       None    -> Err(domain.ClientError("invalid id in path: '#{path}'"))
     }
-  } else {
-    Err(domain.NotFound)
   }
 }
 

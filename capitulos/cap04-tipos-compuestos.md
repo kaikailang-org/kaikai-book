@@ -397,34 +397,48 @@ codepoints: 4
 chars:      4
 bytes list: 5
 de vuelta:  café
-slice(0,3): caf
-slice(3,2): é
+slice(2,2):      fé
+byte_slice(2,3): Some(fé)
+byte_slice(2,2): None
 ```
 
-Las dos últimas líneas estrenan la operación que saca un pedazo de
-un string:
+Esas últimas tres líneas son las dos maneras de sacar un pedazo de
+un string. La diferencia entre ellas es la unidad:
 
 ```
 slice(s: String, desde: Int, largo: Int) : String
+byte_slice(s: String, desde: Int, largo: Int) : Option[String]
 ```
 
-`desde` y `largo` se cuentan **en bytes**, igual que `length`. Por
-eso `slice(s, 3, 2)` devuelve la `é`: ocupa los bytes 3 y 4, y hay
-que pedir los dos. Pedir uno solo también se puede —nadie te
-detiene— pero `slice(s, 0, 4)` parte la `é` por la mitad y devuelve
-cuatro bytes que ya no son UTF-8 válido. Ese es el precio de que
-cortar cueste O(1): kaikai te deja cortar donde quieras y no revisa
-que el corte caiga en un borde de codepoint.
+`slice` cuenta **codepoints**. Sacar `"fé"` de `"café"` es pedir dos
+caracteres a partir del segundo: `slice(s, 2, 2)`. Si te pasas del
+largo recorta en vez de fallar —`slice(s, 1, 9)` devuelve `"afé"`—
+y nunca te puede entregar un string roto, porque no sabe cortar por
+la mitad de un carácter.
 
-La regla mental es corta: **`length` y `slice` razonan en bytes;
-`char_count` y `chars` razonan en codepoints.** Que `length` sea
-barato y por byte lo decidí a conciencia: la representación es
-UTF-8 y `slice` indexa por byte, así que `length` devuelve la
-unidad que esos cortes usan. Cuando lo que te importa es el conteo
-de caracteres y no el de bytes, pides `char_count` o `chars` y
-kaikai paga el costo de decodificar. (Grafemas como "é" compuesta
-de `e` + tilde combinante son otra capa todavía; ahí ni los
-codepoints alcanzan, pero rara vez los necesitas.)
+`byte_slice` cuenta **bytes**, que es lo que necesitas cuando los
+offsets vienen de otra parte: de un `index_of`, de un parser, de un
+protocolo que mide en octetos. Como un byte cualquiera puede caer
+dentro de un carácter, devuelve `Option`: `byte_slice(s, 2, 3)` da
+`Some("fé")` porque 2 y 5 son bordes de codepoint, y
+`byte_slice(s, 2, 2)` da `None` porque el 4 cae en medio de la `é`.
+Si prefieres ajustar el offset en vez de que te lo rechacen, ahí
+están `is_char_boundary`, `floor_char_boundary` y
+`ceil_char_boundary`.
+
+La regla mental es corta: **el nombre te dice la unidad.**
+`length`, `byte_length`, `bytes` y `byte_slice` hablan de bytes;
+`char_count`, `chars` y `slice` hablan de codepoints. La búsqueda
+sigue el mismo par: `index_of` devuelve un offset de byte, que
+alimenta a `byte_slice`, y `char_index_of` devuelve un índice de
+codepoint, que alimenta a `slice`.
+
+Que `length` cuente bytes y `slice` cuente codepoints no es un
+descuido de coherencia. `length` es O(1) y no puede romper nada; un
+corte por byte sí. Cada operación se queda con la unidad que no te
+va a salir cara. (Grafemas como "é" compuesta de `e` + tilde
+combinante son otra capa todavía; ahí ni los codepoints alcanzan,
+pero rara vez los necesitas.)
 
 El mismo cuidado aparece al pasar de minúsculas a mayúsculas y de
 vuelta. `core.char` trae `to_upper`, `to_lower`, `is_upper` e

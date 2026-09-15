@@ -21,9 +21,14 @@ fn main() {
   # pasarle estos octetos a from_chars no compilaría.
   println("de vuelta:  #{string.from_bytes(string.bytes(s))}")
 
-  # slice(s, desde, largo) corta por BYTES, no por caracteres.
-  # La `é` ocupa los bytes 3 y 4, así que cortarla completa
-  # significa pedir esos dos.
-  println("slice(0,3): #{string.slice(s, 0, 3)}")
-  println("slice(3,2): #{string.slice(s, 3, 2)}")
+  # slice(s, desde, largo) corta por CODEPOINTS: los índices son
+  # caracteres, así que nunca parte uno por la mitad.
+  println("slice(2,2):      #{string.slice(s, 2, 2)}")
+
+  # byte_slice corta por bytes, y devuelve None cuando un extremo
+  # cae dentro de un codepoint. La `é` ocupa los bytes 3 y 4.
+  let entero = string.byte_slice(s, 2, 3)
+  let partido = string.byte_slice(s, 2, 2)
+  println("byte_slice(2,3): #{entero}")
+  println("byte_slice(2,2): #{partido}")
 }
