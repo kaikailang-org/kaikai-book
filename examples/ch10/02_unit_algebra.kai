@@ -5,15 +5,17 @@
 # verifies dimensional consistency.
 
 unit m
+
 unit sec
+
 unit kg
 
 fn main() {
-  let velocity: Real<m / sec> = 9.81<m / sec>
+  let velocity: Real<m / sec> = 9.81<m/sec>
   println("v = #{velocity}")
 
   # Composite unit: acceleration.
-  let g: Real<m / sec^2> = 9.81<m / sec^2>
+  let g: Real<m / sec^2> = 9.81<m/sec^2>
   println("g = #{g}")
 
   # Product of units: F = m * a has unit kg*m/sec^2.

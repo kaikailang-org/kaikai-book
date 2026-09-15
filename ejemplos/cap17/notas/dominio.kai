@@ -21,8 +21,8 @@ pub type Comando
 # los matches del capítulo. El traductor a HTTP las convierte
 # en status codes + cuerpos.
 pub type Respuesta
-  = Guardado(String)                # 200, body = String
-  | Creado(Nota)                    # 201, body = nota serializada
-  | NoEncontrado                    # 404
-  | ErrorCliente(String)            # 400
-  | ErrorServidor(String)           # 500
+  = Guardado(String)  # 200, body = String
+  | Creado(Nota)  # 201, body = nota serializada
+  | NoEncontrado  # 404
+  | ErrorCliente(String)  # 400
+  | ErrorServidor(String)  # 500

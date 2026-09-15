@@ -13,8 +13,11 @@ fn larger[T: Ord](a: T, b: T) : T = max(a, b)
 fn render[T: Drawable](x: T) : String = "[" ++ draw(x) ++ "]"
 
 fn label[T: Show + Eq](a: T, b: T) : String =
-  if eq(a, b) { "equal: #{show(a)}" }
-  else { "#{show(a)} and #{show(b)}" }
+  if eq(a, b) {
+    "equal: #{show(a)}"
+  } else {
+    "#{show(a)} and #{show(b)}"
+  }
 
 fn main() : Unit / Stdout {
   Stdout.print(show(larger(3, 7)))

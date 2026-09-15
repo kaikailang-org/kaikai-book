@@ -580,24 +580,24 @@ killed without anything having really noticed.
 The whole run fits on a screen:
 
 ```
-killed    examples/ch07/05_evaluator_tests.kai:32  negate
-killed    examples/ch07/05_evaluator_tests.kai:32  literal
-SURVIVED  examples/ch07/05_evaluator_tests.kai:40  literal
-SURVIVED  examples/ch07/05_evaluator_tests.kai:46  literal
-killed    examples/ch07/05_evaluator_tests.kai:47  literal
+killed    examples/ch07/05_evaluator_tests.kai:33  negate
+killed    examples/ch07/05_evaluator_tests.kai:33  literal
+SURVIVED  examples/ch07/05_evaluator_tests.kai:41  literal
+SURVIVED  examples/ch07/05_evaluator_tests.kai:47  literal
+killed    examples/ch07/05_evaluator_tests.kai:48  literal
 
 survivors — the suite did not notice these:
 
-examples/ch07/05_evaluator_tests.kai	40	15	literal
-    40c40
+examples/ch07/05_evaluator_tests.kai	41	15	literal
+    41c41
     <     Err(_) -> false
     ---
     >     Err(_) -> true
-examples/ch07/05_evaluator_tests.kai	46	15	literal
-    46c46
-    <     Ok(_)  -> false
+examples/ch07/05_evaluator_tests.kai	47	14	literal
+    47c47
+    <     Ok(_) -> false
     ---
-    >     Ok(_)  -> true
+    >     Ok(_) -> true
 
 24 mutants in 18s: 3 killed, 19 did not compile, 2 survived
 ```
@@ -618,12 +618,12 @@ ends up measuring a smaller target than you might expect.
 
 The five that did compile are the ones that talk. Three died and
 two survived, and both survivors sit in the same awkward place:
-not in the evaluator but in the tests' own helpers. Line 40 is
+not in the evaluator but in the tests' own helpers. Line 41 is
 the `Err` branch of `must_yield`. No test
 hands `must_yield` an expression that fails, so nobody finds out
 if that branch says `true` — and a `must_yield` that accepts
 errors lets through any regression in `eval` that starts
-returning `Err` where it shouldn't. Line 46 is the same hole
+returning `Err` where it shouldn't. Line 47 is the same hole
 backwards: nobody hands `must_fail` an expression that evaluates
 fine.
 

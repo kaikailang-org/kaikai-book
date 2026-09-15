@@ -5,14 +5,14 @@ type Status = Pending | Paid | Cancelled
 type Order = {
   id: Int,
   amount: Int,
-  status: Status,
+  status: Status
 }
 
 # Small functions, each doing one thing.
 fn is_pending(o: Order) : Bool =
   match o.status {
-    Pending   -> true
-    Paid      -> false
+    Pending -> true
+    Paid -> false
     Cancelled -> false
   }
 
@@ -28,20 +28,20 @@ fn amount_of(o: Order) : Int = o.amount
 
 fn main() {
   let orders = [
-    Order { id: 1, amount: 500,  status: Pending },
+    Order { id: 1, amount: 500, status: Pending },
     Order { id: 2, amount: 2000, status: Pending },
     Order { id: 3, amount: 1500, status: Paid },
-    Order { id: 4, amount: 800,  status: Cancelled },
-    Order { id: 5, amount: 1200, status: Pending },
+    Order { id: 4, amount: 800, status: Cancelled },
+    Order { id: 5, amount: 1200, status: Pending }
   ]
 
   # Pipeline: filter pending, apply discount, sum.
   let total =
     orders
-    |? is_pending
-    | apply_discount
-    | amount_of
-    |> list.sum
+      |? is_pending
+      | apply_discount
+      | amount_of
+      |> list.sum
 
   println("total to bill: #{total}")
 }

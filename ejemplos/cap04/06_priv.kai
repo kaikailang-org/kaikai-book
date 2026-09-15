@@ -14,8 +14,8 @@
 # autorizados a manipular el invariante.
 
 type Cuenta = {
-  nombre:     String,
-  priv saldo: Real,
+  nombre: String,
+  priv saldo: Real
 }
 
 fn abrir(nombre: String) : Cuenta =

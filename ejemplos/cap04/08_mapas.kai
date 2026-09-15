@@ -15,11 +15,11 @@ fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] / Mutable {
 }
 
 fn contar(m: hashmap.HashMap[String, Int], palabras: [String]) : Unit / Mutable = match palabras {
-  []           -> ()
+  [] -> ()
   [p, ...rest] -> {
     let actual = match m[p] {
       Some(n) -> n
-      None    -> 0
+      None -> 0
     }
     hashmap.put(m, p, actual + 1)
     contar(m, rest)
@@ -33,7 +33,7 @@ fn main() : Unit / Stdout + Mutable {
   # Indexación m[clave]: devuelve Option, None si la clave falta.
   match m["sol"] {
     Some(n) -> Stdout.print("sol aparece #{n} veces")
-    None    -> Stdout.print("sol no aparece")
+    None -> Stdout.print("sol no aparece")
   }
   Stdout.print("palabras distintas: #{hashmap.size(m)}")
 
@@ -44,6 +44,9 @@ fn main() : Unit / Stdout + Mutable {
 }
 
 fn marcar(s: hashset.HashSet[String], palabras: [String]) : Unit / Mutable = match palabras {
-  []           -> ()
-  [p, ...rest] -> { hashset.add(s, p); marcar(s, rest) }
+  [] -> ()
+  [p, ...rest] -> {
+    hashset.add(s, p)
+    marcar(s, rest)
+  }
 }

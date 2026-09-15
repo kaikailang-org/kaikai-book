@@ -5,7 +5,7 @@ type Punto = { x: Int, y: Int }
 type Empleado = {
   nombre: String,
   edad: Int,
-  sueldo: Int,
+  sueldo: Int
 }
 
 fn distancia(a: Punto, b: Punto) : Int {
@@ -16,7 +16,7 @@ fn distancia(a: Punto, b: Punto) : Int {
 
 fn main() {
   let origen = Punto { x: 0, y: 0 }
-  let p      = Punto { x: 3, y: 4 }
+  let p = Punto { x: 3, y: 4 }
 
   println("origen.x = #{origen.x}, origen.y = #{origen.y}")
   println("p en (#{p.x}, #{p.y})")

@@ -10,8 +10,8 @@ type Forma
 
 fn area(f: Forma) : Real =
   match f {
-    Circulo(r)         -> 3.14159 * r * r
-    Rectangulo(w, h)   -> w * h
+    Circulo(r) -> 3.14159 * r * r
+    Rectangulo(w, h) -> w * h
     Triangulo(a, b, c) -> {
       let s = (a + b + c) / 2.0
       # Heron — los Reales se manipulan sin coerción a Int.
@@ -21,9 +21,9 @@ fn area(f: Forma) : Real =
 
 fn nombre(c: Color) : String =
   match c {
-    Rojo  -> "rojo"
+    Rojo -> "rojo"
     Verde -> "verde"
-    Azul  -> "azul"
+    Azul -> "azul"
   }
 
 fn main() {

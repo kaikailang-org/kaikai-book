@@ -20,7 +20,9 @@ test "un test puede llamar un extern C directo" {
 test "un efecto propio se maneja dentro del cuerpo" {
   # `Reloj` no tiene handler en la entrada del runner: si lo
   # invocas suelto, el test no compila. Se instala aquí.
-  let t = handle { Reloj.ahora() } with Reloj {
+  let t = handle {
+    Reloj.ahora()
+  } with Reloj {
     ahora(resume) -> resume(1234)
   }
   assert t == 1234

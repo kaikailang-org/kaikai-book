@@ -5,7 +5,7 @@
 
 type Cuenta = {
   id: Int,
-  saldo: Int,
+  saldo: Int
 }
 
 impl Eq for Cuenta {
@@ -16,32 +16,34 @@ impl Eq for Cuenta {
 # juntas en la misma `impl`.
 impl Ord for Cuenta {
   fn cmp(a: Cuenta, b: Cuenta) : Int =
-    if a.saldo < b.saldo { 0 - 1 }
-    else if a.saldo > b.saldo { 1 }
-    else { 0 }
-
+    if a.saldo < b.saldo {
+      0 - 1
+    } else if a.saldo > b.saldo {
+      1
+    } else {
+      0
+    }
   fn min(a: Cuenta, b: Cuenta) : Cuenta =
     if a.saldo < b.saldo { a } else { b }
-
   fn max(a: Cuenta, b: Cuenta) : Cuenta =
     if a.saldo > b.saldo { a } else { b }
 }
 
 fn main() {
   let c1 = Cuenta { id: 1, saldo: 100 }
-  let c2 = Cuenta { id: 1, saldo: 999 }    # mismo id, distinto saldo
+  let c2 = Cuenta { id: 1, saldo: 999 }  # mismo id, distinto saldo
   let c3 = Cuenta { id: 2, saldo: 50 }
 
   let mismo_id_12 = eq(c1, c2)
   let mismo_id_13 = eq(c1, c3)
-  println("c1 == c2: #{mismo_id_12}")       # true: el id manda
-  println("c1 == c3: #{mismo_id_13}")       # false
+  println("c1 == c2: #{mismo_id_12}")  # true: el id manda
+  println("c1 == c3: #{mismo_id_13}")  # false
 
   let cmp12 = cmp(c1, c2)
   let cmp13 = cmp(c1, c3)
-  println("cmp(c1, c2): #{cmp12}")          # negativo: 100 < 999
-  println("cmp(c1, c3): #{cmp13}")          # positivo: 100 > 50
+  println("cmp(c1, c2): #{cmp12}")  # negativo: 100 < 999
+  println("cmp(c1, c3): #{cmp13}")  # positivo: 100 > 50
 
   let menor = min(c1, c3)
-  println("menor saldo: #{menor.saldo}")    # 50
+  println("menor saldo: #{menor.saldo}")  # 50
 }

@@ -9,7 +9,7 @@ fn main() {
   let xs = [1, 2, 3, 4, 5]
 
   # 1. Form with parens and classic arrow.
-  let a = list.map(xs, (n) => n * 2)
+  let a = list.map(xs, n => n * 2)
   println("a sum=#{list.sum(a)}")
 
   # 2. Trailing lambda: body in braces at the end.
@@ -21,10 +21,11 @@ fn main() {
   println("c sum=#{list.sum(c)}")
 
   # Multi-line bodies: braces form reads better.
-  let d = xs | { n ->
-    let square = n * n
-    square + 1
-  }
+  let d = xs
+    | { n ->
+      let square = n * n
+      square + 1
+    }
   println("d sum=#{list.sum(d)}")
 
   # 4. The parameter may be a tuple pattern: it destructures

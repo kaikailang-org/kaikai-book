@@ -29,41 +29,47 @@ type EvalError = ArithError | EnvError
 type Env = [(String, Real)]
 
 fn lookup(env: Env, name: String) : Result[Real, EvalError] {
-  case [], _                          -> Err(Undefined(name))
-  case [(k, v), ...], n when k == n   -> Ok(v)
-  case [_, ...rest], n                -> lookup(rest, n)
+  case [], _ -> Err(Undefined(name))
+  case [(k, v), ...], n when k == n -> Ok(v)
+  case [_, ...rest], n -> lookup(rest, n)
 }
 
 # Integer-approximation square root (so we don't depend on
 # math.sqrt). Only for x >= 0.
 fn sqrt(x: Real) : Real =
-  if x < 0.0 { 0.0 }
-  else { sqrt_loop(x, x / 2.0 + 1.0, 20) }
+  if x < 0.0 {
+    0.0
+  } else {
+    sqrt_loop(x, x / 2.0 + 1.0, 20)
+  }
 
 fn sqrt_loop(x: Real, guess: Real, fuel: Int) : Real =
-  if fuel <= 0 { guess }
-  else { sqrt_loop(x, (guess + x / guess) / 2.0, fuel - 1) }
+  if fuel <= 0 {
+    guess
+  } else {
+    sqrt_loop(x, (guess + x / guess) / 2.0, fuel - 1)
+  }
 
 fn eval(env: Env, e: Expr) : Result[Real, EvalError] =
   match e {
-    Lit(n)     -> Ok(n)
-    Var(name)  -> lookup(env, name)
-    Add(a, b)  -> {
+    Lit(n) -> Ok(n)
+    Var(name) -> lookup(env, name)
+    Add(a, b) -> {
       let va = eval(env, a)!
       let vb = eval(env, b)!
       Ok(va + vb)
     }
-    Mul(a, b)  -> {
+    Mul(a, b) -> {
       let va = eval(env, a)!
       let vb = eval(env, b)!
       Ok(va * vb)
     }
-    Div(a, b)  -> {
+    Div(a, b) -> {
       let va = eval(env, a)!
       let vb = eval(env, b)!
       if vb == 0.0 { Err(DivByZero) } else { Ok(va / vb) }
     }
-    Sqrt(x)    -> {
+    Sqrt(x) -> {
       let v = eval(env, x)!
       if v < 0.0 { Err(NegativeSqrt(v)) } else { Ok(sqrt(v)) }
     }
@@ -71,23 +77,23 @@ fn eval(env: Env, e: Expr) : Result[Real, EvalError] =
 
 fn describe(e: EvalError) : String =
   match e {
-    DivByZero        -> "division by zero"
-    NegativeSqrt(v)  -> "sqrt of negative (#{v})"
-    Undefined(name)  -> "undefined variable: " ++ name
+    DivByZero -> "division by zero"
+    NegativeSqrt(v) -> "sqrt of negative (#{v})"
+    Undefined(name) -> "undefined variable: " ++ name
   }
 
 fn print_result(r: Result[Real, EvalError]) : Unit / Stdout =
   match r {
-    Ok(v)  -> println("ok: #{v}")
+    Ok(v) -> println("ok: #{v}")
     Err(e) -> println("error: " ++ describe(e))
   }
 
 fn main() {
   let env: Env = [("x", 9.0), ("y", 4.0)]
 
-  print_result(eval(env, Add(Var("x"), Var("y"))))    # ok: 13
-  print_result(eval(env, Sqrt(Var("x"))))             # ok: 3
-  print_result(eval(env, Div(Lit(10.0), Lit(0.0))))   # DivByZero
-  print_result(eval(env, Sqrt(Lit(0.0 - 1.0))))       # NegativeSqrt
-  print_result(eval(env, Var("z")))                    # Undefined
+  print_result(eval(env, Add(Var("x"), Var("y"))))  # ok: 13
+  print_result(eval(env, Sqrt(Var("x"))))  # ok: 3
+  print_result(eval(env, Div(Lit(10.0), Lit(0.0))))  # DivByZero
+  print_result(eval(env, Sqrt(Lit(0.0 - 1.0))))  # NegativeSqrt
+  print_result(eval(env, Var("z")))  # Undefined
 }

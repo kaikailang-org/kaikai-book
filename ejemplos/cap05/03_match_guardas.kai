@@ -2,9 +2,9 @@
 
 fn signo(n: Int) : String =
   match n {
-    0           -> "cero"
-    k if k > 0  -> "positivo"
-    _           -> "negativo"
+    0 -> "cero"
+    k if k > 0 -> "positivo"
+    _ -> "negativo"
   }
 
 # Guardas con bindings y patrones
@@ -12,12 +12,19 @@ type Punto = { x: Int, y: Int }
 
 fn cuadrante(p: Punto) : String {
   let Punto { x, y } = p
-  if x == 0 and y == 0 { "origen" }
-  else if x > 0 and y > 0 { "I" }
-  else if x < 0 and y > 0 { "II" }
-  else if x < 0 and y < 0 { "III" }
-  else if x > 0 and y < 0 { "IV" }
-  else { "sobre un eje" }
+  if x == 0 and y == 0 {
+    "origen"
+  } else if x > 0 and y > 0 {
+    "I"
+  } else if x < 0 and y > 0 {
+    "II"
+  } else if x < 0 and y < 0 {
+    "III"
+  } else if x > 0 and y < 0 {
+    "IV"
+  } else {
+    "sobre un eje"
+  }
 }
 
 fn main() {

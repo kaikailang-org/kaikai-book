@@ -1,13 +1,17 @@
 # `let` ata un nombre a un valor; `if` es una expresión.
 
 fn signo(n: Int) : String =
-  if n < 0 { "negativo" }
-  else if n == 0 { "cero" }
-  else { "positivo" }
+  if n < 0 {
+    "negativo"
+  } else if n == 0 {
+    "cero"
+  } else {
+    "positivo"
+  }
 
 fn main() {
-  let x = 42                  # tipo inferido: Int
-  let y: Real = 3.14         # con anotación explícita
+  let x = 42  # tipo inferido: Int
+  let y: Real = 3.14  # con anotación explícita
   let mensaje = "x es #{x}, y es #{y}"
   println(mensaje)
 

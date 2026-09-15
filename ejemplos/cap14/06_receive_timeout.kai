@@ -15,14 +15,14 @@ fn main() : Unit / Stdout + Spawn + Cancel + Clock + Actor[String] {
     # Mailbox vacío: el deadline expira antes de que llegue nada.
     match receive_timeout(time.millis(10)) {
       Some(m) -> Stdout.print("inesperado: " ++ m)
-      None    -> Stdout.print("timeout: nadie respondió")
+      None -> Stdout.print("timeout: nadie respondió")
     }
 
     # Ahora sí hay un mensaje a la mano: llega antes del deadline.
     Actor.send(Actor.self(), "pong")
     match receive_timeout(time.millis(10)) {
       Some(m) -> Stdout.print("recibido: " ++ m)
-      None    -> Stdout.print("inesperado: timeout")
+      None -> Stdout.print("inesperado: timeout")
     }
   }
 }

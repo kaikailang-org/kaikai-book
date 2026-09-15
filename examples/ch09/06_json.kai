@@ -14,9 +14,9 @@ fn main() : Unit / Stdout {
   println(text)
 
   match json_decode("{\"title\":\"call back\",\"priority\":2}") {
-    None    -> println("invalid json")
+    None -> println("invalid json")
     Some(v) -> match note_of_json(v, "") {
-      Ok(m)  -> println("#{m.title} (p#{m.priority})")
+      Ok(m) -> println("#{m.title} (p#{m.priority})")
       Err(e) -> println(json_error_show(e))
     }
   }

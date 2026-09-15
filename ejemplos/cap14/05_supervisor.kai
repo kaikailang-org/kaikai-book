@@ -15,31 +15,35 @@ import actor
 
 #[derive(Show)]
 type ResultadoLote
-  = Done(Int)             # suma total exitosa
-  | Failed(String)        # razón de la falla
+  = Done(Int)  # suma total exitosa
+  | Failed(String)  # razón de la falla
 
 # Procesa la lista. Si encuentra un divisor cero, devuelve Failed.
 # Si llega al final, devuelve Done con el total.
 fn procesar(tareas: [(Int, Int)], acc: Int) : ResultadoLote {
   match tareas {
-    []                  -> Done(acc)
-    [(a, 0), ..._]      -> Failed("división por cero en (#{a}, 0)")
-    [(a, b), ...resto]  -> procesar(resto, acc + (a / b))
+    [] -> Done(acc)
+    [(a, 0), ..._] -> Failed("división por cero en (#{a}, 0)")
+    [(a, b), ...resto] -> procesar(resto, acc + a / b)
   }
 }
 
 # El trabajador computa el resultado del lote y se lo manda al
 # supervisor.
-fn trabajador(supervisor: Pid[ResultadoLote], tareas: [(Int, Int)])
-    : Unit / Actor[ResultadoLote] + Console {
+fn trabajador(
+  supervisor: Pid[ResultadoLote],
+  tareas: [(Int, Int)]
+) : Unit / Actor[ResultadoLote] + Console {
   let r = procesar(tareas, 0)
   Stdout.print("trabajador: lote terminó como #{r}")
   Actor.send(supervisor, r)
 }
 
 # Un intento: spawnea un trabajador, espera su resultado, lo devuelve.
-fn intento(me: Pid[ResultadoLote], lote: [(Int, Int)])
-    : ResultadoLote / Console + Spawn + Cancel + Actor[ResultadoLote] {
+fn intento(
+  me: Pid[ResultadoLote],
+  lote: [(Int, Int)]
+) : ResultadoLote / Console + Spawn + Cancel + Actor[ResultadoLote] {
   let _ = spawn_actor(() => trabajador(me, lote))
   Actor.receive()
 }
@@ -53,15 +57,16 @@ fn intento(me: Pid[ResultadoLote], lote: [(Int, Int)])
 fn supervisor() : Unit / Console + Spawn + Cancel {
   with_mailbox {
     let me = Actor.self()
-    let primer_lote = [(10, 2), (20, 4), (30, 0)]   # va a fallar
+    let primer_lote = [(10, 2), (20, 4), (30, 0)]  # va a fallar
     let segundo_lote = [(10, 2), (20, 4), (30, 5)]
     match intento(me, primer_lote) {
-      Done(total)    -> Stdout.print("supervisor: éxito al primer intento, total=#{total}")
+      Done(total) -> Stdout.print("supervisor: éxito al primer intento, total=#{total}")
       Failed(motivo) -> {
         Stdout.print("supervisor: primer intento falló (#{motivo}), reintento")
         match intento(me, segundo_lote) {
-          Done(total)    -> Stdout.print("supervisor: éxito al segundo intento, total=#{total}")
-          Failed(motivo) -> Stdout.print("supervisor: segundo intento falló también (#{motivo}), me rindo")
+          Done(total) -> Stdout.print("supervisor: éxito al segundo intento, total=#{total}")
+          Failed(motivo) ->
+            Stdout.print("supervisor: segundo intento falló también (#{motivo}), me rindo")
         }
       }
     }

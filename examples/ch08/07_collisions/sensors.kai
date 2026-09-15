@@ -4,4 +4,4 @@
 
 pub type Reading = { celsius: Real }
 
-pub const MAX: Int = 100
+pub const MAX : Int = 100

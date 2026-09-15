@@ -5,7 +5,7 @@ type Point = { x: Int, y: Int }
 type Employee = {
   name: String,
   age: Int,
-  salary: Int,
+  salary: Int
 }
 
 fn distance(a: Point, b: Point) : Int {
@@ -16,7 +16,7 @@ fn distance(a: Point, b: Point) : Int {
 
 fn main() {
   let origin = Point { x: 0, y: 0 }
-  let p      = Point { x: 3, y: 4 }
+  let p = Point { x: 3, y: 4 }
 
   println("origin.x = #{origin.x}, origin.y = #{origin.y}")
   println("p at (#{p.x}, #{p.y})")

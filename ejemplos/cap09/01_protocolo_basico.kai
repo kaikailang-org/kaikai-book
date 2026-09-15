@@ -13,7 +13,7 @@ impl Show for Punto {
 
 fn main() {
   let origen = Punto { x: 0, y: 0 }
-  let p      = Punto { x: 3, y: 4 }
+  let p = Punto { x: 3, y: 4 }
   println(show(origen))
   println(show(p))
 

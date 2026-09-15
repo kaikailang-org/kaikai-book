@@ -17,7 +17,7 @@ check "addition is commutative" with a: Int, b: Int {
 
 # Addition is associative.
 check "addition is associative" with a: Int, b: Int, c: Int {
-  (a + b) + c == a + (b + c)
+  a + b + c == a + (b + c)
 }
 
 # Over lists: reversing twice is identity.

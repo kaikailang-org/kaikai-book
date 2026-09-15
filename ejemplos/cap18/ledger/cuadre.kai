@@ -11,16 +11,16 @@ import dominio
 
 # Suma los débitos de una lista de movimientos.
 pub fn total_debitos(ms: [dominio.Movimiento]) : Real<USD> = match ms {
-  []                              -> 0.0<USD>
-  [dominio.Debito(_, m), ...rest]  -> m + total_debitos(rest)
+  [] -> 0.0<USD>
+  [dominio.Debito(_, m), ...rest] -> m + total_debitos(rest)
   [dominio.Credito(_, _), ...rest] -> total_debitos(rest)
 }
 
 # Suma los créditos.
 pub fn total_creditos(ms: [dominio.Movimiento]) : Real<USD> = match ms {
-  []                               -> 0.0<USD>
+  [] -> 0.0<USD>
   [dominio.Credito(_, m), ...rest] -> m + total_creditos(rest)
-  [dominio.Debito(_, _), ...rest]  -> total_creditos(rest)
+  [dominio.Debito(_, _), ...rest] -> total_creditos(rest)
 }
 
 # La invariante: ambas sumas son iguales. La pureza se deriva
@@ -34,13 +34,13 @@ pub fn cuadra(ms: [dominio.Movimiento]) : Bool =
 # inserta un assert si no lo puede verificar estáticamente.
 pub fn aplicar_si_cuadra(ms: [dominio.Movimiento]) : [dominio.Movimiento]
   requires cuadra(ms)
-  ensures  cuadra(result)
+  ensures cuadra(result)
 = ms
 
 test "cuadra con una entrada y una salida" {
   let ms = [
     dominio.Debito(1<CuentaId>, 100.0<USD>),
-    dominio.Credito(2<CuentaId>, 100.0<USD>),
+    dominio.Credito(2<CuentaId>, 100.0<USD>)
   ]
   assert cuadra(ms)
 }
@@ -48,7 +48,7 @@ test "cuadra con una entrada y una salida" {
 test "no cuadra cuando los montos difieren" {
   let ms = [
     dominio.Debito(1<CuentaId>, 100.0<USD>),
-    dominio.Credito(2<CuentaId>, 90.0<USD>),
+    dominio.Credito(2<CuentaId>, 90.0<USD>)
   ]
   assert not cuadra(ms)
 }
@@ -57,7 +57,7 @@ test "cuadra con múltiples líneas" {
   let ms = [
     dominio.Debito(1<CuentaId>, 60.0<USD>),
     dominio.Debito(2<CuentaId>, 40.0<USD>),
-    dominio.Credito(3<CuentaId>, 100.0<USD>),
+    dominio.Credito(3<CuentaId>, 100.0<USD>)
   ]
   assert cuadra(ms)
 }

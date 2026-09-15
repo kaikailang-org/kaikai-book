@@ -4,14 +4,15 @@
 # La regla completa: un identificador en un patrón liga, salvo que
 # nombre una constante en scope, y ahí es una prueba de igualdad.
 
-const PUERTO_HTTP: Int = 80
-const PUERTO_HTTPS: Int = 443
+const PUERTO_HTTP : Int = 80
+
+const PUERTO_HTTPS : Int = 443
 
 fn esquema(p: Int) : String =
   match p {
-    PUERTO_HTTP  -> "http"
+    PUERTO_HTTP -> "http"
     PUERTO_HTTPS -> "https"
-    _            -> "desconocido"
+    _ -> "desconocido"
   }
 
 fn main() : Unit / Stdout {

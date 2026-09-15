@@ -5,6 +5,7 @@
 # same unit works; mixing different units is a compile error.
 
 unit USD
+
 unit EUR
 
 fn main() {

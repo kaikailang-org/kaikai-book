@@ -20,16 +20,19 @@ import dominio
 import almacen
 import persistencia
 
-const PATH_LOG: String = "ledger.audit.log"
+const PATH_LOG : String = "ledger.audit.log"
 
 fn imprimir(r: dominio.Respuesta) : Unit / Stdout {
   println("  -> #{r}")
 }
 
-fn registrar_evento(log_pid: Pid[persistencia.Evento], r: dominio.Respuesta) : Unit / Actor[persistencia.Evento] = match r {
-  dominio.CuentaCreada(c)          -> Actor.send(log_pid, persistencia.Linea("CUENTA #{c.id} #{c.nombre}"))
-  dominio.TransaccionRegistrada(t) -> Actor.send(log_pid, persistencia.Linea("TX #{t.id} #{t.descripcion}"))
-  _                                 -> ()
+fn registrar_evento(log_pid: Pid[persistencia.Evento], r: dominio.Respuesta) : Unit / Actor[
+  persistencia.Evento
+] = match r {
+  dominio.CuentaCreada(c) -> Actor.send(log_pid, persistencia.Linea("CUENTA #{c.id} #{c.nombre}"))
+  dominio.TransaccionRegistrada(t) ->
+    Actor.send(log_pid, persistencia.Linea("TX #{t.id} #{t.descripcion}"))
+  _ -> ()
 }
 
 # Un paso del demo: manda el comando al almacén, imprime la
@@ -37,8 +40,10 @@ fn registrar_evento(log_pid: Pid[persistencia.Evento], r: dominio.Respuesta) : U
 fn paso(
   almacen_pid: Pid[almacen.AlmacenMsg],
   log_pid: Pid[persistencia.Evento],
-  c: dominio.Comando,
-) : Unit / Stdout + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] = {
+  c: dominio.Comando
+) : Unit / Stdout + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[
+  persistencia.Evento
+] {
   let r = almacen.preguntar(almacen_pid, c)
   imprimir(r)
   registrar_evento(log_pid, r)
@@ -56,10 +61,12 @@ fn main() : Int / Stdout + File + Spawn + Cancel {
   with_mailbox {
     with_mailbox {
       with_mailbox {
-        let almacen_body: () -> Unit / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] = () => almacen.almacen_loop(almacen.estado_inicial())
-        let log_body:     () -> Unit / Actor[persistencia.Evento] + File = () => persistencia.persistencia_loop(PATH_LOG)
+        let almacen_body: () -> Unit / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] =
+          () => almacen.almacen_loop(almacen.estado_inicial())
+        let log_body: () -> Unit / Actor[persistencia.Evento] + File =
+          () => persistencia.persistencia_loop(PATH_LOG)
         let almacen_pid = spawn_actor(almacen_body)
-        let log_pid     = spawn_actor(log_body)
+        let log_pid = spawn_actor(log_body)
 
         println("== creando cuentas ==")
         paso(almacen_pid, log_pid, dominio.CrearCuenta("caja"))
@@ -67,22 +74,34 @@ fn main() : Int / Stdout + File + Spawn + Cancel {
         paso(almacen_pid, log_pid, dominio.CrearCuenta("gastos"))
 
         println("== registrando una venta ==")
-        paso(almacen_pid, log_pid, dominio.Registrar("venta de tarjeta", [
-          dominio.Debito(1<CuentaId>, 50.0<USD>),
-          dominio.Credito(2<CuentaId>, 50.0<USD>),
-        ]))
+        paso(
+          almacen_pid,
+          log_pid,
+          dominio.Registrar("venta de tarjeta", [
+            dominio.Debito(1<CuentaId>, 50.0<USD>),
+            dominio.Credito(2<CuentaId>, 50.0<USD>)
+          ])
+        )
 
         println("== pagando un gasto ==")
-        paso(almacen_pid, log_pid, dominio.Registrar("café del equipo", [
-          dominio.Debito(3<CuentaId>, 8.0<USD>),
-          dominio.Credito(1<CuentaId>, 8.0<USD>),
-        ]))
+        paso(
+          almacen_pid,
+          log_pid,
+          dominio.Registrar("café del equipo", [
+            dominio.Debito(3<CuentaId>, 8.0<USD>),
+            dominio.Credito(1<CuentaId>, 8.0<USD>)
+          ])
+        )
 
         println("== intento descuadrado (debe fallar) ==")
-        paso(almacen_pid, log_pid, dominio.Registrar("error", [
-          dominio.Debito(1<CuentaId>, 100.0<USD>),
-          dominio.Credito(2<CuentaId>, 50.0<USD>),
-        ]))
+        paso(
+          almacen_pid,
+          log_pid,
+          dominio.Registrar("error", [
+            dominio.Debito(1<CuentaId>, 100.0<USD>),
+            dominio.Credito(2<CuentaId>, 50.0<USD>)
+          ])
+        )
 
         println("== saldos finales ==")
         paso(almacen_pid, log_pid, dominio.ConsultarSaldo(1<CuentaId>))
@@ -91,5 +110,6 @@ fn main() : Int / Stdout + File + Spawn + Cancel {
       }
     }
   }
+
   0
 }

@@ -9,6 +9,7 @@ fn promedio[u: Measure](a: Real<u>, b: Real<u>) : Real<u> =
   (a + b) / 2.0
 
 unit USD
+
 unit kg
 
 fn main() {

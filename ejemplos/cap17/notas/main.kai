@@ -34,18 +34,23 @@ import almacen
 import persistencia
 import web
 
-const PUERTO: Int    = 8080
-const PATH_LOG: String = "notas.log"
+const PUERTO : Int = 8080
+
+const PATH_LOG : String = "notas.log"
 
 # Arma la respuesta de cable para un request HTTP. Le pega al
 # almacén vía `almacen.preguntar` y loguea los comandos
 # mutantes al actor de persistencia antes de responder.
-fn manejar_request(raw: String, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: Pid[persistencia.Evento]) : String / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
+fn manejar_request(
+  raw: String,
+  almacen_pid: Pid[almacen.AlmacenMsg],
+  log_pid: Pid[persistencia.Evento]
+) : String / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
   let resp = match web.parsear_request(raw) {
     Err(msg) -> dominio.ErrorCliente(msg)
-    Ok(req)  -> match web.enrutar(req) {
-      Err(r)        -> r
-      Ok(comando)   -> {
+    Ok(req) -> match web.enrutar(req) {
+      Err(r) -> r
+      Ok(comando) -> {
         registrar(log_pid, comando)
         almacen.preguntar(almacen_pid, comando)
       }
@@ -54,15 +59,17 @@ fn manejar_request(raw: String, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: P
   web.serializar_respuesta(resp)
 }
 
-fn registrar(log_pid: Pid[persistencia.Evento], c: dominio.Comando) : Unit / Actor[persistencia.Evento] = match c {
+fn registrar(log_pid: Pid[persistencia.Evento], c: dominio.Comando) : Unit / Actor[
+  persistencia.Evento
+] = match c {
   dominio.Crear(cuerpo) -> Actor.send(log_pid, persistencia.Linea("CREAR " ++ cuerpo))
-  dominio.Borrar(id)    -> Actor.send(log_pid, persistencia.Linea("BORRAR #{id}"))
-  _                      -> ()
+  dominio.Borrar(id) -> Actor.send(log_pid, persistencia.Linea("BORRAR #{id}"))
+  _ -> ()
 }
 
 fn leer_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
   Ok(bytes) -> web.bytes_to_string(bytes)
-  Err(_)    -> ""
+  Err(_) -> ""
 }
 
 # Atiende una conexión de punta a punta. Se spawn-ea bajo el
@@ -76,10 +83,16 @@ fn leer_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
 # pero el cuerpo del spawn sigue llevando Actor[AlmacenMsg]
 # (envíos al almacén) y Actor[Evento] (envíos a persistencia)
 # porque esos mailboxes son propiedad de *otras* fibras.
-fn atender_conexion(conn: Conn, almacen_pid: Pid[almacen.AlmacenMsg], log_pid: Pid[persistencia.Evento]) : Unit / NetTcp + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] + Cancel {
-  let raw  = leer_request(conn)
+fn atender_conexion(
+  conn: Conn,
+  almacen_pid: Pid[almacen.AlmacenMsg],
+  log_pid: Pid[persistencia.Evento]
+) : Unit / NetTcp + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[
+  persistencia.Evento
+] + Cancel {
+  let raw = leer_request(conn)
   let wire = manejar_request(raw, almacen_pid, log_pid)
-  let _    = NetTcp.send(conn, web.string_to_bytes(wire))
+  let _ = NetTcp.send(conn, web.string_to_bytes(wire))
   NetTcp.close(conn)
 }
 
@@ -94,10 +107,12 @@ fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel {
     with_mailbox {
       persistencia.reset_log(PATH_LOG)
       nursery { n ->
-        let almacen_body: () -> Unit / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] = () => almacen.almacen_loop([], 1)
-        let log_body:     () -> Unit / Actor[persistencia.Evento] + File = () => persistencia.persistencia_loop(PATH_LOG)
+        let almacen_body: () -> Unit / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] =
+          () => almacen.almacen_loop([], 1)
+        let log_body: () -> Unit / Actor[persistencia.Evento] + File =
+          () => persistencia.persistencia_loop(PATH_LOG)
         let almacen_pid = spawn_actor(almacen_body)
-        let log_pid     = spawn_actor(log_body)
+        let log_pid = spawn_actor(log_body)
         match NetTcp.listen("0.0.0.0", PUERTO) {
           Err(msg) -> println("error al arrancar el servidor: " ++ msg)
           Ok(listener) -> {
@@ -106,20 +121,24 @@ fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel {
             # hija spawn-eada vía el cap `n` del nursery. El
             # closure captura `n`, `almacen_pid` y `log_pid`
             # del scope del nursery que lo rodea.
-            forever(() => match NetTcp.accept(listener) {
-              Err(_)   -> ()
-              Ok(conn) -> {
-                # Cada fibra de conexión instala su propio
-                # mailbox Actor[AlmacenResp] para recibir la
-                # respuesta del almacén (ver `atender_conexion`).
-                let _ = n.spawn(() => with_mailbox(() => atender_conexion(conn, almacen_pid, log_pid)))
-                ()
+            forever(
+              () => match NetTcp.accept(listener) {
+                Err(_) -> ()
+                Ok(conn) -> {
+                  # Cada fibra de conexión instala su propio
+                  # mailbox Actor[AlmacenResp] para recibir la
+                  # respuesta del almacén (ver `atender_conexion`).
+                  let _ =
+                    n.spawn(() => with_mailbox(() => atender_conexion(conn, almacen_pid, log_pid)))
+                  ()
+                }
               }
-            })
+            )
           }
         }
       }
     }
   }
+
   0
 }

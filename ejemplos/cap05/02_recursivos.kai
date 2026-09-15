@@ -6,7 +6,7 @@ type Arbol
   | Nodo(Int, Arbol, Arbol)
 
 fn altura(t: Arbol) : Int {
-  case Hoja              -> 0
+  case Hoja -> 0
   case Nodo(_, izq, der) -> 1 + max_int(altura(izq), altura(der))
 }
 
@@ -22,10 +22,10 @@ type Expr
 
 fn eval(e: Expr) : Int =
   match e {
-    Lit(n)       -> n
-    Suma(a, b)   -> eval(a) + eval(b)
-    Mul(a, b)    -> eval(a) * eval(b)
-    Neg(x)       -> -eval(x)
+    Lit(n) -> n
+    Suma(a, b) -> eval(a) + eval(b)
+    Mul(a, b) -> eval(a) * eval(b)
+    Neg(x) -> -eval(x)
   }
 
 fn main() {

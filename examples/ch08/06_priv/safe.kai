@@ -5,8 +5,8 @@
 # from operations the module controls) live inside.
 
 pub type Account = {
-  name:         String,
-  priv balance: Real,
+  name: String,
+  priv balance: Real
 }
 
 pub fn open(name: String) : Account =

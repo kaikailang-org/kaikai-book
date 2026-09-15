@@ -9,6 +9,6 @@ import decimal_proto
 fn main() : Unit / Stdout {
   let u: Money[dec.Decimal]<USD> = 10.00<USD>
   let e: Money[dec.Decimal]<EUR> = 5.00<EUR>
-  let sinsentido = u * e          # error: `EUR USD` no existe
+  let sinsentido = u * e  # error: `EUR USD` no existe
   println(money.to_string(sinsentido))
 }

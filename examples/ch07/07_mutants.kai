@@ -14,11 +14,12 @@ type Expr
   | Mul(Expr, Expr)
   | Div(Expr, Expr)
 
-type EvalError = DivByZero(Int)    # carries the numerator
+type EvalError
+  = DivByZero(Int)  # carries the numerator
 
 fn eval(e: Expr) : Result[Int, EvalError] =
   match e {
-    Lit(n)    -> Ok(n)
+    Lit(n) -> Ok(n)
     Add(a, b) -> {
       let va = eval(a)!
       let vb = eval(b)!
@@ -39,14 +40,14 @@ fn eval(e: Expr) : Result[Int, EvalError] =
 # Helper: "I expect this to evaluate to v"
 fn must_yield(e: Expr, expected: Int) : Bool =
   match eval(e) {
-    Ok(v)  -> v == expected
+    Ok(v) -> v == expected
     Err(_) -> false
   }
 
 # Helper: "I expect it to fail"
 fn must_fail(e: Expr) : Bool =
   match eval(e) {
-    Ok(_)  -> false
+    Ok(_) -> false
     Err(_) -> true
   }
 

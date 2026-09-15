@@ -14,8 +14,8 @@
 # invariant.
 
 type Account = {
-  name:         String,
-  priv balance: Real,
+  name: String,
+  priv balance: Real
 }
 
 fn open(name: String) : Account =

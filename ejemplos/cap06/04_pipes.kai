@@ -1,13 +1,14 @@
 # Cuatro operadores pipe: `|>`, `|`, `||`, `|?`.
 
 fn doble(n: Int) : Int = n * 2
+
 fn es_par(n: Int) : Bool = n % 2 == 0
 
 # `|>` — apply: el lado izquierdo es el primer argumento del
 # llamado de la derecha. `xs |> f` ≡ `f(xs)`.
 fn ejemplo_apply() : Int {
   let xs = [1, 2, 3, 4, 5]
-  xs |> list.sum               # ≡ list.sum(xs)
+  xs |> list.sum  # ≡ list.sum(xs)
 }
 
 # `|` — map sobre listas: `xs | f` ≡ `list.map(xs, f)`.

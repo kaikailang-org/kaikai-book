@@ -2,6 +2,7 @@
 # checks during arithmetic and erases at runtime.
 
 unit USD
+
 unit EUR
 
 fn main() {

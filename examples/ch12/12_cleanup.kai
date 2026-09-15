@@ -23,17 +23,24 @@ fn main() : Unit / Stdout {
     handle {
       report()
     } with Conn {
+      initially 
       # Acquire: runs once, when the handler is installed.
       # Its value is the handler state, readable as `state`.
-      initially { println("opening connection"); 42 }
+      {
+        println("opening connection")
+        42
+      }
       # Release: runs on every exit path that unwinds the scope.
-      finally   { println("closing connection #{state}") }
+      finally {
+        println("closing connection #{state}")
+      }
       query(sql, resume) -> resume("1500")
-      return(x)          -> x
+      return(x) -> x
     }
   } with Fail {
     fail(reason, resume) -> "aborted: #{reason}"
-    return(x)            -> x
+    return(x) -> x
   }
+
   println(r)
 }

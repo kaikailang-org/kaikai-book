@@ -11,7 +11,7 @@ fn main() {
 
   # At the width's edge, addition wraps: there is no promotion.
   let edge = 2147483647i32 + 1i32
-  println("edge = #{edge}")               # -2147483648
+  println("edge = #{edge}")  # -2147483648
 
   # Int128 reaches where Int (64 bits) cannot.
   let big: Int128 = 9223372036854775808i128

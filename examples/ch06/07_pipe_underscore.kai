@@ -11,7 +11,7 @@ fn between(low: Int, x: Int, high: Int) : Bool =
 
 fn main() {
   # Without _: value goes to the first argument.
-  let r1 = 100 |> divide(4)        # ≡ divide(100, 4) = 25
+  let r1 = 100 |> divide(4)  # ≡ divide(100, 4) = 25
   println("100 / 4    = #{r1}")
 
   # With _ at position 1: explicit, same effect.

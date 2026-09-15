@@ -10,9 +10,9 @@ type Forma
 
 fn area(f: Forma) : Real {
   match f {
-    Circulo(r)       -> 3.14 * r * r
-    Cuadrado(l)      -> l * l
-    Triangulo(b, h)  -> ?formula_triangulo
+    Circulo(r) -> 3.14 * r * r
+    Cuadrado(l) -> l * l
+    Triangulo(b, h) -> ?formula_triangulo
   }
 }
 

@@ -14,13 +14,14 @@ pub unit USD
 # Identificadores branded para que el compilador no nos deje
 # pasar una CuentaId donde se espera una TransaccionId.
 pub unit CuentaId
+
 pub unit TransaccionId
 
 #[derive(Show)]
 pub type Cuenta = {
-  id:     Int<CuentaId>,
+  id: Int<CuentaId>,
   nombre: String,
-  saldo:  Real<USD>,        # balance acumulado de la cuenta
+  saldo: Real<USD>  # balance acumulado de la cuenta
 }
 
 # Un movimiento es una línea de una transacción: una cuenta y
@@ -30,21 +31,21 @@ pub type Cuenta = {
 # crédito".
 #[derive(Show)]
 pub type Movimiento
-  = Debito(Int<CuentaId>, Real<USD>)     # cargar a la cuenta
-  | Credito(Int<CuentaId>, Real<USD>)    # abonar a la cuenta
+  = Debito(Int<CuentaId>, Real<USD>)  # cargar a la cuenta
+  | Credito(Int<CuentaId>, Real<USD>)  # abonar a la cuenta
 
 #[derive(Show)]
 pub type Transaccion = {
-  id:           Int<TransaccionId>,
-  descripcion:  String,
-  movimientos:  [Movimiento],
+  id: Int<TransaccionId>,
+  descripcion: String,
+  movimientos: [Movimiento]
 }
 
 # Comandos que el ledger acepta. Crear cuenta, registrar
 # transacción, consultar saldo de una cuenta, listar cuentas.
 pub type Comando
-  = CrearCuenta(String)                          # nombre de cuenta nueva
-  | Registrar(String, [Movimiento])              # descripción + movs
+  = CrearCuenta(String)  # nombre de cuenta nueva
+  | Registrar(String, [Movimiento])  # descripción + movs
   | ConsultarSaldo(Int<CuentaId>)
   | Listar
 
@@ -55,6 +56,6 @@ pub type Respuesta
   | TransaccionRegistrada(Transaccion)
   | SaldoActual(Real<USD>)
   | ListaCuentas([Cuenta])
-  | ErrorDescuadre(String)             # los movs no cuadran
+  | ErrorDescuadre(String)  # los movs no cuadran
   | ErrorCuentaInexistente(Int<CuentaId>)
   | ErrorMontoInvalido(String)

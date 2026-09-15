@@ -14,7 +14,8 @@ import spawn
 
 fn child_ok(parent: Pid[String]) : Unit / Actor[String] + Link =
   Link.link(parent)
-  # The body returns Unit: the fiber ends cleanly -> "Normal".
+
+# The body returns Unit: the fiber ends cleanly -> "Normal".
 
 fn child_crash(parent: Pid[String]) : Unit / Actor[String] + Link + Cancel {
   Link.link(parent)

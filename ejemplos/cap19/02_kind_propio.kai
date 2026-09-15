@@ -1,11 +1,14 @@
 # Un kind propio por sistema de unidades: dos habitantes de kinds
 # distintos jamás unifican, aunque ambos midan longitud.
 
-kind Metrica  : AbelianGroup with metrica
+kind Metrica : AbelianGroup with metrica
+
 kind Imperial : AbelianGroup with imperial
 
 metrica m
+
 metrica s
+
 imperial ft
 
 fn velocidad(d: Real<m>, t: Real<s>) : Real<m/s> = d / t

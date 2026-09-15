@@ -24,9 +24,9 @@ fn parse(ts: [Token]) : Expr = ?ast
 # Piece 3: evaluate (complete).
 fn evaluate(e: Expr) : Int {
   match e {
-    Lit(n)     -> n
-    Sum(a, b)  -> evaluate(a) + evaluate(b)
-    Mul(a, b)  -> evaluate(a) * evaluate(b)
+    Lit(n) -> n
+    Sum(a, b) -> evaluate(a) + evaluate(b)
+    Mul(a, b) -> evaluate(a) * evaluate(b)
   }
 }
 

@@ -9,8 +9,8 @@ fn main() {
 
   # length / byte_length cuentan bytes (O(1)).
   # char_count cuenta codepoints Unicode.
-  println("bytes:      #{string.length(s)}")       # 5
-  println("codepoints: #{string.char_count(s)}")   # 4
+  println("bytes:      #{string.length(s)}")  # 5
+  println("codepoints: #{string.char_count(s)}")  # 4
 
   # chars decodifica la vista UTF-8 a codepoints ([Char]);
   # bytes entrega los octetos crudos, uno por byte ([Byte]).

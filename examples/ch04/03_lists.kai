@@ -14,9 +14,9 @@ fn length[a](xs: [a]) : Int =
 
 fn main() {
   let primes = [2, 3, 5, 7, 11]
-  let r      = [1..10]                  # [1, ..., 10]
-  let evens  = [2..20..2]               # [2, 4, ..., 20]
-  let combo  = [0, ...primes, 13]       # spread
+  let r = [1..10]  # [1, ..., 10]
+  let evens = [2..20..2]  # [2, 4, ..., 20]
+  let combo = [0, ...primes, 13]  # spread
 
   println("primes: length=#{length(primes)}, sum=#{sum(primes)}")
   println("r:      length=#{length(r)}, sum=#{sum(r)}")

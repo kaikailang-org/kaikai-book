@@ -29,14 +29,14 @@ type Entry = { key: String, value: String }
 fn parse(line: String) : Entry / Fail {
   match string.split(line, "=") {
     [k, v] -> Entry { key: k, value: v }
-    _      -> Fail.fail("invalid line: '#{line}'")
+    _ -> Fail.fail("invalid line: '#{line}'")
   }
 }
 
 # Processes a list of lines: parses each one, logs it, counts
 # it. Aborts if any one fails to parse.
 fn process(lines: [String]) : Int / Log + State[Int] + Fail {
-  list.foreach(lines, (l) => {
+  list.foreach(lines, l => {
     let e = parse(l)
     Log.log("#{e.key} = #{e.value}")
     State.set(State.get() + 1)
@@ -50,9 +50,9 @@ fn main() : Unit / Stdout {
       handle {
         process(["name=ada", "age=42", "role=admin"])
       } with State[Int](0) {
-        get(resume)    -> resume(state)
+        get(resume) -> resume(state)
         set(v, resume) -> resume((), v)
-        return(x)      -> x
+        return(x) -> x
       }
     } with Log {
       log(msg, resume) -> {

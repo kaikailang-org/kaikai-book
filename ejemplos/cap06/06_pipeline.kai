@@ -10,14 +10,14 @@ type Estado = Pendiente | Pagado | Cancelado
 type Pedido = {
   id: Int,
   monto: Int,
-  estado: Estado,
+  estado: Estado
 }
 
 # Funciones pequeñas, cada una hace una sola cosa.
 fn esta_pendiente(p: Pedido) : Bool =
   match p.estado {
     Pendiente -> true
-    Pagado    -> false
+    Pagado -> false
     Cancelado -> false
   }
 
@@ -33,20 +33,20 @@ fn monto_de(p: Pedido) : Int = p.monto
 
 fn main() {
   let pedidos = [
-    Pedido { id: 1, monto: 500,  estado: Pendiente },
+    Pedido { id: 1, monto: 500, estado: Pendiente },
     Pedido { id: 2, monto: 2000, estado: Pendiente },
     Pedido { id: 3, monto: 1500, estado: Pagado },
-    Pedido { id: 4, monto: 800,  estado: Cancelado },
-    Pedido { id: 5, monto: 1200, estado: Pendiente },
+    Pedido { id: 4, monto: 800, estado: Cancelado },
+    Pedido { id: 5, monto: 1200, estado: Pendiente }
   ]
 
   # Pipeline: filtrar pendientes, aplicar descuento, sumar.
   let total =
     pedidos
-    |? esta_pendiente
-    | aplicar_descuento
-    | monto_de
-    |> list.sum
+      |? esta_pendiente
+      | aplicar_descuento
+      | monto_de
+      |> list.sum
 
   println("total a cobrar: #{total}")
 }

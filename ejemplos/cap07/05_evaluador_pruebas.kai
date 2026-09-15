@@ -20,22 +20,23 @@ type Expr
   | Mul(Expr, Expr)
   | Div(Expr, Expr)
 
-type ErrorEval = DivCero(Int)    # carga el numerador en cuestión
+type ErrorEval
+  = DivCero(Int)  # carga el numerador en cuestión
 
 fn eval(e: Expr) : Result[Int, ErrorEval] =
   match e {
-    Lit(n)     -> Ok(n)
+    Lit(n) -> Ok(n)
     Suma(a, b) -> {
       let va = eval(a)!
       let vb = eval(b)!
       Ok(va + vb)
     }
-    Mul(a, b)  -> {
+    Mul(a, b) -> {
       let va = eval(a)!
       let vb = eval(b)!
       Ok(va * vb)
     }
-    Div(a, b)  -> {
+    Div(a, b) -> {
       let va = eval(a)!
       let vb = eval(b)!
       if vb == 0 { Err(DivCero(va)) } else { Ok(va / vb) }
@@ -45,14 +46,14 @@ fn eval(e: Expr) : Result[Int, ErrorEval] =
 # Helper para usar dentro de los tests: "espero que evalúe a v"
 fn debe_dar(e: Expr, esperado: Int) : Bool =
   match eval(e) {
-    Ok(v)  -> v == esperado
+    Ok(v) -> v == esperado
     Err(_) -> false
   }
 
 # Helper para "espero que falle"
 fn debe_fallar(e: Expr) : Bool =
   match eval(e) {
-    Ok(_)  -> false
+    Ok(_) -> false
     Err(_) -> true
   }
 

@@ -13,8 +13,11 @@ fn mayor[T: Ord](a: T, b: T) : T = max(a, b)
 fn render[T: Dibujable](x: T) : String = "[" ++ dibujar(x) ++ "]"
 
 fn etiquetar[T: Show + Eq](a: T, b: T) : String =
-  if eq(a, b) { "iguales: #{show(a)}" }
-  else { "#{show(a)} y #{show(b)}" }
+  if eq(a, b) {
+    "iguales: #{show(a)}"
+  } else {
+    "#{show(a)} y #{show(b)}"
+  }
 
 fn main() : Unit / Stdout {
   Stdout.print(show(mayor(3, 7)))

@@ -6,6 +6,7 @@
 # error de compilación.
 
 unit USD
+
 unit EUR
 
 fn main() {

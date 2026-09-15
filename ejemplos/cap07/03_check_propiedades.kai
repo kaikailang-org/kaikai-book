@@ -17,7 +17,7 @@ check "suma conmutativa" with a: Int, b: Int {
 
 # La suma es asociativa para cualquier triple.
 check "suma asociativa" with a: Int, b: Int, c: Int {
-  (a + b) + c == a + (b + c)
+  a + b + c == a + (b + c)
 }
 
 # Sobre listas: invertir dos veces es identidad.

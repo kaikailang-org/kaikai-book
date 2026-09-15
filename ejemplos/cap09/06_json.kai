@@ -14,9 +14,9 @@ fn main() : Unit / Stdout {
   println(texto)
 
   match json_decode("{\"titulo\":\"llamar\",\"prioridad\":2}") {
-    None    -> println("json inválido")
+    None -> println("json inválido")
     Some(v) -> match nota_of_json(v, "") {
-      Ok(m)  -> println("#{m.titulo} (p#{m.prioridad})")
+      Ok(m) -> println("#{m.titulo} (p#{m.prioridad})")
       Err(e) -> println(json_error_show(e))
     }
   }

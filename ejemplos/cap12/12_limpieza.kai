@@ -23,17 +23,24 @@ fn main() : Unit / Stdout {
     handle {
       reporte()
     } with Conexion {
+      initially 
       # Adquirir: corre una vez, al instalar el handler.
       # Su valor es el estado, legible como `state`.
-      initially { println("abriendo conexión"); 42 }
+      {
+        println("abriendo conexión")
+        42
+      }
       # Liberar: corre en toda salida que desarme el scope.
-      finally   { println("cerrando conexión #{state}") }
+      finally {
+        println("cerrando conexión #{state}")
+      }
       consultar(sql, resume) -> resume("1500")
-      return(x)              -> x
+      return(x) -> x
     }
   } with Fail {
     fail(motivo, resume) -> "abortado: #{motivo}"
-    return(x)            -> x
+    return(x) -> x
   }
+
   println(r)
 }

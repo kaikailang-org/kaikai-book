@@ -9,7 +9,7 @@ fn main() {
   let xs = [1, 2, 3, 4, 5]
 
   # 1. Forma con paréntesis y flecha clásica.
-  let a = list.map(xs, (n) => n * 2)
+  let a = list.map(xs, n => n * 2)
   println("a sum=#{list.sum(a)}")
 
   # 2. Trailing lambda: el cuerpo va en llaves al final.
@@ -21,10 +21,11 @@ fn main() {
   println("c sum=#{list.sum(c)}")
 
   # Cuerpos de varias líneas: la forma con llaves se lee mejor.
-  let d = xs | { n ->
-    let cuadrado = n * n
-    cuadrado + 1
-  }
+  let d = xs
+    | { n ->
+      let cuadrado = n * n
+      cuadrado + 1
+    }
   println("d sum=#{list.sum(d)}")
 
   # 4. El parámetro puede ser un patrón de tupla: destructura

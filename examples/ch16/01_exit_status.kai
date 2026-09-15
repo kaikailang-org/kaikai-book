@@ -5,12 +5,21 @@
 # This program exits 1 on purpose: try it with `echo $?`.
 
 fn validate(port: Int) : Result[Int, String] =
-  if port > 0 and port < 65536 { Ok(port) }
-  else { Err("port out of range: #{port}") }
+  if port > 0 and port < 65536 {
+    Ok(port)
+  } else {
+    Err("port out of range: #{port}")
+  }
 
 fn main() : Int / Stdout {
   match validate(70000) {
-    Ok(p)      -> { println("listening on #{p}"); 0 }
-    Err(msg)   -> { println("error: #{msg}"); 1 }
+    Ok(p) -> {
+      println("listening on #{p}")
+      0
+    }
+    Err(msg) -> {
+      println("error: #{msg}")
+      1
+    }
   }
 }
