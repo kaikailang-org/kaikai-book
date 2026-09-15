@@ -386,34 +386,48 @@ codepoints: 4
 chars:      4
 bytes list: 5
 round trip: café
-slice(0,3): caf
-slice(3,2): é
+slice(2,2):      fé
+byte_slice(2,3): Some(fé)
+byte_slice(2,2): None
 ```
 
-Those last two lines introduce the operation that takes a piece out
-of a string:
+Those last three lines are the two ways to take a piece out of a
+string. What separates them is the unit:
 
 ```
 slice(s: String, from: Int, len: Int) : String
+byte_slice(s: String, from: Int, len: Int) : Option[String]
 ```
 
-`from` and `len` are counted **in bytes**, like `length`. That is
-why `slice(s, 3, 2)` gives you the `é`: it occupies bytes 3 and 4,
-and you have to ask for both. Asking for one is allowed — nothing
-stops you — but `slice(s, 0, 4)` cuts the `é` in half and hands
-back four bytes that are no longer valid UTF-8. That is the price
-of a cut costing O(1): kaikai lets you cut wherever you like and
-does not check that the cut lands on a codepoint boundary.
+`slice` counts **codepoints**. Taking `"fé"` out of `"café"` is
+asking for two characters starting at the second: `slice(s, 2, 2)`.
+Overrun the length and it clamps rather than failing —
+`slice(s, 1, 9)` gives `"afé"` — and it can never hand you a broken
+string, because it does not know how to cut a character in half.
 
-The mental rule is short: **`length` and `slice` reason in bytes;
-`char_count` and `chars` reason in codepoints.** That `length` is
-cheap and byte-based I decided deliberately: the representation is
-UTF-8 and `slice` indexes by byte, so `length` reports the unit
-those cuts use. When what you care about is the character count
-rather than the byte count, you ask for `char_count` or `chars` and
-kaikai pays the cost of decoding. (Graphemes like an "é" built from
-`e` plus a combining accent are yet another layer; there even
-codepoints fall short, but you rarely need them.)
+`byte_slice` counts **bytes**, which is what you need when the
+offsets come from somewhere else: an `index_of`, a parser, a
+protocol that measures in octets. Since any byte can land inside a
+character, it returns `Option`: `byte_slice(s, 2, 3)` gives
+`Some("fé")` because 2 and 5 are codepoint boundaries, and
+`byte_slice(s, 2, 2)` gives `None` because 4 sits in the middle of
+the `é`. If you would rather snap the offset than have it refused,
+that is what `is_char_boundary`, `floor_char_boundary` and
+`ceil_char_boundary` are for.
+
+The mental rule is short: **the name tells you the unit.**
+`length`, `byte_length`, `bytes` and `byte_slice` speak bytes;
+`char_count`, `chars` and `slice` speak codepoints. Search comes in
+the same pairs: `index_of` returns a byte offset, which feeds
+`byte_slice`, and `char_index_of` returns a codepoint index, which
+feeds `slice`.
+
+That `length` counts bytes while `slice` counts codepoints is not a
+lapse in coherence. `length` is O(1) and can't break anything; a
+cut by byte can. Each operation keeps the unit that won't cost you.
+(Graphemes like an "é" built from `e` plus a combining accent are
+yet another layer; there even codepoints fall short, but you rarely
+need them.)
 
 The same care shows up in case folding. `core.char` ships
 `to_upper`, `to_lower`, `is_upper` and `is_lower` for ASCII. Its

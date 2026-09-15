@@ -69,20 +69,15 @@ pub fn enrutar(req: ReqHttp) : Result[dominio.Comando, dominio.Respuesta] {
   }
 }
 
-fn drop_prefix(s: String, prefix: String) : String {
-  let n = string.length(prefix)
-  string.slice(s, n, string.length(s) - n)
-}
-
 fn enrutar_id(path: String, f: (Int) -> dominio.Comando) : Result[dominio.Comando, dominio.Respuesta] {
-  if string.starts_with(path, "/notas/") {
-    let sufijo = drop_prefix(path, "/notas/")
-    match string.to_int(sufijo) {
+  # `drop_prefix` del stdlib fusiona el chequeo con el corte: None
+  # si el path no empieza con el prefijo, el resto si sí.
+  match string.drop_prefix(path, "/notas/") {
+    None         -> Err(dominio.NoEncontrado)
+    Some(sufijo) -> match string.to_int(sufijo) {
       Some(n) -> Ok(f(n))
       None    -> Err(dominio.ErrorCliente("id inválido en path: '#{path}'"))
     }
-  } else {
-    Err(dominio.NoEncontrado)
   }
 }
 
