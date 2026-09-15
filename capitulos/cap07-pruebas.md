@@ -587,6 +587,7 @@ nada lo hubiera notado de verdad.
 La corrida entera cabe en pantalla:
 
 ```
+killed    ejemplos/cap07/05_evaluador_pruebas.kai:41  negate
 killed    ejemplos/cap07/05_evaluador_pruebas.kai:41  literal
 SURVIVED  ejemplos/cap07/05_evaluador_pruebas.kai:49  literal
 SURVIVED  ejemplos/cap07/05_evaluador_pruebas.kai:55  literal
@@ -605,24 +606,25 @@ ejemplos/cap07/05_evaluador_pruebas.kai	55	15	literal
     ---
     >     Ok(_)  -> true
 
-24 mutants in 16s: 2 killed, 20 did not compile, 2 survived
+24 mutants in 18s: 3 killed, 19 did not compile, 2 survived
 ```
 
-Veinticuatro mutantes y sólo cuatro llegaron a las pruebas. Los
-otros veinte ni siquiera compilaron, y eso no es un defecto de la
-herramienta: es el sistema de tipos trabajando antes que la
-suite. Borrar un brazo de un `match` lo deja no exhaustivo;
-elidir una llamada deja un `!` sobre algo que no es un `Result`.
-Las dos cosas son errores de compilación en kaikai, así que esos
-mutantes mueren sin que ninguna prueba alcance a opinar.
-`kai mutate` los cuenta en un casillero aparte justamente por
-eso: un mutante que no compila no te dice nada sobre lo que tus
-pruebas están mirando. En un lenguaje con match exhaustivo y
-tipos fuertes ese casillero se llena harto, y conviene saberlo
-antes de leer el resultado: la mutación termina midiendo un
-blanco más chico del que uno esperaría.
+Veinticuatro mutantes y sólo cinco llegaron a las pruebas. Los
+otros diecinueve ni siquiera compilaron, y eso no es un defecto
+de la herramienta: es el sistema de tipos trabajando antes que la
+suite. Cinco vienen de borrar un brazo de un `match`, que lo deja
+no exhaustivo, y catorce de elidir una llamada, que deja un `!`
+sobre algo que no es un `Result`. Las dos cosas son errores de
+compilación en kaikai, así que esos mutantes mueren sin que
+ninguna prueba alcance a opinar. `kai mutate` los cuenta en un
+casillero aparte justamente por eso: un mutante que no compila no
+te dice nada sobre lo que tus pruebas están mirando. En un
+lenguaje con match exhaustivo y tipos fuertes ese casillero se
+llena harto, y conviene saberlo antes de leer el resultado: la
+mutación termina midiendo un blanco más chico del que uno
+esperaría.
 
-Los cuatro que sí compilaron son los que hablan. Dos murieron y
+Los cinco que sí compilaron son los que hablan. Tres murieron y
 dos sobrevivieron, y los dos sobrevivientes están en el mismo
 lugar incómodo: no en el evaluador, sino en los helpers de
 las pruebas. La línea 49 es la rama `Err` de `debe_dar`. Ningún
@@ -649,10 +651,10 @@ Con ellos —es el mismo evaluador, en
 `ejemplos/cap07/07_mutantes.kai`— la corrida termina así:
 
 ```
-24 mutants in 17s: 4 killed, 20 did not compile, 0 survived
+24 mutants in 18s: 5 killed, 19 did not compile, 0 survived
 ```
 
-Los mismos cuatro mutantes que compilan, ahora los cuatro
+Los mismos cinco mutantes que compilan, ahora los cinco
 detectados. Cero sobrevivientes es lo que se puede pedir.
 
 Fíjate en lo que no reporta: un porcentaje. `kai mutate` entrega

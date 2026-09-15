@@ -580,6 +580,7 @@ killed without anything having really noticed.
 The whole run fits on a screen:
 
 ```
+killed    examples/ch07/05_evaluator_tests.kai:32  negate
 killed    examples/ch07/05_evaluator_tests.kai:32  literal
 SURVIVED  examples/ch07/05_evaluator_tests.kai:40  literal
 SURVIVED  examples/ch07/05_evaluator_tests.kai:46  literal
@@ -598,24 +599,24 @@ examples/ch07/05_evaluator_tests.kai	46	15	literal
     ---
     >     Ok(_)  -> true
 
-24 mutants in 17s: 2 killed, 20 did not compile, 2 survived
+24 mutants in 18s: 3 killed, 19 did not compile, 2 survived
 ```
 
-Twenty-four mutants, and only four of them reached the tests.
-The other twenty never compiled — which is not a failing of the
-tool but the type system doing its work ahead of the suite.
-Dropping a `match` arm leaves the match non-exhaustive; eliding a
-call leaves a `!` sitting on something that isn't a `Result`.
-Both are compile errors in kaikai, so those mutants die before
-any test gets a say. `kai mutate` counts them in a bucket of
-their own for exactly that reason: a mutant that doesn't compile
-tells you nothing about what your tests are watching. In a
-language with exhaustive matching and strong types that bucket
-fills up fast, and it's worth knowing before you read the
-result — mutation ends up measuring a smaller target than you
-might expect.
+Twenty-four mutants, and only five of them reached the tests.
+The other nineteen never compiled — which is not a failing of the
+tool but the type system doing its work ahead of the suite. Five
+come from dropping a `match` arm, which leaves the match
+non-exhaustive, and fourteen from eliding a call, which leaves a
+`!` sitting on something that isn't a `Result`. Both are compile
+errors in kaikai, so those mutants die before any test gets a
+say. `kai mutate` counts them in a bucket of their own for
+exactly that reason: a mutant that doesn't compile tells you
+nothing about what your tests are watching. In a language with
+exhaustive matching and strong types that bucket fills up fast,
+and it's worth knowing before you read the result — mutation
+ends up measuring a smaller target than you might expect.
 
-The four that did compile are the ones that talk. Two died and
+The five that did compile are the ones that talk. Three died and
 two survived, and both survivors sit in the same awkward place:
 not in the evaluator but in the tests' own helpers. Line 40 is
 the `Err` branch of `must_yield`. No test
@@ -642,10 +643,10 @@ With them — the same evaluator, in
 `examples/ch07/07_mutants.kai` — the run ends like this:
 
 ```
-24 mutants in 16s: 4 killed, 20 did not compile, 0 survived
+24 mutants in 18s: 5 killed, 19 did not compile, 0 survived
 ```
 
-The same four mutants that compile, all four now caught. Zero
+The same five mutants that compile, all five now caught. Zero
 survivors is as much as you can ask for.
 
 Notice what it doesn't report: a percentage. `kai mutate` hands
