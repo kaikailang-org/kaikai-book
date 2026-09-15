@@ -78,13 +78,13 @@ contexts:
         2: entity.name.kind.kai
 
   keywords:
-    - match: '\b(fn|let|var|if|else|match|case|when|where|return|do|then|in|as|of)\b'
+    - match: '\b(fn|let|var|if|else|match|case|when|where|as)\b'
       scope: keyword.control.kai
-    - match: '\b(effect|handle|with|resume|default|initially|finally)\b'
+    - match: '\b(effect|handle|with|resume|default|initially|finally|return)\b'
       scope: keyword.effect.kai
-    - match: '\b(type|protocol|impl|axiom|const|extern|import|use|pub)\b'
+    - match: '\b(type|protocol|impl|for|axiom|const|extern|import|use|pub|priv)\b'
       scope: keyword.declaration.kai
-    - match: '\b(test|check|bench|assert|requires|ensures|result|todo)\b'
+    - match: '\b(test|check|bench|theory|assert|requires|ensures|result|todo)\b'
       scope: keyword.contract.kai
     - match: '\b(and|or|not)\b'
       scope: keyword.operator.logical.kai
