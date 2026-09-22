@@ -139,7 +139,8 @@ necesita ablandar algunas asunciones antes de seguir.
 
 - 4.1 Records
 - 4.2 Acceso a campos y destructuring
-- 4.3 Listas
+- 4.3 Listas (y `Vec[T]`, el vector de valor, para indexar
+       sin mutar)
 - 4.4 Strings, no listas de chars
 - 4.5 `Option` y `Result`: el día a día
 - 4.6 Tuplas

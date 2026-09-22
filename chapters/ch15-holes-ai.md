@@ -210,10 +210,47 @@ waits to be implemented; as long as we don't call
 cleanly.
 
 This reduces a lot of friction in keeping a program
-"almost compiling" as you develop. Other languages push you
-toward stubs with `unimplemented()`, `todo()`, or `return
-null`; in kaikai the `?` is a primitive of the idiom, and
-the compiler understands it has a type.
+"almost compiling" as you develop. Where other languages give
+you a generic stub — `unimplemented()`, `return null` — in
+kaikai the `?` is a primitive of the idiom, and the compiler
+knows what type it has.
+
+### `todo!` — the other stub, and when to use it
+
+There is a second form, and the two are worth keeping apart:
+
+```kai
+fn parse(s: String) : Config = todo!("parser still missing")
+```
+
+`todo!` compiles at any type and panics if you reach it:
+
+```
+$ kai run app.kai
+panic: todo: parser still missing
+```
+
+So far it looks like `?`, which also compiles and also panics:
+
+```
+panic: unfilled hole: ?formula at line 1 col 37
+```
+
+The difference is in the compiler, not the runtime. A `?` is
+an **open question**: `kai build --holes` reports it with its
+expected type, the bindings in scope and the candidates that
+fit. A `todo!` never shows up in that report: it is a
+**decision already made** not to write this yet.
+
+The rule follows on its own. Use `?` when you don't know what
+goes there and want the compiler's help working it out. Use
+`todo!` when you do know but it isn't the moment: the error
+branch you'll fill in later, the case this version doesn't
+handle. Leave a `todo!` where you needed an answer, and the
+compiler stops offering help it actually had.
+
+One detail: `todo!`'s message is a plain string literal, no
+interpolation. `todo!("missing #{n}")` does not compile.
 
 ## 15.5 Holes in patterns: the incomplete match
 

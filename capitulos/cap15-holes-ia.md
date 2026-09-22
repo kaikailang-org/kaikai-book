@@ -207,10 +207,48 @@ ser implementada; mientras no llamemos a `promedio`, el
 programa no se topa con el hole y corre limpio.
 
 Esto reduce mucho la fricción de mantener un programa "casi
-compilando" mientras lo desarrollas. Otros lenguajes te empujan
-a escribir stubs con `unimplemented()`, `todo()` o `return
-null`; en kaikai el `?` es la primitiva del idioma, y el
-compilador entiende que tiene tipo.
+compilando" mientras lo desarrollas. Donde otros lenguajes te
+dan un stub cualquiera —`unimplemented()`, `return null`—, en
+kaikai el `?` es una primitiva del idioma y el compilador sabe
+qué tipo tiene.
+
+### `todo!`: el otro stub, y cuándo usarlo
+
+Hay una segunda forma, y conviene no confundirlas:
+
+```kai
+fn parsear(s: String) : Config = todo!("falta el parser")
+```
+
+`todo!` compila a cualquier tipo y revienta si lo alcanzas:
+
+```
+$ kai run app.kai
+panic: todo: falta el parser
+```
+
+Hasta aquí se parece al `?`, que también compila y también
+revienta:
+
+```
+panic: unfilled hole: ?formula at line 1 col 37
+```
+
+La diferencia está en el compilador, no en el runtime. Un `?`
+es una **pregunta abierta**: `kai build --holes` lo reporta con
+su tipo esperado, los bindings en alcance y los candidatos que
+calzan. Un `todo!` no aparece en ese reporte: es una
+**decisión tomada** de no escribir eso todavía.
+
+La regla práctica sale sola. Usa `?` cuando no sabes qué va
+ahí y quieres que el compilador te ayude a averiguarlo. Usa
+`todo!` cuando sí sabes, pero todavía no toca: la rama de error
+que vas a llenar después, el caso que no aplica a esta versión.
+Si dejas `todo!` en algo que no sabes resolver, el compilador
+deja de ofrecerte ayuda que sí tenía.
+
+Un detalle: el mensaje de `todo!` es un literal de string sin
+interpolación. `todo!("falta #{n}")` no compila.
 
 ## 15.5 Holes en patrones: el match incompleto
 

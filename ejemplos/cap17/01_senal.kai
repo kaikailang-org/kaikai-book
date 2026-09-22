@@ -1,0 +1,17 @@
+# Apagado ordenado: en vez de que Ctrl-C mate el proceso donde
+# esté, el efecto `Signal` deja que el programa decida cuándo
+# atender la interrupción.
+#
+# `Signal.await()` suspende la fibra hasta que llegue una señal
+# suscrita, así que es un punto de yield como cualquier otro.
+#
+# Para probarlo: correr, y mandar Ctrl-C desde otra terminal.
+
+import effects.os
+
+fn main() : Unit / Stdout + Signal = {
+  Signal.on(SigInt)
+  println("esperando Ctrl-C...")
+  let _s = Signal.await()
+  println("señal recibida, salgo ordenado")
+}

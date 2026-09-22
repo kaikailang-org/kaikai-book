@@ -414,6 +414,39 @@ que cuando el bucle termine (porque alguien cancela el
 listener, o el programa recibe SIGINT), las fibras hijas
 también terminan. No hay handlers de conexión zombies.
 
+### Apagado ordenado: atrapar la señal
+
+Vale abrir ese "o el programa recibe SIGINT", porque es lo
+que separa un servidor de juguete de uno que puedes dejar
+corriendo. Por defecto, un Ctrl-C mata el proceso donde esté:
+a medio escribir un archivo, con conexiones a medio responder.
+
+El efecto `Signal` convierte esa interrupción en algo que tu
+programa decide cuándo atender:
+
+```kai
+import effects.os
+
+fn main() : Unit / Stdout + Signal = {
+  Signal.on(SigInt)
+  println("esperando Ctrl-C...")
+  let _s = Signal.await()
+  println("señal recibida, salgo ordenado")
+}
+```
+
+`Signal.on(SigInt)` se suscribe; `Signal.await()` suspende la
+fibra hasta que llegue. Como suspende, es un punto de yield
+como cualquier otro: el resto del programa sigue corriendo
+mientras esta fibra espera.
+
+El patrón para un servidor es una fibra dedicada a esperar la
+señal, que al recibirla cancela el listener. La cancelación
+desciende por el nursery, cada fibra de conexión corre su
+handler de `Cancel`, y el `finally` del almacén alcanza a
+escribir a disco. Es el mismo mecanismo del cap. 13, con la
+señal del sistema operativo como disparador.
+
 Y por cada conexión, el handler:
 
 ```kai

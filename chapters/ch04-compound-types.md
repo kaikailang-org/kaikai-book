@@ -298,14 +298,14 @@ runtime.
 
 Two more things about indexed access. One: it is **`O(n)`** —
 lists are linked, not indexed; walking to position `i` costs
-`i` steps. For fast random access kaikai has `Array[T]`,
-which we cover in chapter 13.
+`i` steps. For random access there are two other types:
+`Vec[T]`, coming up in a moment, and `Array[T]`, which we
+cover in chapter 12.
 
 The other: the syntax `xs[i]` that some languages use for
-lists is reserved in kaikai for `Array[T]`. Writing it on a
-list is a type error. The reason is the same: `xs[i]` suggests
-cheap, guaranteed access, which would be lying about a linked
-list.
+lists is a type error on a list — indexing is for `Vec` and
+`Array`. The reason is the same: `xs[i]` suggests cheap,
+guaranteed access, which would be lying about a linked list.
 
 For most code, you don't want to index by hand anyway.
 Recursion over `[h, ...t]` or the higher-order functions of
@@ -314,6 +314,49 @@ process lists.
 
 Lists are **immutable**. There is no `xs[0] = 99`. If you
 need a modified list, you build a new one.
+
+### `Vec[T]` — indexing without giving up values
+
+When you genuinely need to index, the default answer is
+`Vec[T]`: a flat, contiguous buffer with `O(1)` access that
+**behaves like a value**. No effects: not one operation
+carries `Mutable` in its row.
+
+A list literal in a `Vec` position builds the vector directly,
+with no linked list in between:
+
+```kai
+fn main() : Unit / Stdout = {
+  let a: Vec[Int] = [10, 20, 30]
+  println("a[1] = #{a[1]}")
+}
+```
+
+```
+$ kai run examples/ch04/11_vec.kai
+a[1] = 20
+```
+
+The annotation is what decides: a bare `[10, 20, 30]` is still
+a list.
+
+The interesting part is that `push` and `set` **return** the
+resulting vector rather than modifying one, so two names
+pointing at the same `Vec` never tread on each other.
+Underneath, the runtime mutates in place whenever the buffer
+has a single owner — the same reference counting as chapter
+13 — and copies only when it is shared. Thread the vector
+linearly, accumulator style, and building it costs one
+allocation.
+
+A slice is a constant-cost view: `v[2..4]` copies no elements,
+it shares the buffer.
+
+And `Array[T]`, which shows up in chapter 12, is the other
+face: the **mutable** reference, where writes are observable
+through every alias and each one demands `/ Mutable`. The rule
+is short: `Vec` when you want a collection that behaves like a
+value, `Array` when you want genuine shared mutation.
 
 ## 4.4 Strings, not lists of chars
 

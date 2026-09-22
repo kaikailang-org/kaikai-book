@@ -308,15 +308,14 @@ abortar en runtime.
 Hay dos cosas más que conviene saber sobre el acceso por
 índice. Una es que es **`O(n)`**: las listas son enlazadas, no
 indexadas; recorrer hasta la posición `i` cuesta `i` pasos.
-Para acceso aleatorio rápido kaikai tiene `Array[T]`, que
-veremos en el capítulo 13.
+Para acceso aleatorio hay otros dos tipos: `Vec[T]`, que viene
+en un momento, y `Array[T]`, que veremos en el capítulo 12.
 
 La otra es que la sintaxis `xs[i]` que algunos lenguajes usan
-para listas, en kaikai está reservada para `Array[T]`. Si la
-escribes sobre una lista te la rechaza el typer. La razón es
-la misma de antes: la sintaxis `xs[i]` sugiere acceso barato y
-con resultado garantizado, lo que sería mentir sobre una lista
-enlazada.
+para listas, sobre una lista te la rechaza el typer: indexar
+es para `Vec` y `Array`. La razón es la misma de antes: `xs[i]`
+sugiere acceso barato y con resultado garantizado, lo que sería
+mentir sobre una lista enlazada.
 
 Para la mayoría del código, tampoco vas a querer indexar a
 mano. Recursión sobre `[h, ...t]` o las funciones de orden
@@ -325,6 +324,48 @@ forma natural de procesar listas.
 
 Las listas son **inmutables**. No hay `xs[0] = 99`. Si
 necesitas una lista modificada, construyes una nueva.
+
+### `Vec[T]`: indexar sin renunciar a los valores
+
+Cuando de verdad necesitas indexar, la respuesta por defecto
+es `Vec[T]`: un buffer plano y contiguo, con acceso `O(1)`,
+que **se comporta como un valor**. Nada de efectos: ninguna
+operación lleva `Mutable` en la fila.
+
+Un literal de lista en posición `Vec` construye el vector
+directo, sin pasar por una lista enlazada:
+
+```kai
+fn main() : Unit / Stdout = {
+  let a: Vec[Int] = [10, 20, 30]
+  println("a[1] = #{a[1]}")
+}
+```
+
+```
+$ kai run ejemplos/cap04/11_vec.kai
+a[1] = 20
+```
+
+La anotación es la que manda: un `[10, 20, 30]` pelado sigue
+siendo una lista.
+
+Lo interesante es que `push` y `set` **devuelven** el vector
+resultante en vez de modificarlo, así que dos nombres que
+apuntan al mismo `Vec` nunca se pisan. Por debajo el runtime
+muta en el lugar cuando el buffer tiene un solo dueño —el
+mismo conteo de referencias del cap. 13— y copia solo cuando
+está compartido. Si enhebras el vector de forma lineal, al
+estilo acumulador, construirlo cuesta una sola asignación.
+
+Un slice es una vista de costo constante: `v[2..4]` no copia
+elementos, comparte el buffer.
+
+Y `Array[T]`, que aparece en el capítulo 12, es la otra cara:
+la referencia **mutable**, donde las escrituras sí se observan
+desde todos los alias y cada una exige `/ Mutable`. La regla es
+corta: `Vec` cuando quieras una colección que se comporte como
+un valor, `Array` cuando quieras mutación compartida de verdad.
 
 ## 4.4 Strings, no listas de chars
 

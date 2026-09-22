@@ -472,7 +472,10 @@ while { i < 10 } { i := i + 1 }
 
 This gives kaikai user-defined control flow. `while` is an
 ordinary stdlib function from `loop`; it just looks like a
-keyword.
+keyword. Its sibling `until` loops until the condition becomes
+true, with a difference that matters: it checks **after** the
+body, so `until` always runs at least once, while a `while`
+whose condition starts false runs none.
 
 ### Block as a lambda
 
