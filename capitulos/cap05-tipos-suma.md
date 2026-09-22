@@ -99,6 +99,35 @@ Tres detalles que vas a usar siempre:
   inspeccionando si los nombres del lado derecho ya están
   declarados.
 
+### El caso de un solo miembro
+
+Hay una esquina que muerde temprano. Con dos o más miembros no
+hay ambigüedad, pero con uno solo, `type Estado = Activo` es
+un **alias**: le estás dando otro nombre a un tipo llamado
+`Activo`, no declarando un constructor. Es la misma forma con
+que se escribe `type Metros = Int`, y el compilador no puede
+adivinar cuál querías.
+
+La barra inicial resuelve el empate:
+
+```kai
+type Evidencia = | MismoBytecode   # un miembro: suma, el ctor existe
+type Color = Rojo | Verde          # dos o más: sin barra inicial
+type Metros = Int                  # sin barra, un nombre: alias
+```
+
+Si te equivocas, el error te lo dice:
+
+```
+error: cannot find `Activo` in this scope
+  = help: `type ... = Activo` declares an alias, so `Activo` is
+    not a constructor — write `type ... = | Activo` for a
+    one-member sum
+```
+
+Un constructor sin payload nunca lleva paréntesis: se escribe
+`Activo`, no `Activo()`.
+
 ## 5.2 Constructores con y sin payload
 
 Lo viste arriba pero conviene fijarlo. Un constructor puede:
