@@ -93,6 +93,35 @@ Three details you'll use all the time:
   decided by the compiler inspecting whether the names on the
   right are already declared.
 
+### The single-member case
+
+There is a corner here that bites early. With two or more
+members there is no ambiguity, but with just one,
+`type State = Active` is an **alias**: you are giving another
+name to a type called `Active`, not declaring a constructor.
+It is the same shape you write `type Meters = Int` with, and
+the compiler cannot guess which one you meant.
+
+A leading bar breaks the tie:
+
+```kai
+type Evidence = | SameBytecode     # one member: a sum, the ctor exists
+type Color = Red | Green           # two or more: no leading bar
+type Meters = Int                  # no bar, one name: an alias
+```
+
+Get it wrong and the error says so:
+
+```
+error: cannot find `Active` in this scope
+  = help: `type ... = Active` declares an alias, so `Active` is
+    not a constructor — write `type ... = | Active` for a
+    one-member sum
+```
+
+A constructor with no payload never takes parentheses: write
+`Active`, not `Active()`.
+
 ## 5.2 Constructors with and without payload
 
 You saw it above; let's pin it down. A constructor can:
