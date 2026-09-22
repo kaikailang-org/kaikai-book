@@ -413,6 +413,39 @@ guarantees that when the loop ends (because someone
 cancels the listener, or the program receives SIGINT), the
 child fibers end too. No zombie connection handlers.
 
+### Graceful shutdown: trapping the signal
+
+That "or the program receives SIGINT" is worth opening up,
+because it is what separates a toy server from one you can
+leave running. By default a Ctrl-C kills the process wherever
+it stands: mid-write on a file, mid-response on a connection.
+
+The `Signal` effect turns that interruption into something
+your program decides when to handle:
+
+```kai
+import effects.os
+
+fn main() : Unit / Stdout + Signal = {
+  Signal.on(SigInt)
+  println("waiting for Ctrl-C...")
+  let _s = Signal.await()
+  println("signal received, shutting down cleanly")
+}
+```
+
+`Signal.on(SigInt)` subscribes; `Signal.await()` suspends the
+fiber until one arrives. Because it suspends, it is a yield
+point like any other: the rest of the program keeps running
+while this fiber waits.
+
+The pattern for a server is a dedicated fiber waiting on the
+signal, which cancels the listener when it fires. The
+cancellation descends through the nursery, each connection
+fiber runs its `Cancel` handler, and the store's `finally`
+gets to write to disk. It is chapter 13's mechanism, with the
+operating system's signal as the trigger.
+
 And per connection, the handler:
 
 ```kai

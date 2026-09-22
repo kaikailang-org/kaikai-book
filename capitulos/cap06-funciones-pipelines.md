@@ -541,7 +541,11 @@ while { i < 10 } { i := i + 1 }
 
 Esto le da a kaikai control de flujo definible por el
 usuario. `while` es una función ordinaria del stdlib, del
-módulo `loop`; solo parece un keyword.
+módulo `loop`; solo parece un keyword. Su hermana `until` corre
+hasta que la condición se vuelve cierta, y con una diferencia
+que importa: chequea **después** del cuerpo, así que `until`
+siempre ejecuta al menos una vez, mientras que un `while` con
+la condición falsa de entrada no ejecuta ninguna.
 
 ### Block como lambda
 

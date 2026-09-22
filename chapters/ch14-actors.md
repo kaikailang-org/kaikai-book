@@ -473,6 +473,44 @@ depend on each other symmetrically (a worker and its queue,
 two sides of a handshake). It is not what you want for
 "supervisor watches worker": that's the monitor case.
 
+### `set_trap_exit` — receiving the crash instead of suffering it
+
+Dying alongside your peer is not always what you want. A
+supervisor linked to its workers needs the opposite: to learn
+that one went down, and stay alive to bring it back.
+
+`spawn.set_trap_exit(true)` flips the behavior in the fiber
+that calls it. Instead of receiving `Cancel.raise()` when a
+linked peer terminates, a message lands in its mailbox:
+`"Crashed"` if the peer went down, `"Normal"` if it finished
+cleanly.
+
+```kai
+with_mailbox {
+  spawn.set_trap_exit(true)
+  let p = spawn_actor(body)
+  Link.link(p)
+  spawn.yield()
+  Stdout.print("parent: got -> #{Actor.receive()}")
+}
+```
+
+```
+child: going down
+parent: got -> Crashed
+```
+
+Without that line, the child's crash reaches the parent and
+the program goes down with it. With it, the parent is left in
+a position to decide. It is the piece that turns a link into
+supervision.
+
+Two conditions that bite when missing. The fiber has to be
+**inside a `with_mailbox`** for the message to have somewhere
+to land; otherwise the runtime falls back to ordinary cancel
+propagation. And the notice only arrives for **linked** peers:
+without `Link.link`, there is nothing to report.
+
 ### Monitors: unidirectional
 
 `Monitor.monitor(pid)` declares that the current actor

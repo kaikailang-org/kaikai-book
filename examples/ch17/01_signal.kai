@@ -1,0 +1,17 @@
+# Graceful shutdown: instead of Ctrl-C killing the process
+# wherever it stands, the `Signal` effect lets the program
+# decide when to handle the interruption.
+#
+# `Signal.await()` suspends the fiber until a subscribed
+# signal arrives, so it is a yield point like any other.
+#
+# To try it: run, then send Ctrl-C from another terminal.
+
+import effects.os
+
+fn main() : Unit / Stdout + Signal = {
+  Signal.on(SigInt)
+  println("waiting for Ctrl-C...")
+  let _s = Signal.await()
+  println("signal received, shutting down cleanly")
+}

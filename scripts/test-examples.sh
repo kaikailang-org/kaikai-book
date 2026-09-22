@@ -84,6 +84,7 @@ build|ejemplos/cap04/07_strings.kai|ok
 build|ejemplos/cap04/08_mapas.kai|ok
 build|ejemplos/cap04/09_string_builder.kai|ok
 run|ejemplos/cap04/10_mayusculas.kai|ok
+build|ejemplos/cap04/11_vec.kai|ok
 
 # Capítulo 5 — pattern matching
 build|ejemplos/cap05/01_sumas_basicas.kai|ok
@@ -194,6 +195,7 @@ build|ejemplos/cap16/ffi/02_renombre.kai|ok
 project|ejemplos/cap16/ffi/03_shim|ok|app.kai|shim.c|c
 
 # Capítulo 17 — caso notas
+build|ejemplos/cap17/01_senal.kai|ok
 project|ejemplos/cap17/notas|ok
 
 # Capítulo 18 — caso ledger
@@ -244,6 +246,7 @@ build|examples/ch04/07_strings.kai|ok
 build|examples/ch04/08_maps.kai|ok
 build|examples/ch04/09_string_builder.kai|ok
 run|examples/ch04/10_case_folding.kai|ok
+build|examples/ch04/11_vec.kai|ok
 
 # Chapter 5
 build|examples/ch05/01_basic_sums.kai|ok
@@ -354,6 +357,7 @@ build|examples/ch16/ffi/02_rename.kai|ok
 project|examples/ch16/ffi/03_shim|ok|app.kai|shim.c|c
 
 # Chapter 17
+build|examples/ch17/01_signal.kai|ok
 project|examples/ch17/notes|ok
 
 # Chapter 18

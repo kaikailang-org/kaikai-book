@@ -1,0 +1,11 @@
+# `Vec[T]` is the value vector: flat buffer, O(1) access, and
+# functional semantics — `push` and `set` return the resulting
+# vector instead of modifying the original.
+#
+# A list literal in a `Vec` position builds the vector
+# directly; a `[10, 20, 30]` with no annotation is still a list.
+
+fn main() : Unit / Stdout = {
+  let a: Vec[Int] = [10, 20, 30]
+  println("a[1] = #{a[1]}")
+}
