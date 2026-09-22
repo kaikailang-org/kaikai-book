@@ -199,6 +199,32 @@ weeks:
   output every time you run the tests. `"validate email
   rejects spaces"` reads; `"test_3"` doesn't.
 
+### Results for machines: `--json`
+
+The colored, ticked output is for you. When the reader is
+another program — a CI runner annotating the commit, a
+dashboard, a script diffing two runs — there is a second
+shape:
+
+```
+$ kai test --json my_file.kai
+{"type":"test","id":"my_file.kai:one","file":"my_file.kai","line":3,"status":"pass","duration_ms":0}
+{"type":"summary","passed":1,"failed":0,"duration_ms":0}
+```
+
+It is NDJSON: one JSON object per line, one per `test` block,
+and a `summary` at the end. Without the flag the human output
+is unchanged, so adding it to a pipeline does not alter what
+you see in the terminal.
+
+Three details for whoever consumes it. A failing block also
+carries a `message` with the assert's text, and the exit code
+is still 1. The `id` — `file:test name` — is the canonical way
+to name a block: stable across runs as long as the name and
+the file hold. And if a test body prints, that output goes to
+the same stdout as the records, interleaved among them: a
+parser has to tolerate lines that are not JSON.
+
 ## 7.3 `check "..."` — properties
 
 The tests you've seen so far check **fixed cases**: "for this

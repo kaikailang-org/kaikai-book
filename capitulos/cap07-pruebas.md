@@ -200,6 +200,33 @@ las pocas semanas:
   `"validar email rechaza espacios"` se entiende; `"test_3"`
   no.
 
+### Resultados para máquinas: `--json`
+
+La salida con colores y palomitas es para ti. Cuando quien
+lee es otro programa —un runner de CI que anota el commit, un
+dashboard, un script que compara dos corridas— hay una
+segunda forma:
+
+```
+$ kai test --json mi_archivo.kai
+{"type":"test","id":"mi_archivo.kai:uno","file":"mi_archivo.kai","line":3,"status":"pass","duration_ms":0}
+{"type":"summary","passed":1,"failed":0,"duration_ms":0}
+```
+
+Es NDJSON: un objeto JSON por línea, uno por bloque `test`, y
+un `summary` al final. Sin el flag la salida humana no cambia
+en nada, así que agregarlo a un pipeline no altera lo que ves
+en el terminal.
+
+Tres detalles para quien lo consuma. Un bloque que falla trae
+además un `message` con el texto del assert, y el código de
+salida sigue siendo 1. El `id` —`archivo:nombre del test`— es
+la forma canónica de nombrar un bloque: estable entre corridas
+mientras el nombre y el archivo no cambien. Y si el cuerpo de
+un test imprime, esa salida sale por el mismo stdout que los
+registros, intercalada entre ellos: un parser tiene que
+tolerar líneas que no son JSON.
+
 ## 7.3 `check "..."`: propiedades
 
 Los tests que viste hasta aquí comprueban **casos fijos**:
