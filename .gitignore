@@ -28,3 +28,10 @@ examples/ch18/ledger/ledger
 
 # Caché de compilación por paquete (kai build dentro de un proyecto)
 **/.kai-cache/
+
+# Lockfiles que kai regenera en los proyectos de ejemplo
+ejemplos/cap18/ledger/kai.lock
+examples/ch18/ledger/kai.lock
+
+# Bytecode de Python de scripts/
+scripts/__pycache__/
