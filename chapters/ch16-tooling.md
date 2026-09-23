@@ -700,7 +700,21 @@ behavior for special cases:
   root. Same principle as `KAI_STDLIB`.
 
 For normal use you don't need to touch any of this. The binary
-comes preconfigured to find its own things.
+comes preconfigured to find its own things, and if you want to
+see **what** it found, `kai env` prints it already resolved:
+
+```
+$ kai env
+KAIKAI_HOME=/Users/you/.kaikai
+KAI_STDLIB=/Users/you/.kaikai/share/kaikai/stdlib
+KAI_TOOLCHAIN_ID=1790127065-54356248
+```
+
+It is the first question worth asking when something compiles
+on one machine and not on another: it is rarely the code,
+almost always `KAI_STDLIB` pointing somewhere else. Given a
+name as an argument it prints just that value, which is the
+convenient form for a script.
 
 ## 16.11 Typical project structure
 
@@ -1078,7 +1092,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.121.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.122.0 - hanga-roa (stage 2, self-hosted)
 ```
 
 If `kai.toml` omits the field, the compiler assumes the

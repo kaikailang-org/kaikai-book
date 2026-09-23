@@ -227,6 +227,29 @@ un test imprime, esa salida sale por el mismo stdout que los
 registros, intercalada entre ellos: un parser tiene que
 tolerar líneas que no son JSON.
 
+### Correr uno solo: `--only`
+
+Ese `id` no es solo para leer. `--only` lo toma y corre
+exactamente ese bloque:
+
+```
+$ kai test --only "mi_archivo.kai:uno" mi_archivo.kai
+  ok   uno
+
+1/1 tests passed
+```
+
+El flag se repite para nombrar varios. Es lo que quieres
+cuando un test falla en medio de una suite lenta: en vez de
+esperar los otros cien, corres el que te importa.
+
+Un detalle con consecuencias: si el `id` no calza con ningún
+bloque, es **error** —código de salida 1— y no un "cero tests,
+todo bien". La diferencia importa apenas automatizas algo.
+Un script que pasa ids generados y lee un cero como éxito
+creería que el test pasó, cuando en realidad no corrió
+ninguno. Esa clase de falso verde es peor que un rojo.
+
 ## 7.3 `check "..."`: propiedades
 
 Los tests que viste hasta aquí comprueban **casos fijos**:

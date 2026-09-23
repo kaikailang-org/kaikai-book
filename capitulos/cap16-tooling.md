@@ -706,7 +706,21 @@ del binario `kai` para casos especiales:
   del runtime (`runtime.h`). Mismo principio que `KAI_STDLIB`.
 
 Para uso normal no necesitas tocar nada de esto. El binario
-viene preconfigurado para encontrar todo lo suyo.
+viene preconfigurado para encontrar todo lo suyo, y si quieres
+ver **qué** encontró, `kai env` lo imprime ya resuelto:
+
+```
+$ kai env
+KAIKAI_HOME=/Users/tuusuario/.kaikai
+KAI_STDLIB=/Users/tuusuario/.kaikai/share/kaikai/stdlib
+KAI_TOOLCHAIN_ID=1790127065-54356248
+```
+
+Es la primera pregunta que conviene hacer cuando algo compila
+en una máquina y no en otra: rara vez es el código, casi
+siempre es que `KAI_STDLIB` apunta a otra parte. Con un nombre
+como argumento imprime solo ese valor, que es lo cómodo para
+un script.
 
 ## 16.11 Estructura típica de un proyecto
 
@@ -1090,7 +1104,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.121.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.122.0 - hanga-roa (stage 2, self-hosted)
 ```
 
 Si el `kai.toml` omite el campo, el compilador asume la
