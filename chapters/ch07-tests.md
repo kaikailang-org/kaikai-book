@@ -225,6 +225,29 @@ the file hold. And if a test body prints, that output goes to
 the same stdout as the records, interleaved among them: a
 parser has to tolerate lines that are not JSON.
 
+### Running just one: `--only`
+
+That `id` is not only for reading. `--only` takes one and runs
+exactly that block:
+
+```
+$ kai test --only "my_file.kai:one" my_file.kai
+  ok   one
+
+1/1 tests passed
+```
+
+The flag repeats to name several. It is what you want when one
+test fails in the middle of a slow suite: instead of waiting
+for the other hundred, you run the one you care about.
+
+One detail with consequences: an `id` that matches no block is
+an **error** — exit code 1 — not a "zero tests, all good". The
+difference matters the moment you automate anything. A script
+passing generated ids and reading a zero as success would
+believe the test passed when in fact none ran. That kind of
+false green is worse than a red.
+
 ## 7.3 `check "..."` — properties
 
 The tests you've seen so far check **fixed cases**: "for this

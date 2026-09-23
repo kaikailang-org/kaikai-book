@@ -181,7 +181,8 @@ archivo, y se ejecutan vía el driver `kai`.
 
 - 7.1 `test "..." { ... }` y `assert`
 - 7.2 `kai test` y el ciclo corto de retroalimentación
-       (`--json` para consumo por máquina)
+       (`--json` para consumo por máquina, `--only` para
+       correr uno solo)
 - 7.3 `check "..."`: propiedades
 - 7.4 `bench "..." { ... }`: medir, no adivinar
 - 7.5 Cuándo usar cuál
