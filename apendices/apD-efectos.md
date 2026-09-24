@@ -258,10 +258,12 @@ effect Process {
   kill(c: Child, sig: Int)           : Result[Unit, String]
   exit(code: Int)                    : Nothing
   start_piped(cmd: String, args: [String],
-              pipe_stdin: Bool, pipe_stdout: Bool) : Result[Child, String]
+              pipe_stdin: Bool, pipe_stdout: Bool,
+              pipe_stderr: Bool)      : Result[Child, String]
   write_stdin(c: Child, data: String) : Result[Unit, String]
   close_stdin(c: Child)               : Result[Unit, String]
   read_stdout(c: Child)               : Result[String, String]
+  read_stderr(c: Child)               : Result[String, String]
 }
 ```
 
@@ -279,9 +281,13 @@ el caso normal, terminar con un código de salida, basta con
 devolver un `Int` desde `main` (cap. 16 §16.1), que sí usa el
 camino de salida completo de la libc.
 
-`start_piped` es la forma `popen`: conecta pipes al stdin y/o al
-stdout del hijo, y desde ahí `write_stdin`, `close_stdin` y
-`read_stdout` manejan la conversación.
+`start_piped` es la forma `popen`: conecta pipes al stdin, al
+stdout y/o al stderr del hijo —un flag para cada uno—, y desde
+ahí `write_stdin`, `close_stdin`, `read_stdout` y `read_stderr`
+manejan la conversación. Que stderr sea un pipe aparte es lo que
+permite distinguir un diagnóstico de la salida; fusionar los dos
+flujos no se ofrece, porque una vez fusionados ya no se pueden
+separar.
 
 ### `Signal`
 

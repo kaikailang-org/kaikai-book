@@ -1092,7 +1092,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.122.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.124.1 - hanga-roa (stage 2, self-hosted)
 ```
 
 If `kai.toml` omits the field, the compiler assumes the

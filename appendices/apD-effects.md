@@ -257,10 +257,12 @@ effect Process {
   kill(c: Child, sig: Int)           : Result[Unit, String]
   exit(code: Int)                    : Nothing
   start_piped(cmd: String, args: [String],
-              pipe_stdin: Bool, pipe_stdout: Bool) : Result[Child, String]
+              pipe_stdin: Bool, pipe_stdout: Bool,
+              pipe_stderr: Bool)      : Result[Child, String]
   write_stdin(c: Child, data: String) : Result[Unit, String]
   close_stdin(c: Child)               : Result[Unit, String]
   read_stdout(c: Child)               : Result[String, String]
+  read_stderr(c: Child)               : Result[String, String]
 }
 ```
 
@@ -278,8 +280,12 @@ For the ordinary case — exiting with a status — returning an
 does take libc's full exit path.
 
 `start_piped` is the `popen` shape: it attaches pipes to the
-child's stdin and/or stdout, and from there `write_stdin`,
-`close_stdin` and `read_stdout` carry the conversation.
+child's stdin, stdout and/or stderr — one flag each — and from
+there `write_stdin`, `close_stdin`, `read_stdout` and
+`read_stderr` carry the conversation. Keeping stderr a separate
+pipe is what lets a caller tell a diagnostic apart from output;
+merging the two streams is not offered, because once merged they
+cannot be told apart again.
 
 ### `Signal`
 
