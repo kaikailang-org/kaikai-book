@@ -1,0 +1,39 @@
+# Testing an actor without running an actor.
+#
+# The mailbox is an ordinary handler written in kaikai, so a test
+# can install its own and answer every `receive` from a script —
+# including "the deadline passed", with no time passing at all.
+#
+# `gather` asks for up to 5 seconds per message. Nothing waits
+# here: the fake handler answers from its state and the run
+# finishes in microseconds.
+#
+#   $ kai run examples/ch14/08_test_mailbox.kai
+#   [tick 1, tick 2, timeout]
+
+import actor
+import time
+
+type Msg = Tick(Int) | Done
+
+fn gather(seen: [String]) : [String] / Actor[Msg] + Clock =
+  match receive_timeout(time.seconds(5)) {
+    None -> seen ++ ["timeout"]
+    Some(Tick(n)) -> gather(seen ++ ["tick #{n}"])
+    Some(Done) -> seen ++ ["done"]
+  }
+
+fn main() : Unit / Stdout + Clock {
+  # The handler's state is the script: two messages, then an
+  # expired deadline. `resume(value, new_state)` advances it.
+  let got = handle {
+    gather([])
+  } with Actor[Msg]([Some(Tick(1)), Some(Tick(2)), None]) {
+    receive_timeout(ns, resume) -> match state {
+      [] -> resume(Some(Done), [])
+      [next, ...rest] -> resume(next, rest)
+    }
+    return(x) -> x
+  }
+  println("#{got}")
+}

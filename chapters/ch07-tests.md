@@ -452,6 +452,12 @@ simple question:
 | For **every** input, does this invariant hold? | `check` |
 | How much does this operation cost? | `bench` |
 
+One question this chapter does not answer: what about the concurrent
+part? Actors and fibers are tested with these same three constructs,
+and the trick is that the mailbox is a handler you can replace with a
+script — including the moment a deadline expires, without waiting.
+That is §14.9.
+
 The three complement each other. A serious project will have
 all three in the same file: tests for the contractual cases
 (the customer's, the edges, the ones that historically

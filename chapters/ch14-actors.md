@@ -736,6 +736,97 @@ can write it. The syntax hides nothing: `handle`, `receive`,
 any other actor framework should be expressible as an
 ordinary function in kaikai with these pieces.
 
+## 14.9 Testing an actor: replace the mailbox
+
+Chapter 7 left you with three tools — `test`, `check`, `bench` —
+and one question unanswered: how do you test the concurrent part?
+If actors were language primitives the answer would be awkward:
+stand up real actors, send them real messages, and wait. Slow
+tests, and flaky ones whenever the scheduler declines to cooperate.
+
+But you already know `with_mailbox` is no magic: it is an ordinary
+stdlib handler. And a handler can be replaced.
+
+In a test you install your own, answering every `receive` from a
+script you write. The handler's state *is* the script, and
+`resume(value, new_state)` advances it:
+
+```kai
+import actor
+import time
+
+type Msg = Tick(Int) | Done
+
+fn gather(seen: [String]) : [String] / Actor[Msg] + Clock =
+  match receive_timeout(time.seconds(5)) {
+    None -> seen ++ ["timeout"]
+    Some(Tick(n)) -> gather(seen ++ ["tick #{n}"])
+    Some(Done) -> seen ++ ["done"]
+  }
+
+fn main() : Unit / Stdout + Clock {
+  let got = handle {
+    gather([])
+  } with Actor[Msg]([Some(Tick(1)), Some(Tick(2)), None]) {
+    receive_timeout(ns, resume) -> match state {
+      [] -> resume(Some(Done), [])
+      [next, ...rest] -> resume(next, rest)
+    }
+    return(x) -> x
+  }
+  println("#{got}")
+}
+```
+
+```
+$ kai run examples/ch14/08_test_mailbox.kai
+[tick 1, tick 2, timeout]
+```
+
+Notice what is absent: no mailbox, no spawned fibers, no waiting.
+The test chooses the message order, and it chooses the moment the
+deadline expires. `gather` asks for up to five seconds per message;
+the whole run finishes in microseconds.
+
+That last part is what you come to appreciate. Controlling time in
+tests of concurrent code is a known, unglamorous pain: on the BEAM
+the usual answers are sleeps that make suites slow and flaky, or
+mocking libraries that patch the runtime. Here it is the same
+mechanism as everything else, and it costs four lines.
+
+One detail worth looking at: `Clock` is still in `main`'s
+signature. The fake handler intercepts `Actor`, not the clock, and
+the row is what the body declares — not what ends up happening. The
+capability stays even though the clock is never consulted. That is
+consistent: the type describes what the code *may* do.
+
+### Two boundaries, before you find them the hard way
+
+**A handler does not cross a `spawn`.** It is the first thing you
+try: install the fake in the parent and spawn the children beneath
+it. The compiler declines:
+
+```
+error: effect not handled in spawned fiber: Ticker
+  --> b.kai:10:23
+     |
+  10 |       let h = n.spawn(() => child())
+     |                       ^
+  = note: a fiber does not inherit the parent's handlers
+  = help: handle the effect inside the spawned body: `handle { ... } with Ticker { ... }`
+```
+
+It is §12.9's rule about capabilities, now about any `handle`:
+handlers belong to the fiber, not to the program. If the child needs
+the fake, the `handle` goes inside the spawned body.
+
+**A fake cannot emulate blocking.** A handler clause has to return,
+so there is no way to say "nothing yet, wait". Replacing the mailbox
+works because a mailbox *is* the thing that waits: the script decides
+when each message arrived. Replacing a pipe does not, for the same
+reason. Where the boundary with the operating system is exactly what
+you are testing, the instrument is still a real subprocess.
+
 ## Exercises
 
 **14.1.** Modify the §14.3 example so the worker processes

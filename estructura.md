@@ -311,6 +311,7 @@ memoria es por-fibra.
 - 14.6 Supervisión: links y monitores
 - 14.7 Caso de estudio: supervisor con reintentos
 - 14.8 Filosofía: actores son una biblioteca
+- 14.9 Probar un actor: reemplaza el mailbox
 - *5 ejercicios*
 
 #### Capítulo 15 · Holes y kaikai con agentes IA
