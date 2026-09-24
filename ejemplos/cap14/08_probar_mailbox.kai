@@ -1,0 +1,39 @@
+# Probar un actor sin correr un actor.
+#
+# El mailbox es un handler ordinario escrito en kaikai, así que un
+# test puede instalar el suyo y contestar cada `receive` desde un
+# guion — incluido el "se venció el plazo", sin que pase tiempo.
+#
+# `recolectar` pide hasta 5 segundos por mensaje. Acá nadie espera:
+# el handler falso responde de su estado y la corrida termina en
+# microsegundos.
+#
+#   $ kai run ejemplos/cap14/08_probar_mailbox.kai
+#   [tick 1, tick 2, timeout]
+
+import actor
+import time
+
+type Msg = Tick(Int) | Done
+
+fn recolectar(visto: [String]) : [String] / Actor[Msg] + Clock =
+  match receive_timeout(time.seconds(5)) {
+    None -> visto ++ ["timeout"]
+    Some(Tick(n)) -> recolectar(visto ++ ["tick #{n}"])
+    Some(Done) -> visto ++ ["done"]
+  }
+
+fn main() : Unit / Stdout + Clock {
+  # El estado del handler es el guion: dos mensajes y después el
+  # plazo vencido. `resume(valor, estado_nuevo)` lo hace avanzar.
+  let resultado = handle {
+    recolectar([])
+  } with Actor[Msg]([Some(Tick(1)), Some(Tick(2)), None]) {
+    receive_timeout(ns, resume) -> match state {
+      [] -> resume(Some(Done), [])
+      [siguiente, ...resto] -> resume(siguiente, resto)
+    }
+    return(x) -> x
+  }
+  println("#{resultado}")
+}

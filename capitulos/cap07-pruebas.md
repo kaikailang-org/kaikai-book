@@ -450,6 +450,12 @@ pregunta simple:
 | ¿Para **toda** entrada, vale esta invariante? | `check` |
 | ¿Cuánto cuesta esta operación? | `bench` |
 
+Falta una pregunta que este capítulo no contesta: ¿y la parte
+concurrente? Los actores y las fibras se prueban con estas mismas
+tres construcciones, y el truco está en que el mailbox es un
+handler que puedes reemplazar por un guion — incluido el momento en
+que un plazo se vence, sin esperar. Está en §14.9.
+
 Las tres se complementan. Un proyecto serio va a tener las
 tres en el mismo archivo: tests para los casos
 contractuales (los del cliente, los de borde, los que

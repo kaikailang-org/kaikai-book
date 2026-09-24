@@ -732,6 +732,99 @@ hayas visto en Erlang, Akka, o cualquier framework de actores
 no sea expresable como una función ordinaria en kaikai con
 estas piezas.
 
+## 14.9 Probar un actor: reemplaza el mailbox
+
+El capítulo 7 te dejó tres herramientas —`test`, `check`, `bench`—
+y una pregunta sin responder: ¿cómo se prueba la parte concurrente?
+Si los actores fueran primitivos del lenguaje la respuesta sería
+incómoda: levantar actores de verdad, mandarles mensajes de verdad,
+y esperar. Tests lentos, y frágiles cuando el scheduler no coopera.
+
+Pero ya sabes que `with_mailbox` no es magia: es un handler
+ordinario del stdlib. Y un handler se reemplaza.
+
+En un test instalas el tuyo, que contesta cada `receive` desde un
+guion que tú escribes. El estado del handler *es* el guion, y
+`resume(valor, estado_nuevo)` lo hace avanzar:
+
+```kai
+import actor
+import time
+
+type Msg = Tick(Int) | Done
+
+fn recolectar(visto: [String]) : [String] / Actor[Msg] + Clock =
+  match receive_timeout(time.seconds(5)) {
+    None -> visto ++ ["timeout"]
+    Some(Tick(n)) -> recolectar(visto ++ ["tick #{n}"])
+    Some(Done) -> visto ++ ["done"]
+  }
+
+fn main() : Unit / Stdout + Clock {
+  let resultado = handle {
+    recolectar([])
+  } with Actor[Msg]([Some(Tick(1)), Some(Tick(2)), None]) {
+    receive_timeout(ns, resume) -> match state {
+      [] -> resume(Some(Done), [])
+      [siguiente, ...resto] -> resume(siguiente, resto)
+    }
+    return(x) -> x
+  }
+  println("#{resultado}")
+}
+```
+
+```
+$ kai run ejemplos/cap14/08_probar_mailbox.kai
+[tick 1, tick 2, timeout]
+```
+
+Fíjate en lo que no hay: ningún mailbox, ninguna fibra, ninguna
+espera. El orden de los mensajes lo elige el test, y también el
+instante en que el plazo se vence. `recolectar` pide hasta cinco
+segundos por mensaje; la corrida entera termina en microsegundos.
+
+Eso es lo que más se agradece. Controlar el tiempo en tests de
+código concurrente es un dolor conocido: en la BEAM se resuelve con
+sleeps que vuelven la suite lenta y caprichosa, o con bibliotecas
+que parchan el runtime. Acá es el mismo mecanismo que todo lo
+demás, y cuesta cuatro líneas.
+
+Un detalle que conviene mirar: `Clock` sigue en la firma de `main`.
+El handler falso intercepta `Actor`, no el reloj, y la fila es lo
+que el cuerpo declara — no lo que termina ocurriendo. La capacidad
+se queda aunque el reloj nunca se consulte. Es coherente: el tipo
+describe lo que el código *puede* hacer.
+
+### Dos límites, antes de que los descubras a golpes
+
+**Un handler no cruza un `spawn`.** Es lo primero que uno intenta:
+instalar el falso en el padre y spawnear los hijos debajo. El
+compilador no te deja:
+
+```
+error: effect not handled in spawned fiber: Reloj
+  --> b.kai:10:23
+     |
+  10 |       let h = n.spawn(() => hija())
+     |                       ^
+  = note: a fiber does not inherit the parent's handlers
+  = help: handle the effect inside the spawned body: `handle { ... } with Reloj { ... }`
+```
+
+Es la misma regla del §12.9 sobre capacidades, ahora sobre un
+`handle` cualquiera: los handlers son de la fibra, no del programa.
+Si el hijo necesita el falso, el `handle` va adentro del cuerpo
+spawneado.
+
+**Un falso no puede emular bloqueo.** Una cláusula de handler tiene
+que retornar, así que no hay forma de decir "todavía nada, espera".
+Reemplazar el mailbox funciona porque un mailbox *es* la cosa que
+espera: el guion decide cuándo llegó cada mensaje. Reemplazar una
+tubería no funciona, por la misma razón. Cuando lo que estás
+probando es justamente el borde con el sistema operativo, el
+instrumento sigue siendo un subproceso de verdad.
+
 ## Ejercicios
 
 **14.1.** Modifica el ejemplo §14.3 para que el trabajador
