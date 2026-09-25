@@ -580,22 +580,39 @@ Why does this matter, really?
   take the leap to programming with recursion.
 - **It's a language guarantee, not an opportunistic
   optimization.** Some languages optimize TCO when they
-  remember; kaikai promises it. But note the exact scope: the
-  guarantee covers the **call to itself**. A function whose
-  final expression calls itself runs in constant stack, and
-  that is mandatory, not a heuristic.
-- **Mutual recursion is not part of that promise.** If
-  `is_even` ends by calling `is_odd` and vice versa, both calls
-  sit in tail position and the compiler still doesn't guarantee
-  converting them. Deep enough, the program dies with `kai:
-  fiber stack overflow`. When you need that pattern, fold it
-  into a single function with a parameter telling the cases
-  apart, and you're back on guaranteed ground.
+  remember; kaikai promises it. A function whose final
+  expression calls itself runs in constant stack, and that is
+  mandatory, not a heuristic.
+- **Mutual recursion is part of the promise too, with one
+  condition.** If `is_even` ends by calling `is_odd` and vice
+  versa, the cycle runs in constant stack on both backends: the
+  compiler fuses the group into a single self-recursive
+  function, so the cycle becomes the same loop a self-call
+  compiles to. It holds for cycles of two and for longer ones.
+  The condition is that the members share **one signature**:
+  same parameter types, same return type, same effect row, and
+  no type parameters. A cycle whose members disagree spends a
+  frame per hop, and deep enough it dies with `kai: fiber stack
+  overflow`.
+- **A tail call that closes no cycle does keep its frame.** `f`
+  calling `g`, where `g` never leads back to `f`, is an ordinary
+  call. The guarantee is about cycles, not about anything
+  written in tail position.
 - **Nothing warns you in advance.** The compiler doesn't flag
   recursion you thought was in tail position and isn't — you
   find out when the program blows the stack. That's why the
   accumulator form is what you write from the start, not what
   you reach for once it hurts.
+
+`examples/ch06/10_mutual_recursion.kai` puts both cycles to the
+test, five million hops each:
+
+```
+$ kai run examples/ch06/10_mutual_recursion.kai
+even(5000000) = true
+odd(5000000)  = false
+a(5000000)    = true
+```
 
 In practice, most recursive functions you write to process
 lists or trees will have the shape `match xs { [] -> base;
