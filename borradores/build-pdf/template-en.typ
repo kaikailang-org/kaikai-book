@@ -142,6 +142,10 @@
       radius: 2pt,
       text(
         font: ("JetBrains Mono", "Menlo", "Monaco"),
+        // JetBrains Mono dibuja -> como flecha y |> como triangulo; el
+        // codigo debe mostrar los caracteres que se escriben.
+        ligatures: false,
+        features: ("calt": 0),
         size: 9.5pt,
         it,
       ),
@@ -155,6 +159,10 @@
       radius: 1pt,
       text(
         font: ("JetBrains Mono", "Menlo", "Monaco"),
+        // JetBrains Mono dibuja -> como flecha y |> como triangulo; el
+        // codigo debe mostrar los caracteres que se escriben.
+        ligatures: false,
+        features: ("calt": 0),
         size: 0.92em,
         it,
       ),
