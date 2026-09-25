@@ -1,0 +1,38 @@
+# Mutual recursion in tail position: it is covered by the guarantee.
+#
+# `even` and `odd` call each other in tail position. The compiler
+# fuses the cycle into a single self-recursive function, so it runs
+# in constant stack — exactly as if each called itself. And it is
+# not limited to pairs: the cycle `a` -> `b` -> `c` gets the same
+# treatment.
+#
+# The condition is that the cycle's members share one signature:
+# same parameter types, same return type, same effect row, and no
+# type parameters. A cycle whose members disagree spends a frame per
+# hop and, deep enough, dies with `kai: fiber stack overflow`.
+#
+# Five million hops are enough for the difference to show: without
+# the guarantee this would not reach the first println.
+#
+#   $ kai run examples/ch06/10_mutual_recursion.kai
+#   even(5000000) = true
+#   odd(5000000)  = false
+#   a(5000000)    = true
+
+# A cycle of two.
+fn even(n: Int) : Bool = if n == 0 { true } else { odd(n - 1) }
+
+fn odd(n: Int) : Bool = if n == 0 { false } else { even(n - 1) }
+
+# A cycle of three: the guarantee is not limited to pairs.
+fn a(n: Int) : Bool = if n == 0 { true } else { b(n - 1) }
+
+fn b(n: Int) : Bool = if n == 0 { false } else { c(n - 1) }
+
+fn c(n: Int) : Bool = if n == 0 { true } else { a(n - 1) }
+
+fn main() : Unit / Stdout {
+  println("even(5000000) = #{even(5000000)}")
+  println("odd(5000000)  = #{odd(5000000)}")
+  println("a(5000000)    = #{a(5000000)}")
+}

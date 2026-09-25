@@ -651,22 +651,39 @@ el resultado parcial, y al terminar lo devuelves.
   garantizada puedes dar el paso a programar con recursión.
 - **Es una garantía del lenguaje, no una optimización
   oportunista.** Algunos lenguajes optimizan TCO cuando se
-  acuerdan; kaikai te lo promete. Pero fíjate en el alcance
-  exacto: la garantía cubre la **llamada a sí misma**. Una
-  función cuya última expresión se llama a sí misma usa stack
-  constante, y eso es obligatorio, no una heurística.
-- **La recursión mutua no entra en esa promesa.** Si `es_par`
-  termina llamando a `es_impar` y viceversa, las dos llamadas
-  están en posición de cola y aun así el compilador no
-  garantiza convertirlas. A suficiente profundidad el programa
-  muere con `kai: fiber stack overflow`. Cuando necesites ese
-  patrón, fúndelo en una sola función con un parámetro que
-  distinga el caso, y vuelves a estar en terreno garantizado.
+  acuerdan; kaikai te lo promete. Una función cuya última
+  expresión se llama a sí misma usa stack constante, y eso es
+  obligatorio, no una heurística.
+- **La recursión mutua también entra en la promesa, con una
+  condición.** Si `es_par` termina llamando a `es_impar` y
+  viceversa, el ciclo corre en stack constante en los dos
+  backends: el compilador funde al grupo en una sola función
+  auto-recursiva, así que el ciclo se vuelve el mismo loop que
+  compila una llamada a sí misma. Vale para ciclos de dos y para
+  ciclos más largos. La condición es que los miembros compartan
+  **una sola firma**: mismos tipos de parámetro, mismo tipo de
+  retorno, misma fila de efectos, y sin parámetros de tipo. Un
+  ciclo donde discrepan gasta un frame por salto, y a suficiente
+  profundidad muere con `kai: fiber stack overflow`.
+- **Una llamada de cola que no cierra ciclo sí conserva su
+  frame.** `f` llamando a `g`, donde `g` nunca vuelve a `f`, es
+  una llamada ordinaria. La garantía es sobre ciclos, no sobre
+  cualquier cosa escrita en posición de cola.
 - **No hay quien te avise antes de tiempo.** El compilador no
   marca la recursión que creías en cola y no lo está: te
   enteras cuando el programa revienta el stack. Por eso la
   forma con acumulador se escribe desde el principio y no
   cuando duele.
+
+`ejemplos/cap06/10_recursion_mutua.kai` pone los dos ciclos a
+prueba, con cinco millones de saltos cada uno:
+
+```
+$ kai run ejemplos/cap06/10_recursion_mutua.kai
+par(5000000)   = true
+impar(5000000) = false
+a(5000000)     = true
+```
 
 En la práctica, la mayoría de las funciones recursivas que
 escribas para procesar listas o árboles van a ser de la

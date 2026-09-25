@@ -1,0 +1,39 @@
+# Recursión mutua en posición de cola: también entra en la garantía.
+#
+# `par` y `impar` se llaman entre sí en posición de cola. El
+# compilador funde el ciclo en una sola función auto-recursiva, así
+# que corre en stack constante — igual que si cada una se llamara a
+# sí misma. Y no se limita a pares: el ciclo `a` -> `b` -> `c`
+# recibe el mismo trato.
+#
+# La condición es que los miembros del ciclo compartan una sola
+# firma: mismos tipos de parámetro, mismo tipo de retorno, misma
+# fila de efectos, y sin parámetros de tipo. Un ciclo donde
+# discrepan gasta un frame por salto y, a suficiente profundidad,
+# muere con `kai: fiber stack overflow`.
+#
+# Cinco millones de saltos alcanzan para que la diferencia se note:
+# sin la garantía, esto no llegaría al primer println.
+#
+#   $ kai run ejemplos/cap06/10_recursion_mutua.kai
+#   par(5000000)   = true
+#   impar(5000000) = false
+#   a(5000000)     = true
+
+# Ciclo de dos.
+fn par(n: Int) : Bool = if n == 0 { true } else { impar(n - 1) }
+
+fn impar(n: Int) : Bool = if n == 0 { false } else { par(n - 1) }
+
+# Ciclo de tres: la garantía no se limita a pares de funciones.
+fn a(n: Int) : Bool = if n == 0 { true } else { b(n - 1) }
+
+fn b(n: Int) : Bool = if n == 0 { false } else { c(n - 1) }
+
+fn c(n: Int) : Bool = if n == 0 { true } else { a(n - 1) }
+
+fn main() : Unit / Stdout {
+  println("par(5000000)   = #{par(5000000)}")
+  println("impar(5000000) = #{impar(5000000)}")
+  println("a(5000000)     = #{a(5000000)}")
+}
