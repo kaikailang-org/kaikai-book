@@ -604,8 +604,28 @@ Why does this matter, really?
   accumulator form is what you write from the start, not what
   you reach for once it hurts.
 
-`examples/ch06/10_mutual_recursion.kai` puts both cycles to the
-test, five million hops each:
+The classic pair, plus a cycle of three to show the guarantee is
+not limited to pairs:
+
+```kai
+# A cycle of two.
+fn even(n: Int) : Bool = if n == 0 { true } else { odd(n - 1) }
+
+fn odd(n: Int) : Bool = if n == 0 { false } else { even(n - 1) }
+
+# A cycle of three: the guarantee is not limited to pairs.
+fn a(n: Int) : Bool = if n == 0 { true } else { b(n - 1) }
+
+fn b(n: Int) : Bool = if n == 0 { false } else { c(n - 1) }
+
+fn c(n: Int) : Bool = if n == 0 { true } else { a(n - 1) }
+
+fn main() : Unit / Stdout {
+  println("even(5000000) = #{even(5000000)}")
+  println("odd(5000000)  = #{odd(5000000)}")
+  println("a(5000000)    = #{a(5000000)}")
+}
+```
 
 ```
 $ kai run examples/ch06/10_mutual_recursion.kai
@@ -613,6 +633,9 @@ even(5000000) = true
 odd(5000000)  = false
 a(5000000)    = true
 ```
+
+Five million hops in each cycle, and neither grows the stack.
+Without the guarantee this would not reach the first `println`.
 
 In practice, most recursive functions you write to process
 lists or trees will have the shape `match xs { [] -> base;
