@@ -675,8 +675,28 @@ el resultado parcial, y al terminar lo devuelves.
   forma con acumulador se escribe desde el principio y no
   cuando duele.
 
-`ejemplos/cap06/10_recursion_mutua.kai` pone los dos ciclos a
-prueba, con cinco millones de saltos cada uno:
+El par clásico, más un ciclo de tres para mostrar que la garantía
+no se limita a pares:
+
+```kai
+# Ciclo de dos.
+fn par(n: Int) : Bool = if n == 0 { true } else { impar(n - 1) }
+
+fn impar(n: Int) : Bool = if n == 0 { false } else { par(n - 1) }
+
+# Ciclo de tres: la garantía no se limita a pares de funciones.
+fn a(n: Int) : Bool = if n == 0 { true } else { b(n - 1) }
+
+fn b(n: Int) : Bool = if n == 0 { false } else { c(n - 1) }
+
+fn c(n: Int) : Bool = if n == 0 { true } else { a(n - 1) }
+
+fn main() : Unit / Stdout {
+  println("par(5000000)   = #{par(5000000)}")
+  println("impar(5000000) = #{impar(5000000)}")
+  println("a(5000000)     = #{a(5000000)}")
+}
+```
 
 ```
 $ kai run ejemplos/cap06/10_recursion_mutua.kai
@@ -684,6 +704,9 @@ par(5000000)   = true
 impar(5000000) = false
 a(5000000)     = true
 ```
+
+Cinco millones de saltos en cada ciclo, y ninguno crece el stack.
+Sin la garantía, esto no llegaría al primer `println`.
 
 En la práctica, la mayoría de las funciones recursivas que
 escribas para procesar listas o árboles van a ser de la
