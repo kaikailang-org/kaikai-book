@@ -772,6 +772,9 @@ fn main() : Unit / Stdout + Clock {
       [] -> resume(Some(Done), [])
       [next, ...rest] -> resume(next, rest)
     }
+    self(resume) -> panic("the script does not cover self")
+    send(pid, msg, resume) -> panic("the script does not cover send")
+    receive(resume) -> panic("the script does not cover receive")
     return(x) -> x
   }
   println("#{got}")
@@ -792,7 +795,28 @@ That last part is what you come to appreciate. Controlling time in
 tests of concurrent code is a known, unglamorous pain: on the BEAM
 the usual answers are sleeps that make suites slow and flaky, or
 mocking libraries that patch the runtime. Here it is the same
-mechanism as everything else, and it costs four lines.
+mechanism as everything else, and it costs one handler.
+
+The three `panic` clauses are there because a handler covers every
+op of its effect, including the ones the code under test never
+calls. `gather` only uses `receive_timeout`, but the compiler wants
+an answer for `self`, `send` and `receive` too:
+
+```
+error: handler for `Actor` does not cover every op: missing `self`, `send`, `receive`
+  --> mailbox.kai:14:13
+     |
+  14 |   let got = handle {
+     |             ^
+  = note: an op without a clause has no handler inside this `handle`; a clause is needed even when nothing calls it
+  = help: add a clause for each missing op, e.g. `self(args, resume) -> resume(...)`
+```
+
+The alternative would be finding out at run time, the day someone
+adds a `send` to `gather` and the test dies on an unhandled effect.
+With the `panic` the script states how far it goes: if the code
+starts asking for something the test did not plan for, the run
+aborts with that message.
 
 One detail worth looking at: `Clock` is still in `main`'s
 signature. The fake handler intercepts `Actor`, not the clock, and

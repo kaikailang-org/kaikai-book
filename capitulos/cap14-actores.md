@@ -768,6 +768,9 @@ fn main() : Unit / Stdout + Clock {
       [] -> resume(Some(Done), [])
       [siguiente, ...resto] -> resume(siguiente, resto)
     }
+    self(resume) -> panic("el guion no cubre self")
+    send(pid, msg, resume) -> panic("el guion no cubre send")
+    receive(resume) -> panic("el guion no cubre receive")
     return(x) -> x
   }
   println("#{resultado}")
@@ -787,8 +790,29 @@ segundos por mensaje; la corrida entera termina en microsegundos.
 Eso es lo que más se agradece. Controlar el tiempo en tests de
 código concurrente es un dolor conocido: en la BEAM se resuelve con
 sleeps que vuelven la suite lenta y caprichosa, o con bibliotecas
-que parchan el runtime. Acá es el mismo mecanismo que todo lo
-demás, y cuesta cuatro líneas.
+que parchan el runtime. Aquí es el mismo mecanismo que todo lo
+demás, y cuesta un handler.
+
+Las tres cláusulas con `panic` están porque un handler cubre todas
+las ops de su efecto, también las que el código bajo prueba nunca
+llama. `recolectar` solo usa `receive_timeout`, pero el compilador
+exige una respuesta para `self`, `send` y `receive`:
+
+```
+error: handler for `Actor` does not cover every op: missing `self`, `send`, `receive`
+  --> mailbox.kai:14:19
+     |
+  14 |   let resultado = handle {
+     |                   ^
+  = note: an op without a clause has no handler inside this `handle`; a clause is needed even when nothing calls it
+  = help: add a clause for each missing op, e.g. `self(args, resume) -> resume(...)`
+```
+
+La alternativa sería descubrirlo en runtime, el día que alguien
+agregue un `send` a `recolectar` y el test muera con un efecto sin
+handler. Con el `panic` el guion declara hasta dónde llega: si el
+código empieza a pedir algo que el test no previó, la corrida aborta
+con ese mensaje.
 
 Un detalle que conviene mirar: `Clock` sigue en la firma de `main`.
 El handler falso intercepta `Actor`, no el reloj, y la fila es lo

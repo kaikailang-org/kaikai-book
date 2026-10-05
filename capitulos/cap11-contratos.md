@@ -135,10 +135,10 @@ Tres detalles que vale fijar:
   esperas a runtime. Si llamas con valores dinámicos, inserta
   el assert.
 
-- **Los contratos no se ejecutan en builds de release**, según
-  un flag de compilación. En ese modo, los `requires` y
-  `ensures` desaparecen del binario; el costo es cero. Para
-  desarrollo y para tests, los contratos se evalúan.
+- **Los contratos se verifican también en `--release`**. El
+  build optimizado no los apaga: un `requires` que depende de
+  valores de runtime se sigue revisando ahí. Nadie demostró ese
+  invariante, y sacarlo sería cambiar una garantía por un `if`.
 
 ## 11.3 `result` y los nombres en alcance dentro del `ensures`
 
@@ -455,11 +455,20 @@ Lectura humana:
 
 ¿Qué pasa si alguien (tú, en seis meses, con prisa)
 escribe `retirar(cuenta, 0 - 50)` (pasando un negativo)? El
-contrato `requires monto > 0` se viola y el programa aborta
-con un mensaje que apunta a la línea exacta del `requires`.
-Nada de fallar en silencio ni de arrastrar un saldo
-inconsistente: el programa se detiene de inmediato y te dice
-por qué.
+programa no compila. La llamada está comentada al final de
+`ejemplos/cap11/03_cuenta_bancaria.kai`; si la descomentas, el
+compilador responde:
+
+```
+ejemplos/cap11/03_cuenta_bancaria.kai:49:17: error: call to `retirar`: literal args violate `monto > 0`
+```
+
+El argumento es una constante y el compilador alcanza a
+evaluarla contra el `requires`. Cuando el monto negativo llega
+desde afuera, de un formulario o de un archivo, el mismo
+contrato se revisa al entrar y el programa aborta con un
+mensaje que apunta a la línea exacta del `requires`. Nada de
+fallar en silencio ni de arrastrar un saldo inconsistente.
 
 ¿Y si el cuerpo de `retirar` tuviera un bug (alguien cambia
 `c.saldo - monto` por `c.saldo + monto` accidentalmente)? El

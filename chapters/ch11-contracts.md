@@ -133,10 +133,11 @@ Three details worth pinning down:
   for runtime. If you call with dynamic values, it inserts
   the assert.
 
-- **Contracts don't run in release builds**, depending on a
-  compiler flag. In that mode, `requires` and `ensures`
-  vanish from the binary; cost is zero. For development and
-  tests, contracts are evaluated.
+- **Contracts are checked in `--release` too**. The optimized
+  build does not switch them off: a `requires` that depends on
+  run-time values is still checked there. Nobody proved that
+  invariant, and dropping it would trade a guarantee for one
+  `if`.
 
 ## 11.3 `result` and names in scope inside `ensures`
 
@@ -451,11 +452,20 @@ Human reading:
 
 What if someone — you, in six months, in a hurry —
 writes `withdraw(account, 0 - 50)` (passing a negative)? The
-contract `requires amount > 0` is violated and the program
-aborts with a message pointing at the exact `requires` line.
-Instead of failing silently or leaving an inconsistent balance,
-the program aborts on entry and tells you which `requires` line
-it tripped.
+program does not compile. The call sits commented out at the end
+of `examples/ch11/03_bank_account.kai`; uncomment it and the
+compiler answers:
+
+```
+examples/ch11/03_bank_account.kai:44:17: error: call to `withdraw`: literal args violate `amount > 0`
+```
+
+The argument is a constant and the compiler can evaluate it
+against the `requires`. When the negative amount comes from
+outside — a form, a file — the same contract is checked on
+entry and the program aborts with a message pointing at the
+exact `requires` line. No failing silently, no inconsistent
+balance carried along.
 
 And if `withdraw`'s body had a bug — someone changes
 `c.balance - amount` to `c.balance + amount` accidentally —

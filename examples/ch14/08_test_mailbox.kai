@@ -26,6 +26,10 @@ fn gather(seen: [String]) : [String] / Actor[Msg] + Clock =
 fn main() : Unit / Stdout + Clock {
   # The handler's state is the script: two messages, then an
   # expired deadline. `resume(value, new_state)` advances it.
+  #
+  # A handler covers every op of the effect. The three `gather`
+  # never calls abort: if the code under test starts calling them,
+  # the test says so instead of making up an answer.
   let got = handle {
     gather([])
   } with Actor[Msg]([Some(Tick(1)), Some(Tick(2)), None]) {
@@ -33,6 +37,9 @@ fn main() : Unit / Stdout + Clock {
       [] -> resume(Some(Done), [])
       [next, ...rest] -> resume(next, rest)
     }
+    self(resume) -> panic("the script does not cover self")
+    send(pid, msg, resume) -> panic("the script does not cover send")
+    receive(resume) -> panic("the script does not cover receive")
     return(x) -> x
   }
   println("#{got}")
