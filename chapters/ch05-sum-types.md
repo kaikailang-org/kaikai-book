@@ -726,7 +726,7 @@ fn main() {
   print_result(eval(env, Add(Var("x"), Var("y"))))    # ok: 13
   print_result(eval(env, Sqrt(Var("x"))))             # ok: 3
   print_result(eval(env, Div(Lit(10.0), Lit(0.0))))   # division by zero
-  print_result(eval(env, Sqrt(Lit(0.0 - 1.0))))       # negative sqrt
+  print_result(eval(env, Sqrt(Lit(-1.0))))       # negative sqrt
   print_result(eval(env, Var("z")))                    # undefined variable
 }
 ```

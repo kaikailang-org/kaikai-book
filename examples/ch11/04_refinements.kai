@@ -18,7 +18,7 @@ fn main() {
   event(pr, "rain tomorrow")
 
   # The next line does NOT compile: -5 doesn't satisfy NonNeg.
-  # let y : NonNeg = 0 - 5
+  # let y : NonNeg = -5
 
   # Nor this: 1.5 doesn't satisfy 0.0 <= self <= 1.0.
   # let pr2 : Probability = 1.5

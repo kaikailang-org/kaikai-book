@@ -198,7 +198,7 @@ verifies at compile time:
 
 ```kai
 let x: NonNeg = 16        # OK: 16 >= 0
-let y: NonNeg = 0 - 5     # ERROR: -5 doesn't satisfy self >= 0
+let y: NonNeg = -5     # ERROR: -5 doesn't satisfy self >= 0
 ```
 
 If you satisfy it with a dynamic value, the compiler inserts
@@ -239,7 +239,7 @@ or the compiler knows their ranges:
 
 ```kai
 divide(10, 0)              # compile ERROR: 0 != 0 is false
-let x: NonNeg = 0 - 5     # compile ERROR: -5 < 0
+let x: NonNeg = -5     # compile ERROR: -5 < 0
 ```
 
 The program doesn't even produce a binary. The strongest
@@ -451,7 +451,7 @@ Human reading:
   amount.
 
 What if someone — you, in six months, in a hurry —
-writes `withdraw(account, 0 - 50)` (passing a negative)? The
+writes `withdraw(account, -50)` (passing a negative)? The
 program does not compile. The call sits commented out at the end
 of `examples/ch11/03_bank_account.kai`; uncomment it and the
 compiler answers:

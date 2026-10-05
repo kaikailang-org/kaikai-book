@@ -201,7 +201,7 @@ verifica en compile time:
 
 ```kai
 let x: NoNeg = 16        # OK: 16 >= 0
-let y: NoNeg = 0 - 5     # ERROR: -5 no satisface self >= 0
+let y: NoNeg = -5     # ERROR: -5 no satisface self >= 0
 ```
 
 Si lo cumples con un valor dinámico, el compilador inserta una
@@ -242,7 +242,7 @@ son literales o el compilador conoce sus rangos:
 
 ```kai
 divide(10, 0)              # ERROR de compilación: 0 != 0 es falso
-let x: NoNeg = 0 - 5      # ERROR de compilación: -5 < 0
+let x: NoNeg = -5      # ERROR de compilación: -5 < 0
 ```
 
 El programa ni siquiera llega a generar binario, que es la
@@ -454,7 +454,7 @@ Lectura humana:
   promete que el saldo final es el inicial menos el monto.
 
 ¿Qué pasa si alguien (tú, en seis meses, con prisa)
-escribe `retirar(cuenta, 0 - 50)` (pasando un negativo)? El
+escribe `retirar(cuenta, -50)` (pasando un negativo)? El
 programa no compila. La llamada está comentada al final de
 `ejemplos/cap11/03_cuenta_bancaria.kai`; si la descomentas, el
 compilador responde:

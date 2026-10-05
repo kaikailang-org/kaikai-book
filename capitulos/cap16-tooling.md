@@ -792,7 +792,7 @@ El caso más simple es atarse a una función de libc directo:
 extern "C" fn llabs(n: Int) : Int / Ffi
 
 fn main() : Unit / Stdout + Ffi {
-  print("|-7| = #{llabs(0 - 7)}")
+  print("|-7| = #{llabs(-7)}")
 }
 ```
 

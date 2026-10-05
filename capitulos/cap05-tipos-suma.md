@@ -751,7 +751,7 @@ fn main() {
   imprimir(eval(env, Suma(Var("x"), Var("y"))))    # ok: 13
   imprimir(eval(env, Raiz(Var("x"))))              # ok: 3
   imprimir(eval(env, Div(Lit(10.0), Lit(0.0))))    # error: división por cero
-  imprimir(eval(env, Raiz(Lit(0.0 - 1.0))))        # error: raíz de negativo
+  imprimir(eval(env, Raiz(Lit(-1.0))))        # error: raíz de negativo
   imprimir(eval(env, Var("z")))                     # error: variable no definida: z
 }
 ```

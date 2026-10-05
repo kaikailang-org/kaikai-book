@@ -16,5 +16,5 @@ fn main() : Unit / Stdout {
   # Ambas ramas son `?palabra`, así que el compilador sabe
   # que cualquier valor que escojas para una vale para la
   # otra.
-  println(clasificar(0 - 5))
+  println(clasificar(-5))
 }

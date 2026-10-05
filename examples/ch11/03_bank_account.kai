@@ -41,5 +41,5 @@ fn main() {
 
   # This does not even compile: the amount is a constant and the
   # compiler evaluates it against requires amount > 0.
-  # let ada_neg = withdraw(ada3, 0 - 50)
+  # let ada_neg = withdraw(ada3, -50)
 }

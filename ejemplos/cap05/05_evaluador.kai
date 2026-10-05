@@ -104,7 +104,7 @@ fn main() {
   imprimir(eval(env, Div(Lit(10.0), Lit(0.0))))
 
   # √(-1)         — RaizNegativa
-  imprimir(eval(env, Raiz(Lit(0.0 - 1.0))))
+  imprimir(eval(env, Raiz(Lit(-1.0))))
 
   # z             — NoDefinida
   imprimir(eval(env, Var("z")))
