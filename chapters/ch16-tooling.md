@@ -191,10 +191,7 @@ certainty, the judge is still `kai build`.
 
 The structured-report flags mount on `typecheck` the same way
 they do on `build` (`--diags-json`, `--holes-json`): the same
-report, without paying for codegen. The reports stop before
-monomorphisation: a protocol bound violated at a concrete
-instantiation shows up under plain `kai typecheck`, not in the
-JSON. That makes it the natural
+report, without paying for codegen. That makes it the natural
 tool for chapter 15's hole loop, where each iteration costs the
 front-end and nothing more.
 
@@ -573,13 +570,15 @@ The same idea extends to `kai build`. Three flags emit
 structured information instead of diagnostic prose:
 
 - `kai build --diags-json` — the compiler's diagnostics as
-  JSON: an object with the file and a `diagnostics` array.
-  Each entry carries `severity`, `file`, `line`, `col`,
-  `message` and a `related` list with the notes. What the
-  editor consumes through LSP is also reachable from scripts
-  and agents that call `kai build` directly. Coverage is
-  partial: a diagnostic the compiler only emits as text goes
-  to stderr and is absent from the array.
+  JSON: an object with the file, a `status` (the exit code
+  the build would give) and a `diagnostics` array. Each entry
+  carries `severity`, `file`, `line`, `col`, `message` and a
+  `related` list with the notes. What the editor consumes
+  through LSP is also reachable from scripts and agents that
+  call `kai build` directly. The array does not cover
+  everything: a kind error or a contract violation leaves
+  `status` at 1 and the array empty, with the text on stderr.
+  The reliable signal that a build fails is `status`.
 - `kai build --effects-json` — every function's effect row,
   one entry per function with `file`, `fn`, `line`, `col`,
   `effects`, `row_open` and `handlers_installed`. The report
@@ -1105,7 +1104,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.129.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.130.0 - hanga-roa (stage 2, self-hosted)
 ```
 
 If `kai.toml` omits the field, the compiler assumes the
