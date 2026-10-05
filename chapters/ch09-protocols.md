@@ -142,7 +142,7 @@ block:
 ```kai
 impl Ord for Account {
   fn cmp(a: Account, b: Account) : Int =
-    if a.balance < b.balance { 0 - 1 }
+    if a.balance < b.balance { -1 }
     else if a.balance > b.balance { 1 }
     else { 0 }
 

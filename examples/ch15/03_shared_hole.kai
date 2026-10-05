@@ -14,5 +14,5 @@ fn classify(n: Int) : String {
 fn main() : Unit / Stdout {
   # Both branches are `?word`, so the compiler knows that
   # any value you pick for one works for the other.
-  println(classify(0 - 5))
+  println(classify(-5))
 }

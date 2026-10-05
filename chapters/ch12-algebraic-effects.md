@@ -1221,7 +1221,7 @@ fn main() : Unit / Stdout {
   } with Fail {
     fail(reason, resume) -> {
       println("error: " ++ reason)
-      0 - 1
+      -1
     }
   }
   println("entries processed: #{n}")

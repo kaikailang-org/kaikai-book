@@ -14,7 +14,7 @@ effect Reloj {
 }
 
 test "un test puede llamar un extern C directo" {
-  assert llabs(0 - 5) == 5
+  assert llabs(-5) == 5
 }
 
 test "un efecto propio se maneja dentro del cuerpo" {

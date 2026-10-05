@@ -122,7 +122,7 @@ the compiler synthesises. That's why a test can call an
 extern "C" fn llabs(x: Int) : Int / Ffi
 
 test "a test can call an extern C fn directly" {
-  assert llabs(0 - 5) == 5
+  assert llabs(-5) == 5
 }
 ```
 

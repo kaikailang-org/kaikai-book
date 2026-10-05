@@ -46,5 +46,5 @@ fn main() {
 
   # Esto ni siquiera compila: el monto es una constante y el
   # compilador la evalúa contra requires monto > 0.
-  # let ada_neg = retirar(ada3, 0 - 50)
+  # let ada_neg = retirar(ada3, -50)
 }

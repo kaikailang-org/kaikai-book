@@ -129,7 +129,7 @@ el mismo bloque:
 ```kai
 impl Ord for Cuenta {
   fn cmp(a: Cuenta, b: Cuenta) : Int =
-    if a.saldo < b.saldo { 0 - 1 }
+    if a.saldo < b.saldo { -1 }
     else if a.saldo > b.saldo { 1 }
     else { 0 }
 

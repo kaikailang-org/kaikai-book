@@ -24,7 +24,7 @@ fn main() {
   evento(pr, "lluvia mañana")
 
   # Lo siguiente NO compila: -5 no satisface NoNeg.
-  # let y : NoNeg = 0 - 5
+  # let y : NoNeg = -5
 
   # Y esto tampoco: 1.5 no satisface 0.0 <= self <= 1.0.
   # let pr2 : Probabilidad = 1.5

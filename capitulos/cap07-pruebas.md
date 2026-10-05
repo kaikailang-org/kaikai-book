@@ -122,7 +122,7 @@ llamar a un `extern "C"` sin envolverlo en nada:
 extern "C" fn llabs(x: Int) : Int / Ffi
 
 test "un test puede llamar un extern C directo" {
-  assert llabs(0 - 5) == 5
+  assert llabs(-5) == 5
 }
 ```
 
