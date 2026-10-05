@@ -173,11 +173,19 @@ edición → prueba toma uno o dos segundos en archivos chicos.
 Si estás dentro de un proyecto (un directorio con `kai.toml`),
 `kai test .` corre los tests del paquete principal y también
 descubre automáticamente cualquier `.kai` bajo el directorio
-`tests/`. Cada archivo de `tests/` se compila como una unidad
-aparte: no como parte del paquete, sino como su propio
-programa de prueba. Si necesitas ejercer una función `pub`
-del paquete desde `tests/`, impórtala como cualquier
-dependencia: `import mi_paquete`.
+`tests/`. Cada archivo de `tests/` es su propio programa de
+prueba, fuera del paquete, y corre por separado. Se compilan
+juntos, eso sí, en un solo binario: `kai test` revisa cada uno
+solo y después los construye en conjunto, de modo que dos
+archivos que pasan por separado pero no pueden compilar juntos
+hacen fallar la corrida. Lo que compartan va a un módulo que
+ambos importen. Si necesitas ejercer una función `pub` del
+paquete desde `tests/`, impórtala como cualquier dependencia:
+`import mi_paquete`.
+
+Las compilaciones corren en paralelo, hasta una por CPU por defecto;
+`-j <n>` fija el tope. Los tests se siguen ejecutando de a un
+archivo, en orden.
 
 Si llamas a `kai test mi_archivo.kai` apuntando a un archivo
 suelto, el runner corre todo lo que ese archivo y sus
@@ -223,9 +231,9 @@ además un `message` con el texto del assert, y el código de
 salida sigue siendo 1. El `id` —`archivo:nombre del test`— es
 la forma canónica de nombrar un bloque: estable entre corridas
 mientras el nombre y el archivo no cambien. Y si el cuerpo de
-un test imprime, esa salida sale por el mismo stdout que los
-registros, intercalada entre ellos: un parser tiene que
-tolerar líneas que no son JSON.
+un test imprime, esa salida se va a stderr: por stdout salen
+solo los registros, y un parser puede leerlo línea a línea sin
+filtrar nada.
 
 ### Correr uno solo: `--only`
 

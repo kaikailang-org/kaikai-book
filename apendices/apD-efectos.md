@@ -215,6 +215,34 @@ Sockets TCP a nivel de bytes; los bytes viajan como `[Int]` en
 el hilo del sistema. `recv_timeout` devuelve `None` si se vence
 el plazo.
 
+### `NetUnix`
+
+```kai
+effect NetUnix {
+  listen(path: String, mode: Int)  : Result[Listener, String]
+  connect(path: String)            : Result[Conn, String]
+  accept(l: Listener)              : Result[Conn, String]
+  send(c: Conn, data: [Int])       : Result[Int, String]
+  recv(c: Conn, max: Int)          : Result[[Int], String]
+  recv_timeout(c: Conn, max: Int, nanos: Int) : Option[Result[[Int], String]]
+  peer_uid(c: Conn)                : Result[Int, String]
+  close(c: Conn)                   : Unit
+  close_listener(l: Listener)      : Unit
+}
+```
+
+Sockets de dominio Unix: el hermano local de `NetTcp`, con un
+archivo en el lugar del par host y puerto. Se importa desde
+`net.unix`. `send`, `recv`, `recv_timeout` y `close` se comportan
+igual que en TCP. `listen` crea el archivo del socket con los
+permisos de `mode`; como kaikai no tiene literales octales, el
+módulo exporta `owner_only` para el `0600` de siempre.
+`close_listener` cierra el listener y borra el archivo.
+
+`peer_uid` devuelve el uid efectivo del proceso al otro lado, tal
+como lo registró el kernel al conectar. Nada de lo que el par
+envíe puede falsificarlo.
+
 ### `NetUdp` y `NetDns`
 
 ```kai
@@ -231,10 +259,10 @@ effect NetDns {
 ```
 
 Mismo estilo que `NetTcp`. El stdlib **no** trae un alias que
-agrupe a los tres: los únicos que declara son `Console` e `Io`
-(§D.9). Una función que use los tres los suma en su fila,
+agrupe a los efectos de red: los únicos que declara son `Console`
+e `Io` (§D.9). Una función que use varios los suma en su fila,
 `/ NetTcp + NetUdp + NetDns`, o defines el alias tú, que es una
-línea una vez importados los tres módulos:
+línea una vez importados los módulos:
 
 ```kai
 import net.tcp
@@ -264,6 +292,10 @@ effect Process {
   close_stdin(c: Child)               : Result[Unit, String]
   read_stdout(c: Child)               : Result[String, String]
   read_stderr(c: Child)               : Result[String, String]
+  start_group(cmd: String, args: [String],
+              pipe_stdin: Bool, pipe_stdout: Bool,
+              pipe_stderr: Bool)      : Result[Child, String]
+  kill_group(c: Child, sig: Int)      : Result[Unit, String]
 }
 ```
 
@@ -288,6 +320,17 @@ manejan la conversación. Que stderr sea un pipe aparte es lo que
 permite distinguir un diagnóstico de la salida; fusionar los dos
 flujos no se ofrece, porque una vez fusionados ya no se pueden
 separar.
+
+`kill` alcanza solo al hijo, no a los procesos que ese hijo lanzó.
+Para eso está `start_group`: es `start_piped` con el hijo como
+líder de un grupo de procesos nuevo, y `kill_group` le manda la
+señal al grupo completo, de modo que una cadena como
+`sh -> lanzador -> programa` muere junta. `kill_group` sobre un
+hijo que arrancó de otra forma devuelve `Err`. El grupo es
+optativo porque un hijo fuera del grupo en primer plano de la
+terminal no recibe Ctrl-C y queda detenido si intenta leer de
+ella: un paginador o un editor siguen yendo por `start` o
+`start_piped`.
 
 ### `Signal`
 
@@ -527,7 +570,7 @@ variables de entorno y manipular archivos: el equivalente a
 "esta función no es pura, hace cosas con el sistema".
 
 Fíjate en quiénes **no** están en `Io`: `Clock`, `Random`,
-`SecureRandom`, los tres efectos de red y `Process` quedan fuera a
+`SecureRandom`, los efectos de red y `Process` quedan fuera a
 propósito. Una función que "logguea y lee configuración" no
 debería ganar en silencio la capacidad de salir a la red o de
 lanzar subprocesos solo porque ambas cosas viven bajo un nombre
@@ -541,7 +584,7 @@ runtime instala automáticamente un handler por defecto:
 
 - `Stdout`, `Stderr`, `Stdin`, `Env`, `File` → IO al sistema.
 - `Clock`, `Random`, `SecureRandom` → reloj y RNG del sistema.
-- `NetTcp`, `NetUdp`, `NetDns` → POSIX sockets.
+- `NetTcp`, `NetUnix`, `NetUdp`, `NetDns` → POSIX sockets.
 - `Process`, `Signal` → llamadas POSIX.
 - `Log` → cada mensaje a stderr como `[ISO8601Z] NIVEL mensaje`.
 - `Mutable` → asignaciones reales en heap.

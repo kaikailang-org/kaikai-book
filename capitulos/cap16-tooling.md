@@ -167,8 +167,8 @@ ahí.
 La clave es lo que `typecheck` **no** hace. Corre el front-end
 completo del compilador (lexer, parser, resolución de nombres,
 inferencia HM y de filas de efectos, la maquinaria de kinds y
-unidades, la validación de dispatch de protocolos) y se detiene
-ahí. No monomorfiza, no genera código, no enlaza, no escribe un
+unidades, la validación de dispatch de protocolos), monomorfiza,
+y se detiene ahí. No genera código, no enlaza, no escribe un
 binario. Todo el trabajo que un `build` gasta *después* de
 saber que el programa es correcto se lo salta, y por eso termina
 en una fracción de lo que tarda una compilación completa.
@@ -185,17 +185,19 @@ distinguir clases de error: lo que sale por consola y el número
 con que termina son los que `kai build` habría dado.
 
 Un límite honesto, porque el nombre promete un poco de más:
-`typecheck` cubre el front-end, no el pipeline entero. Un puñado
-de errores solo aparecen en fases posteriores (una cota de
-protocolo que se viola recién al monomorfizar en una instancia
-concreta, o un hueco de cobertura de un backend) y esos
-`typecheck` no los ve. Un archivo que pasa `typecheck` casi
+`typecheck` cubre el front-end, no el pipeline entero. Lo que
+queda fuera son los huecos de cobertura de un backend, una forma
+que el front-end acepta y el generador de código no sabe emitir,
+y esos `typecheck` no los ve. Un archivo que pasa `typecheck` casi
 siempre compila, pero "casi siempre" no es "siempre". Para la
 certeza total, el juez sigue siendo `kai build`.
 
 Los flags de reporte estructurado montan sobre `typecheck` igual
 que sobre `build` (`--diags-json`, `--holes-json`): el mismo
-reporte, sin pagar la generación de código. Eso lo vuelve la
+reporte, sin pagar la generación de código. Los reportes se
+detienen antes de monomorfizar: una cota de protocolo violada en
+una instancia concreta la muestra `kai typecheck` a secas, no el
+JSON. Eso lo vuelve la
 herramienta natural del loop con holes del cap. 15, donde cada
 iteración cuesta lo que cuesta el front-end y nada más.
 
@@ -536,6 +538,8 @@ Topics:
   loop         Control flow — `if`, `while`, `until`, and iteration via pipes.
   lsp          The kaikai Language Server (`kai lsp`) for editor integration.
   match        Pattern matching with exhaustiveness checking.
+  mutate       Break the code on purpose and ask whether anything notices.
+  net          Byte-level networking — TCP, UDP, DNS, and Unix-domain sockets.
   packages     `kai.toml`, imports, visibility.
   pipes        Apply (`|>`), map (`|`), flat-map (`||`), filter (`|?`) — four pipe
   protocols    Single-dispatch protocols, Go/Clojure/Elixir-style.
@@ -574,17 +578,25 @@ necesita, en el formato que mejor le sirva.
 La misma idea se extiende a `kai build`. Tres flags emiten
 información estructurada en vez de prosa diagnóstica:
 
-- `kai build --diags-json`: todos los errores y warnings del
-  compilador como un array JSON, con campos `severity`,
-  `file`, `line`, `col`, `message`, `code`. Lo que el editor
-  vía LSP consume queda accesible también desde scripts y
-  agentes que llaman a `kai build` directamente.
-- `kai build --effects-json`: la fila de efectos inferida
-  para cada función `pub` del archivo. Permite que un agente
-  responda "¿esta función toca el disco?" sin parsear código.
-- `kai build --library-mode`: compila sin requerir un
-  `fn main`. Útil para analizar paquetes que se van a usar
-  como biblioteca.
+- `kai build --diags-json`: los diagnósticos del compilador
+  como JSON, un objeto con el archivo y un array `diagnostics`.
+  Cada entrada trae `severity`, `file`, `line`, `col`,
+  `message` y un `related` con las notas. Lo que el editor vía
+  LSP consume queda accesible también desde scripts y agentes
+  que llaman a `kai build` directamente. La cobertura es
+  parcial: un diagnóstico que el compilador emite solo como
+  texto sale por stderr y no aparece en el array.
+- `kai build --effects-json`: la fila de efectos de cada
+  función, una entrada por función con `file`, `fn`, `line`,
+  `col`, `effects`, `row_open` y `handlers_installed`. El
+  reporte incluye las funciones del prelude, así que el
+  consumidor filtra por `file`. Permite que un agente responda
+  "¿esta función toca el disco?" sin parsear código.
+- `kai build --library-mode`: corre el front-end sin exigir un
+  `fn main` y responde los comentarios `# @probe <kind> L:C`
+  que encuentre en el fuente: tipo, definición, completado,
+  firma. Es lo que `kai lsp` usa por debajo para el hover y el
+  ir-a-definición.
 
 Las tres formas comparten propósito: hacer que la
 información que el compilador ya tiene viva fuera del
@@ -713,7 +725,8 @@ ver **qué** encontró, `kai env` lo imprime ya resuelto:
 $ kai env
 KAIKAI_HOME=/Users/tuusuario/.kaikai
 KAI_STDLIB=/Users/tuusuario/.kaikai/share/kaikai/stdlib
-KAI_TOOLCHAIN_ID=1790127065-54356248
+KAI_TOOLCHAIN_ID=1791118538-57238280
+KAI_KAIC2=/Users/tuusuario/.kaikai/libexec/kaikai/kaic2
 ```
 
 Es la primera pregunta que conviene hacer cuando algo compila
@@ -1104,7 +1117,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.124.1 - hanga-roa (stage 2, self-hosted)
+kaikai 0.129.0 - hanga-roa (stage 2, self-hosted)
 ```
 
 Si el `kai.toml` omite el campo, el compilador asume la

@@ -165,7 +165,7 @@ expected there.
 The point is what `typecheck` does **not** do. It runs the
 compiler's full front-end — lexer, parser, name resolution, HM
 and effect-row inference, the kind and unit machinery, protocol-
-dispatch validation — and stops there. No monomorphisation, no
+dispatch validation — then monomorphises, and stops there. No
 codegen, no link, no binary. All the work a `build` spends
 *after* it knows the program is correct is skipped, which is why
 it finishes in a fraction of a full compile.
@@ -182,17 +182,19 @@ classes apart: what it prints and the number it exits with are
 what `kai build` would have given you.
 
 One honest limit, because the name promises a touch more:
-`typecheck` covers the front-end, not the whole pipeline. A
-handful of errors only surface in later phases — a protocol
-bound violated only when it monomorphises at a concrete
-instantiation, or a backend coverage gap — and those `typecheck`
-does not see. A file that passes `typecheck` almost always
+`typecheck` covers the front-end, not the whole pipeline. What
+stays out are backend coverage gaps — a form the front-end
+accepts and the code generator cannot emit — and those
+`typecheck` does not see. A file that passes `typecheck` almost always
 builds, but "almost always" is not "always". For total
 certainty, the judge is still `kai build`.
 
 The structured-report flags mount on `typecheck` the same way
 they do on `build` (`--diags-json`, `--holes-json`): the same
-report, without paying for codegen. That makes it the natural
+report, without paying for codegen. The reports stop before
+monomorphisation: a protocol bound violated at a concrete
+instantiation shows up under plain `kai typecheck`, not in the
+JSON. That makes it the natural
 tool for chapter 15's hole loop, where each iteration costs the
 front-end and nothing more.
 
@@ -530,6 +532,8 @@ Topics:
   loop         Control flow — `if`, `while`, `until`, and iteration via pipes.
   lsp          The kaikai Language Server (`kai lsp`) for editor integration.
   match        Pattern matching with exhaustiveness checking.
+  mutate       Break the code on purpose and ask whether anything notices.
+  net          Byte-level networking — TCP, UDP, DNS, and Unix-domain sockets.
   packages     `kai.toml`, imports, visibility.
   pipes        Apply (`|>`), map (`|`), flat-map (`||`), filter (`|?`) — four pipe
   protocols    Single-dispatch protocols, Go/Clojure/Elixir-style.
@@ -568,17 +572,25 @@ suits them.
 The same idea extends to `kai build`. Three flags emit
 structured information instead of diagnostic prose:
 
-- `kai build --diags-json` — every compiler error and warning
-  as a JSON array, with fields `severity`, `file`, `line`,
-  `col`, `message`, `code`. What the editor consumes through
-  LSP is also reachable from scripts and agents that call
-  `kai build` directly.
-- `kai build --effects-json` — the effect row inferred for
-  each `pub` function in the file. Lets an agent answer
-  "does this function touch disk?" without parsing source.
-- `kai build --library-mode` — compile without requiring a
-  `fn main`. Useful for analyzing packages meant to be used
-  as a library.
+- `kai build --diags-json` — the compiler's diagnostics as
+  JSON: an object with the file and a `diagnostics` array.
+  Each entry carries `severity`, `file`, `line`, `col`,
+  `message` and a `related` list with the notes. What the
+  editor consumes through LSP is also reachable from scripts
+  and agents that call `kai build` directly. Coverage is
+  partial: a diagnostic the compiler only emits as text goes
+  to stderr and is absent from the array.
+- `kai build --effects-json` — every function's effect row,
+  one entry per function with `file`, `fn`, `line`, `col`,
+  `effects`, `row_open` and `handlers_installed`. The report
+  includes the prelude's functions, so a consumer filters by
+  `file`. Lets an agent answer "does this function touch
+  disk?" without parsing source.
+- `kai build --library-mode` — runs the front-end without
+  requiring a `fn main` and answers the `# @probe <kind> L:C`
+  comments it finds in the source: type, definition,
+  completion, signature. It is what `kai lsp` uses underneath
+  for hover and go-to-definition.
 
 The three share a purpose: making the information the
 compiler already has live outside the binary, in a format
@@ -707,7 +719,8 @@ see **what** it found, `kai env` prints it already resolved:
 $ kai env
 KAIKAI_HOME=/Users/you/.kaikai
 KAI_STDLIB=/Users/you/.kaikai/share/kaikai/stdlib
-KAI_TOOLCHAIN_ID=1790127065-54356248
+KAI_TOOLCHAIN_ID=1791118538-57238280
+KAI_KAIC2=/Users/you/.kaikai/libexec/kaikai/kaic2
 ```
 
 It is the first question worth asking when something compiles
@@ -1092,7 +1105,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.124.1 - hanga-roa (stage 2, self-hosted)
+kaikai 0.129.0 - hanga-roa (stage 2, self-hosted)
 ```
 
 If `kai.toml` omits the field, the compiler assumes the

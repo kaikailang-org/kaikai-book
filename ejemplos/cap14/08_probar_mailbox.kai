@@ -4,7 +4,7 @@
 # test puede instalar el suyo y contestar cada `receive` desde un
 # guion — incluido el "se venció el plazo", sin que pase tiempo.
 #
-# `recolectar` pide hasta 5 segundos por mensaje. Acá nadie espera:
+# `recolectar` pide hasta 5 segundos por mensaje. Aquí nadie espera:
 # el handler falso responde de su estado y la corrida termina en
 # microsegundos.
 #
@@ -26,6 +26,10 @@ fn recolectar(visto: [String]) : [String] / Actor[Msg] + Clock =
 fn main() : Unit / Stdout + Clock {
   # El estado del handler es el guion: dos mensajes y después el
   # plazo vencido. `resume(valor, estado_nuevo)` lo hace avanzar.
+  #
+  # Un handler cubre todas las ops del efecto. Las tres que
+  # `recolectar` no usa abortan: si el código bajo prueba empieza
+  # a llamarlas, el test lo dice en vez de inventar una respuesta.
   let resultado = handle {
     recolectar([])
   } with Actor[Msg]([Some(Tick(1)), Some(Tick(2)), None]) {
@@ -33,6 +37,9 @@ fn main() : Unit / Stdout + Clock {
       [] -> resume(Some(Done), [])
       [siguiente, ...resto] -> resume(siguiente, resto)
     }
+    self(resume) -> panic("el guion no cubre self")
+    send(pid, msg, resume) -> panic("el guion no cubre send")
+    receive(resume) -> panic("el guion no cubre receive")
     return(x) -> x
   }
   println("#{resultado}")

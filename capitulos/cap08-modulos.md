@@ -213,6 +213,12 @@ su propia declaración: dos dependencias pueden declarar cada
 una su `effect Emit` sin pisarse, y `with ea.Emit` alcanza solo
 al de `ea`.
 
+Hay un caso que no llega a disputa: el homónimo de un efecto del
+stdlib. Si importas un módulo que declara su propio `effect Log`,
+en ese archivo `Log` a secas es el del módulo. Lo que importaste
+a mano le gana a lo que venía puesto, y el del stdlib sigue a un
+calificador de distancia, como `effects.Log`.
+
 La otra salida es el import selectivo, que desempata para todo
 el archivo en vez de hacerlo en cada uso:
 

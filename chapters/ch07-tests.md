@@ -173,11 +173,17 @@ edit→run cycle takes a second or two on small files.
 If you are inside a project (a directory with `kai.toml`),
 `kai test .` runs the main package's tests and also
 auto-discovers any `.kai` under the `tests/` directory. Each
-file under `tests/` is compiled as its own unit — not as
-part of the package, but as a standalone test program. If
-you need to exercise a `pub` function of the package from
-`tests/`, import it like any other dependency:
+file under `tests/` is its own test program, outside the
+package, and runs separately. They do build together, as one
+binary: `kai test` checks each file alone and then builds them
+as a set, so two files that pass on their own but cannot build
+together fail the run. What they share goes into a module both
+import. If you need to exercise a `pub` function of the package
+from `tests/`, import it like any other dependency:
 `import my_package`.
+
+Builds run in parallel, up to one per CPU by default; `-j <n>` sets
+the cap. Tests still run one file at a time, in order.
 
 If you call `kai test my_file.kai` against a loose file, the
 runner runs everything that file and its imports declare
@@ -222,8 +228,8 @@ carries a `message` with the assert's text, and the exit code
 is still 1. The `id` — `file:test name` — is the canonical way
 to name a block: stable across runs as long as the name and
 the file hold. And if a test body prints, that output goes to
-the same stdout as the records, interleaved among them: a
-parser has to tolerate lines that are not JSON.
+stderr: stdout carries the records and nothing else, so a
+parser can read it line by line without filtering.
 
 ### Running just one: `--only`
 

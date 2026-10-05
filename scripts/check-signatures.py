@@ -25,6 +25,11 @@ NOT_IN_STDLIB = {
     "Io": "efecto inventado para ilustrar varias ops en una declaración",
 }
 
+# Efectos `pub` del stdlib que el apéndice omite a propósito.
+NOT_IN_BOOK = {
+    "TracePrefix": "portador interno de `trace.with_log_prefix`",
+}
+
 APPENDICES = [
     "apendices/apD-efectos.md",
     "appendices/apD-effects.md",
@@ -119,6 +124,8 @@ def join_wrapped(text: str) -> str:
 def check(path: Path, std: dict[str, dict[str, str]]) -> list[str]:
     problems = []
     book = parse_effects(join_wrapped(kai_blocks(path.read_text())), pub_only=False)
+    for name in sorted(set(std) - set(book) - set(NOT_IN_BOOK)):
+        problems.append(f"{name}: el stdlib lo declara, el apéndice no")
     for name, ops in sorted(book.items()):
         if name in NOT_IN_STDLIB:
             continue
@@ -173,7 +180,7 @@ def main() -> int:
 
     if failed:
         print("\nEl apéndice no calza con el stdlib instalado.")
-        print("Corrige el apéndice, o agrega el efecto a NOT_IN_STDLIB con su razón.")
+        print("Corrige el apéndice, o agrega el efecto a NOT_IN_STDLIB o NOT_IN_BOOK con su razón.")
     return 1 if failed else 0
 
 

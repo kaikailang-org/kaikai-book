@@ -43,4 +43,8 @@ fn main() {
   # Esto compila, pero al ejecutarse aborta:
   # retirar más de lo que hay viola requires saldo >= monto.
   # let ada_bad = retirar(ada3, 999)
+
+  # Esto ni siquiera compila: el monto es una constante y el
+  # compilador la evalúa contra requires monto > 0.
+  # let ada_neg = retirar(ada3, 0 - 50)
 }

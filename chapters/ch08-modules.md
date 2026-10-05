@@ -212,6 +212,12 @@ declaration: two dependencies may each declare their own
 `effect Emit` without colliding, and `with ea.Emit` reaches only
 `ea`'s.
 
+One case never becomes a dispute: a namesake of a stdlib effect.
+If you import a module that declares its own `effect Log`, a bare
+`Log` in that file is the module's. What you imported by hand
+wins over what was already there, and the stdlib's stays one
+qualifier away, as `effects.Log`.
+
 The other way out is the selective import, which settles it for
 the whole file instead of at every use:
 
