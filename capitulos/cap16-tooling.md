@@ -194,10 +194,7 @@ certeza total, el juez sigue siendo `kai build`.
 
 Los flags de reporte estructurado montan sobre `typecheck` igual
 que sobre `build` (`--diags-json`, `--holes-json`): el mismo
-reporte, sin pagar la generación de código. Los reportes se
-detienen antes de monomorfizar: una cota de protocolo violada en
-una instancia concreta la muestra `kai typecheck` a secas, no el
-JSON. Eso lo vuelve la
+reporte, sin pagar la generación de código. Eso lo vuelve la
 herramienta natural del loop con holes del cap. 15, donde cada
 iteración cuesta lo que cuesta el front-end y nada más.
 
@@ -579,13 +576,15 @@ La misma idea se extiende a `kai build`. Tres flags emiten
 información estructurada en vez de prosa diagnóstica:
 
 - `kai build --diags-json`: los diagnósticos del compilador
-  como JSON, un objeto con el archivo y un array `diagnostics`.
-  Cada entrada trae `severity`, `file`, `line`, `col`,
-  `message` y un `related` con las notas. Lo que el editor vía
-  LSP consume queda accesible también desde scripts y agentes
-  que llaman a `kai build` directamente. La cobertura es
-  parcial: un diagnóstico que el compilador emite solo como
-  texto sale por stderr y no aparece en el array.
+  como JSON, un objeto con el archivo, un `status` (el código
+  de salida que daría el build) y un array `diagnostics`. Cada
+  entrada trae `severity`, `file`, `line`, `col`, `message` y
+  un `related` con las notas. Lo que el editor vía LSP consume
+  queda accesible también desde scripts y agentes que llaman a
+  `kai build` directamente. El array no lo cubre todo: un error
+  de kinds o una violación de contrato dejan `status` en 1 y
+  el array vacío, con el texto en stderr. La señal confiable
+  de que el build falla es `status`.
 - `kai build --effects-json`: la fila de efectos de cada
   función, una entrada por función con `file`, `fn`, `line`,
   `col`, `effects`, `row_open` y `handlers_installed`. El
@@ -1117,7 +1116,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.129.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.130.0 - hanga-roa (stage 2, self-hosted)
 ```
 
 Si el `kai.toml` omite el campo, el compilador asume la
