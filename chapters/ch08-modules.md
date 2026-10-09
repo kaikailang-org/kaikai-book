@@ -212,11 +212,42 @@ declaration: two dependencies may each declare their own
 `effect Emit` without colliding, and `with ea.Emit` reaches only
 `ea`'s.
 
-One case never becomes a dispute: a namesake of a stdlib effect.
-If you import a module that declares its own `effect Log`, a bare
-`Log` in that file is the module's. What you imported by hand
-wins over what was already there, and the stdlib's stays one
-qualifier away, as `effects.Log`.
+One case never becomes a dispute: a namesake of something that
+was already there. If you import a module that declares its own
+`effect Log`, a bare `Log` in that file is the module's. What you
+imported by hand wins over what was already there, and the
+stdlib's stays one qualifier away, as `effects.Log`.
+
+The rule holds for functions too, and that's where it's easier to
+trip, because the core's names are the most obvious ones in the
+trade: `map`, `filter`, `each`, `reduce`. A file that imports
+`gen` — the generators from §12.13, which ship their own stages
+under those names — changes who a bare `map` calls:
+
+```kai
+import gen
+
+let xs = [1, 2, 3]
+map(xs, double)      # ERROR: this `map` is gen's, not list's
+```
+
+```
+error: type mismatch in function call
+  = note: expected: (Gen[?t3], (?t3) -> ?t4) -> Gen[?t4]
+  = note: found:    ([Int], (Int) -> Int) -> ?t5
+```
+
+No mystery, no guessing: the error shows you the signature it
+found. And the ways out are the usual two, qualify or pipe:
+
+```kai
+list.map(xs, double) # [2, 4, 6]
+xs | double          # [2, 4, 6]
+```
+
+That's the price of the import winning, and it's worth paying:
+the alternative is that a core name is untouchable, and that the
+author of a module can't call their `map` `map`.
 
 The other way out is the selective import, which settles it for
 the whole file instead of at every use:

@@ -6,11 +6,8 @@
 # construye directo gracias al atributo `#[constructor]`.
 
 import math.bigint
-import math.bigint_proto
 import decimal_big as db
-import decimal_big_proto
 import rational as rat
-import rational_proto
 
 fn main() {
   # BigInt: exacto incluso pasado 2^64.

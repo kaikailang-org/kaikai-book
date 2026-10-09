@@ -406,6 +406,13 @@ and is discarded before the next is read. A `Stream` isn't a
 cursor that advances once; it's a **re-runnable recipe**. The
 full catalog is in `kai doc stream`.
 
+There's one difference from Python's `yield` worth noting here
+and collected in chapter 12: there you write the producer
+yourself, with ordinary recursion, and what turns it into a lazy
+sequence is an effect handler. A `Stream` consumes something that
+already exists; a generator produces. Both fall out of the same
+mechanism.
+
 ## 6.5 Trailing lambdas and other sugars
 
 kaikai has several syntactic sugars you'll see in real code,

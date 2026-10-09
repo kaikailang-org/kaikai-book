@@ -389,7 +389,6 @@ escribir casi siempre es `Money[Decimal]<USD>`:
 # Listado 19.5 — ejemplos/cap19/05_dinero.kai
 import money
 import decimal as dec
-import decimal_proto
 
 fn main() : Unit / Stdout {
   let a: Money[dec.Decimal]<USD> = 10.50<USD>

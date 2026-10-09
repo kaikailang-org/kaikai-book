@@ -112,31 +112,42 @@ works inside, the answer is a `spawn.spawn` plus a
 ## 14.1 `Actor[Msg]`: the effect
 
 An actor is a fiber inside a `handle ... with Actor[Msg]`
-that grants it access to three operations. The effect is
+that grants it access to four operations. The effect is
 declared in the stdlib:
 
 ```kai
-# Declared in stdlib/actor.kai, accessible via `import actor`.
+# Declared in stdlib/effects/concurrent.kai, accessible via
+# `import actor`.
 pub effect Actor[Msg] {
-  self()                         : Pid[Msg]
-  send(pid: Pid[Msg], msg: Msg)  : Unit / Cancel
-  receive()                      : Msg / Cancel
+  self()                        : Pid[Msg]
+  send[T](pid: Pid[T], msg: T)  : Unit
+  receive()                     : Msg
+  receive_timeout(nanos: Int)   : Option[Msg]
 }
 ```
 
 - **`self()`** returns the `Pid` of the current actor. The
   `Pid` is the handle others use to send it messages.
-- **`send(pid, msg)`** enqueues `msg` in `pid`'s mailbox. If
-  the mailbox is full, the behavior depends on the policy
-  (§14.4).
+- **`send(pid, msg)`** enqueues `msg` in `pid`'s mailbox. Note
+  the `[T]`: the message type is **the destination's**, picked
+  per call, and has nothing to do with the sender's own `Msg`.
+  An actor whose mailbox is `Reply` can send a `Request` to a
+  `Pid[Request]`, the way Erlang's `!` sends to any pid. If the
+  destination mailbox is full, the behavior depends on the
+  policy (§14.4).
 - **`receive()`** takes the next message from the current
-  actor's mailbox. If there's nothing, the fiber suspends
-  until one arrives. Because it suspends, it's a yield point
-  and carries `Cancel`.
+  actor's mailbox. If there's nothing, the fiber suspends until
+  one arrives. That block is a yield point: it's where the
+  scheduler delivers cancellation to a cancelled fiber.
+- **`receive_timeout(nanos)`** is `receive()` with a deadline.
+  It returns `None` if the deadline passes with nothing in the
+  mailbox. You'll meet it with its typed wrapper in §14.3.
 
-`Msg` is the concrete message type the actor receives.
-**An actor handles a single message type.** If you need to
-mix shapes, unify them with a sum type:
+`Msg` is the concrete type of the messages that actor
+**receives**. An actor receives a single message type; sending
+is a different matter, and that's what `send`'s `[T]` is for.
+If you need to mix shapes in what you receive, unify them with
+a sum type:
 
 ```kai
 type ServerMsg
@@ -378,7 +389,7 @@ import actor
 type Request = Query(String, Pid[Reply])
 type Reply   = Answer(String)
 
-fn server() : Unit / Actor[Request] + Actor[Reply] + Stdout {
+fn server() : Unit / Actor[Request] + Stdout {
   match Actor.receive() {
     Query(q, client) -> {
       Stdout.print("server: got '#{q}'")
@@ -388,7 +399,7 @@ fn server() : Unit / Actor[Request] + Actor[Reply] + Stdout {
   }
 }
 
-fn main() : Unit / Console + Spawn + Cancel {
+fn main() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
     let s = spawn_actor(() => server())
 
@@ -412,13 +423,14 @@ trip.*
 
 A few things worth noting about the structure:
 
-- **Two distinct types, `Request` and `Reply`**, each with
-  its own mailbox. The server declares `Actor[Request] +
-  Actor[Reply]` in its row: it receives `Request` from its
-  own mailbox and sends `Reply` to the client's mailbox.
-  The client declares only `Actor[Reply]`: it has a `Reply`
-  mailbox, not a `Request` one. The types tell you exactly
-  which mailbox is which.
+- **Two distinct types, `Request` and `Reply`.** The mailbox
+  fixes what each actor receives, and there the two sides are
+  asymmetric: the server declares `Actor[Request]` because
+  that's where it pulls messages from, and the client declares
+  `Actor[Reply]` for the same reason. Sending is a different
+  matter. `Actor.send` takes the destination's type, not the
+  sender's own mailbox type, so the server answers with a
+  `Reply` while owning no `Reply` mailbox.
 - **`Query` includes the return `Pid[Reply]`.** Without it,
   the server doesn't know whom to reply to. The `Pid`'s type
   guarantees that only `Reply` messages can be sent to it.

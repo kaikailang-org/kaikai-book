@@ -96,9 +96,29 @@ Tres detalles que conviene fijar:
 
 - **Una sola implementación por par `(protocolo, tipo)`**. Si hay dos `impl Show for Punto` en la misma compilación, el compilador rechaza con "duplicate impl". No hay sobreescritura ni resolución contextual.
 
-- **La regla orphan**: solo puedes implementar un protocolo `P` para un tipo `T` si `P` se declara en tu módulo **o** `T` se declara en tu módulo. Esto evita que dos paquetes externos definan implementaciones conflictivas para tipos que ambos importan. Es una limitación práctica, no del sistema de tipos.
+- **La regla orphan**: solo puedes implementar un protocolo `P` para un tipo `T` si tu módulo declara `P`, declara `T`, o declara el tipo de alguno de los argumentos de `P`. Esto evita que dos paquetes externos definan implementaciones conflictivas para tipos que ambos importan. Es una limitación práctica, no del sistema de tipos. Y no hay excepción para los builtin: `impl Show for Int` en tu módulo no compila.
 
 - **El nombre se puede calificar.** Cuando dos de tus imports exportan un protocolo con el mismo nombre, dices cuál: `impl dibujo.Render for Caja`, y lo mismo dentro de un derive, `#[derive(protocols.Show)]`. Es la regla general del §8.2: el calificador es un desempate, y el nombre pelado está bien mientras nada colisione.
+
+Vale volver a la regla orphan, porque con los builtin se topa antes de lo que uno esperaría: tarde o temprano quieres que un `Int` o un `String` se comporten distinto en tu dominio. El compilador te explica exactamente dónde estás parado:
+
+```
+error: orphan rule: `impl Show for Int` is in module `a`, but `Show` is declared in
+`protocols` and `Int` is builtin; an impl must live in the module of its protocol, its
+type, or a protocol argument's type
+```
+
+La salida es envolver el builtin en un tipo tuyo y darle el `impl` a ese:
+
+```kai
+type Puntaje = Puntaje(Int)
+
+impl Show for Puntaje {
+  fn show(self: Puntaje) : String = match self { Puntaje(n) -> "#{n} puntos" }
+}
+```
+
+Ahora el `impl` vive en el módulo de su propio tipo y la regla se cumple sola. De paso ganas lo que un `Int` desnudo no te daba: `Puntaje` y `Edad` dejan de ser el mismo tipo, y el compilador deja de aceptar que los sumes.
 
 ## 9.3 Los cinco protocolos del stdlib
 

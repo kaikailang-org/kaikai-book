@@ -1,0 +1,48 @@
+# Un generador es un handler que no llama a `resume`: lo guarda.
+# El productor se escribe como recursión corriente —y puede no
+# terminar nunca—; el consumidor decide cuántos elementos pedir.
+
+import gen.{Yield, Done, Next, generate, take_until, reduce}
+
+# El productor. Su única capacidad es `Yield[Int]`: no imprime, no
+# lee, no falla. La fila de efectos lo deja dicho en la firma.
+
+fn naturales(desde: Int) : Unit / Yield[Int] = {
+  Yield.yield(desde)
+  naturales(desde + 1)
+}
+
+# Pedir a mano, para ver la máquina. Cada `k(())` corre el
+# productor hasta su yield siguiente y devuelve el par
+# (elemento, continuación) de nuevo.
+
+fn a_mano() : Unit / Stdout {
+  let g = generate { naturales(10) }
+  match g {
+    Done -> println("generador vacío")
+    Next(a, k) -> {
+      println("primero: #{a}")
+      match k(()) {
+        Done       -> println("se acabó")
+        Next(b, _) -> println("segundo: #{b}")
+      }
+    }
+  }
+}
+
+# En la práctica se consume con los pipes. `naturales` no termina;
+# `take_until` corta, y lo que quedó del productor se descarta.
+
+fn con_pipes() : Unit / Stdout {
+  let suma = generate { naturales(1) }
+    |  (n => n * n)              # map lazy: cuadrados
+    |? (n => n % 2 == 1)         # filter lazy: los impares
+    |> take_until(n => n > 100)  # corta en el primero que pasa 100
+    |> reduce((a, b) => a + b)
+  println("suma de cuadrados impares hasta 100: #{suma}")
+}
+
+fn main() : Unit / Stdout {
+  a_mano()
+  con_pipes()
+}

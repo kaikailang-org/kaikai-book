@@ -205,6 +205,76 @@ If you satisfy it with a dynamic value, the compiler inserts
 a runtime check — same as a `requires` whose argument can't
 be deduced statically.
 
+### Where it's checked: not just in a `let`
+
+The `let` is the easy case to see, but the check doesn't live
+there. It goes wherever a value **enters** a refined type: a
+record field, a constructor payload, a list element, a `var`.
+Each of those is a construction, and each one is checked.
+
+```kai
+type Service = { name: String, port: Port }
+
+let s = Service { name: "http", port: 0 }
+```
+
+```
+error: record field 'port': literal 0 violates `self >= 1 and self <= 65535`
+```
+
+With a refuting literal, it doesn't compile. With a value the
+compiler can't decide, the check drops to runtime and the
+program aborts showing the predicate:
+
+```
+panic: refinement violated in `main`
+predicate: self >= 1 and self <= 65535
+```
+
+This matters more than it looks. It means you can't smuggle an
+invalid value in by tucking it inside a structure: the
+refinement's boundary isn't a function signature, it's the
+type, anywhere it shows up.
+
+### A refinement doesn't walk into a generic on its own
+
+There's a limit worth knowing before you hit it. An `[Int]`
+doesn't become a `[Port]` by itself:
+
+```kai
+fn open_all(ps: [Port]) : Int = length(ps)
+
+let raw: [Int] = [80, 443]
+open_all(raw)                   # ERROR
+```
+
+```
+error: argument 1 of `open_all`: `[Int]` does not narrow to
+`[Int where self >= 1 and self <= 65535]`: inside a generic type
+nothing checks `self >= 1 and self <= 65535`; map the value
+through a function that checks it
+```
+
+The error says exactly why: inside `[t]` there's nowhere to put
+the check. Verifying the whole list would be a cost you didn't
+ask for; letting it through unchecked would be a lie. So the
+compiler sends you to do it explicitly: run the elements
+through a function returning `Port`, and each one pays for its
+own guarantee on the way in.
+
+With a mutable type the rule is stricter still, and it cuts
+both ways:
+
+```
+error: argument 1 of `zero`: `Array[Int where self >= 1 and self
+<= 65535]` does not fit `Array[Int]`: a mutable type keeps its
+refinements exactly
+```
+
+It has to be that way: if an `Array[Port]` could pass as an
+`Array[Int]`, whoever received it could write a zero into it
+and break the refinement behind the owner's back.
+
 Functions that accept refined types **benefit from the
 guarantee without checking it**. If your signature says `n:
 NonNeg`, inside you can assume `n >= 0` without writing an

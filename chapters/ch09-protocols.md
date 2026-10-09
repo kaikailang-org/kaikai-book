@@ -101,11 +101,12 @@ Three details worth pinning down:
   contextual resolution.
 
 - **The orphan rule**: you can only implement a protocol `P`
-  for a type `T` if `P` is declared in your module **or** `T`
-  is declared in your module. This prevents two external
-  packages from defining conflicting impls for types they
-  both import. It's a practical limitation, not a type-system
-  one.
+  for a type `T` if your module declares `P`, declares `T`, or
+  declares the type of one of `P`'s arguments. This prevents
+  two external packages from defining conflicting impls for
+  types they both import. It's a practical limitation, not a
+  type-system one. And there's no exemption for the builtins:
+  `impl Show for Int` in your module doesn't compile.
 
 - **The name can be qualified.** When two of your imports
   export a protocol with the same name, say which one you mean
@@ -113,6 +114,33 @@ Three details worth pinning down:
   derive, `#[derive(protocols.Show)]`. It's the general rule
   from §8.2: the qualifier is a tiebreaker, and a bare name is
   fine whenever nothing collides.
+
+It's worth coming back to the orphan rule, because with the
+builtins you hit it sooner than you'd expect: sooner or later
+you want an `Int` or a `String` to behave differently in your
+domain. The compiler spells out exactly where you stand:
+
+```
+error: orphan rule: `impl Show for Int` is in module `a`, but `Show` is declared in
+`protocols` and `Int` is builtin; an impl must live in the module of its protocol, its
+type, or a protocol argument's type
+```
+
+The way out is to wrap the builtin in a type of your own and
+give that one the `impl`:
+
+```kai
+type Score = Score(Int)
+
+impl Show for Score {
+  fn show(self: Score) : String = match self { Score(n) -> "#{n} points" }
+}
+```
+
+Now the impl lives in the module of its own type and the rule
+holds by itself. You also gain what a bare `Int` never gave
+you: `Score` and `Age` stop being the same type, and the
+compiler stops letting you add them together.
 
 ## 9.3 The five stdlib protocols
 

@@ -429,6 +429,69 @@ the general mechanism. There's no special syntax for
 `try/catch`; there's `handle` and an effect whose operation
 returns `Nothing`.
 
+### Code after `resume`
+
+In every example so far, `resume` was the last thing in the
+clause. That's **tail position**, and it's the shape you'll
+write ninety-nine percent of the time: the handler decides
+something, resumes, and gets out of the way.
+
+But nothing forces you to stop there. If you put code **after**
+the `resume`, that code runs once the body is done, and `resume`
+hands you the `handle`'s result:
+
+```kai
+# examples/ch12/14_non_tail_resume.kai (fragment)
+log(msg, resume) -> {
+  println("before: #{msg}")
+  let v = resume(())
+  println("after:  #{msg} (handle = #{v})")
+  v
+}
+```
+
+```
+$ kai run examples/ch12/14_non_tail_resume.kai
+before: start
+before: finish
+after:  finish (handle = 42)
+after:  start (handle = 42)
+result = 42
+```
+
+Read the order slowly, because that's the part that surprises
+people. The two "before" lines come out in the order the body
+performed `log`. The two "after" lines come out **backwards**:
+`finish` first, because it was the last to suspend and the first
+whose body ran out. It's a stack unwinding, and it's exactly
+what you'd expect once you take `resume` for what it is: the
+rest of the computation.
+
+And look at what `resume` returned: `42`, the value the body
+produced, not the `()` that `log` declares as its return type.
+Out of tail position, `resume` isn't handing you the operation's
+return value any more — the body gets that, down below — it's
+handing you what came out of the whole `handle`. Mixing up the
+two is the classic mistake here.
+
+One restriction comes along with it: on any one execution path
+`resume` is called **once**. Two calls are a compile error:
+
+```
+error: `resume` may be called twice on one path
+  = help: the continuation is one-shot
+```
+
+Resuming the same computation twice is *multi-shot*, it costs a
+copy of the fiber's frames, and it lives separately under
+`resume_multishot`.
+
+What's this good for in practice? Anything that has to happen
+*around* the rest of the program and not just before it: timing
+a stretch, closing a resource, counting what happened inside. In
+§12.8 you'll meet `initially` and `finally`, the sugar for the
+common case of exactly this.
+
 ## 12.6 Handlers with state: the `State` pattern
 
 So far our handlers have been stateless: they decide what to
@@ -1140,21 +1203,157 @@ category; they're instances of (2).
 ### Why the sigil has an odd name
 
 `$extern_handler` may sound long. The reason is that the sigil is
-a system, not a single operation. The #533 trilogy introduced `$`
-as the prefix for a **family** of intrinsics; `$extern_handler` is
-the first. If kaikai later needs to expose other runtime bridges —
-asking the current `errno`, calling a platform-specific symbol —
-they'll live under the same sigil with descriptive names:
-`$os_name`, `$panic_with_trace`, whatever. Reserving
-`$<ident>(args)` leaves the door open without reopening the
-syntactic debate every time.
+a system, not a single operation: `$` reserves the namespace of a
+**family** of intrinsics, and `$extern_handler` is the one that
+lives there. Any other bridge to the runtime — asking the current
+`errno`, calling a platform-specific symbol — comes in under the
+same sigil with a descriptive name: `$os_name`,
+`$panic_with_trace`. Reserving `$<ident>(args)` leaves the door
+open without relitigating the syntax every time.
 
 For your daily work: if you never bridge an effect to C, you'll
 never write `$extern_handler`. But when you see it in stdlib you
 know what it is: a clause that hands its body off to a runtime
 symbol, declared with the same syntax as any other handler.
 
-## 12.13 Case study: configuration processor
+## 12.13 Generators: the continuation as a value
+
+At the top of this chapter I said that if it sounded like
+generators, hold that thought too. Time to pay that off, and it
+gets paid with a piece you already have.
+
+In §12.5 we saw what a handler can do with `resume`: call it —
+in tail position or not — and the body carries on; or not call
+it, and the body is discarded. One is missing, and it's the
+interesting one: **keep it**.
+
+A kept `resume` is a value like any other. You can put it in a
+constructor, return it, and call it later from somewhere else
+entirely. That is a generator.
+
+```kai
+# stdlib/gen.kai
+pub effect Yield[t] { yield(v: t) : Unit }
+
+pub type Gen[t] = Done | Next(t, Cont[Unit, Gen[t]])
+
+pub fn generate[t](body: () -> Unit / Yield[t]) : Gen[t] =
+  handle { body(); Done } with Yield[t] { yield(v, resume) -> Next(v, resume) }
+```
+
+Read that clause slowly, because the whole idea is in it:
+`yield(v, resume) -> Next(v, resume)`. The handler resumes
+nothing. It packs the element together with the rest of the
+computation and returns it. Whoever receives that `Next(v, k)`
+holds the first element and a function that, whenever they say
+so, produces the next one.
+
+### The producer doesn't know it's a generator
+
+```kai
+# examples/ch12/13_generators.kai (fragment)
+fn naturals(from: Int) : Unit / Yield[Int] = {
+  Yield.yield(from)
+  naturals(from + 1)
+}
+```
+
+That's ordinary recursion, the kind you wrote back in chapter 6.
+No special keyword, no state machine, no odd return type. The
+function never terminates and that's perfectly fine: it runs on
+its own stack segment and advances only when someone asks for
+the next element.
+
+Pulling the elements by hand shows the machinery:
+
+```kai
+let g = generate { naturals(10) }
+match g {
+  Done -> println("empty generator")
+  Next(a, k) -> {
+    println("first:  #{a}")
+    match k(()) {
+      Done       -> println("exhausted")
+      Next(b, _) -> println("second: #{b}")
+    }
+  }
+}
+```
+
+That `k(())` is the call that runs `naturals` from where it left
+off to its next `Yield.yield`. And if you never call `k`, the
+producer never runs again: dropping a `Gen` discontinues its
+producer and releases its segment.
+
+### In practice, the pipes
+
+Nobody writes `match` over `Next` in day-to-day code. `gen`
+ships its stages with the canonical signatures, so the pipes
+from §6.4 work exactly as they do over lists and streams:
+
+```kai
+let total = generate { naturals(1) }
+  |  (n => n * n)              # lazy map: squares
+  |? (n => n % 2 == 1)         # lazy filter: the odd ones
+  |> take_until(n => n > 100)  # cut at the first one past 100
+  |> reduce((a, b) => a + b)
+```
+
+```
+$ kai run examples/ch12/13_generators.kai
+first:  10
+second: 11
+sum of odd squares up to 100: Some(286)
+```
+
+`naturals(1)` never ends. `take_until` cuts. Between the two
+there's no intermediate list, and the producer never generated
+an element nobody was going to look at. The `Some` is there
+because `reduce` returns an `Option`: a generator can be empty,
+and the type says so instead of inventing a zero.
+
+If chapter 6 left you wondering when to reach for `stream` and
+when for this, the answer is which side you're on. `stream`
+consumes something that already exists — a list, a file — and is
+a re-runnable recipe. `gen` is for when you write the producer
+yourself.
+
+### What the row guarantees
+
+Look at `generate`'s signature again: it wants a body of type
+`() -> Unit / Yield[t]`. That row is closed on purpose. A
+producer that tries to print won't compile:
+
+```
+error: type mismatch in function call
+  = note: expected: (() -> Unit / Yield[Int]) -> Gen[Int]
+  = note: found:    (() -> Unit / Stdout + Yield[Int] + ?e3) -> ?t3
+```
+
+This isn't an arbitrary restriction. A producer that suspends
+halfway through and may never resume is a terrible place to do
+I/O. The effect row turns that piece of manual advice into a
+compile error. Whatever effects you want belong on the consumer
+side, where `each_indexed` and `reduce` take them happily.
+
+### Why this matters more than it looks
+
+Python needed a keyword for generators, then found out it didn't
+compose with `async`: hence `async def`, and hence
+`async function*`. Every new capability asked for new syntax, and
+the combinations asked for more syntax still. It's the complaint
+from §12.1 all over again, in a different costume.
+
+Here the whole mechanism is 105 lines of stdlib. The compiler
+doesn't know `Yield`: there is no `yield` keyword, there's an
+operation that happens to be called that. And it composes with
+everything else because it isn't a special case of anything.
+
+That's what you buy when the continuation is a first-class
+value: not that the language has generators, but that nobody had
+to add them.
+
+## 12.14 Case study: configuration processor
 
 We close with an example that mixes the three patterns we
 saw: logging, state, failure. The program processes a list of
@@ -1250,7 +1449,7 @@ different implementations: `Log` accumulates messages into a
 list instead of printing, `Fail` propagates inside a
 `Result`, `State` starts from whatever value the test wants.
 
-## 12.14 Philosophy: three ideas worth remembering
+## 12.15 Philosophy: three ideas worth remembering
 
 If this feels like a lot of pieces, three ideas underpin
 everything else:
@@ -1300,7 +1499,7 @@ What is the second one for?
 and the number of elements summed, without adding parameters.
 Hint: change `return(x) -> x`.
 
-**12.3.** The case study in §12.13 prints `[LOG]` for each
+**12.3.** The case study in §12.14 prints `[LOG]` for each
 entry. Change the `Log` handler so that instead of printing,
 it accumulates the messages into a list and returns them as
 part of the final result, along with `n`. Hint: you'll need
