@@ -114,31 +114,42 @@ es un `spawn.spawn` más un `handle ... with Actor[Msg]`.
 ## 14.1 `Actor[Msg]`: el efecto
 
 Un actor es una fibra dentro de un `handle ... with
-Actor[Msg]` que le da acceso a tres operaciones. El efecto
+Actor[Msg]` que le da acceso a cuatro operaciones. El efecto
 viene declarado en el stdlib:
 
 ```kai
-# Declarado en stdlib/actor.kai, accesible vía `import actor`.
+# Declarado en stdlib/effects/concurrent.kai, accesible vía
+# `import actor`.
 pub effect Actor[Msg] {
-  self()                         : Pid[Msg]
-  send(pid: Pid[Msg], msg: Msg)  : Unit / Cancel
-  receive()                      : Msg / Cancel
+  self()                        : Pid[Msg]
+  send[T](pid: Pid[T], msg: T)  : Unit
+  receive()                     : Msg
+  receive_timeout(nanos: Int)   : Option[Msg]
 }
 ```
 
 - **`self()`** devuelve el `Pid` del actor actual. El `Pid` es
   el handle con el que otros le mandan mensajes.
-- **`send(pid, msg)`** encola `msg` en el mailbox de `pid`. Si
-  el mailbox está lleno, el comportamiento depende de la
-  policy (lo veremos en §14.4).
+- **`send(pid, msg)`** encola `msg` en el mailbox de `pid`.
+  Fíjate en el `[T]`: el tipo del mensaje es **el del
+  destino**, elegido llamada por llamada, y no tiene nada que
+  ver con el `Msg` del que manda. Un actor con mailbox de
+  `Reply` puede mandarle un `Request` a un `Pid[Request]`, como
+  el `!` de Erlang le manda a cualquier pid. Si el mailbox
+  destino está lleno, el comportamiento depende de la policy
+  (§14.4).
 - **`receive()`** saca el siguiente mensaje del mailbox del
   actor actual. Si no hay nada, la fibra se suspende hasta que
-  llegue uno. Como suspende, es un punto de yield y carga
-  `Cancel`.
+  llegue uno. Ese bloqueo es un punto de yield: es ahí donde el
+  scheduler le entrega la cancelación a una fibra cancelada.
+- **`receive_timeout(nanos)`** es `receive()` con plazo.
+  Devuelve `None` si el plazo vence sin que llegue nada. Lo
+  verás con su envoltorio tipado en §14.3.
 
-`Msg` es el tipo concreto de los mensajes que ese actor recibe.
-**Un actor maneja un solo tipo de mensaje.** Si necesitas mezclar
-shapes, los unificas con un sum type:
+`Msg` es el tipo concreto de los mensajes que ese actor
+**recibe**. Un actor recibe un solo tipo de mensaje; mandar es
+otra cosa, y de eso se encarga el `[T]` de `send`. Si necesitas
+mezclar shapes en lo que recibes, los unificas con un sum type:
 
 ```kai
 type ServerMsg
@@ -380,7 +391,7 @@ import actor
 type Request = Query(String, Pid[Reply])
 type Reply   = Answer(String)
 
-fn servidor() : Unit / Actor[Request] + Actor[Reply] + Stdout {
+fn servidor() : Unit / Actor[Request] + Stdout {
   match Actor.receive() {
     Query(p, cliente) -> {
       Stdout.print("servidor: recibí '#{p}'")
@@ -390,7 +401,7 @@ fn servidor() : Unit / Actor[Request] + Actor[Reply] + Stdout {
   }
 }
 
-fn main() : Unit / Console + Spawn + Cancel {
+fn main() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
     let server = spawn_actor(() => servidor())
 
@@ -413,13 +424,13 @@ mailboxes tipados, dos mensajes, una ida y vuelta.*
 
 Lo importante de la estructura:
 
-- **Dos tipos distintos, `Request` y `Reply`**, cada uno con
-  su propio mailbox. El servidor declara `Actor[Request] +
-  Actor[Reply]` en su fila: recibe `Request` desde su propio
-  mailbox y envía `Reply` al mailbox del cliente. El cliente
-  declara solo `Actor[Reply]`: él tiene mailbox de `Reply`, no
-  de `Request`. Los tipos te dicen exactamente qué mailbox es
-  qué.
+- **Dos tipos distintos, `Request` y `Reply`.** El mailbox fija
+  qué recibe cada actor, y ahí los dos lados son asimétricos: el
+  servidor declara `Actor[Request]` porque de ahí saca mensajes;
+  el cliente declara `Actor[Reply]` por lo mismo. Mandar es otra
+  cosa. `Actor.send` toma el tipo del destino, no el del mailbox
+  propio, así que el servidor contesta un `Reply` sin tener
+  mailbox de `Reply`.
 - **`Query` incluye el `Pid[Reply]` de retorno.** Sin eso, el
   servidor no sabe a quién contestarle. El tipo del `Pid`
   garantiza que solo se le pueden enviar mensajes de tipo

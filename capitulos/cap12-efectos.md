@@ -415,6 +415,63 @@ Esa es la clave: las "excepciones" de kaikai son un caso particular
 del mecanismo general. No hay sintaxis especial para `try/catch`;
 hay `handle` y un efecto cuya operación devuelve `Nothing`.
 
+
+### Código después de `resume`
+
+En todos los ejemplos hasta aquí `resume` fue lo último de la
+cláusula. Eso se llama **posición de cola**, y es la forma que
+vas a escribir el noventa y nueve por ciento del tiempo: el
+handler decide algo, reanuda, y se va.
+
+Pero nada te obliga a terminar ahí. Si pones código **después**
+del `resume`, ese código corre cuando el body ya terminó, y
+`resume` te devuelve el resultado del `handle`:
+
+```kai
+# ejemplos/cap12/14_resume_no_tail.kai (fragmento)
+log(msg, resume) -> {
+  println("antes:   #{msg}")
+  let v = resume(())
+  println("después: #{msg} (handle = #{v})")
+  v
+}
+```
+
+```
+$ kai run ejemplos/cap12/14_resume_no_tail.kai
+antes:   empiezo
+antes:   termino
+después: termino (handle = 42)
+después: empiezo (handle = 42)
+resultado = 42
+```
+
+Lee el orden con calma, porque es la parte que sorprende. Los
+dos "antes" salen en el orden en que el body invocó `log`. Los
+dos "después" salen **al revés**: el de `termino` primero,
+porque fue el último en suspenderse y el primero en que el body
+se acabó. Es el desarme de una pila, y es exactamente lo que
+esperarías si piensas en `resume` como lo que es: el resto del
+cómputo.
+
+Y fíjate en qué devolvió `resume`: `42`, el valor que produjo el
+body, no el `()` que `log` declara devolver. Fuera de posición
+de cola, `resume` ya no te está dando el valor de retorno de la
+operación —eso lo recibe el body, allá abajo—; te está dando lo
+que salió del `handle` completo. Confundir los dos es el error
+clásico aquí.
+
+Hay una restricción que acompaña: en un mismo camino de
+ejecución `resume` se llama **una vez**. Dos llamadas son un
+error de compilación. Reanudar dos veces el mismo cómputo es
+*multi-shot*, cuesta copiar los frames de la fibra, y vive
+aparte bajo `resume_multishot`.
+
+¿Para qué sirve esto en la práctica? Para todo lo que tenga que
+pasar *alrededor* del resto del programa y no solo antes:
+cronometrar un tramo, cerrar un recurso, contar lo que pasó
+adentro. En §12.8 vas a ver `initially` y `finally`, que son el
+azúcar para el caso común de eso.
 ## 12.6 Handlers con estado: el patrón `State`
 
 Hasta aquí los handlers fueron sin estado: solo decidían qué hacer
@@ -1124,21 +1181,157 @@ una cuarta categoría; son instancias de (2).
 ### Por qué el sigil tiene un nombre raro
 
 `$extern_handler` puede sonar largo. La razón es que el sigil es
-un sistema, no una sola operación. La trilogía #533 introdujo `$`
-como prefijo para una **familia** de intrinsics; `$extern_handler`
-es el primero. Si más adelante kaikai necesita exponer otros
-puentes al runtime (pedir el `errno` actual, llamar a un símbolo
-de plataforma específica), vivirán bajo el mismo sigil con nombres
-descriptivos: `$os_name`, `$panic_with_trace`, lo que sea. Reservar
-`$<ident>(args)` deja la puerta abierta sin reabrir el debate
-sintáctico cada vez.
+un sistema, no una sola operación: `$` reserva el espacio de
+nombres de una **familia** de intrinsics, y `$extern_handler` es
+el que vive ahí. Cualquier otro puente al runtime —pedir el
+`errno` actual, llamar a un símbolo de plataforma específica—
+entra por el mismo sigil con un nombre descriptivo: `$os_name`,
+`$panic_with_trace`. Reservar `$<ident>(args)` deja la puerta
+abierta sin volver a discutir la sintaxis cada vez.
 
 Para tu día a día: si nunca conectas un efecto a C, nunca vas a
 escribir `$extern_handler`. Pero cuando lo veas en stdlib sabes
 qué es: una cláusula que cede el cuerpo a un símbolo del runtime,
 declarada con la misma sintaxis que cualquier otro handler.
 
-## 12.13 Caso de estudio: procesador de configuración
+## 12.13 Generadores: la continuación como valor
+
+En la apertura del capítulo dije que si esto te sonaba a
+generadores, mantuvieras la idea cerca. Es hora de pagar esa
+promesa, y se paga con una pieza que ya conoces.
+
+En §12.5 vimos qué puede hacer un handler con `resume`:
+llamarlo —en posición de cola o no— y el body sigue; o no
+llamarlo, y el body se descarta. Falta una, y es la más
+interesante: **guardarlo**.
+
+Un `resume` guardado es un valor como cualquier otro. Lo puedes
+meter en un constructor, devolverlo, y llamarlo más tarde desde
+otro lugar del programa. Eso es un generador.
+
+```kai
+# stdlib/gen.kai
+pub effect Yield[t] { yield(v: t) : Unit }
+
+pub type Gen[t] = Done | Next(t, Cont[Unit, Gen[t]])
+
+pub fn generate[t](body: () -> Unit / Yield[t]) : Gen[t] =
+  handle { body(); Done } with Yield[t] { yield(v, resume) -> Next(v, resume) }
+```
+
+Lee la cláusula despacio, porque ahí está todo: `yield(v, resume)
+-> Next(v, resume)`. El handler no reanuda nada. Empaqueta el
+elemento junto con el resto del cómputo y lo devuelve. Quien
+recibe ese `Next(v, k)` tiene en la mano el primer elemento y una
+función que, cuando él decida, produce el siguiente.
+
+### El productor no sabe que es un generador
+
+```kai
+# ejemplos/cap12/13_generadores.kai (fragmento)
+fn naturales(desde: Int) : Unit / Yield[Int] = {
+  Yield.yield(desde)
+  naturales(desde + 1)
+}
+```
+
+Eso es recursión corriente, de la que escribiste en el capítulo
+6. No hay una palabra clave especial, no hay una máquina de
+estados, no hay un tipo de retorno raro. La función no termina
+nunca y eso está perfectamente bien: corre en su propio segmento
+de stack y avanza solo cuando alguien le pide el elemento
+siguiente.
+
+Pedir los elementos a mano deja ver la máquina:
+
+```kai
+let g = generate { naturales(10) }
+match g {
+  Done -> println("generador vacío")
+  Next(a, k) -> {
+    println("primero: #{a}")
+    match k(()) {
+      Done       -> println("se acabó")
+      Next(b, _) -> println("segundo: #{b}")
+    }
+  }
+}
+```
+
+Ese `k(())` es la llamada que corre `naturales` desde donde se
+había quedado hasta su `Yield.yield` siguiente. Y si nunca llamas
+a `k`, el productor no vuelve a correr nunca: descartar un `Gen`
+descontinúa a su productor y libera su segmento.
+
+### En la práctica, los pipes
+
+Nadie escribe `match` sobre `Next` en código de todos los días.
+`gen` trae las etapas con las firmas canónicas, así que los pipes
+del §6.4 funcionan igual que sobre listas y streams:
+
+```kai
+let suma = generate { naturales(1) }
+  |  (n => n * n)              # map lazy: cuadrados
+  |? (n => n % 2 == 1)         # filter lazy: los impares
+  |> take_until(n => n > 100)  # corta en el primero que pasa 100
+  |> reduce((a, b) => a + b)
+```
+
+```
+$ kai run ejemplos/cap12/13_generadores.kai
+primero: 10
+segundo: 11
+suma de cuadrados impares hasta 100: Some(286)
+```
+
+`naturales(1)` no termina. `take_until` corta. Entre los dos no
+hay ninguna lista intermedia, y el productor nunca generó un
+elemento que nadie iba a mirar. El `Some` es porque `reduce`
+devuelve `Option`: un generador puede estar vacío, y el tipo lo
+dice en vez de inventar un cero.
+
+Si en el capítulo 6 te quedó la duda de cuándo usar `stream` y
+cuándo esto, la respuesta es de qué lado estás. `stream` consume
+algo que ya existe —una lista, un archivo— y es una receta
+re-ejecutable. `gen` es para cuando el productor lo escribes tú.
+
+### Lo que la fila te garantiza
+
+Mira otra vez la firma de `generate`: pide un body de tipo
+`() -> Unit / Yield[t]`. Esa fila está cerrada a propósito. Un
+productor que intente imprimir no compila:
+
+```
+error: type mismatch in function call
+  = note: expected: (() -> Unit / Yield[Int]) -> Gen[Int]
+  = note: found:    (() -> Unit / Stdout + Yield[Int] + ?e3) -> ?t3
+```
+
+No es una restricción arbitraria: un productor que se suspende a
+mitad de camino y puede no reanudarse nunca es un lugar malísimo
+para hacer I/O. La fila de efectos convierte esa advertencia de
+manual en un error de compilación. Los efectos que quieras van
+del lado del consumidor, donde `each_indexed` y `reduce` los
+aceptan sin problema.
+
+### Por qué esto importa más de lo que parece
+
+Python necesitó una palabra clave para los generadores, y después
+descubrió que no componía con `async`: por eso existe `async def`
+y por eso existe `async function*`. Cada capacidad nueva pidió
+sintaxis nueva, y las combinaciones pidieron más sintaxis
+todavía. Es la queja del §12.1 otra vez, con otro disfraz.
+
+Aquí el mecanismo completo son 105 líneas de stdlib. El
+compilador no conoce `Yield`: no hay una palabra clave `yield`,
+hay una operación que se llama así. Y compone con todo lo demás
+porque no es un caso especial de nada.
+
+Eso es lo que compras cuando la continuación es un valor de
+primera clase: no que el lenguaje tenga generadores, sino que
+nadie haya tenido que agregárselos.
+
+## 12.14 Caso de estudio: procesador de configuración
 
 Cerramos con un ejemplo que mezcla los tres patrones que vimos:
 logueo, estado, fallo. El programa procesa una lista de líneas
@@ -1234,7 +1427,7 @@ test, los tres handlers tienen otras implementaciones: el `Log`
 acumula en una lista en vez de imprimir, el `Fail` propaga en un
 `Result`, el `State` parte del valor que el test quiera.
 
-## 12.14 Filosofía: tres ideas que vale recordar
+## 12.15 Filosofía: tres ideas que vale recordar
 
 Si esto te parece muchas piezas, vale fijar las tres ideas que
 todo lo demás sostiene:
@@ -1284,7 +1477,7 @@ segundo?
 total como la cantidad de elementos sumados, sin agregar
 parámetros. Pista: cambia `return(x) -> x`.
 
-**12.3.** El caso de estudio §12.13 imprime con `[LOG]` cada
+**12.3.** El caso de estudio §12.14 imprime con `[LOG]` cada
 entrada. Cambia el handler de `Log` para que en vez de imprimir,
 acumule los mensajes en una lista y los devuelva como parte del
 resultado final, junto con `n`. Pista: necesitas otro `State`.

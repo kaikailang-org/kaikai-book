@@ -213,11 +213,43 @@ su propia declaración: dos dependencias pueden declarar cada
 una su `effect Emit` sin pisarse, y `with ea.Emit` alcanza solo
 al de `ea`.
 
-Hay un caso que no llega a disputa: el homónimo de un efecto del
-stdlib. Si importas un módulo que declara su propio `effect Log`,
-en ese archivo `Log` a secas es el del módulo. Lo que importaste
-a mano le gana a lo que venía puesto, y el del stdlib sigue a un
-calificador de distancia, como `effects.Log`.
+Hay un caso que no llega a disputa: el homónimo de algo que ya
+venía puesto. Si importas un módulo que declara su propio
+`effect Log`, en ese archivo `Log` a secas es el del módulo. Lo
+que importaste a mano le gana a lo que venía puesto, y el del
+stdlib sigue a un calificador de distancia, como `effects.Log`.
+
+La regla vale igual para las funciones, y ahí es más fácil
+tropezar, porque los nombres del core son los más obvios del
+oficio: `map`, `filter`, `each`, `reduce`. Un archivo que
+importa `gen` —los generadores del §12.13, que traen sus propias
+etapas con esos nombres— cambia a quién llama `map` a secas:
+
+```kai
+import gen
+
+let xs = [1, 2, 3]
+map(xs, doble)       # ERROR: este `map` es el de gen, no el de list
+```
+
+```
+error: type mismatch in function call
+  = note: expected: (Gen[?t3], (?t3) -> ?t4) -> Gen[?t4]
+  = note: found:    ([Int], (Int) -> Int) -> ?t5
+```
+
+No es un misterio ni hay que adivinar: el error te muestra la
+firma que encontró. Y las dos salidas son las de siempre,
+calificar o usar el pipe:
+
+```kai
+list.map(xs, doble)  # [2, 4, 6]
+xs | doble           # [2, 4, 6]
+```
+
+Es el precio de que el import gane, y vale la pena pagarlo: la
+alternativa es que un nombre del core sea intocable y que el
+autor de un módulo no pueda llamar `map` a su `map`.
 
 La otra salida es el import selectivo, que desempata para todo
 el archivo en vez de hacerlo en cada uso:

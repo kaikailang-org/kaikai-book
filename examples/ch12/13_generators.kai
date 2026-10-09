@@ -1,0 +1,49 @@
+# A generator is a handler that doesn't call `resume`: it keeps it.
+# The producer is written as ordinary recursion — and may never
+# terminate; the consumer decides how many elements to ask for.
+
+import gen.{Yield, Done, Next, generate, take_until, reduce}
+
+# The producer. Its only capability is `Yield[Int]`: it doesn't
+# print, read or fail. The effect row says so in the signature.
+
+fn naturals(from: Int) : Unit / Yield[Int] = {
+  Yield.yield(from)
+  naturals(from + 1)
+}
+
+# Pulling by hand, to see the machinery. Each `k(())` runs the
+# producer up to its next yield and hands back the
+# (element, continuation) pair again.
+
+fn by_hand() : Unit / Stdout {
+  let g = generate { naturals(10) }
+  match g {
+    Done -> println("empty generator")
+    Next(a, k) -> {
+      println("first:  #{a}")
+      match k(()) {
+        Done       -> println("exhausted")
+        Next(b, _) -> println("second: #{b}")
+      }
+    }
+  }
+}
+
+# In practice you consume through the pipes. `naturals` never
+# ends; `take_until` cuts, and what's left of the producer is
+# dropped.
+
+fn with_pipes() : Unit / Stdout {
+  let total = generate { naturals(1) }
+    |  (n => n * n)              # lazy map: squares
+    |? (n => n % 2 == 1)         # lazy filter: the odd ones
+    |> take_until(n => n > 100)  # cut at the first one past 100
+    |> reduce((a, b) => a + b)
+  println("sum of odd squares up to 100: #{total}")
+}
+
+fn main() : Unit / Stdout {
+  by_hand()
+  with_pipes()
+}

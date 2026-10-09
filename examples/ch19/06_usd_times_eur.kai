@@ -4,7 +4,6 @@
 
 import money
 import decimal as dec
-import decimal_proto
 
 fn main() : Unit / Stdout {
   let u: Money[dec.Decimal]<USD> = 10.00<USD>

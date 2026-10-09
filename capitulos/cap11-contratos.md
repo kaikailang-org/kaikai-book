@@ -208,6 +208,77 @@ Si lo cumples con un valor dinámico, el compilador inserta una
 verificación en runtime: igual que con un `requires` cuyo argumento
 no se puede deducir estáticamente.
 
+### Dónde se chequea: no solo en un `let`
+
+El `let` es el caso fácil de ver, pero el chequeo no vive ahí.
+Va donde sea que un valor **entre** a un tipo refinado: un campo
+de record, el payload de un constructor, un elemento de lista,
+un `var`. Cada uno de esos es una construcción, y cada uno se
+verifica.
+
+```kai
+type Servicio = { nombre: String, puerto: Puerto }
+
+let s = Servicio { nombre: "http", puerto: 0 }
+```
+
+```
+error: record field 'puerto': literal 0 violates `self >= 1 and self <= 65535`
+```
+
+Con un literal que refuta, no compila. Con un valor que el
+compilador no puede decidir, el chequeo baja a runtime y el
+programa aborta mostrando el predicado:
+
+```
+panic: refinement violated in `main`
+predicate: self >= 1 and self <= 65535
+```
+
+Esto importa más de lo que parece. Quiere decir que no puedes
+contrabandear un valor inválido metiéndolo dentro de una
+estructura: la frontera del refinamiento no es la firma de una
+función, es el tipo, en cualquier lugar donde aparezca.
+
+### El refinamiento no entra solo a un genérico
+
+Hay un límite que conviene conocer antes de chocar con él. Una
+`[Int]` no se vuelve `[Puerto]` por su cuenta:
+
+```kai
+fn abrir_todos(ps: [Puerto]) : Int = length(ps)
+
+let crudos: [Int] = [80, 443]
+abrir_todos(crudos)             # ERROR
+```
+
+```
+error: argument 1 of `abrir_todos`: `[Int]` does not narrow to
+`[Int where self >= 1 and self <= 65535]`: inside a generic type
+nothing checks `self >= 1 and self <= 65535`; map the value
+through a function that checks it
+```
+
+El error dice exactamente por qué: dentro de `[t]` no hay ningún
+lugar donde poner el chequeo. Verificar la lista entera sería un
+costo que no pediste; dejarla pasar sería mentir. Así que el
+compilador te manda a hacerlo explícito: pasa los elementos por
+una función que devuelva `Puerto`, y cada uno paga su garantía
+al entrar.
+
+Con un tipo mutable la regla es más estricta todavía, y en las
+dos direcciones:
+
+```
+error: argument 1 of `cero`: `Array[Int where self >= 1 and self
+<= 65535]` does not fit `Array[Int]`: a mutable type keeps its
+refinements exactly
+```
+
+Tiene que ser así: si un `Array[Puerto]` pasara por
+`Array[Int]`, quien lo recibe podría escribirle un cero y el
+refinamiento quedaría roto a espaldas del dueño.
+
 Las funciones que aceptan tipos refinados **se benefician de
 la garantía sin verificarla**. Si tu firma dice `n: NoNeg`,
 adentro puedes suponer `n >= 0` sin escribir un `if`. Eso es

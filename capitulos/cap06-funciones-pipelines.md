@@ -470,6 +470,13 @@ no es un cursor que avanza una vez; es una **receta
 re-ejecutable**. El catálogo completo está en `kai doc
 stream`.
 
+Hay una diferencia con el `yield` de Python que conviene dejar
+anotada ahora y que se cobra en el capítulo 12: ahí el productor
+lo escribes tú, con recursión corriente, y lo que lo convierte en
+secuencia perezosa es un handler de efectos. Un `Stream` consume
+algo que ya existe; un generador produce. Los dos salen del mismo
+mecanismo.
+
 ## 6.5 Trailing lambdas y otros azúcares
 
 kaikai trae varios azúcares sintácticos que vas a ver en

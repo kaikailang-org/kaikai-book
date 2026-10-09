@@ -1,0 +1,29 @@
+# A `resume` in tail position returns into the operation's site.
+# Out of tail position, the code after it runs once the body is
+# done, and `resume` returns the `handle`'s result — not the
+# operation's return value.
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+fn work() : Int / Log {
+  Log.log("start")
+  Log.log("finish")
+  42
+}
+
+fn main() : Unit / Stdout {
+  let r = handle {
+    work()
+  } with Log {
+    log(msg, resume) -> {
+      println("before: #{msg}")
+      let v = resume(())
+      println("after:  #{msg} (handle = #{v})")
+      v
+    }
+    return(x) -> x
+  }
+  println("result = #{r}")
+}

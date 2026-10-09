@@ -280,8 +280,9 @@ concepto a la vez. Pero sin diluir.
 - 12.10 Alias de filas de efectos
 - 12.11 Default handlers: el efecto trae el suyo
 - 12.12 Los handlers del stdlib son código kaikai
-- 12.13 Caso de estudio: procesador de configuración
-- 12.14 Filosofía: tres ideas que vale recordar
+- 12.13 Generadores: la continuación como valor
+- 12.14 Caso de estudio: procesador de configuración
+- 12.15 Filosofía: tres ideas que vale recordar
 - *9 ejercicios*
 
 #### Capítulo 13 · Concurrencia y memoria

@@ -1,0 +1,29 @@
+# `resume` en posición de cola devuelve al sitio de la operación.
+# Fuera de cola, el código que viene después corre cuando el body
+# ya terminó, y `resume` devuelve el resultado del `handle`
+# —no el valor de retorno de la operación.
+
+effect Log {
+  log(msg: String) : Unit
+}
+
+fn trabajo() : Int / Log {
+  Log.log("empiezo")
+  Log.log("termino")
+  42
+}
+
+fn main() : Unit / Stdout {
+  let r = handle {
+    trabajo()
+  } with Log {
+    log(msg, resume) -> {
+      println("antes:   #{msg}")
+      let v = resume(())
+      println("después: #{msg} (handle = #{v})")
+      v
+    }
+    return(x) -> x
+  }
+  println("resultado = #{r}")
+}

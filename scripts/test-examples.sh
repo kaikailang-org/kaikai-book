@@ -159,6 +159,8 @@ build|ejemplos/cap12/09_wrapper_default.kai|ok
 build|ejemplos/cap12/10_var_local.kai|ok
 build|ejemplos/cap12/11_instancias.kai|ok
 run|ejemplos/cap12/12_limpieza.kai|ok
+run|ejemplos/cap12/13_generadores.kai|ok
+run|ejemplos/cap12/14_resume_no_tail.kai|ok
 
 # Capítulo 13 — fibras
 # En modo run, no solo build: compilar no prueba que un programa
@@ -323,6 +325,8 @@ build|examples/ch12/09_wrapper_default.kai|ok
 build|examples/ch12/10_local_var.kai|ok
 build|examples/ch12/11_instances.kai|ok
 run|examples/ch12/12_cleanup.kai|ok
+run|examples/ch12/13_generators.kai|ok
+run|examples/ch12/14_non_tail_resume.kai|ok
 
 # Chapter 13
 # In run mode, not just build: compiling proves nothing about a
