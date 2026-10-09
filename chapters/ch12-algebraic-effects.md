@@ -1235,9 +1235,9 @@ entirely. That is a generator.
 # stdlib/gen.kai
 pub effect Yield[t] { yield(v: t) : Unit }
 
-pub type Gen[t] = Done | Next(t, Cont[Unit, Gen[t]])
+pub type Gen[t, e] = Done | Next(t, Cont[Unit, Gen[t, e], e])
 
-pub fn generate[t](body: () -> Unit / Yield[t]) : Gen[t] =
+pub fn generate[t, e](body: () -> Unit / Yield[t] + e) : Gen[t, e] / e =
   handle { body(); Done } with Yield[t] { yield(v, resume) -> Next(v, resume) }
 ```
 
@@ -1247,6 +1247,10 @@ nothing. It packs the element together with the rest of the
 computation and returns it. Whoever receives that `Next(v, k)`
 holds the first element and a function that, whenever they say
 so, produces the next one.
+
+The `e` in all three signatures gets its own subsection below; for
+now read it as "whatever effects the producer performs besides
+`Yield`".
 
 ### The producer doesn't know it's a generator
 
@@ -1318,23 +1322,73 @@ consumes something that already exists — a list, a file — and is
 a re-runnable recipe. `gen` is for when you write the producer
 yourself.
 
-### What the row guarantees
+### The producer's effects, and who serves them
 
-Look at `generate`'s signature again: it wants a body of type
-`() -> Unit / Yield[t]`. That row is closed on purpose. A
-producer that tries to print won't compile:
+Look at the three signatures again: the `e` in all of them is the
+producer's row. A generator doesn't demand a pure body. Whatever
+the producer does besides `Yield` travels in the type, and it
+happens **where someone steps the generator**, not where it was
+created: the handlers that serve it are the ones around the
+consumer.
+
+```kai
+# examples/ch12/15_producer_effects.kai (fragment)
+fn noisy(n: Int) : Unit / Yield[Int] + Stdout = {
+  println("  producing #{n}")
+  Yield.yield(n)
+  noisy(n + 1)
+}
+```
 
 ```
-error: type mismatch in function call
-  = note: expected: (() -> Unit / Yield[Int]) -> Gen[Int]
-  = note: found:    (() -> Unit / Stdout + Yield[Int] + ?e3) -> ?t3
+$ kai run examples/ch12/15_producer_effects.kai
+act 1: the producer's effects run as you step it
+  producing 1
+  producing 2
+  producing 3
+total = Some(6)
 ```
 
-This isn't an arbitrary restriction. A producer that suspends
-halfway through and may never resume is a terrible place to do
-I/O. The effect row turns that piece of manual advice into a
-compile error. Whatever effects you want belong on the consumer
-side, where `each_indexed` and `reduce` take them happily.
+`noisy` never ends and the `println` is its own, but the three
+lines come out because the consumer asked for three elements.
+There is no fourth: `take_until` cut at `3` and the producer never
+got to take another step.
+
+That leaves an uncomfortable question. If the consumer stops
+whenever it likes, and the producer had a file open, who closes it?
+From the consumer's side, nobody: it just stops calling `k`. The
+answer is the one from §12.8, and it arrives without the consumer
+knowing it exists.
+
+```kai
+fn with_resource() : Unit / Yield[String] + Stdout =
+  handle {
+    read_all()
+  } with Logbook {
+    initially { println("  opening the file"); 1 }
+    finally   { println("  closing the file") }
+    line(resume) -> resume("line #{state}", state + 1)
+    return(x)    -> x
+  }
+```
+
+```
+act 2: dropping the generator runs the cleanup
+  opening the file
+  read 'line 1' and I'm asking for no more
+  closing the file
+the producer is gone
+```
+
+The `finally` ran on its own, the moment the `Gen` was left
+ownerless, and before `main` moved on. Discarding a generator
+isn't forgetting about it: it's taking it apart.
+
+That's the division of labor the row proposes. It doesn't forbid
+I/O in a producer — that would be a rule easy to implement and
+annoying to use. It tells you in the type which effects have to be
+served to step it, and it guarantees that dropping it halfway is
+still a clean operation.
 
 ### Why this matters more than it looks
 
@@ -1344,7 +1398,7 @@ compose with `async`: hence `async def`, and hence
 the combinations asked for more syntax still. It's the complaint
 from §12.1 all over again, in a different costume.
 
-Here the whole mechanism is 105 lines of stdlib. The compiler
+Here the whole mechanism is 108 lines of stdlib. The compiler
 doesn't know `Yield`: there is no `yield` keyword, there's an
 operation that happens to be called that. And it composes with
 everything else because it isn't a special case of anything.

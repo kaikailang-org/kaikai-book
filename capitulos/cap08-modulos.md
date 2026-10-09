@@ -234,8 +234,8 @@ map(xs, doble)       # ERROR: este `map` es el de gen, no el de list
 
 ```
 error: type mismatch in function call
-  = note: expected: (Gen[?t3], (?t3) -> ?t4) -> Gen[?t4]
-  = note: found:    ([Int], (Int) -> Int) -> ?t5
+  = note: expected: (Gen[?t2, _], (?t2) -> ?t3) -> Gen[?t3, _]
+  = note: found:    ([Int], (Int) -> Int) -> ?t4
 ```
 
 No es un misterio ni hay que adivinar: el error te muestra la

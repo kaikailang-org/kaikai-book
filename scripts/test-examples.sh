@@ -161,6 +161,7 @@ build|ejemplos/cap12/11_instancias.kai|ok
 run|ejemplos/cap12/12_limpieza.kai|ok
 run|ejemplos/cap12/13_generadores.kai|ok
 run|ejemplos/cap12/14_resume_no_tail.kai|ok
+run|ejemplos/cap12/15_productor_con_efectos.kai|ok
 
 # Capítulo 13 — fibras
 # En modo run, no solo build: compilar no prueba que un programa
@@ -327,6 +328,7 @@ build|examples/ch12/11_instances.kai|ok
 run|examples/ch12/12_cleanup.kai|ok
 run|examples/ch12/13_generators.kai|ok
 run|examples/ch12/14_non_tail_resume.kai|ok
+run|examples/ch12/15_producer_effects.kai|ok
 
 # Chapter 13
 # In run mode, not just build: compiling proves nothing about a
