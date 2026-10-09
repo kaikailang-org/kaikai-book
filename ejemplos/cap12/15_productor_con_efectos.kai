@@ -1,0 +1,58 @@
+# Un productor puede hacer más que `Yield`. Los efectos que realiza
+# son el `e` de `Gen[t, e]` y se sirven donde alguien avanza el
+# generador, no donde se creó.
+#
+# El acto 1 lo hace visible: el productor imprime, y cada línea sale
+# cuando el consumidor pide el elemento. El acto 2 muestra el otro
+# lado del trato: soltar el `Gen` descontinúa al productor, y la
+# limpieza que tenga instalada corre igual.
+
+import gen.{Yield, Done, Next, generate, take_until, reduce}
+
+effect Bitacora {
+  linea() : String
+}
+
+fn ruidoso(n: Int) : Unit / Yield[Int] + Stdout = {
+  println("  produzco #{n}")
+  Yield.yield(n)
+  ruidoso(n + 1)
+}
+
+fn entrelazado() : Unit / Stdout = {
+  println("acto 1: los efectos del productor corren al avanzarlo")
+  let suma = generate { ruidoso(1) }
+    |> take_until(n => n >= 3)
+    |> reduce((a, b) => a + b)
+  println("suma = #{suma}")
+}
+
+fn leer_todo() : Unit / Yield[String] + Bitacora = {
+  Yield.yield(Bitacora.linea())
+  leer_todo()
+}
+
+fn con_recurso() : Unit / Yield[String] + Stdout =
+  handle {
+    leer_todo()
+  } with Bitacora {
+    initially { println("  abriendo el archivo"); 1 }
+    finally   { println("  cerrando el archivo") }
+    linea(resume) -> resume("línea #{state}", state + 1)
+    return(x)     -> x
+  }
+
+fn una_sola() : Unit / Stdout = {
+  println("acto 2: soltar el generador corre la limpieza")
+  let g = generate { con_recurso() }
+  match g {
+    Done       -> println("  el archivo estaba vacío")
+    Next(l, _) -> println("  leí '#{l}' y no pido más")
+  }
+  println("el productor ya no existe")
+}
+
+fn main() : Unit / Stdout = {
+  entrelazado()
+  una_sola()
+}

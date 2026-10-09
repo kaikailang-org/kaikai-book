@@ -1213,9 +1213,9 @@ otro lugar del programa. Eso es un generador.
 # stdlib/gen.kai
 pub effect Yield[t] { yield(v: t) : Unit }
 
-pub type Gen[t] = Done | Next(t, Cont[Unit, Gen[t]])
+pub type Gen[t, e] = Done | Next(t, Cont[Unit, Gen[t, e], e])
 
-pub fn generate[t](body: () -> Unit / Yield[t]) : Gen[t] =
+pub fn generate[t, e](body: () -> Unit / Yield[t] + e) : Gen[t, e] / e =
   handle { body(); Done } with Yield[t] { yield(v, resume) -> Next(v, resume) }
 ```
 
@@ -1224,6 +1224,10 @@ Lee la cláusula despacio, porque ahí está todo: `yield(v, resume)
 elemento junto con el resto del cómputo y lo devuelve. Quien
 recibe ese `Next(v, k)` tiene en la mano el primer elemento y una
 función que, cuando él decida, produce el siguiente.
+
+Del `e` que aparece en las tres firmas hablamos más abajo; por
+ahora léelo como «los efectos que el productor haga además de
+`Yield`».
 
 ### El productor no sabe que es un generador
 
@@ -1295,24 +1299,72 @@ cuándo esto, la respuesta es de qué lado estás. `stream` consume
 algo que ya existe —una lista, un archivo— y es una receta
 re-ejecutable. `gen` es para cuando el productor lo escribes tú.
 
-### Lo que la fila te garantiza
+### Los efectos del productor, y quién los sirve
 
-Mira otra vez la firma de `generate`: pide un body de tipo
-`() -> Unit / Yield[t]`. Esa fila está cerrada a propósito. Un
-productor que intente imprimir no compila:
+Mira otra vez las tres firmas: el `e` que aparece en todas es la
+fila del productor. Un generador no le exige a su body que sea
+puro. Lo que el productor haga además de `Yield` viaja en el tipo,
+y se realiza **donde alguien avanza el generador**, no donde se
+creó: los handlers que lo sirven son los que rodean al consumidor.
+
+```kai
+# ejemplos/cap12/15_productor_con_efectos.kai (fragmento)
+fn ruidoso(n: Int) : Unit / Yield[Int] + Stdout = {
+  println("  produzco #{n}")
+  Yield.yield(n)
+  ruidoso(n + 1)
+}
+```
 
 ```
-error: type mismatch in function call
-  = note: expected: (() -> Unit / Yield[Int]) -> Gen[Int]
-  = note: found:    (() -> Unit / Stdout + Yield[Int] + ?e3) -> ?t3
+$ kai run ejemplos/cap12/15_productor_con_efectos.kai
+acto 1: los efectos del productor corren al avanzarlo
+  produzco 1
+  produzco 2
+  produzco 3
+suma = Some(6)
 ```
 
-No es una restricción arbitraria: un productor que se suspende a
-mitad de camino y puede no reanudarse nunca es un lugar malísimo
-para hacer I/O. La fila de efectos convierte esa advertencia de
-manual en un error de compilación. Los efectos que quieras van
-del lado del consumidor, donde `each_indexed` y `reduce` los
-aceptan sin problema.
+`ruidoso` no termina nunca y el `println` es suyo, pero las tres
+líneas salen porque el consumidor pidió tres elementos. No hay una
+cuarta: `take_until` cortó en el `3` y el productor no alcanzó a
+dar un paso más.
+
+Eso deja una pregunta incómoda. Si el consumidor para cuando
+quiere, y el productor tenía un archivo abierto, ¿quién lo cierra?
+Del lado del consumidor, nadie: él solo deja de llamar a `k`. La
+respuesta es la de §12.8, y llega sin que el consumidor sepa que
+existe.
+
+```kai
+fn con_recurso() : Unit / Yield[String] + Stdout =
+  handle {
+    leer_todo()
+  } with Bitacora {
+    initially { println("  abriendo el archivo"); 1 }
+    finally   { println("  cerrando el archivo") }
+    linea(resume) -> resume("línea #{state}", state + 1)
+    return(x)     -> x
+  }
+```
+
+```
+acto 2: soltar el generador corre la limpieza
+  abriendo el archivo
+  leí 'línea 1' y no pido más
+  cerrando el archivo
+el productor ya no existe
+```
+
+El `finally` corrió solo, en el momento en que el `Gen` quedó sin
+dueño, y antes de que `main` siguiera. Descartar un generador no es
+olvidarlo: es desarmarlo.
+
+Esa es la división del trabajo que propone la fila. No te prohíbe
+hacer I/O en un productor —sería una regla cómoda de implementar y
+molesta de usar—; te dice en el tipo qué efectos hace falta tener
+servidos para avanzarlo, y te garantiza que soltarlo a mitad de
+camino sigue siendo una operación limpia.
 
 ### Por qué esto importa más de lo que parece
 
@@ -1322,7 +1374,7 @@ y por eso existe `async function*`. Cada capacidad nueva pidió
 sintaxis nueva, y las combinaciones pidieron más sintaxis
 todavía. Es la queja del §12.1 otra vez, con otro disfraz.
 
-Aquí el mecanismo completo son 105 líneas de stdlib. El
+Aquí el mecanismo completo son 108 líneas de stdlib. El
 compilador no conoce `Yield`: no hay una palabra clave `yield`,
 hay una operación que se llama así. Y compone con todo lo demás
 porque no es un caso especial de nada.
