@@ -684,10 +684,17 @@ it under `~/.kaikai/`, and adds `~/.kaikai/bin` to your shell's
 `PATH`. If you'd rather use Homebrew,
 `brew install kaikailang-org/kaikai/kaikai` lands in the same
 place. The binary is self-contained — it carries its own LLVM,
-no separate toolchain needed — though for now the prebuilt
-releases cover macOS on Apple Silicon.
+no separate toolchain needed.
 
-On other platforms you build from source, which lives at
+kaikai runs on macOS, on Linux, and on Windows through WSL2. The
+prebuilt releases cover macOS on Apple Silicon and Linux on
+x86-64; the Homebrew formula is macOS-only. On Windows, install
+[WSL2](https://learn.microsoft.com/windows/wsl/install) with an
+x86-64 Linux distribution and run the installer inside it — the
+Linux release works there unchanged.
+
+On the remaining platforms (macOS on Intel, Linux on arm64) you
+build from source, which lives at
 [github.com/kaikailang-org/kaikai](https://github.com/kaikailang-org/kaikai)
 and asks only for a C compiler:
 
