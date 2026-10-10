@@ -1,6 +1,6 @@
 # Capítulo 1 · Tour de kaikai
 
-La mejor forma de conocer un lenguaje es leerlo y correrlo. Así
+La mejor forma de conocer un lenguaje de programación es leerlo y correrlo. Así
 aprendí todos los que sé, y por eso este libro empieza con
 programas y no con definiciones. Este capítulo es un recorrido
 panorámico por kaikai en diez programas cortos. Ninguno pasa de
@@ -12,8 +12,8 @@ medida, contratos, pruebas inline y holes tipados.
 
 No vamos a explicar cada detalle todavía. La idea es que termines
 el capítulo con el lenguaje mirado desde arriba y la sensación de
-que ya puedes leer código kaikai aunque te falten precisiones.
-Esas precisiones llegan en los capítulos siguientes.
+que ya puedes leer código kaikai aunque te falten precisiones,
+las que llegarán en los capítulos siguientes.
 
 Si quieres seguir los ejemplos en tu computador, los archivos
 están en `ejemplos/cap01/` del repositorio del libro. La
@@ -22,7 +22,7 @@ te urge, salta ahí primero y vuelve.
 
 ## 1.1 Hola, kaikai
 
-Empezamos por lo más viejo del repertorio.
+Empezamos con el clásico de todos los tiempos:
 
 ```kai
 fn main() {
@@ -35,33 +35,33 @@ $ kai run ejemplos/cap01/01_hola.kai
 Hola, kaikai
 ```
 
-Cuatro cosas que mirar antes de seguir:
+Hay cuatro cosas que mirar antes de seguir:
 
-- Todo programa kaikai parte en `fn main()`. No hay archivo de
-  configuración, no hay `package main`, no hay clase contenedora.
-  Una función con ese nombre, en algún archivo, alcanza.
-- `fn` declara funciones. Es una palabra clave corta a propósito;
-  vas a escribirla mucho.
+- Todo programa kaikai parte con `fn main()`. No hay archivo de
+  configuración, ni `package main`, tampoco una clase contenedora.
+  Una función con ese nombre, en algún archivo, eso es todo.
+- `fn` declara funciones. Es una palabra clave corta a propósito
+  porque vas a escribirla mucho.
 - Las llaves `{ ... }` agrupan un bloque de instrucciones, pero
   un bloque también es una expresión: el último valor que produce
   es el valor del bloque. Aquí no nos interesa, pero lo vas a usar.
 - `println` no requiere `import`. Está disponible en todos los
   programas porque escribe a la salida estándar mediante un
-  efecto que kaikai trae por defecto. En el capítulo 12 vamos a
-  abrir esa caja; por ahora basta con que funciona.
+  efecto que kaikai trae por omisión. En el capítulo 12 vamos a
+  profundizar en esto, por ahora basta con saber que funciona.
 
 No hay punto y coma al final de la línea. No hay `return` para
 funciones que no devuelven nada. Tampoco hace falta declarar el
 tipo de retorno de `main` cuando no devuelve un valor útil. Todo
 eso es por diseño: kaikai trata de no pedirte que escribas lo
-obvio. Cuando sí devuelve algo útil hay una convención que vale
+obvio. Cuando sí devuelve algo útil hay una convención que es bueno
 saber desde ya: un `main` que devuelve `Int` usa ese número como
 código de salida del proceso, igual que en C o en Go. El cap. 16
 §16.1 lo retoma.
 
 ## 1.2 Tipos algebraicos y `match`: FizzBuzz
 
-El típico ejercicio de la entrevista, escrito en kaikai, se ve
+Este es el típico ejercicio de entrevista, escrito en kaikai, se ve
 así:
 
 ```kai
@@ -107,13 +107,13 @@ Definimos un **tipo suma**: `Tag` es uno de cuatro
 constructores. Tres son nombres pelados (`Both`, `Fizz`, `Buzz`)
 y uno carga un dato (`Other(Int)`). Si vienes de un lenguaje
 imperativo, esto se parece a un `enum` con datos. Si vienes de
-un lenguaje OO, se parece a una jerarquía sellada de
+un lenguaje orientado al objeto, se parece a una jerarquía sellada de
 subclases. La diferencia es que en kaikai esta declaración no
 trae herencia, no trae métodos virtuales, no trae nada salvo lo
 que ves: cuatro maneras de construir un valor de tipo `Tag`.
 
 `classify` decide cuál de los cuatro construir. Fíjate en el
-`if`: no tiene `then`, no tiene paréntesis alrededor de la
+`if`: no tiene `then`, ni paréntesis alrededor de la
 condición, y cada rama es un bloque que produce un valor. El
 `if` mismo es una expresión que devuelve `Tag`, y el cuerpo de
 la función es esa expresión, sin `return` ni asignación
@@ -125,8 +125,8 @@ hábito que vas a tener que hacer.
 **patrón** seguido de `->` y la expresión que devuelve. El
 patrón `Other(n)` no solo dice "es del constructor `Other`",
 también desempaca el dato y lo amarra al nombre `n`, listo
-para usarse a la derecha. Es destructurar, comparar y declarar
-una variable en un solo paso.
+para usarse a la derecha.
+Es destructurar, comparar y declarar una variable en un solo paso.
 
 `loop` es recursivo. No hay sentencia `while` ni sentencia
 `for`: la base de la iteración es la recursión. Sí existe un
@@ -143,12 +143,12 @@ capítulo 12: la firma de `loop` dice `: Unit / Stdout`. La parte
 después del `/` es el conjunto de **efectos** que la función usa.
 `Stdout` significa "esta función escribe al terminal". Si no
 estuviera ahí, el compilador no te dejaría llamar a `println`
-adentro. Por ahora no te preocupes; el detalle viene completo
+adentro. Por ahora no te preocupes; el detalle viene
 más adelante.
 
 ## 1.3 Una calculadora con AST recursivo
 
-Pasemos a algo con un poco más de chicha. Una calculadora muy
+Pasemos a algo con un poco más contundente. Una calculadora muy
 simple, con expresiones aritméticas representadas como árbol.
 
 ```kai
@@ -196,8 +196,8 @@ agregas un constructor a `Expr` y se te olvida una rama en
 horas. El capítulo 5 lo explora con calma; por ahora confía.
 
 `let` introduce un binding local. El tipo se infiere del lado
-derecho. No hay `var`, no hay `mutable`, no hay reasignación:
-`let e = ...` ata `e` a un valor y ese valor no cambia. Si
+derecho. No hay `var`, ni `mutable`, tampoco hay reasignación:
+`let e = ...` amarra `e` a un valor y ese valor no cambia. Si
 necesitas mutar algo, kaikai te lo permite, pero te pide
 declararlo (capítulo 13). Esta es la otra mitad del cambio de
 hábito: **inmutabilidad por defecto**.
@@ -236,9 +236,9 @@ $ kai run ejemplos/cap01/04_efecto.kai
 [INFO] hola, mundo
 ```
 
-Este es el ejemplo que más probablemente te haga frenar la
-lectura. Es deliberado. Los efectos algebraicos son la apuesta
-distintiva de kaikai y queremos que los veas funcionando antes
+Este es el ejemplo que probablemente más te frene la
+lectura. Está bien, los efectos algebraicos son la apuesta
+distintiva de kaikai y quiero que los veas funcionando antes
 de que te los expliquemos en serio.
 
 Lo que está pasando es lo siguiente:
@@ -611,7 +611,7 @@ programa de arriba termina bien.
 
 ¿Para qué sirve esto? Para tres cosas:
 
-- **Diseñar de arriba hacia abajo.** Escribes la firma de la
+- **Diseñar de arriba hacia abajo (top-down).** Escribes la firma de la
   función, dejas el cuerpo en `?`, y compilas. El compilador
   te dice qué tipo se espera ahí y qué valores tienes en
   alcance. Conversas con el compilador antes de escribir el
@@ -656,9 +656,9 @@ local    = { path = "../local-thing" }
 El flujo del día a día son tres comandos:
 
 ```
-$ kai init                                       # crea kai.toml en el directorio actual
-$ kai add github.com/kaikailang-org/manutara@v0.1          # agrega una dependencia
-$ kai run main.kai                               # compila y corre
+kai init                                       # crea kai.toml en el directorio actual
+kai add github.com/kaikailang-org/manutara@v0.1          # agrega una dependencia
+kai run main.kai                               # compila y corre
 ```
 
 `kai add` clona el repositorio de la dependencia, lo cachea
@@ -689,7 +689,7 @@ Para correr cualquiera de los programas anteriores necesitas el
 binario `kai`. La vía corta es el instalador:
 
 ```
-$ curl -fsSL https://raw.githubusercontent.com/kaikailang-org/kaikai/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/kaikailang-org/kaikai/main/install.sh | sh
 ```
 
 Descarga el último release, verifica su SHA-256, lo deja bajo
@@ -712,8 +712,8 @@ se compila desde el fuente, que vive en
 y solo pide un compilador de C:
 
 ```
-$ make tier0
-$ ./bin/kai run examples/minimal/hello.kai
+make tier0
+./bin/kai run examples/minimal/hello.kai
 ```
 
 `make tier0` construye la cadena de bootstrap completa (stage 0
@@ -724,7 +724,7 @@ rápidas para confirmar que quedó sana.
 Instalado una vez, el compilador se actualiza solo:
 
 ```
-$ kai upgrade
+kai upgrade
 ```
 
 consulta el último release y, si es más nuevo que el que tienes,
@@ -735,9 +735,9 @@ A partir de ahí, los comandos que vas a usar a lo largo del
 libro son tres:
 
 ```
-$ kai run archivo.kai     # compila y ejecuta
-$ kai build archivo.kai -o nombre   # produce un binario nativo
-$ kai test archivo.kai    # ejecuta los bloques `test "..." { ... }` del archivo
+kai run archivo.kai     # compila y ejecuta
+kai build archivo.kai -o nombre   # produce un binario nativo
+kai test archivo.kai    # ejecuta los bloques `test "..." { ... }` del archivo
 ```
 
 `kai run` es el comando que más vas a teclear mientras lees el
