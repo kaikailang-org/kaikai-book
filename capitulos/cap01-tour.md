@@ -61,7 +61,7 @@ código de salida del proceso, igual que en C o en Go. El cap. 16
 
 ## 1.2 Tipos algebraicos y `match`: FizzBuzz
 
-Este es el típico ejercicio de entrevista, escrito en kaikai, se ve
+Este es el típico ejercicio de entrevista. Escrito en kaikai, se ve
 así:
 
 ```kai

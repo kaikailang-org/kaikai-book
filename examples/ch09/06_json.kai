@@ -4,6 +4,7 @@
 # 7's inverse property: decode(encode(x)) == x.
 
 import encoding.json.{json_decode, json_encode}
+import encoding.json_bind
 
 #[derive(Json)]
 type Note = { title: String, priority: Int, tag: Option[String] }
