@@ -148,7 +148,7 @@ más adelante.
 
 ## 1.3 Una calculadora con AST recursivo
 
-Pasemos a algo con un poco más contundente. Una calculadora muy
+Pasemos a algo un poco más contundente. Una calculadora muy
 simple, con expresiones aritméticas representadas como árbol.
 
 ```kai
