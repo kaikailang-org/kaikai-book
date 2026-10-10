@@ -83,49 +83,116 @@ Anonymous holes (`?` with no name) are each independent.
 
 ## 15.2 The conversation with the compiler
 
-The point of holes isn't in aborting nicely; it's in what
-the compiler tells you about them. For each hole, it emits
-a **report**:
+The point of holes isn't that they abort nicely, it's what the
+compiler tells you about them. For each hole, it emits a
+**report**:
 
 ```
 $ kai build examples/ch15/01_basic_hole.kai --holes
-examples/ch15/01_basic_hole.kai:1:32: type hole
+examples/ch15/01_basic_hole.kai:6:34: type hole ?formula
 
   expected: Real
 
-  in scope:
+  in scope (local):
     r : Real
 
   candidates that fit:
     r
-    real_mul(r, r)
+    real_sqrt(r)
+    real_cbrt(r)
+    real_exp(r)
+    real_log(r)
+    real_log2(r)
+    real_log10(r)
+    real_sin(r)
 
-  replace `?formula` with one of the candidates or a literal Real.
+  279 more bindings in scope (--holes-scope lists them)
 ```
 
 Four pieces of information:
 
+- **The header** gives the position and the name: `?formula`.
+  With several holes open at once — which is normal when you work
+  this way — that's what tells you which one the block is about.
 - **`expected`**: the type the hole's position demands. The
-  compiler infers it from context: here, the function
-  returns `Real`, the body is a single expression, therefore
-  the hole must be `Real`.
-- **`in scope`**: every name reachable from the hole's
-  point, with its type. Here only `r : Real` (the
-  parameter).
+  compiler derives it from context: here the function returns
+  `Real`, the body is a single expression, so the hole has to be
+  `Real`.
+- **`in scope (local)`**: the local names reachable from the
+  hole, with their types. Here just `r : Real`, the parameter.
+  The `(local)` isn't decoration: the report shows you your own
+  names and counts the rest on the last line, because listing the
+  279 things the prelude brings along helps nobody. When you want
+  them, `--holes-scope`.
 - **`candidates that fit`**: expressions the compiler can
-  synthesize that have the expected type. For `Real` with
-  `r` in scope: `r` itself, `real_mul(r, r)` which is also
-  `Real`. Synthesis is **bounded**: at most one function
-  application. It doesn't give you the full body; it gives
-  you hints.
-- **`replace`**: the final suggestion, in one line.
+  synthesize that have the expected type. The synthesis is
+  **bounded**: a single function application, with arguments
+  taken from what's in scope, and a cap of eight proposals.
 
-That's the conversation. While the signature is all you
-know, the compiler helps you see what could go inside.
+Those eight candidates are worth a careful look, because they
+teach something easy to misread: **none of them is the answer**.
+The area of a circle is `3.14 * r * r`, and that's two
+multiplications — two applications — so the search doesn't reach
+it. The candidates aren't an attempt to write your function. They
+are a list of what fits in the gap, which is a different thing and
+useful for a different reason: it tells you what you have on hand,
+and in what shape.
 
-Like any compiler report, the cost of invoking it is low:
-you run `kai build --holes` and read. You don't have to
-guess.
+That's the conversation. While the signature is all you know, the
+compiler helps you see what can go inside it.
+
+Like any compiler report, it's cheap to ask for: you run
+`kai build --holes` and read. No guessing required.
+
+### The effect row filters too
+
+There's a piece a pure example can't show. Candidates are searched
+against the effect row **at the hole's position**, not against the
+whole program. Two holes that expect the same type and see the same
+names in scope get different lists if their rows differ:
+
+```kai
+# examples/ch15/06_hole_with_effects.kai
+effect Ask {
+  question() : String
+}
+
+fn greeting(name: String) : String = ?text
+
+fn interactive_greeting(name: String) : String / Ask = ?text_with_ask
+```
+
+The first one doesn't have `Ask`, so `Ask.question()` doesn't fit
+— but the compiler doesn't hide it, it sets it aside with the
+price tag attached:
+
+```
+  candidates that fit:
+    name
+    to_lower_unicode(name)
+    ...
+
+  fits if you add `/ Ask`:
+    interactive_greeting(name)
+    Ask.question()
+```
+
+The second one declares `Ask`, and the same operation shows up
+among the ones that fit outright:
+
+```
+  candidates that fit:
+    name
+    greeting(name)
+    Ask.question()
+    ...
+```
+
+That "fits if you add" is my favorite part of the report. It
+doesn't just tell you what you can write there: it tells you what
+you could write if you were willing to pay one more effect in the
+signature. The decision stays yours, but now you make it looking
+at the price.
 
 ## 15.3 Top-down design: start from the signature
 
@@ -233,7 +300,7 @@ panic: todo: parser still missing
 So far it looks like `?`, which also compiles and also panics:
 
 ```
-panic: unfilled hole: ?formula at line 1 col 37
+panic: unfilled hole: ?formula at line 6 col 34
 ```
 
 The difference is in the compiler, not the runtime. A `?` is
@@ -319,34 +386,52 @@ needing to read natural language.
 
 ## 15.7 The JSON output of holes
 
-The JSON report has a stable schema:
+The JSON report carries the same data as the human one, minus
+the formatting:
 
 ```json
 [
   {
-    "file": "area.kai",
-    "line": 1, "col": 32,
+    "file": "examples/ch15/01_basic_hole.kai",
+    "line": 6, "col": 34,
+    "kind": "hole",
     "name": "formula",
+    "message": null,
     "expected_type": "Real",
     "in_scope": [
       {"name": "r", "type": "Real"}
     ],
+    "scope_elided": 551,
     "candidates": [
-      {"expr": "r", "kind": "local"},
-      {"expr": "real_mul(r, r)", "kind": "application"}
-    ]
+      {"expr": "r", "kind": "synth"},
+      {"expr": "real_sqrt(r)", "kind": "synth"},
+      {"expr": "real_cbrt(r)", "kind": "synth"},
+      {"expr": "real_exp(r)", "kind": "synth"},
+      {"expr": "real_log(r)", "kind": "synth"},
+      {"expr": "real_log2(r)", "kind": "synth"},
+      {"expr": "real_log10(r)", "kind": "synth"},
+      {"expr": "real_sin(r)", "kind": "synth"}
+    ],
+    "candidates_needing_effects": [],
+    "doc": null
   }
 ]
 ```
 
-Each hole is an object. The array has as many elements as
-there are holes in the file. The fields are the same as the
-human report in §15.2, but as structured data.
+Each hole is an object, and the array has as many elements as the
+file has holes. Four fields have no printed equivalent in the
+human report, and for an agent they're worth their weight in gold:
+`kind` separates a `?` (`"hole"`) from a `todo!` (`"todo"`), with
+the `todo!`'s text in `message`; `scope_elided` says how many
+bindings were left out of `in_scope`;
+`candidates_needing_effects` carries the "fits if you add"
+candidates along with the row they're missing; and `doc` holds the
+docstring of the function containing the hole.
 
-For a human this is noisy; for an agent it's exact. And that
-exactness changes the practical outcome: an agent that gets it
-on the first try instead of the third is what separates a tool
-you actually reach for from one that gets in your way.
+For a human this is noisy; for an agent it's exactly what's
+needed. And that precision changes the practical outcome: an agent
+getting it right on the first try instead of the third is what
+separates a usable tool from one that just gets in the way.
 
 ## 15.8 Beyond holes: rich information as interface
 
@@ -458,22 +543,36 @@ The human runs `kai build --holes-json`. The agent
 receives:
 
 ```json
-{
-  "name": "body",
-  "expected_type": "[String]",
-  "in_scope": [
-    {"name": "grades", "type": "[(String, Int)]"}
-  ],
-  "candidates": [
-    {"expr": "[]", "kind": "literal"}
-  ]
-}
+[
+  {
+    "file": "grades.kai",
+    "line": 1, "col": 49,
+    "kind": "hole",
+    "name": "body",
+    "message": null,
+    "expected_type": "[String]",
+    "in_scope": [
+      {"name": "grades", "type": "[Pair[String, Int]]"}
+    ],
+    "scope_elided": 550,
+    "candidates": [],
+    "candidates_needing_effects": [
+      {"expr": "Env.args()", "kind": "synth", "effects": ["Env"]},
+      {"expr": "args()", "kind": "synth", "effects": ["Env"]}
+    ],
+    "doc": null
+  }
+]
 ```
 
-The agent knows: expected type `[String]`, an input
-`grades` of type `[(String, Int)]`. Candidates are thin
-because the compiler's synthesis is bounded; the agent has
-to propose something more substantial. A first proposal:
+The agent knows: expected type `[String]`, an input `grades` of
+type `[Pair[String, Int]]` — the shape the compiler prints
+`[(String, Int)]` as, per §4.6. And it knows something more
+useful still: `candidates` comes back **empty**. The synthesis is
+bounded and here it reaches nothing at all; the two that show up
+behind an effect are `Env.args()`, which has nothing to do with
+the problem. The compiler was honest: this one is on you. The
+agent has to propose something substantial. A first proposal:
 
 ```kai
 fn passed(grades: [(String, Int)]) : [String] =

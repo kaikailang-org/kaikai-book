@@ -88,35 +88,53 @@ que el compilador te dice de ellos. Para cada hole, emite un
 
 ```
 $ kai build ejemplos/cap15/01_hole_basico.kai --holes
-ejemplos/cap15/01_hole_basico.kai:1:32: type hole
+ejemplos/cap15/01_hole_basico.kai:6:35: type hole ?formula
 
   expected: Real
 
-  in scope:
+  in scope (local):
     r : Real
 
   candidates that fit:
     r
-    real_mul(r, r)
+    real_sqrt(r)
+    real_cbrt(r)
+    real_exp(r)
+    real_log(r)
+    real_log2(r)
+    real_log10(r)
+    real_sin(r)
 
-  replace `?formula` with one of the candidates or a literal Real.
+  279 more bindings in scope (--holes-scope lists them)
 ```
 
 Cuatro piezas de información:
 
+- **La cabecera** da la posición y el nombre: `?formula`. Con
+  varios holes abiertos a la vez —que es lo normal trabajando
+  así— es lo que te dice de cuál habla el bloque.
 - **`expected`**: el tipo que la posición del hole exige. El
   compilador lo deduce del contexto: aquí, la función devuelve
   `Real`, el cuerpo es una expresión sola, entonces el hole
   tiene que ser `Real`.
-- **`in scope`**: cada nombre alcanzable desde el punto del
-  hole, con su tipo. Aquí solo `r : Real` (el parámetro).
-- **`candidates that fit`**: expresiones que el compilador
-  puede sintetizar y que tienen el tipo esperado. Para `Real`
-  con `r` en alcance: `r` mismo, `real_mul(r, r)` que es
-  `Real` también. La síntesis es **bounded**: a lo más una
-  aplicación de función. No te da el cuerpo completo, te da
-  pistas.
-- **`replace`**: la sugerencia final, en una línea.
+- **`in scope (local)`**: los nombres locales alcanzables desde
+  el punto del hole, con su tipo. Aquí solo `r : Real`, el
+  parámetro. El `(local)` no es decoración: el reporte te muestra
+  lo tuyo y cuenta el resto en la última línea, porque listar las
+  279 cosas que trae el prelude no le sirve a nadie. Cuando las
+  quieras, `--holes-scope`.
+- **`candidates that fit`**: expresiones que el compilador puede
+  sintetizar y que tienen el tipo esperado. La síntesis es
+  **bounded**: una sola aplicación de función, con los argumentos
+  tomados de lo que hay en alcance, y un tope de ocho propuestas.
+
+Vale mirar esos ocho candidatos con atención, porque enseñan algo
+que es fácil malentender: **ninguno es la respuesta**. El área de
+un círculo es `3.14 * r * r`, y eso son dos multiplicaciones —dos
+aplicaciones— así que la búsqueda no llega. Los candidatos no son
+un intento de escribir tu función. Son una lista de lo que calza
+en el hueco, que es otra cosa y sirve para otra cosa: te dice qué
+tienes a mano y con qué forma.
 
 Esta es la conversación. Mientras la firma es lo único que sabes,
 el compilador te ayuda a ver qué se puede poner adentro.
@@ -124,6 +142,55 @@ el compilador te ayuda a ver qué se puede poner adentro.
 Como cualquier reporte del compilador, el costo de invocarlo
 es bajo: corres `kai build --holes` y lees. No tienes que
 adivinar.
+
+### La fila de efectos también filtra
+
+Hay una pieza que un ejemplo puro no deja ver. Los candidatos se
+buscan contra la fila de efectos **de la posición del hole**, no
+contra el programa entero. Dos holes que esperan lo mismo y ven lo
+mismo en alcance reciben listas distintas si sus filas difieren:
+
+```kai
+# ejemplos/cap15/06_hole_con_efectos.kai
+effect Ask {
+  pregunta() : String
+}
+
+fn saludo(nombre: String) : String = ?texto
+
+fn saludo_interactivo(nombre: String) : String / Ask = ?texto_con_ask
+```
+
+El primero no tiene `Ask`, así que `Ask.pregunta()` no calza —
+pero el compilador no lo esconde, lo pone aparte con el precio
+anotado:
+
+```
+  candidates that fit:
+    nombre
+    to_lower_unicode(nombre)
+    ...
+
+  fits if you add `/ Ask`:
+    saludo_interactivo(nombre)
+    Ask.pregunta()
+```
+
+El segundo declara `Ask`, y la misma operación aparece entre los
+que calzan sin más:
+
+```
+  candidates that fit:
+    nombre
+    saludo(nombre)
+    Ask.pregunta()
+    ...
+```
+
+Ese "fits if you add" es la parte que más me gusta del reporte. No
+te dice solo qué puedes escribir ahí: te dice qué podrías escribir
+si estuvieras dispuesto a pagar un efecto más en la firma. La
+decisión sigue siendo tuya, pero ahora la tomas viendo el precio.
 
 ## 15.3 Diseño top-down: empieza por la firma
 
@@ -231,7 +298,7 @@ Hasta aquí se parece al `?`, que también compila y también
 revienta:
 
 ```
-panic: unfilled hole: ?formula at line 1 col 37
+panic: unfilled hole: ?formula at line 6 col 35
 ```
 
 La diferencia está en el compilador, no en el runtime. Un `?`
@@ -318,29 +385,46 @@ variante faltante sin necesidad de leer texto natural.
 
 ## 15.7 La salida JSON de los holes
 
-El reporte JSON tiene un esquema estable:
+El reporte JSON lleva los mismos datos que el reporte humano,
+sin el formateo:
 
 ```json
 [
   {
-    "file": "area.kai",
-    "line": 1, "col": 32,
+    "file": "ejemplos/cap15/01_hole_basico.kai",
+    "line": 6, "col": 35,
+    "kind": "hole",
     "name": "formula",
+    "message": null,
     "expected_type": "Real",
     "in_scope": [
       {"name": "r", "type": "Real"}
     ],
+    "scope_elided": 551,
     "candidates": [
-      {"expr": "r", "kind": "local"},
-      {"expr": "real_mul(r, r)", "kind": "application"}
-    ]
+      {"expr": "r", "kind": "synth"},
+      {"expr": "real_sqrt(r)", "kind": "synth"},
+      {"expr": "real_cbrt(r)", "kind": "synth"},
+      {"expr": "real_exp(r)", "kind": "synth"},
+      {"expr": "real_log(r)", "kind": "synth"},
+      {"expr": "real_log2(r)", "kind": "synth"},
+      {"expr": "real_log10(r)", "kind": "synth"},
+      {"expr": "real_sin(r)", "kind": "synth"}
+    ],
+    "candidates_needing_effects": [],
+    "doc": null
   }
 ]
 ```
 
-Cada hole es un objeto. El array contiene tantos elementos
-como holes haya en el archivo. Los campos son los mismos del
-reporte humano del §15.2, pero como datos estructurados.
+Cada hole es un objeto y el array tiene tantos elementos como
+holes haya en el archivo. Cuatro campos no tienen equivalente
+impreso en el reporte humano, y para un agente valen oro:
+`kind` separa un `?` (`"hole"`) de un `todo!` (`"todo"`), con el
+texto del `todo!` en `message`; `scope_elided` dice cuántos
+bindings quedaron fuera de `in_scope`; `candidates_needing_effects`
+trae los candidatos del "fits if you add" con la fila que les
+falta; y `doc` el docstring de la función que contiene el hole.
 
 Para un humano esto es ruidoso; para un agente es exactamente
 lo que necesita. Y esa exactitud cambia el resultado práctico:
@@ -457,22 +541,36 @@ test "filtra y ordena" {
 El humano corre `kai build --holes-json`. El agente recibe:
 
 ```json
-{
-  "name": "cuerpo",
-  "expected_type": "[String]",
-  "in_scope": [
-    {"name": "notas", "type": "[(String, Int)]"}
-  ],
-  "candidates": [
-    {"expr": "[]", "kind": "literal"}
-  ]
-}
+[
+  {
+    "file": "notas.kai",
+    "line": 1, "col": 51,
+    "kind": "hole",
+    "name": "cuerpo",
+    "message": null,
+    "expected_type": "[String]",
+    "in_scope": [
+      {"name": "notas", "type": "[Pair[String, Int]]"}
+    ],
+    "scope_elided": 550,
+    "candidates": [],
+    "candidates_needing_effects": [
+      {"expr": "Env.args()", "kind": "synth", "effects": ["Env"]},
+      {"expr": "args()", "kind": "synth", "effects": ["Env"]}
+    ],
+    "doc": null
+  }
+]
 ```
 
-El agente sabe: tipo esperado `[String]`, una entrada `notas`
-de tipo `[(String, Int)]`. Los candidatos son magros porque la
-síntesis del compilador es bounded; el agente tiene que
-proponer algo más sustantivo. Una primera propuesta:
+El agente sabe: tipo esperado `[String]`, una entrada `notas` de
+tipo `[Pair[String, Int]]` —la forma con que el compilador imprime
+`[(String, Int)]`, como vimos en §4.6—. Y sabe algo más útil
+todavía: `candidates` viene **vacío**. La síntesis es bounded y
+aquí no alcanza para nada; los dos que aparecen detrás de un
+efecto son `Env.args()`, que no tiene nada que ver con el
+problema. El compilador fue honesto: de esta no te salvo. El
+agente tiene que proponer algo sustantivo. Una primera propuesta:
 
 ```kai
 fn aprobados(notas: [(String, Int)]) : [String] =

@@ -386,6 +386,7 @@ bench "fib(15)" {
 }
 ```
 
+<!-- transcripto: tiempos, cambian en cada corrida -->
 ```
 $ kai bench ejemplos/cap07/04_bench_basico.kai
   aritmética: 2 + 3 * 4: 1000 iter / median 0 ns / MAD 0 ns / mean 30 ns / range [0, 1000]

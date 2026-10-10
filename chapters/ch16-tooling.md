@@ -538,6 +538,7 @@ Topics:
   testing      Test blocks, assertions, benchmarks, property checks.
   units        Units of measure on `Real` — phantom-type discipline, zero runtime
   vec          `Vec[T]` — the pure value vector: flat contiguous storage with
+...
 ```
 
 Pass a topic and it prints the page:
@@ -714,6 +715,7 @@ For normal use you don't need to touch any of this. The binary
 comes preconfigured to find its own things, and if you want to
 see **what** it found, `kai env` prints it already resolved:
 
+<!-- transcripto: paths and toolchain id are per machine -->
 ```
 $ kai env
 KAIKAI_HOME=/Users/you/.kaikai
@@ -1104,7 +1106,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.139.1 - hanga-roa (stage 2, self-hosted)
+kaikai 0.139.2 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org

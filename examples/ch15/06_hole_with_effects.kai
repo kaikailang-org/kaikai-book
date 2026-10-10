@@ -1,0 +1,18 @@
+# A hole's candidates are filtered by the effect row at its
+# position. Both holes here expect a `String` and have the same
+# name in scope; the only thing that tells them apart is the row.
+#
+# The file is here to be read with `kai build --holes`. It
+# compiles, and `main` reaches neither hole.
+
+effect Ask {
+  question() : String
+}
+
+fn greeting(name: String) : String = ?text
+
+fn interactive_greeting(name: String) : String / Ask = ?text_with_ask
+
+fn main() : Unit / Stdout {
+  println("run `kai build --holes` on this file")
+}

@@ -427,6 +427,7 @@ let e: Money[dec.Decimal]<EUR> = 5.00<EUR>
 let sinsentido = u * e          # error: `EUR USD` no existe
 ```
 
+<!-- transcripto: salida larga, reformateada para la página -->
 ```
 $ kai build ejemplos/cap19/06_usd_por_eur.kai
 error: operator `*` cannot combine `Currency` quantities: the

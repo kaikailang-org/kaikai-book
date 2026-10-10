@@ -1,0 +1,18 @@
+# Los candidatos de un hole se filtran por la fila de efectos de
+# su posición. Los dos holes de aquí esperan `String` y tienen el
+# mismo nombre en alcance; lo único que los distingue es la fila.
+#
+# El archivo es para leerlo con `kai build --holes`. Compila, y
+# `main` no llega a ninguno de los dos.
+
+effect Ask {
+  pregunta() : String
+}
+
+fn saludo(nombre: String) : String = ?texto
+
+fn saludo_interactivo(nombre: String) : String / Ask = ?texto_con_ask
+
+fn main() : Unit / Stdout {
+  println("corre `kai build --holes` sobre este archivo")
+}
