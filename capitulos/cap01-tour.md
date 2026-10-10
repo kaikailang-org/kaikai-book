@@ -656,9 +656,9 @@ local    = { path = "../local-thing" }
 El flujo del día a día son tres comandos:
 
 ```
-kai init                                       # crea kai.toml en el directorio actual
-kai add github.com/kaikailang-org/manutara@v0.1          # agrega una dependencia
-kai run main.kai                               # compila y corre
+$ kai init                                       # crea kai.toml en el directorio actual
+$ kai add github.com/kaikailang-org/manutara@v0.1          # agrega una dependencia
+$ kai run main.kai                               # compila y corre
 ```
 
 `kai add` clona el repositorio de la dependencia, lo cachea
@@ -689,7 +689,7 @@ Para correr cualquiera de los programas anteriores necesitas el
 binario `kai`. La vía corta es el instalador:
 
 ```
-curl -fsSL https://raw.githubusercontent.com/kaikailang-org/kaikai/main/install.sh | sh
+$ curl -fsSL https://raw.githubusercontent.com/kaikailang-org/kaikai/main/install.sh | sh
 ```
 
 Descarga el último release, verifica su SHA-256, lo deja bajo
@@ -712,8 +712,8 @@ se compila desde el fuente, que vive en
 y solo pide un compilador de C:
 
 ```
-make tier0
-./bin/kai run examples/minimal/hello.kai
+$ make tier0
+$ ./bin/kai run examples/minimal/hello.kai
 ```
 
 `make tier0` construye la cadena de bootstrap completa (stage 0
@@ -724,7 +724,7 @@ rápidas para confirmar que quedó sana.
 Instalado una vez, el compilador se actualiza solo:
 
 ```
-kai upgrade
+$ kai upgrade
 ```
 
 consulta el último release y, si es más nuevo que el que tienes,
@@ -735,9 +735,9 @@ A partir de ahí, los comandos que vas a usar a lo largo del
 libro son tres:
 
 ```
-kai run archivo.kai     # compila y ejecuta
-kai build archivo.kai -o nombre   # produce un binario nativo
-kai test archivo.kai    # ejecuta los bloques `test "..." { ... }` del archivo
+$ kai run archivo.kai     # compila y ejecuta
+$ kai build archivo.kai -o nombre   # produce un binario nativo
+$ kai test archivo.kai    # ejecuta los bloques `test "..." { ... }` del archivo
 ```
 
 `kai run` es el comando que más vas a teclear mientras lees el
