@@ -253,9 +253,13 @@ your record into a JSON value, and a `<type>_of_json` shim, which
 rebuilds it from one. It's the data boundary with the outside
 world: APIs, config files, messages.
 
+The generated code uses the JSON model that lives in
+`encoding.json_bind`, so the deriving file has to import it.
+
 ```kai
 # Listing 9.6 — examples/ch09/06_json.kai
 import encoding.json.{json_decode, json_encode}
+import encoding.json_bind
 
 #[derive(Json)]
 type Note = { title: String, priority: Int, tag: Option[String] }

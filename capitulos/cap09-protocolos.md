@@ -230,9 +230,14 @@ record a un valor JSON, y un shim `<tipo>_of_json`, que lo
 reconstruye desde uno. Es la frontera de datos con el mundo:
 APIs, archivos de configuración, mensajes.
 
+El código generado usa el modelo de JSON que vive en
+`encoding.json_bind`, así que el archivo que deriva tiene que
+importarlo.
+
 ```kai
 # Listado 9.6 — ejemplos/cap09/06_json.kai
 import encoding.json.{json_decode, json_encode}
+import encoding.json_bind
 
 #[derive(Json)]
 type Nota = { titulo: String, prioridad: Int, etiqueta: Option[String] }
@@ -283,7 +288,7 @@ type Config = {
 valor cuando la clave falta (y vuelve opcional ese campo); `skip`
 saca el campo del JSON por completo, y como al decodificar no hay
 nada que leer, exige un `default` o que el campo sea `Option`. Un
-campo necesita dos ajustes (saltado y con default) se escribe con
+campo que necesita dos ajustes (saltado y con default) se escribe con
 dos atributos, como arriba.
 
 Una limitación que conviene saber de antemano: `#[derive(Json)]`

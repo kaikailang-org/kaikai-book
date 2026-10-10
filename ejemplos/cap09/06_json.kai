@@ -4,6 +4,7 @@
 # inversa del cap. 7: decode(encode(x)) == x.
 
 import encoding.json.{json_decode, json_encode}
+import encoding.json_bind
 
 #[derive(Json)]
 type Nota = { titulo: String, prioridad: Int, etiqueta: Option[String] }
