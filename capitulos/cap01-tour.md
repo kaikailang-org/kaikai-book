@@ -696,11 +696,18 @@ Descarga el último release, verifica su SHA-256, lo deja bajo
 `~/.kaikai/` y agrega `~/.kaikai/bin` al `PATH` de tu shell. Si
 prefieres Homebrew, `brew install kaikailang-org/kaikai/kaikai`
 llega al mismo lugar. El binario es autocontenido: trae su
-propio LLVM adentro y no necesitas toolchain aparte, aunque por
-ahora los releases preconstruidos cubren macOS sobre Apple
-Silicon.
+propio LLVM adentro y no necesitas toolchain aparte.
 
-En otras plataformas se compila desde el fuente, que vive en
+kaikai funciona en macOS, en Linux y en Windows con WSL2. Los
+releases preconstruidos cubren macOS sobre Apple Silicon y Linux
+sobre x86-64; la fórmula de Homebrew es solo para macOS. En
+Windows instala
+[WSL2](https://learn.microsoft.com/windows/wsl/install) con una
+distribución Linux x86-64 y corre el instalador ahí adentro: el
+release de Linux funciona tal cual.
+
+En las demás plataformas (macOS sobre Intel, Linux sobre arm64)
+se compila desde el fuente, que vive en
 [github.com/kaikailang-org/kaikai](https://github.com/kaikailang-org/kaikai)
 y solo pide un compilador de C:
 
