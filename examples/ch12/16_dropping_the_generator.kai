@@ -1,0 +1,37 @@
+# Dropping a `Gen` discontinues its producer: whatever cleanup the
+# producer installed still runs, and it runs the moment the
+# generator is left ownerless.
+#
+# The consumer asks for one element and walks away. Nobody closes
+# the file by hand.
+
+import gen.{Yield, Done, Next, generate}
+
+effect Logbook {
+  line() : String
+}
+
+fn read_all() : Unit / Yield[String] + Logbook = {
+  Yield.yield(Logbook.line())
+  read_all()
+}
+
+fn with_resource() : Unit / Yield[String] + Stdout =
+  handle {
+    read_all()
+  } with Logbook {
+    initially { println("  opening the file"); 1 }
+    finally   { println("  closing the file") }
+    line(resume) -> resume("line #{state}", state + 1)
+    return(x)    -> x
+  }
+
+fn main() : Unit / Stdout = {
+  println("dropping the generator runs the cleanup")
+  let g = generate { with_resource() }
+  match g {
+    Done       -> println("  the file was empty")
+    Next(l, _) -> println("  read '#{l}' and I'm asking for no more")
+  }
+  println("the producer is gone")
+}

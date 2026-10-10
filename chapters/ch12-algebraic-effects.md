@@ -1342,7 +1342,7 @@ fn noisy(n: Int) : Unit / Yield[Int] + Stdout = {
 
 ```
 $ kai run examples/ch12/15_producer_effects.kai
-act 1: the producer's effects run as you step it
+the producer's effects run as you step it
   producing 1
   producing 2
   producing 3
@@ -1361,6 +1361,7 @@ answer is the one from §12.8, and it arrives without the consumer
 knowing it exists.
 
 ```kai
+# examples/ch12/16_dropping_the_generator.kai (fragment)
 fn with_resource() : Unit / Yield[String] + Stdout =
   handle {
     read_all()
@@ -1373,7 +1374,8 @@ fn with_resource() : Unit / Yield[String] + Stdout =
 ```
 
 ```
-act 2: dropping the generator runs the cleanup
+ run examples/ch12/16_dropping_the_generator.kai
+dropping the generator runs the cleanup
   opening the file
   read 'line 1' and I'm asking for no more
   closing the file

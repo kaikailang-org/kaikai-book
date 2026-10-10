@@ -162,6 +162,7 @@ run|ejemplos/cap12/12_limpieza.kai|ok
 run|ejemplos/cap12/13_generadores.kai|ok
 run|ejemplos/cap12/14_resume_no_tail.kai|ok
 run|ejemplos/cap12/15_productor_con_efectos.kai|ok
+run|ejemplos/cap12/16_soltar_el_generador.kai|ok
 
 # Capítulo 13 — fibras
 # En modo run, no solo build: compilar no prueba que un programa
@@ -190,6 +191,7 @@ build|ejemplos/cap15/02_programa_parcial.kai|ok
 build|ejemplos/cap15/03_hole_compartido.kai|ok
 build|ejemplos/cap15/04_hole_en_patron.kai|ok
 build|ejemplos/cap15/05_diseno_top_down.kai|ok
+build|ejemplos/cap15/06_hole_con_efectos.kai|ok
 
 # Capítulo 16 — FFI
 # Sale con 1 a propósito: el ejemplo demuestra que el Int que
@@ -329,6 +331,7 @@ run|examples/ch12/12_cleanup.kai|ok
 run|examples/ch12/13_generators.kai|ok
 run|examples/ch12/14_non_tail_resume.kai|ok
 run|examples/ch12/15_producer_effects.kai|ok
+run|examples/ch12/16_dropping_the_generator.kai|ok
 
 # Chapter 13
 # In run mode, not just build: compiling proves nothing about a
@@ -357,6 +360,7 @@ build|examples/ch15/02_partial_program.kai|ok
 build|examples/ch15/03_shared_hole.kai|ok
 build|examples/ch15/04_hole_in_pattern.kai|ok
 build|examples/ch15/05_top_down_design.kai|ok
+build|examples/ch15/06_hole_with_effects.kai|ok
 
 # Chapter 16
 # Exits 1 on purpose: the example demonstrates that the Int main

@@ -162,6 +162,7 @@ fn main() {
 
 Una salida posible:
 
+<!-- transcripto: orden no determinista, como dice el texto -->
 ```
 $ kai run ejemplos/cap13/01_dos_fibras.kai
 A

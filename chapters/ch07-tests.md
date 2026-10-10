@@ -383,6 +383,7 @@ bench "fib(15)" {
 }
 ```
 
+<!-- transcripto: timings, they change on every run -->
 ```
 $ kai bench examples/ch07/04_basic_bench.kai
   arithmetic: 2 + 3 * 4: 1000 iter / median 0 ns / MAD 0 ns / mean 29 ns / range [0, 1000]

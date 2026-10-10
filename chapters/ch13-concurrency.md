@@ -164,6 +164,7 @@ fn main() {
 
 One possible output:
 
+<!-- transcripto: nondeterministic order, as the text says -->
 ```
 $ kai run examples/ch13/01_two_fibers.kai
 A

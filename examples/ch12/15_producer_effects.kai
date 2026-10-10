@@ -1,17 +1,11 @@
 # A producer can do more than `Yield`. The effects it performs are
 # the `e` of `Gen[t, e]`, and they run where someone steps the
-# generator, not where it was created.
+# generator, not where it was created: here the producer's
+# `println` is served by main's handler.
 #
-# Act 1 makes that visible: the producer prints, and each line comes
-# out when the consumer asks for an element. Act 2 shows the other
-# half of the deal: dropping the `Gen` discontinues its producer, and
-# whatever cleanup it installed still runs.
+# And you see the three the consumer asked for, not a fourth.
 
-import gen.{Yield, Done, Next, generate, take_until, reduce}
-
-effect Logbook {
-  line() : String
-}
+import gen.{Yield, generate, take_until, reduce}
 
 fn noisy(n: Int) : Unit / Yield[Int] + Stdout = {
   println("  producing #{n}")
@@ -19,40 +13,10 @@ fn noisy(n: Int) : Unit / Yield[Int] + Stdout = {
   noisy(n + 1)
 }
 
-fn interleaved() : Unit / Stdout = {
-  println("act 1: the producer's effects run as you step it")
+fn main() : Unit / Stdout = {
+  println("the producer's effects run as you step it")
   let total = generate { noisy(1) }
     |> take_until(n => n >= 3)
     |> reduce((a, b) => a + b)
   println("total = #{total}")
-}
-
-fn read_all() : Unit / Yield[String] + Logbook = {
-  Yield.yield(Logbook.line())
-  read_all()
-}
-
-fn with_resource() : Unit / Yield[String] + Stdout =
-  handle {
-    read_all()
-  } with Logbook {
-    initially { println("  opening the file"); 1 }
-    finally   { println("  closing the file") }
-    line(resume) -> resume("line #{state}", state + 1)
-    return(x)    -> x
-  }
-
-fn just_one() : Unit / Stdout = {
-  println("act 2: dropping the generator runs the cleanup")
-  let g = generate { with_resource() }
-  match g {
-    Done       -> println("  the file was empty")
-    Next(l, _) -> println("  read '#{l}' and I'm asking for no more")
-  }
-  println("the producer is gone")
-}
-
-fn main() : Unit / Stdout = {
-  interleaved()
-  just_one()
 }

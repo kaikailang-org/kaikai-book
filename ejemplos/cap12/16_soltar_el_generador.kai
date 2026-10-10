@@ -1,0 +1,37 @@
+# Soltar un `Gen` descontinúa a su productor: la limpieza que el
+# productor tenga instalada corre igual, y corre en el momento en
+# que el generador queda sin dueño.
+#
+# El consumidor pide un elemento y se va. Nadie cierra el archivo
+# a mano.
+
+import gen.{Yield, Done, Next, generate}
+
+effect Bitacora {
+  linea() : String
+}
+
+fn leer_todo() : Unit / Yield[String] + Bitacora = {
+  Yield.yield(Bitacora.linea())
+  leer_todo()
+}
+
+fn con_recurso() : Unit / Yield[String] + Stdout =
+  handle {
+    leer_todo()
+  } with Bitacora {
+    initially { println("  abriendo el archivo"); 1 }
+    finally   { println("  cerrando el archivo") }
+    linea(resume) -> resume("línea #{state}", state + 1)
+    return(x)     -> x
+  }
+
+fn main() : Unit / Stdout = {
+  println("soltar el generador corre la limpieza")
+  let g = generate { con_recurso() }
+  match g {
+    Done       -> println("  el archivo estaba vacío")
+    Next(l, _) -> println("  leí '#{l}' y no pido más")
+  }
+  println("el productor ya no existe")
+}

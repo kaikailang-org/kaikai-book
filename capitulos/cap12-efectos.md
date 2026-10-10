@@ -1318,7 +1318,7 @@ fn ruidoso(n: Int) : Unit / Yield[Int] + Stdout = {
 
 ```
 $ kai run ejemplos/cap12/15_productor_con_efectos.kai
-acto 1: los efectos del productor corren al avanzarlo
+los efectos del productor corren al avanzarlo
   produzco 1
   produzco 2
   produzco 3
@@ -1337,6 +1337,7 @@ respuesta es la de §12.8, y llega sin que el consumidor sepa que
 existe.
 
 ```kai
+# ejemplos/cap12/16_soltar_el_generador.kai (fragmento)
 fn con_recurso() : Unit / Yield[String] + Stdout =
   handle {
     leer_todo()
@@ -1349,7 +1350,8 @@ fn con_recurso() : Unit / Yield[String] + Stdout =
 ```
 
 ```
-acto 2: soltar el generador corre la limpieza
+ run ejemplos/cap12/16_soltar_el_generador.kai
+soltar el generador corre la limpieza
   abriendo el archivo
   leí 'línea 1' y no pido más
   cerrando el archivo
