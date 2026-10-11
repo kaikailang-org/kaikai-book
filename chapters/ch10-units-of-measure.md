@@ -1,4 +1,4 @@
-# Chapter 10 · Units of measure and branded types
+# Chapter 10 · Units of measure: your first kind
 
 In 1999, NASA lost the Mars Climate Orbiter — a 327
 million-dollar project — because two software modules
