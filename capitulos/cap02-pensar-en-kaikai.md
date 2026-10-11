@@ -1,14 +1,18 @@
 # Capítulo 2 · Pensar en kaikai
 
-El capítulo 1 te mostró el lenguaje desde arriba. Antes de bajar
-al detalle de tipos, funciones y módulos, conviene detenerse un
-momento en algunos hábitos que kaikai pide y que probablemente
-no traigas si vienes de Python, Java, Go, JavaScript o C#.
+En el capítulo 1 te mostré el lenguaje desde arriba.
+Antes de bajar
+al detalle de tipos, funciones y módulos, conviene
+que nos detengamos para revisar
+algunos hábitos que kaikai pide y que probablemente
+no traigas si vienes de
+lenguajes como Python, Java, Go, JavaScript o C#.
 
 Este es el capítulo más corto del libro, y se puede saltar. Si
 ya programaste en Haskell, OCaml, Elixir o Scala, esto te va a
-sonar familiar; pasa a la Parte II y nos vemos en el capítulo
-3. Si vienes de un mundo imperativo, dedícale los veinte minutos
+sonar familiar, así que puedes pasar a la Parte II y nos vemos
+en el capítulo 3.
+Si vienes de un mundo imperativo, dedícale los veinte minutos
 que pide. Te van a ahorrar incomodidades en las siguientes
 ciento cincuenta páginas.
 
@@ -19,7 +23,7 @@ aparezca.
 
 ## 2.1 Expresiones, no sentencias
 
-En la mayoría de los lenguajes que probablemente conoces, el
+En la mayoría de los lenguajes el
 código se construye con dos tipos distintos de pieza:
 
 - **Expresiones**, que producen un valor: `x + 1`, `f(2)`, `a == b`.
@@ -27,10 +31,11 @@ código se construye con dos tipos distintos de pieza:
   `if` con dos ramas, un `for`, un `return`, una asignación.
 
 Las sentencias necesitan armarse en una secuencia. Las
-expresiones, no: se componen anidándose.
+expresiones no: se componen anidándose.
 
-kaikai borra esa frontera. **Casi todo es expresión.** Un `if`
-produce un valor. Un `match` produce un valor. Un bloque
+kaikai borra esa frontera. **Casi todo es expresión.**
+Un `if` produce un valor.
+Un `match` produce un valor. Un bloque
 `{ ... }` produce un valor: el de la última expresión adentro.
 Una función no necesita `return` porque su cuerpo *es* la
 expresión que devuelve.
@@ -55,8 +60,8 @@ let s = if x > 0 { "positivo" } else { "no positivo" }
 println(s)
 ```
 
-La diferencia no es de líneas sino de pensamiento. En la versión
-imperativa hay que **declarar `s` primero**, porque el `if` no
+En la versión imperativa hay que **declarar `s` primero**,
+porque el `if` no
 sabe devolver nada; después hay que **mutar `s` en cada rama**.
 En kaikai, el `if` *es* el valor, y `s` se ata directo al
 resultado: no hay una declaración separada de la asignación,
@@ -72,15 +77,15 @@ Esto tiene consecuencias prácticas que vas a notar pronto:
   declaradas-pero-sin-valor.
 - **Refactor más fluido.** Una expresión se puede extraer a una
   función o reemplazar por otra expresión sin tocar el contexto
-  alrededor; una sentencia, no tanto.
+  alrededor; en una sentencia, no tanto.
 
-Este fue el primer punto que fijé cuando empecé a diseñar kaikai,
+Este fue uno de los primeros puntos que decidí cuando empecé a diseñar kaikai,
 antes que los efectos y antes que los kinds. Todo lo demás se
 acomodó alrededor.
 
 Vas a ver lo mismo en `match`. En la mayoría de los lenguajes con
 `switch`, cada `case` es una sentencia que ejecuta un bloque y
-después rompe (o sigue, según las reglas del lenguaje). En
+después sale (o sigue, según las reglas del lenguaje). En
 kaikai, `match` es una expresión que devuelve un valor, y cada
 rama es la expresión que ese valor podría ser. Lo viste en el
 capítulo 1, en `label` y en `eval`. Volverás a verlo
@@ -134,7 +139,7 @@ en kaikai eso significa una de dos cosas:
   ámbito interno.
 - En realidad necesitas mutación visible. Eso es un caso real
   pero pequeño, y kaikai te lo da, pero te pide declararlo. La
-  mutación de un array, por ejemplo, vive bajo el efecto
+  mutación de un arreglo, por ejemplo, vive bajo el efecto
   `Mutable`, que aparece en la firma de cualquier función que la
   use. Lo veremos con calma en el capítulo 13.
 
@@ -183,7 +188,7 @@ mismo, así que el efecto `State` no se asoma a la firma de la
 función. Una función con `var` adentro tiene la misma firma que
 si no lo tuviera.
 
-Mutaciones más visibles (escribir un array que vive más allá
+Mutaciones más visibles (escribir un arreglo que vive más allá
 del bloque, enviar a la mailbox de otro actor, modificar memoria
 que se observa desde fuera) sí aparecen en la firma, bajo
 efectos como `Mutable`, `Actor` o los que correspondan. Esa
@@ -196,12 +201,12 @@ estamos en territorio de efectos y vas a tener que declararlos.
 
 ## 2.3 `Option` y `Result` en vez de `null` y excepciones
 
-La pregunta más vieja al diseñar un lenguaje: ¿qué hace una
+Una pregunta vieja al diseñar un lenguaje es: ¿qué hace una
 función cuando no puede devolver lo que prometió?
 
 La respuesta de C, Java, Python, JavaScript y un largo etcétera
-es **mentir**: la función dice que devuelve un `Usuario`, pero
-en algunos casos devuelve una variable mágica llamada `null` (o
+es **mentir**. La función dice que devuelve un `Usuario`, pero
+en algunos casos devuelve un valor mágico llamado `null` (o
 `None`, o `nil`) que **no es un usuario** y que el sistema de
 tipos no distingue del valor real. El que llama tiene que
 recordar comprobarlo. Tony Hoare, que inventó la referencia
@@ -223,9 +228,9 @@ type Result[a, e] = Ok(a) | Err(e)
 ```
 
 Una función que puede no encontrar el resultado devuelve
-`Option[Usuario]`: o `Some(usr)` cuando lo encuentra, o `None`
+`Option[Usuario]`: `Some(usr)` cuando lo encuentra o `None`
 cuando no. Una función que puede fallar de varias maneras
-devuelve `Result[Usuario, Error]`: o `Ok(usr)`, o
+devuelve `Result[Usuario, Error]`: `Ok(usr)` o
 `Err(razón)`. En ambos casos, el tipo te obliga a considerar
 las dos posibilidades.
 
@@ -270,7 +275,7 @@ qué puede fallar, y decides ahí mismo qué hacer.
 ### Una nota sobre `!`
 
 En kaikai, el operador postfix `!` aplica a un `Option` o un
-`Result` y propaga el caso negativo: si el valor es `Ok(v)` o
+`Result` y propaga (retorna) el caso negativo: si el valor es `Ok(v)` o
 `Some(v)`, la expresión vale `v` y el programa sigue; si es
 `Err(e)` o `None`, la función actual termina ahí mismo
 devolviendo ese `Err` o `None` a quien llama.
@@ -356,18 +361,17 @@ una de esas herramientas que no quieres soltar.
 
 ## 2.5 Funciones puras y efectos visibles
 
-Las cuatro ideas anteriores convergen en una más grande, que es
+Las ideas anteriores convergen en una más grande, que es
 la apuesta central del lenguaje: **separar lo puro de lo que
 toca el mundo**, y tener al sistema de tipos cuidando esa
 distinción.
 
 Una función *pura* es una función cuyo resultado depende solo de
 sus argumentos. Llamarla con los mismos argumentos siempre
-devuelve el mismo valor. No imprime. No lee del disco. No
-manda mensajes. No mira un reloj. No lanza un dado.
+devuelve el mismo valor. No imprime, ni lee del disco.
 
-Las funciones puras son fáciles de probar, fáciles de razonar,
-fáciles de paralelizar, fáciles de cachear. El problema es que
+Las funciones puras son fáciles de probar, razonar, paralelizar
+o almacenar en caché. El problema es que
 un programa que solo tiene funciones puras no hace nada útil:
 nunca habla con el mundo.
 
@@ -400,16 +404,16 @@ varias incomodidades viejas:
   el tipo, y la elige quien llama.
 
 Si nunca has visto esto, suena demasiado ambicioso para ser
-cierto. Lo es y no lo es. El capítulo 12 le dedica todo el
+cierto. El capítulo 12 le dedica todo el
 espacio que merece. Por ahora basta con saber que las firmas que
 ves con `/ algo` no son ruido: son información sobre lo que esa
 función puede hacerle a tu programa.
 
 ## 2.6 El tipo no es la única etiqueta
 
-Hay un último hábito que conviene instalar temprano, porque
+Hay un último hábito que conviene adquirir temprano, porque
 reordena cómo lees todo lo que viene. En los lenguajes que
-traes, el compilador razona sobre una sola clase de etiqueta:
+conoces, el compilador razona sobre una sola clase de etiqueta:
 el tipo. Todo lo demás que importa de un valor (en qué unidad
 está, qué puede fallar al calcularlo, quién es dueño de su
 memoria) vive en comentarios, en convenciones de nombres, o
@@ -476,14 +480,21 @@ cuáles poner juntas.
   Perceus + fibras aisladas resuelven el problema sin pedirle
   al programador que entienda lifetimes.
 
-Ninguna de estas decisiones es nueva. Lo que kaikai intenta es
+Lo que kaikai intenta es
 una combinación coherente: tipos algebraicos + efectos
 algebraicos + Perceus + fibras BEAM, en un lenguaje que se
 compila rápido a código nativo y que un programador con
 experiencia puede leer sin un curso previo.
 
-El resto del libro entra en detalle en cada una de esas
-decisiones. Si llegaste hasta aquí, ya tienes el mapa.
+Hay algo novedoso en kaikai, que se ve poco o de forma restringida
+en otros lenguajes: los kinds. Es un concepto que
+no siempre está expuesto al programador; kaikai lo libera y
+lo explora con más audacia de lo que se ha visto hasta ahora.
+Eso lo veremos en el capítulo 19.
+
+El resto del libro entra en detalle en cada una de las
+decisiones tomadas al diseñar el lenguaje.
+Si llegaste hasta aquí, ya tienes el mapa.
 
 ## Ejercicios
 
