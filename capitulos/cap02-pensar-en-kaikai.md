@@ -490,7 +490,8 @@ Hay algo novedoso en kaikai, que se ve poco o de forma restringida
 en otros lenguajes: los kinds. Es un concepto que
 no siempre está expuesto al programador; kaikai lo libera y
 lo explora con más audacia de lo que se ha visto hasta ahora.
-Eso lo veremos en el capítulo 19.
+Tu primer kind aparece en el capítulo 10, con las unidades de
+medida, y el catálogo completo está en el capítulo 19.
 
 El resto del libro entra en detalle en cada una de las
 decisiones tomadas al diseñar el lenguaje.

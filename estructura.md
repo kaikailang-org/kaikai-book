@@ -222,7 +222,7 @@ escogió kaikai y por qué.
 - 9.8 Operadores: `+`, `==`, `<` como protocolos
 - *5 ejercicios*
 
-#### Capítulo 10 · Unidades de medida y branded types
+#### Capítulo 10 · Unidades de medida: tu primer kind
 
 kaikai trae units of measure al estilo F#, una herramienta rara
 en lenguajes mainstream. El capítulo cubre dos casos: la

@@ -474,11 +474,18 @@ are mine. What I chose was which ones to put together.
   Perceus plus isolated fibers solve the problem without
   asking the programmer to internalize lifetimes.
 
-None of these decisions is new. What kaikai attempts is a
+What kaikai attempts is a
 coherent combination: algebraic types + algebraic effects +
 Perceus + BEAM-style fibers, in a language that compiles fast
 to native code and that an experienced programmer can read
 without taking a course first.
+
+One thing in kaikai is new, or at least rarely seen and tightly
+restricted elsewhere: kinds. Most languages keep the concept
+away from the programmer; kaikai opens it up and explores it
+more boldly than has been tried so far. You meet your first
+kind in chapter 10, with units of measure, and chapter 19 walks
+through the full catalog.
 
 The rest of the book digs into each of those decisions. If you
 made it this far, you have the map.

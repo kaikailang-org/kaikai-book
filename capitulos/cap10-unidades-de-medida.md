@@ -1,4 +1,4 @@
-# Capítulo 10 · Unidades de medida y branded types
+# Capítulo 10 · Unidades de medida: tu primer kind
 
 En 1999, la NASA perdió la sonda Mars Climate Orbiter (327
 millones de dólares de proyecto) porque dos módulos de
