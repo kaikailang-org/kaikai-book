@@ -1,11 +1,18 @@
 # `Vec[T]` is the value vector: flat buffer, O(1) access, and
-# functional semantics — `push` and `set` return the resulting
-# vector instead of modifying the original.
+# functional semantics. The operations live in `collections.vec`,
+# and none of them modifies the vector it gets: they return another.
 #
-# A list literal in a `Vec` position builds the vector
-# directly; a `[10, 20, 30]` with no annotation is still a list.
+# A list literal in a `Vec` position builds the vector directly;
+# a `[10, 20, 30]` with no annotation is still a list.
+
+import collections.vec
 
 fn main() : Unit / Stdout = {
   let a: Vec[Int] = [10, 20, 30]
-  println("a[1] = #{a[1]}")
+  println("a[1] = #{a[1]}, same as vec.get(a, 1) = #{vec.get(a, 1)}")
+
+  # `set` and `push` return the resulting vector; `a` is untouched.
+  let b = vec.push(vec.set(a, 1, 99), 40)
+  println("a = #{vec.to_list(a)}")
+  println("b = #{vec.to_list(b)}")
 }

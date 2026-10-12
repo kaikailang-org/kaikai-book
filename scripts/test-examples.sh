@@ -82,9 +82,9 @@ build|ejemplos/cap04/05_tuplas.kai|ok
 build|ejemplos/cap04/06_priv.kai|ok
 build|ejemplos/cap04/07_strings.kai|ok
 build|ejemplos/cap04/08_mapas.kai|ok
-build|ejemplos/cap04/09_string_builder.kai|ok
+run|ejemplos/cap04/09_string_builder.kai|ok
 run|ejemplos/cap04/10_mayusculas.kai|ok
-build|ejemplos/cap04/11_vec.kai|ok
+run|ejemplos/cap04/11_vec.kai|ok
 
 # Capítulo 5 — pattern matching
 build|ejemplos/cap05/01_sumas_basicas.kai|ok
@@ -251,9 +251,9 @@ build|examples/ch04/05_tuples.kai|ok
 build|examples/ch04/06_priv.kai|ok
 build|examples/ch04/07_strings.kai|ok
 build|examples/ch04/08_maps.kai|ok
-build|examples/ch04/09_string_builder.kai|ok
+run|examples/ch04/09_string_builder.kai|ok
 run|examples/ch04/10_case_folding.kai|ok
-build|examples/ch04/11_vec.kai|ok
+run|examples/ch04/11_vec.kai|ok
 
 # Chapter 5
 build|examples/ch05/01_basic_sums.kai|ok

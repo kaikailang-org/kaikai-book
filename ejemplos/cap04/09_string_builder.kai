@@ -1,14 +1,27 @@
-import string_builder
+import string_builder as sb
 import core.list
+import core.string
 
-# Concatenar con ++ en un loop es O(n^2): cada ++ copia todo lo
-# acumulado. StringBuilder junta los fragmentos y los une en un
-# solo paso con build. append rinde Mutable; build es puro.
-fn unir(nombres: [String]) : String {
-  let sb = list.foldl(nombres, string_builder.new(), (b, n) => string_builder.append(b, "#{n}, "))
-  string_builder.build(sb)
+type Fila = { nombre: String, puntos: Int }
+
+fn linea(f: Fila) : String =
+  "\n#{string.pad_right(f.nombre, 8, ' ')}#{f.puntos}"
+
+# El informe se arma de pedazos que no son una lista uniforme: una
+# cabecera calculada aparte y una línea por fila. El builder los
+# acumula y los une en una sola pasada con build. append rinde
+# Mutable; build es puro.
+fn informe(filas: [Fila]) : String {
+  let total = list.foldl(filas, 0, (acc, f) => acc + f.puntos)
+  let cabecera = sb.append(sb.new(), "#{list.length(filas)} filas, #{total} puntos")
+  let cuerpo = list.foldl(filas, cabecera, (b, f) => sb.append(b, linea(f)))
+  sb.build(cuerpo)
 }
 
 fn main() : Unit / Stdout {
-  println(unir(["ana", "ben", "cleo"]))
+  println(informe([
+    Fila { nombre: "ana", puntos: 12 },
+    Fila { nombre: "ben", puntos: 7 },
+    Fila { nombre: "cleo", puntos: 21 },
+  ]))
 }

@@ -329,35 +329,58 @@ When you genuinely need to index, the default answer is
 **behaves like a value**. No effects: not one operation
 carries `Mutable` in its row.
 
+The operations live in `collections.vec` and you call them
+qualified. They are the ones you'd expect: `vec.get`, `vec.set`,
+`vec.push`, `vec.length`, `vec.slice`, `vec.map`, `vec.foldl`,
+`vec.from_list` and `vec.to_list`. The `a[1]` in the example is
+shorthand for `vec.get(a, 1)`.
+
 A list literal in a `Vec` position builds the vector directly,
-with no linked list in between:
+with no linked list in between. And the interesting part is how
+they write: `set` and `push` **return** the resulting vector
+rather than modifying the one they get.
 
 ```kai
+# examples/ch04/11_vec.kai
+import collections.vec
+
 fn main() : Unit / Stdout = {
   let a: Vec[Int] = [10, 20, 30]
-  println("a[1] = #{a[1]}")
+  println("a[1] = #{a[1]}, same as vec.get(a, 1) = #{vec.get(a, 1)}")
+
+  # `set` and `push` return the resulting vector; `a` is untouched.
+  let b = vec.push(vec.set(a, 1, 99), 40)
+  println("a = #{vec.to_list(a)}")
+  println("b = #{vec.to_list(b)}")
 }
 ```
 
 ```
 $ kai run examples/ch04/11_vec.kai
-a[1] = 20
+a[1] = 20, same as vec.get(a, 1) = 20
+a = [10, 20, 30]
+b = [10, 99, 30, 40]
 ```
 
-The annotation is what decides: a bare `[10, 20, 30]` is still
-a list.
+The annotation is what decides: that same bare `[10, 20, 30]`,
+without the `: Vec[Int]`, is still a linked list.
 
-The interesting part is that `push` and `set` **return** the
-resulting vector rather than modifying one, so two names
-pointing at the same `Vec` never tread on each other.
-Underneath, the runtime mutates in place whenever the buffer
-has a single owner — the same reference counting as chapter
-13 — and copies only when it is shared. Thread the vector
-linearly, accumulator style, and building it costs one
-allocation.
+Notice that `a` didn't change. That's the guarantee, and it has
+no exceptions: no name pointing at a `Vec` ever sees what another
+one writes.
 
-A slice is a constant-cost view: `v[2..4]` copies no elements,
-it shares the buffer.
+The guarantee isn't paid for with a copy per write. Underneath,
+the runtime checks whether the buffer is shared — the same
+reference counting as chapter 13 — and writes in place when it
+has a single owner. In the example `a` is used *after* the `set`,
+because the next line prints it, so at the moment of the write it
+is shared and the write copies. Thread the vector linearly
+instead, accumulator style, where each step is the sole owner of
+what it receives, and nothing is copied: building it asks for
+memory once.
+
+A slice is a constant-cost view: `a[1..2]` copies no elements, it
+shares the buffer. Both ends are included, as in a range literal.
 
 And `Array[T]`, which shows up in chapter 12, is the other
 face: the **mutable** reference, where writes are observable
@@ -541,34 +564,62 @@ For interpolation, `#{...}` inside a literal `"..."`.
 building a large string by gluing fragments in a loop: because a
 `String` is immutable, every `++` copies the whole accumulator to
 produce a new one, which lands you in O(n²) — the classic
-quadratic of concatenation. That is what `StringBuilder` is for: a
-text accumulator that holds the fragments as you add them and only
-joins them at the end, in a single pass, with `build`. Appending is
-amortized O(1), and the whole assembly is O(n).
+quadratic of concatenation.
+
+If what you have is a list of strings and a separator, it is
+already solved: `string.join` walks the list once and leaves no
+separator dangling at the end.
 
 ```kai
-import string_builder
-import core.list
+string.join(["ana", "ben", "cleo"], ", ")    # "ana, ben, cleo"
+```
 
-fn join(names: [String]) : String {
-  let sb = list.foldl(names, string_builder.new(),
-                      (b, n) => string_builder.append(b, "#{n}, "))
-  string_builder.build(sb)
+`StringBuilder` is for the other case: when the result is
+assembled from pieces that are not a uniform list. It is a text
+accumulator that holds the fragments as you add them and only
+joins them at the end, in a single pass, with `build`. Appending
+is amortized O(1), and the whole assembly is O(n).
+
+```kai
+import string_builder as sb
+import core.list
+import core.string
+
+type Row = { name: String, points: Int }
+
+fn line(r: Row) : String =
+  "\n#{string.pad_right(r.name, 8, ' ')}#{r.points}"
+
+fn report(rows: [Row]) : String {
+  let total = list.foldl(rows, 0, (acc, r) => acc + r.points)
+  let header = sb.append(sb.new(),
+                         "#{list.length(rows)} rows, #{total} points")
+  let body = list.foldl(rows, header, (b, r) => sb.append(b, line(r)))
+  sb.build(body)
 }
 ```
 
 ```
 $ kai run examples/ch04/09_string_builder.kai
-ana, ben, cleo,
+3 rows, 40 points
+ana     12
+ben     7
+cleo    21
 ```
+
+The header comes out of a separate computation and each line out
+of a row: different sources, and `join` does not cover them. The
+builder gathers them without recopying what it already holds. The
+newline goes at the front of each row so the result does not end
+in one.
 
 `append` rides the `Mutable` effect — internally it writes into
 the builder's fragment array — while `build` is pure: it only reads
-and joins. Notice that `join` declares no `/ Mutable` in its
+and joins. Notice that `report` declares no `/ Mutable` in its
 signature even though it drives `append`: since the builder is born
 and dies inside, never escaping, kaikai *masks* the effect at the
 function boundary. The rest of the API (`new`, `with_capacity`,
-`append_char`, `len`, `is_empty`) is in `kai doc string_builder`.
+`append_char`, `length`, `is_empty`) is in `kai doc string_builder`.
 
 ## 4.5 `Option` and `Result`: the daily tools
 
