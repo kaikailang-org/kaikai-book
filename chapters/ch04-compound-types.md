@@ -1,10 +1,10 @@
 # Chapter 4 · Compound Types
 
-The seven primitives from chapter 3 give you raw pieces. To
-build real programs, you glue them into structures: aggregates
-with named fields, lists, tuples, and the two stdlib types you'll
-reach for more than any other, `Option` and `Result`. If I had to
-keep a single stdlib decision, I'd keep those two.
+The primitive types from the previous chapter give you raw
+pieces. To build real programs, you glue them into structures:
+aggregates with named fields, lists, tuples, and the two stdlib
+types you'll reach for more than any other, `Option` and
+`Result`.
 
 This chapter covers all of that. **Sum types** (`type Tag =
 Foo | Bar(Int)`) you saw in the tour deserve their own chapter

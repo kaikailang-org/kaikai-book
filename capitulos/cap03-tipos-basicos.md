@@ -1,15 +1,14 @@
 # Capítulo 3 · Tipos básicos y expresiones
 
-Este capítulo describe los tipos
-básicos de kaikai, la forma de los literales, los operadores que
-los manipulan, y cómo se atan a nombres con `let`. También
-introduce algo que ya viste de pasada y vamos a fijar bien:
-**`if` y los bloques son expresiones**, no sentencias.
+Este capítulo describe los tipos básicos de kaikai, la forma de
+los literales, los operadores que los manipulan, y cómo se atan a
+nombres con `let`. También introduce algo que ya viste de pasada y
+vamos a fijar bien: **`if` y los bloques son expresiones**, no
+sentencias.
 
-Si leíste el capítulo 2, lo que viene es el contenido
-concreto de las advertencias vistas allí.
-Si no lo leíste y vienes de un mundo
-imperativo, revísalo. Te ahorra fricción.
+Si leíste el capítulo 2, lo que viene es el contenido concreto de
+las advertencias vistas allí. Si no lo leíste y vienes de un
+mundo imperativo, revísalo. Te ahorra fricción.
 
 ## 3.1 Los siete tipos primitivos
 

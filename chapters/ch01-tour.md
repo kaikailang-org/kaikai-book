@@ -1,6 +1,7 @@
 # Chapter 1 · A Tour of kaikai
 
-The best way to get to know a language is to read it and run it.
+The best way to get to know a programming language is to read it
+and run it.
 That is how I learned every language I know, which is why this
 book opens with programs instead of definitions. This chapter is
 a guided tour of kaikai in ten short programs.
@@ -24,7 +25,7 @@ back.
 
 ## 1.1 Hello, kaikai
 
-The oldest exercise in the book, in kaikai:
+The all-time classic, in kaikai:
 
 ```kai
 fn main() {
@@ -51,8 +52,9 @@ Four things to notice before moving on:
   will use it.
 - `println` does not require an `import`. It is available in
   every program because it writes to standard output through
-  an effect that kaikai installs by default. Chapter 9 opens
-  that box; for now, it just works.
+  an effect that kaikai installs by default. Chapter 12 goes
+  into this properly; for now it is enough to know that it
+  works.
 
 There is no semicolon at the end of the line. There is no
 `return` for a function that does not return a value. You don't
@@ -240,9 +242,8 @@ $ kai run examples/ch01/04_effect.kai
 ```
 
 This is the example most likely to make you slow down. That is
-deliberate. Algebraic effects are kaikai's distinctive bet, and
-we want you to see them running before we explain them
-seriously.
+fine. Algebraic effects are kaikai's distinctive bet, and I want
+you to see them running before we explain them seriously.
 
 What is going on:
 

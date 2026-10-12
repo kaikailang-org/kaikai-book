@@ -1,15 +1,12 @@
 # Chapter 3 · Basic types and expressions
 
-Time to get to the primitives. This chapter covers kaikai's seven
-basic types, the shape of literals, the operators that handle
-them, and how values bind to names with `let`. It also pins down
-something you've already seen in passing: **`if` and blocks are
-expressions**, not statements.
+This chapter covers kaikai's basic types, the shape of literals,
+the operators that handle them, and how values bind to names with
+`let`. It also pins down something you've already seen in
+passing: **`if` and blocks are expressions**, not statements.
 
-Seven struck me as the right number: enough not to fight the
-language day to day, few enough to hold all at once. If you read
-chapter 2, what follows is the concrete content of those
-warnings. If you skipped it and you come from an imperative
+If you read chapter 2, what follows is the concrete content of
+those warnings. If you skipped it and you come from an imperative
 background, go back. It will save you friction.
 
 ## 3.1 The seven primitive types
