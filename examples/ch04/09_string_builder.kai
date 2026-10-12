@@ -1,14 +1,27 @@
-import string_builder
+import string_builder as sb
 import core.list
+import core.string
 
-# Concatenating with ++ in a loop is O(n^2): each ++ copies the
-# whole accumulator. StringBuilder gathers the fragments and joins
-# them in one pass with build. append rides Mutable; build is pure.
-fn join(names: [String]) : String {
-  let sb = list.foldl(names, string_builder.new(), (b, n) => string_builder.append(b, "#{n}, "))
-  string_builder.build(sb)
+type Row = { name: String, points: Int }
+
+fn line(r: Row) : String =
+  "\n#{string.pad_right(r.name, 8, ' ')}#{r.points}"
+
+# The report is assembled from pieces that are not a uniform list: a
+# header computed separately and one line per row. The builder
+# accumulates them and joins them in a single pass with build.
+# append rides Mutable; build is pure.
+fn report(rows: [Row]) : String {
+  let total = list.foldl(rows, 0, (acc, r) => acc + r.points)
+  let header = sb.append(sb.new(), "#{list.length(rows)} rows, #{total} points")
+  let body = list.foldl(rows, header, (b, r) => sb.append(b, line(r)))
+  sb.build(body)
 }
 
 fn main() : Unit / Stdout {
-  println(join(["ana", "ben", "cleo"]))
+  println(report([
+    Row { name: "ana", points: 12 },
+    Row { name: "ben", points: 7 },
+    Row { name: "cleo", points: 21 },
+  ]))
 }

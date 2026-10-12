@@ -1,11 +1,10 @@
 # Capítulo 4 · Tipos compuestos
 
-Los siete primitivos del capítulo anterior te dan piezas
-sueltas. Para construir programas de verdad, las pegas en
+Los tipos primitivos del capítulo anterior te dan piezas
+sueltas. Para construir programas de verdad, los juntas en
 estructuras: agregados con campos nombrados, listas, tuplas y
 las dos joyas del stdlib que vas a ver más que cualquier otro
-tipo, `Option` y `Result`. Si tuviera que quedarme con una sola
-decisión del stdlib, me quedaría con esas dos.
+tipo, `Option` y `Result`.
 
 Este capítulo cubre todo eso. Los **sum types** (`type Tag =
 Foo | Bar(Int)`) que viste en el tour merecen su propio
@@ -238,11 +237,11 @@ fn anteponer_concat(h: Int, t: [Int]) : [Int] = [h] ++ t
 ```
 
 La diferencia no es solo de lectura. `[h, ...t]` dice "una lista
-que empieza con `h` y sigue con `t`" —la misma forma del patrón
-con que la vas a descomponer después— y emite el cons directo.
-`[h] ++ t` dice "pega estas dos listas", y para eso construye una
-lista de un elemento que existe solo para ser pegada: una
-asignación por llamada.
+que empieza con `h` y sigue con `t`", que es la misma forma del
+patrón con que la vas a descomponer después, y emite el cons
+directo. `[h] ++ t` dice "pega estas dos listas", y para eso
+construye una lista de un elemento que existe solo para ser
+pegada: una asignación por llamada.
 
 Medir eso tiene su truco, y vale la pena saberlo antes de
 intentarlo. Si pones las dos formas en un `bench` cuyo cuerpo
@@ -336,37 +335,62 @@ necesitas una lista modificada, construyes una nueva.
 
 Cuando de verdad necesitas indexar, la respuesta por defecto
 es `Vec[T]`: un buffer plano y contiguo, con acceso `O(1)`,
-que **se comporta como un valor**. Nada de efectos: ninguna
-operación lleva `Mutable` en la fila.
+que **se comporta como un valor**. Nada de efectos, ninguna
+operación es mutable.
+
+Las operaciones viven en `collections.vec` y se usan
+calificadas. Son las que esperas: `vec.get`, `vec.set`,
+`vec.push`, `vec.length`, `vec.slice`, `vec.map`, `vec.foldl`,
+`vec.from_list` y `vec.to_list`. El `a[1]` del ejemplo es la
+forma corta de `vec.get(a, 1)`.
 
 Un literal de lista en posición `Vec` construye el vector
-directo, sin pasar por una lista enlazada:
+directo, sin pasar por una lista enlazada. Y lo interesante está
+en cómo escriben: `set` y `push` **devuelven** el vector
+resultante en vez de modificar el que reciben.
 
 ```kai
+# ejemplos/cap04/11_vec.kai
+import collections.vec
+
 fn main() : Unit / Stdout = {
   let a: Vec[Int] = [10, 20, 30]
-  println("a[1] = #{a[1]}")
+  println("a[1] = #{a[1]}, igual que vec.get(a, 1) = #{vec.get(a, 1)}")
+
+  # `set` y `push` devuelven el vector resultante; `a` no se toca.
+  let b = vec.push(vec.set(a, 1, 99), 40)
+  println("a = #{vec.to_list(a)}")
+  println("b = #{vec.to_list(b)}")
 }
 ```
 
 ```
 $ kai run ejemplos/cap04/11_vec.kai
-a[1] = 20
+a[1] = 20, igual que vec.get(a, 1) = 20
+a = [10, 20, 30]
+b = [10, 99, 30, 40]
 ```
 
-La anotación es la que manda: un `[10, 20, 30]` pelado sigue
-siendo una lista.
+La anotación es la que manda: ese mismo `[10, 20, 30]` pelado,
+sin el `: Vec[Int]`, sigue siendo una lista enlazada.
 
-Lo interesante es que `push` y `set` **devuelven** el vector
-resultante en vez de modificarlo, así que dos nombres que
-apuntan al mismo `Vec` nunca se pisan. Por debajo el runtime
-muta en el lugar cuando el buffer tiene un solo dueño —el
-mismo conteo de referencias del cap. 13— y copia solo cuando
-está compartido. Si enhebras el vector de forma lineal, al
-estilo acumulador, construirlo cuesta una sola asignación.
+Fíjate en que `a` no cambió. Esa es la garantía y no tiene
+excepciones: ningún nombre que apunte a un `Vec` ve nunca lo que
+otro escribe.
 
-Un slice es una vista de costo constante: `v[2..4]` no copia
-elementos, comparte el buffer.
+Eso no quiere decir que cada escritura copie el buffer. Por
+debajo el runtime mira si el buffer está compartido, con el mismo
+conteo de referencias del cap. 13, y escribe en el lugar cuando
+tiene un solo dueño. En el ejemplo `a` se usa *después* del
+`set`, porque la línea siguiente lo imprime, así que en el
+momento de escribir está compartido y la escritura copia. Si en
+cambio enhebras el vector de forma lineal, al estilo acumulador,
+donde cada paso es el único dueño del que recibe, no se copia
+nada: construirlo pide memoria una sola vez.
+
+Un slice es una vista de costo constante: `a[1..2]` no copia
+elementos, comparte el buffer. Los extremos van incluidos, igual
+que en un literal de rango.
 
 Y `Array[T]`, que aparece en el capítulo 12, es la otra cara:
 la referencia **mutable**, donde las escrituras sí se observan
@@ -420,7 +444,7 @@ Tomemos `"café"` y midámoslo de las cuatro maneras.
 
 Fíjate en que las dos vistas tienen **tipos distintos**: `[Char]`
 son caracteres, `[Byte]` son octetos. No es un detalle cosmético.
-Significa que no puedes cruzarlas por descuido — pasarle a
+Significa que no puedes cruzarlas por descuido: pasarle a
 `from_chars` el resultado de `bytes(s)` no compila, porque un
 octeto no es un carácter y el compilador lo sabe.
 
@@ -460,7 +484,7 @@ byte_slice(s: String, desde: Int, largo: Int) : Option[String]
 
 `slice` cuenta **codepoints**. Sacar `"fé"` de `"café"` es pedir dos
 caracteres a partir del segundo: `slice(s, 2, 2)`. Si te pasas del
-largo recorta en vez de fallar —`slice(s, 1, 9)` devuelve `"afé"`—
+largo recorta en vez de fallar (`slice(s, 1, 9)` devuelve `"afé"`)
 y nunca te puede entregar un string roto, porque no sabe cortar por
 la mitad de un carácter.
 
@@ -550,34 +574,62 @@ Y para interpolar, `#{...}` dentro de un literal `"..."`.
 armar un string grande pegando trozos en un loop: como un `String`
 es inmutable, cada `++` copia todo lo acumulado para producir uno
 nuevo, y eso te lleva a O(n²), el clásico cuadrático de la
-concatenación. Para eso está `StringBuilder`: un acumulador de
-texto que guarda los fragmentos a medida que los agregas y recién
-al final los une en una sola pasada con `build`. El costo de
-agregar es amortizado O(1), y todo el armado es O(n).
+concatenación.
+
+Si lo que tienes es una lista de strings y un separador, ya está
+resuelto: `string.join` recorre la lista una sola vez y no deja
+separador colgando al final.
 
 ```kai
-import string_builder
-import core.list
+string.join(["ana", "ben", "cleo"], ", ")    # "ana, ben, cleo"
+```
 
-fn unir(nombres: [String]) : String {
-  let sb = list.foldl(nombres, string_builder.new(),
-                      (b, n) => string_builder.append(b, "#{n}, "))
-  string_builder.build(sb)
+`StringBuilder` es para lo otro: cuando el resultado se arma de
+pedazos que no son una lista uniforme. Es un acumulador de texto
+que guarda los fragmentos a medida que los agregas y recién al
+final los une en una sola pasada con `build`. Agregar cuesta O(1)
+amortizado, y todo el armado es O(n).
+
+```kai
+import string_builder as sb
+import core.list
+import core.string
+
+type Fila = { nombre: String, puntos: Int }
+
+fn linea(f: Fila) : String =
+  "\n#{string.pad_right(f.nombre, 8, ' ')}#{f.puntos}"
+
+fn informe(filas: [Fila]) : String {
+  let total = list.foldl(filas, 0, (acc, f) => acc + f.puntos)
+  let cabecera = sb.append(sb.new(),
+                           "#{list.length(filas)} filas, #{total} puntos")
+  let cuerpo = list.foldl(filas, cabecera, (b, f) => sb.append(b, linea(f)))
+  sb.build(cuerpo)
 }
 ```
 
 ```
 $ kai run ejemplos/cap04/09_string_builder.kai
-ana, ben, cleo,
+3 filas, 40 puntos
+ana     12
+ben     7
+cleo    21
 ```
+
+La cabecera sale de un cálculo aparte y cada línea de una fila:
+son fuentes distintas, y `join` no las cubre. El builder las
+acumula sin volver a copiar lo ya juntado. El salto de línea va al
+principio de cada fila, para que el resultado no termine en uno.
 
 `append` rinde el efecto `Mutable` (por dentro escribe en el
 arreglo de fragmentos del builder), mientras que `build` es puro:
-solo lee y junta. Fíjate que `unir` no declara `/ Mutable` en su
-firma aunque maneje `append`: como el builder nace y muere adentro,
-sin escapar, kaikai *enmascara* el efecto en el borde de la
-función. Los detalles de la API (`new`, `with_capacity`,
-`append_char`, `len`, `is_empty`) están en `kai doc string_builder`.
+solo lee y junta. Fíjate que `informe` no declara `/ Mutable` en
+su firma aunque maneje `append`: como el builder nace y muere
+adentro, sin escapar, kaikai *enmascara* el efecto en el borde de
+la función. Los detalles de la API (`new`, `with_capacity`,
+`append_char`, `length`, `is_empty`) están en
+`kai doc string_builder`.
 
 ## 4.5 `Option` y `Result`: el día a día
 
