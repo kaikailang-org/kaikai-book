@@ -105,7 +105,7 @@ ejemplos/cap15/01_hole_basico.kai:6:35: type hole ?formula
     real_log10(r)
     real_sin(r)
 
-  279 more bindings in scope (--holes-scope lists them)
+  284 more bindings in scope (--holes-scope lists them)
 ```
 
 Cuatro piezas de información:
@@ -121,8 +121,8 @@ Cuatro piezas de información:
   el punto del hole, con su tipo. Aquí solo `r : Real`, el
   parámetro. El `(local)` no es decoración: el reporte te muestra
   lo tuyo y cuenta el resto en la última línea, porque listar las
-  279 cosas que trae el prelude no le sirve a nadie. Cuando las
-  quieras, `--holes-scope`.
+  casi trescientas cosas que trae el prelude no le sirve a
+  nadie. Cuando las quieras, `--holes-scope`.
 - **`candidates that fit`**: expresiones que el compilador puede
   sintetizar y que tienen el tipo esperado. La síntesis es
   **bounded**: una sola aplicación de función, con los argumentos
@@ -400,7 +400,7 @@ sin el formateo:
     "in_scope": [
       {"name": "r", "type": "Real"}
     ],
-    "scope_elided": 551,
+    "scope_elided": 557,
     "candidates": [
       {"expr": "r", "kind": "synth"},
       {"expr": "real_sqrt(r)", "kind": "synth"},
@@ -552,7 +552,7 @@ El humano corre `kai build --holes-json`. El agente recibe:
     "in_scope": [
       {"name": "notas", "type": "[Pair[String, Int]]"}
     ],
-    "scope_elided": 550,
+    "scope_elided": 556,
     "candidates": [],
     "candidates_needing_effects": [
       {"expr": "Env.args()", "kind": "synth", "effects": ["Env"]},

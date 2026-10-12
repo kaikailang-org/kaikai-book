@@ -193,9 +193,16 @@ treats as just another list:
 
 ```kai
 let r1 = [1..10]        # [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-let r2 = [1..10..2]     # [1, 3, 5, 7, 9]
-let r3 = [10..1..-1]    # [10, 9, 8, ..., 1]
+let r2 = [1, 3..10]     # [1, 3, 5, 7, 9]
+let r3 = [10, 9..1]     # [10, 9, 8, ..., 1]
 ```
+
+The last two carry a step, and the step isn't written: it's read
+off the first two elements. `[1, 3..10]` moves by two because
+`3 - 1` is two, and `[10, 9..1]` counts down because the
+subtraction comes out negative. It's the Haskell form, and it has
+one advantage over annotating the step separately: what you read
+is what you get, starting with the list's first two elements.
 
 One cost detail worth knowing: the range is **lazy**. The
 runtime stores it as three numbers (start, end, step), not ten
