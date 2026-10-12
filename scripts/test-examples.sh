@@ -105,6 +105,7 @@ build|ejemplos/cap06/07_pipe_underscore.kai|ok
 build|ejemplos/cap06/08_trailing_y_bloques.kai|ok
 build|ejemplos/cap06/09_stream.kai|ok
 run|ejemplos/cap06/10_recursion_mutua.kai|ok
+run|ejemplos/cap06/11_seq.kai|ok
 
 # Capítulo 7 — tests / bench / check
 test|ejemplos/cap07/01_test_basico.kai|ok
@@ -274,6 +275,7 @@ build|examples/ch06/07_pipe_underscore.kai|ok
 build|examples/ch06/08_trailing_blocks.kai|ok
 build|examples/ch06/09_stream.kai|ok
 run|examples/ch06/10_mutual_recursion.kai|ok
+run|examples/ch06/11_seq.kai|ok
 
 # Chapter 7
 test|examples/ch07/01_basic_test.kai|ok

@@ -1,0 +1,20 @@
+# A `Seq` is computed cell by cell, each cell at most once, so it can
+# be defined in terms of itself.
+import seq
+
+# The naturals: zero, followed by the naturals plus one.
+const nat: Seq[Int] = lazy [0, ...map(nat, (x) => x + 1)]
+
+# The unbounded sieve: one filter stage per prime found.
+fn sieve(xs: Seq[Int]) : Seq[Int] = match xs {
+  []           -> lazy []
+  [p, ...rest] -> lazy [p, ...sieve(rest |? (x) => x % p != 0)]
+}
+
+fn main() : Unit / Stdout {
+  println("naturals: #{nat |> take(8) |> to_list()}")
+
+  let primes = sieve(lazy [2..])
+  println("primes up to 30: #{primes |> take_while((p) => p <= 30) |> to_list()}")
+  println("the 1000th prime: #{primes |> nth(999)}")
+}

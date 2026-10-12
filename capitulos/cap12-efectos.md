@@ -1299,6 +1299,14 @@ cuándo esto, la respuesta es de qué lado estás. `stream` consume
 algo que ya existe —una lista, un archivo— y es una receta
 re-ejecutable. `gen` es para cuando el productor lo escribes tú.
 
+Y si lo escribes tú pero es puro, la respuesta es ninguno de los
+dos: eso es una `Seq`, la secuencia perezosa del §6.4, cuyas
+celdas se computan una vez y quedan compartidas. Lo que distingue
+a `gen` es que el productor puede hacer efectos, porque es el
+único de los tres que los lleva en la fila. Las etapas de una
+`Seq` tienen que ser puras, así que una `Seq` no lee un archivo ni
+le pregunta nada a nadie.
+
 ### Los efectos del productor, y quién los sirve
 
 Mira otra vez las tres firmas: el `e` que aparece en todas es la

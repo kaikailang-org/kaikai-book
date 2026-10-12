@@ -406,8 +406,85 @@ and is discarded before the next is read. A `Stream` isn't a
 cursor that advances once; it's a **re-runnable recipe**. The
 full catalog is in `kai doc stream`.
 
-There's one difference from Python's `yield` worth noting here
-and collected in chapter 12: there you write the producer
+### Lazy and shared too: `Seq`
+
+A `Stream` is a recipe: every walk runs it again. That is what you
+want for a gigabyte-sized file, and exactly what you don't want
+when computing an element is expensive and you are going to read
+it twice.
+
+`Seq[t]` is the other option: a lazy list whose cells are computed
+when read, and **at most once**. The first read runs the
+computation; every later one hands back what it left behind. You
+write it by putting `lazy` in front of a list literal, and inside
+`lazy` a range may have no end:
+
+```kai
+lazy []                # empty
+lazy [1, 2, 3]         # three cells
+lazy [2..]             # the integers from 2 up, unbounded
+lazy [0, 5..]          # 0, 5, 10, 15, ... unbounded
+lazy [p, ...rest]      # one cell and the rest of the sequence
+```
+
+List patterns read one too: `[]` and `[first, ...rest]` match a
+`Seq` just as they match a list, and the `match` forces only the
+cell it is looking at. A range without an end outside `lazy` does
+not compile, and the error says what is missing: a list has an
+end, a lazy sequence does not.
+
+That each cell is computed once and shared has a consequence that
+does not jump out at you: a sequence can be defined **in terms of
+itself**.
+
+```kai
+import seq
+
+# The naturals: zero, followed by the naturals plus one.
+const nat: Seq[Int] = lazy [0, ...map(nat, (x) => x + 1)]
+
+# The unbounded sieve: one filter stage per prime found.
+fn sieve(xs: Seq[Int]) : Seq[Int] = match xs {
+  []           -> lazy []
+  [p, ...rest] -> lazy [p, ...sieve(rest |? (x) => x % p != 0)]
+}
+```
+
+```
+$ kai run examples/ch06/11_seq.kai
+naturals: [0, 1, 2, 3, 4, 5, 6, 7]
+primes up to 30: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+the 1000th prime: 7919
+```
+
+`nat` names itself inside its own definition and that is fine:
+when `map` asks for the next cell, the previous one is already
+computed and stored. The sieve is the same idea at work. For every
+prime it finds it adds a filter stage over the rest, so the chain
+of filters grows as it goes, and nobody decided up front how many
+primes would be needed. The 1000th prime comes out of reading
+cells that, once computed, stay computed: asking again sieves
+nothing. With a re-runnable recipe, every read would sieve from
+two all over again.
+
+The language's three lazy forms divide up by who produces and by
+what happens when you read them again:
+
+| | who produces | on a second read |
+|---|---|---|
+| `Stream` | something that already exists, a resource even | runs again |
+| `Seq` | you write it, and it is pure | already computed |
+| `Gen` | you write it, and it may perform effects | advances, never returns |
+
+A `Seq`'s stages cannot perform effects: they run when somebody
+reads a cell, and whoever wrote them does not pick that moment.
+The sinks can (`each` and `foldl` run in the consumer and carry
+its row). And a `Seq` stays on the fiber that made it: if another
+fiber needs a slice, send it `to_list` of that slice. The full
+catalog is in `kai doc seq`.
+
+The table's `Gen` is chapter 12's, and there is one difference
+from Python's `yield` worth noting here: you write the producer
 yourself, with ordinary recursion, and what turns it into a lazy
 sequence is an effect handler. A `Stream` consumes something that
 already exists; a generator produces. Both fall out of the same

@@ -1322,6 +1322,13 @@ consumes something that already exists — a list, a file — and is
 a re-runnable recipe. `gen` is for when you write the producer
 yourself.
 
+And if you write it yourself but it is pure, the answer is
+neither: that is a `Seq`, §6.4's lazy sequence, whose cells are
+computed once and then shared. What sets `gen` apart is that its
+producer may perform effects, because it is the only one of the
+three that carries them in the row. A `Seq`'s stages must be pure,
+so a `Seq` reads no file and asks nobody anything.
+
 ### The producer's effects, and who serves them
 
 Look at the three signatures again: the `e` in all of them is the
