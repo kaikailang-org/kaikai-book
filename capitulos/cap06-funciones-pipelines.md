@@ -470,12 +470,89 @@ no es un cursor que avanza una vez; es una **receta
 re-ejecutable**. El catálogo completo está en `kai doc
 stream`.
 
-Hay una diferencia con el `yield` de Python que conviene dejar
-anotada ahora y que se cobra en el capítulo 12: ahí el productor
-lo escribes tú, con recursión corriente, y lo que lo convierte en
-secuencia perezosa es un handler de efectos. Un `Stream` consume
-algo que ya existe; un generador produce. Los dos salen del mismo
-mecanismo.
+### Perezoso y además compartido: `Seq`
+
+Un `Stream` es una receta: cada vez que lo recorres, vuelve a
+correr. Eso es lo que quieres para un archivo de gigabytes, y es
+justo lo que no quieres cuando computar un elemento cuesta caro y
+lo vas a leer dos veces.
+
+`Seq[t]` es la otra opción: una lista perezosa cuyas celdas se
+computan al leerlas y **a lo más una vez**. La primera lectura
+corre el cómputo; las que vienen después devuelven lo que quedó
+guardado. La escribes poniendo `lazy` delante de un literal de
+lista, y dentro de `lazy` un rango puede no tener fin:
+
+```kai
+lazy []                # vacía
+lazy [1, 2, 3]         # tres celdas
+lazy [2..]             # los enteros desde 2, sin cota
+lazy [0, 5..]          # 0, 5, 10, 15, ... sin cota
+lazy [p, ...resto]     # una celda y el resto de la secuencia
+```
+
+Los patrones de lista también la leen: `[]` y
+`[primero, ...resto]` calzan sobre una `Seq` igual que sobre una
+lista, y el `match` fuerza solo la celda que está mirando. Un
+rango sin fin fuera de `lazy` no compila, y el error te dice que
+le falta: una lista tiene final, una secuencia perezosa no.
+
+Que cada celda se compute una vez y se comparta tiene una
+consecuencia que no salta a la vista: una secuencia puede
+definirse **en términos de sí misma**.
+
+```kai
+import seq
+
+# Los naturales: el cero, seguido de los naturales más uno.
+const nat: Seq[Int] = lazy [0, ...map(nat, (x) => x + 1)]
+
+# La criba sin cota: una etapa de filtro por cada primo encontrado.
+fn criba(xs: Seq[Int]) : Seq[Int] = match xs {
+  []            -> lazy []
+  [p, ...resto] -> lazy [p, ...criba(resto |? (x) => x % p != 0)]
+}
+```
+
+```
+$ kai run ejemplos/cap06/11_seq.kai
+naturales: [0, 1, 2, 3, 4, 5, 6, 7]
+primos hasta 30: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+el primo 1000: 7919
+```
+
+`nat` se menciona dentro de su propia definición y no es un
+problema: cuando `map` pide la celda siguiente, la anterior ya
+está computada y guardada. La criba es la misma idea trabajando.
+Por cada primo que encuentra agrega una etapa de filtro sobre el
+resto, así que la cadena de filtros crece a medida que avanza, y
+nadie decidió de antemano cuántos primos iban a hacer falta. El
+primo 1000 sale de leer celdas que, una vez computadas, quedan
+ahí: pedirlo de nuevo no vuelve a cribar nada. Con una receta
+re-ejecutable, cada lectura cribaría otra vez desde el dos.
+
+Las tres formas perezosas del lenguaje se reparten por quién
+produce y por lo que pasa al leerlas de nuevo:
+
+| | quién produce | al leer de nuevo |
+|---|---|---|
+| `Stream` | algo que ya existe, incluso un recurso | vuelve a correr |
+| `Seq` | lo escribes tú, y es puro | ya está computado |
+| `Gen` | lo escribes tú, y puede hacer efectos | avanza, no vuelve |
+
+Las etapas de una `Seq` no pueden hacer efectos: corren cuando
+alguien lee una celda, y ese momento no lo decide quien las
+escribió. Los sinks sí (`each` y `foldl` corren en el consumidor y
+llevan su fila). Y una `Seq` se queda en la fibra que la creó: si
+otra fibra necesita un trozo, le mandas `to_list` de ese trozo. El
+catálogo completo está en `kai doc seq`.
+
+El `Gen` de la tabla es el del capítulo 12, y ahí hay una
+diferencia con el `yield` de Python que conviene dejar anotada
+ahora: el productor lo escribes tú, con recursión corriente, y lo
+que lo convierte en secuencia perezosa es un handler de efectos.
+Un `Stream` consume algo que ya existe; un generador produce. Los
+dos salen del mismo mecanismo.
 
 ## 6.5 Trailing lambdas y otros azúcares
 

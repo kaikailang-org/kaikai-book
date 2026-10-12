@@ -1,0 +1,20 @@
+# Una `Seq` se computa por celda y cada celda a lo más una vez, así
+# que puede definirse en términos de sí misma.
+import seq
+
+# Los naturales: el cero, seguido de los naturales más uno.
+const nat: Seq[Int] = lazy [0, ...map(nat, (x) => x + 1)]
+
+# La criba sin cota: una etapa de filtro por cada primo encontrado.
+fn criba(xs: Seq[Int]) : Seq[Int] = match xs {
+  []            -> lazy []
+  [p, ...resto] -> lazy [p, ...criba(resto |? (x) => x % p != 0)]
+}
+
+fn main() : Unit / Stdout {
+  println("naturales: #{nat |> take(8) |> to_list()}")
+
+  let primos = criba(lazy [2..])
+  println("primos hasta 30: #{primos |> take_while((p) => p <= 30) |> to_list()}")
+  println("el primo 1000: #{primos |> nth(999)}")
+}
