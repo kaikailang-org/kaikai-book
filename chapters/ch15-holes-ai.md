@@ -106,7 +106,7 @@ examples/ch15/01_basic_hole.kai:6:34: type hole ?formula
     real_log10(r)
     real_sin(r)
 
-  279 more bindings in scope (--holes-scope lists them)
+  284 more bindings in scope (--holes-scope lists them)
 ```
 
 Four pieces of information:
@@ -122,8 +122,8 @@ Four pieces of information:
   hole, with their types. Here just `r : Real`, the parameter.
   The `(local)` isn't decoration: the report shows you your own
   names and counts the rest on the last line, because listing the
-  279 things the prelude brings along helps nobody. When you want
-  them, `--holes-scope`.
+  nearly three hundred things the prelude brings along helps
+  nobody. When you want them, `--holes-scope`.
 - **`candidates that fit`**: expressions the compiler can
   synthesize that have the expected type. The synthesis is
   **bounded**: a single function application, with arguments
@@ -401,7 +401,7 @@ the formatting:
     "in_scope": [
       {"name": "r", "type": "Real"}
     ],
-    "scope_elided": 551,
+    "scope_elided": 557,
     "candidates": [
       {"expr": "r", "kind": "synth"},
       {"expr": "real_sqrt(r)", "kind": "synth"},
@@ -554,7 +554,7 @@ receives:
     "in_scope": [
       {"name": "grades", "type": "[Pair[String, Int]]"}
     ],
-    "scope_elided": 550,
+    "scope_elided": 556,
     "candidates": [],
     "candidates_needing_effects": [
       {"expr": "Env.args()", "kind": "synth", "effects": ["Env"]},

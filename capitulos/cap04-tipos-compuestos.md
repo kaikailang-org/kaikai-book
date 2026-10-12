@@ -200,9 +200,16 @@ de tipos son una lista más:
 
 ```kai
 let r1 = [1..10]        # [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-let r2 = [1..10..2]     # [1, 3, 5, 7, 9]
-let r3 = [10..1..-1]    # [10, 9, 8, ..., 1]
+let r2 = [1, 3..10]     # [1, 3, 5, 7, 9]
+let r3 = [10, 9..1]     # [10, 9, 8, ..., 1]
 ```
+
+Los dos últimos llevan paso, y el paso no se escribe: se deduce
+de los dos primeros elementos. `[1, 3..10]` avanza de dos en dos
+porque `3 - 1` es dos, y `[10, 9..1]` baja porque la resta sale
+negativa. Es la forma de Haskell, y tiene una ventaja sobre
+anotar el paso aparte: lo que lees es lo que vas a obtener,
+empezando por los dos primeros elementos de la lista.
 
 Un detalle de costo que conviene saber: el rango es **lazy**. El
 runtime lo guarda como tres números (inicio, fin, paso), no como
