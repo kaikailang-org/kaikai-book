@@ -1,6 +1,6 @@
 # Chapter 2 · Thinking in kaikai
 
-Chapter 1 showed you the language from above. Before getting
+In chapter 1 I showed you the language from above. Before getting
 into the detail of types, functions, and modules, it is worth
 pausing on a handful of habits kaikai asks of you that you
 probably did not bring with you from Python, Java, Go,
@@ -21,8 +21,7 @@ it when it shows up.
 
 ## 2.1 Expressions, not statements
 
-In most of the languages you probably know, code is built from
-two kinds of pieces:
+In most languages, code is built from two kinds of pieces:
 
 - **Expressions**, which produce a value: `x + 1`, `f(2)`,
   `a == b`.
@@ -59,9 +58,7 @@ let s = if x > 0 { "positive" } else { "non-positive" }
 println(s)
 ```
 
-The difference isn't in line count but in how you think about
-the code. The imperative version forces you to **declare `s`
-first**, because the `if` cannot return anything; then it
+The imperative version forces you to **declare `s` first**, because the `if` cannot return anything; then it
 **assigns to `s` in each branch**. In kaikai, the `if` *is* the
 value, and `s` binds directly to the result. Declaration and
 assignment merge. There is no assignment at all: `s` is bound
@@ -195,7 +192,7 @@ you are in effects territory and you'll have to declare them.
 
 ## 2.3 `Option` and `Result` instead of `null` and exceptions
 
-The oldest question in language design: what does a function do
+An old question in language design: what does a function do
 when it cannot return what it promised?
 
 The C, Java, Python, JavaScript answer (and many others) is to
@@ -354,15 +351,14 @@ tools you don't want to give up.
 
 ## 2.5 Pure functions and visible effects
 
-The four ideas above converge on a bigger one, which is the
+The ideas above converge on a bigger one, which is the
 language's central bet: **separate the pure from what touches
 the world**, and have the type system police that distinction.
 
 A *pure* function is a function whose result depends only on
 its arguments. Calling it with the same arguments always
-returns the same value. It does not print. It does not read
-from disk. It does not send messages. It does not look at a
-clock. It does not roll a die.
+returns the same value. It does not print, and it does not read
+from disk.
 
 Pure functions are easy to test, easy to reason about, easy to
 parallelize, easy to cache. The catch is that a program made
@@ -398,8 +394,7 @@ old itches:
   the caller.
 
 If you've never seen this before, it sounds too ambitious to be
-true. It is and it isn't. Chapter 12 gives it the space it
-deserves. For now, it is enough to know that the signatures you
+true. Chapter 12 gives it the space it deserves. For now, it is enough to know that the signatures you
 see with `/ something` are not noise: they are information
 about what that function can do to your program.
 
