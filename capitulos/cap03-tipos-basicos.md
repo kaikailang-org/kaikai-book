@@ -1,23 +1,22 @@
 # Capítulo 3 · Tipos básicos y expresiones
 
-Vamos a las primitivas. Este capítulo describe los siete tipos
+Este capítulo describe los tipos
 básicos de kaikai, la forma de los literales, los operadores que
 los manipulan, y cómo se atan a nombres con `let`. También
 introduce algo que ya viste de pasada y vamos a fijar bien:
 **`if` y los bloques son expresiones**, no sentencias.
 
-Siete me pareció el número correcto: suficientes para no pelear
-con el lenguaje en el día a día, pocos para tenerlos todos en la
-cabeza. Si leíste el capítulo 2, lo que viene es el contenido
-concreto de aquellas advertencias. Si no lo leíste y vienes de un mundo
-imperativo, vuelve. Te ahorra fricción.
+Si leíste el capítulo 2, lo que viene es el contenido
+concreto de las advertencias vistas allí.
+Si no lo leíste y vienes de un mundo
+imperativo, revísalo. Te ahorra fricción.
 
 ## 3.1 Los siete tipos primitivos
 
 El día a día de kaikai se apoya en siete tipos básicos:
 
 | Tipo | Para qué sirve | Literal de ejemplo |
-|---|---|---|
+| --- | --- | --- |
 | `Int` | Enteros con signo, 64 bits | `42`, `-7`, `1_000_000` |
 | `Real` | Reales de doble precisión, IEEE 754 | `3.14`, `-0.5`, `1e10` |
 | `Bool` | Verdadero / falso | `true`, `false` |
