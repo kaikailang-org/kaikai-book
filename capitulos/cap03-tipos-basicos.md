@@ -222,6 +222,27 @@ los protocolos `Eq` (para `==`/`!=`) y `Ord` (para los demás).
 Eso lo veremos en el capítulo 9; por ahora, todos los tipos
 primitivos los implementan.
 
+Un último hábito, y este es de los `Real`. Un `Real` es un
+flotante IEEE 754 de doble precisión, así que hay decimales que
+no tiene cómo representar: `0.1` no es exactamente un décimo,
+es el binario más cercano. kaikai no te lo esconde al imprimir.
+La regla es que un `Real` se escribe con los dígitos que
+necesita para que leerlo de vuelta dé el mismo número, y ni uno
+más:
+
+```kai
+println("#{1.5}")          # 1.5
+println("#{7.0 / 2.0}")    # 3.5
+println("#{0.1 + 0.2}")    # 0.30000000000000004
+```
+
+El tercero no es un error del lenguaje ni de tu máquina: es la
+suma que de verdad ocurrió. Un lenguaje que imprimiera `0.3`
+estaría redondeando para que la cuenta se vea bien, y la
+próxima comparación te lo cobraría igual. Si lo que llevas es
+dinero, o cualquier cantidad donde eso no se tolera, el tipo
+que quieres no es `Real`, y está en la sección que sigue.
+
 ## 3.4 Más números: anchos fijos y precisión arbitraria
 
 `Int` y `Real` cubren casi todo el código que vas a escribir. El
