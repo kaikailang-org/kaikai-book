@@ -217,6 +217,27 @@ They return `Bool`. They work over any type that implements the
 see those in chapter 9; for now, every primitive type
 implements them.
 
+One last habit, and this one belongs to `Real`. A `Real` is an
+IEEE 754 double, so there are decimals it has no way to
+represent: `0.1` is not exactly one tenth, it is the nearest
+binary value. kaikai does not hide that when it prints. The
+rule is that a `Real` is written with the digits it needs for
+reading it back to give the same number, and not one more:
+
+```kai
+println("#{1.5}")          # 1.5
+println("#{7.0 / 2.0}")    # 3.5
+println("#{0.1 + 0.2}")    # 0.30000000000000004
+```
+
+The third is not a bug in the language or on your machine: it
+is the sum that actually happened. A language that printed
+`0.3` would be rounding to make the arithmetic look tidy, and
+the next comparison would charge you for it anyway. If what you
+are carrying is money, or any quantity where that cannot be
+tolerated, the type you want is not `Real`, and it is in the
+section that follows.
+
 ## 3.4 More numbers: fixed widths and arbitrary precision
 
 `Int` and `Real` cover nearly all the code you'll write. The
