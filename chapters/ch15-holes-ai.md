@@ -106,7 +106,7 @@ examples/ch15/01_basic_hole.kai:6:34: type hole ?formula
     real_log10(r)
     real_sin(r)
 
-  284 more bindings in scope (--holes-scope lists them)
+  288 more bindings in scope (--holes-scope lists them)
 ```
 
 Four pieces of information:
@@ -401,7 +401,7 @@ the formatting:
     "in_scope": [
       {"name": "r", "type": "Real"}
     ],
-    "scope_elided": 557,
+    "scope_elided": 561,
     "candidates": [
       {"expr": "r", "kind": "synth"},
       {"expr": "real_sqrt(r)", "kind": "synth"},
@@ -554,7 +554,7 @@ receives:
     "in_scope": [
       {"name": "grades", "type": "[Pair[String, Int]]"}
     ],
-    "scope_elided": 556,
+    "scope_elided": 560,
     "candidates": [],
     "candidates_needing_effects": [
       {"expr": "Env.args()", "kind": "synth", "effects": ["Env"]},

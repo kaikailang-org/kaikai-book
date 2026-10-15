@@ -3,7 +3,7 @@
 import seq
 
 # The naturals: zero, followed by the naturals plus one.
-const nat: Seq[Int] = lazy [0, ...map(nat, (x) => x + 1)]
+const nat: Seq[Int] = lazy [0, ...seq.map(nat, (x) => x + 1)]
 
 # The unbounded sieve: one filter stage per prime found.
 fn sieve(xs: Seq[Int]) : Seq[Int] = match xs {

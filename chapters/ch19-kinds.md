@@ -222,7 +222,7 @@ imperial ft
 fn speed(d: Real<m>, t: Real<s>) : Real<m/s> = d / t
 
 fn main() : Unit / Stdout {
-  let v = speed(100.0<m>, 9.58<s>)
+  let v = speed(100.0<m>, 10.0<s>)
   println("#{v}")
 
   # This does not compile: m lives in Metric, ft lives in Imperial.
@@ -232,7 +232,7 @@ fn main() : Unit / Stdout {
 
 ```
 $ kai run examples/ch19/02_own_kind.kai
-10.4384 m/s
+10 m/s
 ```
 
 Each `kind ... with word` also mints its own introducer word:
