@@ -745,8 +745,8 @@ estas piezas.
 
 ## 14.9 Probar un actor: reemplaza el mailbox
 
-El capítulo 7 te dejó tres herramientas —`test`, `check`, `bench`—
-y una pregunta sin responder: ¿cómo se prueba la parte concurrente?
+El capítulo 7 te dejó tres herramientas (`test`, `check` y
+`bench`) y una pregunta sin responder: ¿cómo se prueba la parte concurrente?
 Si los actores fueran primitivos del lenguaje la respuesta sería
 incómoda: levantar actores de verdad, mandarles mensajes de verdad,
 y esperar. Tests lentos, y frágiles cuando el scheduler no coopera.
@@ -827,7 +827,7 @@ con ese mensaje.
 
 Un detalle que conviene mirar: `Clock` sigue en la firma de `main`.
 El handler falso intercepta `Actor`, no el reloj, y la fila es lo
-que el cuerpo declara — no lo que termina ocurriendo. La capacidad
+que el cuerpo declara, no lo que termina ocurriendo. La capacidad
 se queda aunque el reloj nunca se consulte. Es coherente: el tipo
 describe lo que el código *puede* hacer.
 

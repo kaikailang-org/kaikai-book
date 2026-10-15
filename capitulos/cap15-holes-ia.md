@@ -111,8 +111,8 @@ ejemplos/cap15/01_hole_basico.kai:6:35: type hole ?formula
 Cuatro piezas de información:
 
 - **La cabecera** da la posición y el nombre: `?formula`. Con
-  varios holes abiertos a la vez —que es lo normal trabajando
-  así— es lo que te dice de cuál habla el bloque.
+  varios holes abiertos a la vez, que es lo normal trabajando
+  así, es lo que te dice de cuál habla el bloque.
 - **`expected`**: el tipo que la posición del hole exige. El
   compilador lo deduce del contexto: aquí, la función devuelve
   `Real`, el cuerpo es una expresión sola, entonces el hole
@@ -130,8 +130,8 @@ Cuatro piezas de información:
 
 Vale mirar esos ocho candidatos con atención, porque enseñan algo
 que es fácil malentender: **ninguno es la respuesta**. El área de
-un círculo es `3.14 * r * r`, y eso son dos multiplicaciones —dos
-aplicaciones— así que la búsqueda no llega. Los candidatos no son
+un círculo es `3.14 * r * r`, y eso son dos multiplicaciones, o
+sea dos aplicaciones, así que la búsqueda no llega. Los candidatos no son
 un intento de escribir tu función. Son una lista de lo que calza
 en el hueco, que es otra cosa y sirve para otra cosa: te dice qué
 tienes a mano y con qué forma.
@@ -161,8 +161,8 @@ fn saludo(nombre: String) : String = ?texto
 fn saludo_interactivo(nombre: String) : String / Ask = ?texto_con_ask
 ```
 
-El primero no tiene `Ask`, así que `Ask.pregunta()` no calza —
-pero el compilador no lo esconde, lo pone aparte con el precio
+El primero no tiene `Ask`, así que `Ask.pregunta()` no calza,
+pero el compilador no lo esconde: lo pone aparte con el precio
 anotado:
 
 ```
@@ -275,7 +275,7 @@ programa no se topa con el hole y corre limpio.
 
 Esto reduce mucho la fricción de mantener un programa "casi
 compilando" mientras lo desarrollas. Donde otros lenguajes te
-dan un stub cualquiera —`unimplemented()`, `return null`—, en
+dan un stub cualquiera (`unimplemented()`, `return null`), en
 kaikai el `?` es una primitiva del idioma y el compilador sabe
 qué tipo tiene.
 
@@ -564,8 +564,9 @@ El humano corre `kai build --holes-json`. El agente recibe:
 ```
 
 El agente sabe: tipo esperado `[String]`, una entrada `notas` de
-tipo `[Pair[String, Int]]` —la forma con que el compilador imprime
-`[(String, Int)]`, como vimos en §4.6—. Y sabe algo más útil
+tipo `[Pair[String, Int]]`, que es la forma con que el compilador
+imprime `[(String, Int)]`, como vimos en §4.6. Y sabe algo más
+útil
 todavía: `candidates` viene **vacío**. La síntesis es bounded y
 aquí no alcanza para nada; los dos que aparecen detrás de un
 efecto son `Env.args()`, que no tiene nada que ver con el

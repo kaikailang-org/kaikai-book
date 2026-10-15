@@ -67,9 +67,9 @@ original (inglés). Las figuras viven una sola vez bajo
 `figuras/` cuando son neutrales al idioma.
 
 Una nota sobre la palabra: el *lenguaje* kaikai también tiene
-ediciones — Tongariki, Hanga Roa, Orongo, y Anakena en el
-horizonte — como su mecanismo de estabilidad (el capítulo 16
-lo cubre). Este libro está escrito y validado contra la
+ediciones (Tongariki, Hanga Roa, Orongo, y Anakena en el
+horizonte) como su mecanismo de estabilidad, que el capítulo 16
+cubre. Este libro está escrito y validado contra la
 edición **Hanga Roa**, hoy **kaikai 0.158.0**. Los hitos del
 lenguaje se definen por edición, nunca por un número de
 versión: Hanga Roa ya pasó por la serie 0.100.x sin cambiar de

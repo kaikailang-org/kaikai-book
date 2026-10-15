@@ -121,8 +121,8 @@ un cache (cap. 8 §8.8 cubre el cache de paquetes; el cache de
 compilación del propio archivo `.kai` es otra historia).
 
 Ese "menos de un segundo" es el estado estacionario, que es el
-que vas a vivir: el caso de estudio del cap. 17 —420 líneas en
-cinco módulos— compila en unos 0,6 segundos. La primera vez,
+que vas a vivir: el caso de estudio del cap. 17, 420 líneas en
+cinco módulos, compila en unos 0,6 segundos. La primera vez,
 con el cache frío, cuesta varias veces eso; en mi máquina, 4,1
 segundos para ese mismo proyecto. Vale saberlo antes de
 cronometrar una compilación en frío y sacar la conclusión
@@ -279,8 +279,8 @@ encuentra dos huecos.
 
 El ancho manda la maqueta. Un constructo que cabe en su línea
 se queda ahí; uno que no cabe se corta en sus propios puntos
-—después del `=`, un argumento por línea, una etapa de pipe
-por línea— y un corte que tú ya escribiste en uno de esos
+(después del `=`, un argumento por línea, una etapa de pipe por
+línea), y un corte que tú ya escribiste en uno de esos
 puntos se respeta, así que una cadena de pipes maquetada a
 mano sobrevive al formateador. El default son 100 columnas;
 `--width N` lo cambia para una corrida, y la clave `width` de
@@ -354,9 +354,9 @@ una lambda unaria solo proyecta sobre su parámetro.
 realidad un `map`, y `match_option_to_combinator` hace lo
 propio con un `match` sobre `Option` que ya tiene combinador.
 `list_concat_literal_to_spread` pilla el `[h] ++ t`, que arma
-una lista de un elemento solo para concatenarla y tirarla — el
-spread `[h, ...t]` emite el cons directo y se ahorra la
-asignación. El resto barre residuos: `redundant_if_bool`,
+una lista de un elemento solo para concatenarla y tirarla,
+mientras el spread `[h, ...t]` emite el cons directo y no pide
+memoria. El resto barre residuos: `redundant_if_bool`,
 `redundant_match_catchall`, `dead_code_unused_priv`,
 `effect_over_declared` y `effect_ffi_without_extern`.
 
@@ -391,8 +391,8 @@ descargue lo que falte.
 
 Los dos nombres reparten el trabajo como lo espera un usuario de
 Rust o de Go: `fetch` resuelve dependencias, e `install` hace lo
-que su nombre dice en esos ecosistemas —**poner un binario en el
-PATH**—, no lo que significa en npm:
+que su nombre dice en esos ecosistemas, **poner un binario en el
+PATH**, y no lo que significa en npm:
 
 ```
 $ kai install .                        # compila el paquete del cwd e instala su binario
@@ -434,14 +434,14 @@ destino sale del campo `name` del manifiesto, no de la ruta de
 origen, así que el archivo aterriza con el nombre que el shell
 busca. Los tres directorios viven bajo `$KAIKAI_HOME/share`, y
 `install.sh` los engancha una sola vez a la ruta de búsqueda
-del shell — así cualquier `kai install` posterior funciona sin
-paso adicional. Cuando falta ese enganche, `kai install`
+del shell, así que cualquier `kai install` posterior funciona
+sin paso adicional. Cuando falta ese enganche, `kai install`
 imprime la línea que hay que agregar; nunca edita un archivo de
 arranque a tus espaldas.
 
 Un detalle con historia detrás: a zsh el directorio se le
 **antepone** al `fpath`, no se le agrega al final. Agregado,
-una función de fábrica con el mismo nombre le gana igual — zsh
+una función de fábrica con el mismo nombre le gana igual: zsh
 trae un `_mh` que se apropia de `mark` y después suprime hasta
 la completación de nombres de archivo cuando MH no está
 instalado.
@@ -932,15 +932,15 @@ libs = ["sqlite3"]       # bibliotecas del sistema, -l<nombre> al enlazar
 ```
 
 Declarado eso, el consumidor escribe `kai build` a secas. La
-tabla la honran todos los verbos —`build`, `run`, `test`,
-`install`—, en los dos backends, y se propaga
+tabla la honran todos los verbos (`build`, `run`, `test`,
+`install`), en los dos backends, y se propaga
 transitivamente: si A y B dependen del mismo paquete con
 shim, el shim se compila y se enlaza una sola vez.
 
 Es declarativo y nada más: `sources`, `include`, `libs`, sin
 build scripts ni flags libres. Un build script es código
-ajeno corriendo en la máquina de quien instala —superficie de
-ataque y un agujero de reproducibilidad—, y los flags libres
+ajeno corriendo en la máquina de quien instala, o sea superficie
+de ataque y un agujero de reproducibilidad, y los flags libres
 convertirían el manifiesto en un sistema de construcción. La
 distinción que sí importa es entre `sources` y `libs`: una
 fuente vendorizada siempre funciona, porque el `.c` viaja con
@@ -1082,9 +1082,8 @@ se sella cuando la edición se cierra, no antes.**
 `hanga-roa` es la edición donde esa superficie todavía se
 está decidiendo. Un cambio incompatible en la lista de
 arriba no es una violación de la promesa: es el trabajo de
-construirla. El retiro de `Fail` del stdlib en 0.106 es
-exactamente eso: una firma `pub` que se puso a prueba, no
-se ganó su lugar, y salió.
+construirla. Una firma `pub` se pone a prueba, y si no se
+gana su lugar, sale.
 
 Esos cambios no quedan enterrados en el historial de git.
 Se anotan a medida que ocurren en `docs/editions.md` del
@@ -1125,8 +1124,8 @@ home:           https://kaikai-lang.org
 ```
 
 La primera línea es la que te importa aquí: versión y edición.
-Las otras tres son diagnóstico del build —cuántas demos cubre la
-baseline, qué backend nativo quedó activo— y las vas a querer
+Las otras tres son diagnóstico del build (cuántas demos cubre la
+baseline, qué backend nativo quedó activo) y las vas a querer
 cuando reportes un problema.
 
 Si el `kai.toml` omite el campo, el compilador asume la
