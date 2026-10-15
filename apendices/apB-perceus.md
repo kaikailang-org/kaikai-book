@@ -155,10 +155,10 @@ Si vienes de Rust, te suena familiar: hay RC en Rust también
 | Anotaciones requeridas | `Rc<T>`, `Arc<T>`, `Rc::clone(&x)` | ninguna |
 | Mutabilidad de contenido | Necesita `RefCell<T>` | Por defecto, inmutable |
 | Ciclos | Memory leak silencioso | Imposibles (sin mutación) |
-| Costo en single-use | Pago el `Rc` siempre | Sin costo: el compilador no emite RC |
+| Costo en single-use | El `Rc` cuenta siempre | Sin costo: el compilador no emite RC |
 
 La diferencia más fuerte es la última. En Rust, cuando declaras
-`Rc<T>` pagas el contador SIEMPRE, incluso en los casos donde el
+`Rc<T>` el contador está SIEMPRE, incluso en los casos donde el
 valor tiene un solo uso. En kaikai, **si el valor tiene un solo
 uso, no se emite RC**. El compilador inserta los `dup`s solo
 donde hacen falta, después del análisis de last-use.
@@ -212,7 +212,7 @@ sea libre de locks**.
 Si dos fibras compartieran punteros al mismo valor, los
 incrementos y decrementos del contador tendrían que ser
 **atómicos**. Atómico significa que la CPU emite una barrera de
-memoria, sincroniza con otros núcleos, paga overhead. En
+memoria, sincroniza con otros núcleos, suma overhead. En
 programas de muchas fibras, ese overhead es enorme.
 
 Cuando cada fibra tiene su propio heap, los contadores son
@@ -222,7 +222,7 @@ entero, sin barreras. Un `drop` es un `--`, idem.
 Esto es por qué el modelo de fibras de kaikai y Perceus se
 diseñan juntos: cada uno habilita al otro. Las fibras aisladas
 permiten RC sin sincronización; el RC eficiente permite
-millones de fibras sin pagar GC.
+millones de fibras sin un GC detrás.
 
 Cuando dos fibras necesitan compartir un valor, lo hacen via
 una operación explícita (`send` a un mailbox, devolver de un
@@ -238,9 +238,9 @@ Perceus tiene costos. Vale enumerarlos:
   lento que tipos crudos. En kaikai, el análisis está integrado
   con la inferencia y se ejecuta en milisegundos para programas
   típicos.
-- **Cuando un valor se duplica de verdad, paga el RC.** Si
+- **Cuando un valor se duplica de verdad, el RC cuesta.** Si
   tienes muchas estructuras compartidas pesadas, el `dup`/`drop`
-  cuesta.
+  se nota.
 - **Reuse in place depende de la unicidad estática.** Si el
   análisis no puede probar unicidad, la optimización no aplica
   y caes a la versión segura.

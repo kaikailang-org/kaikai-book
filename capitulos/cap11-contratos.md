@@ -263,8 +263,8 @@ El error dice exactamente por qué: dentro de `[t]` no hay ningún
 lugar donde poner el chequeo. Verificar la lista entera sería un
 costo que no pediste; dejarla pasar sería mentir. Así que el
 compilador te manda a hacerlo explícito: pasa los elementos por
-una función que devuelva `Puerto`, y cada uno paga su garantía
-al entrar.
+una función que devuelva `Puerto`, y cada uno se verifica al
+entrar.
 
 Con un tipo mutable la regla es más estricta todavía, y en las
 dos direcciones:

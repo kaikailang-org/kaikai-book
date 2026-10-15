@@ -33,7 +33,7 @@ sienta obvio.
 
 Antes de mostrar la sintaxis, veamos los problemas concretos que
 los efectos resuelven. Si reconoces el patrón en tu trabajo,
-sabrás por qué pagar el costo de aprender una herramienta nueva.
+sabrás por qué vale la pena aprender una herramienta nueva.
 
 ### Excepciones invisibles
 
@@ -204,7 +204,7 @@ fn main() : Unit / Log {       # propaga el efecto
 
 Es el mismo principio del contagio que vimos en `async`/`await`,
 pero sin el problema de los colores: aquí no hay sintaxis especial
-para "pagar el efecto" en la llamada. `Log.log(...)` es una
+para "anunciar el efecto" en la llamada. `Log.log(...)` es una
 llamada como cualquier otra. La fila en la firma es donde vive la
 disciplina, y agregar un efecto nuevo no introduce un color nuevo
 incompatible con el resto: solo extiende la fila.
@@ -919,7 +919,7 @@ fn realizar_compra(usuario: String, monto: Int) : Unit / Tracing {
 Una restricción: los alias deben ser **cerrados**. No puedes
 escribir `type WithIo[e] = Io + e` (con variable de fila). Esa
 restricción evita complicaciones en la unificación que el
-compilador no necesita pagar.
+compilador se puede ahorrar.
 
 ## 12.11 Default handlers: el efecto trae el suyo
 

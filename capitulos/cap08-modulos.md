@@ -128,8 +128,8 @@ la pista. La tercera es la **importación selectiva**: una lista
 explícita de nombres que se traen al namespace local. Te conviene
 solo cuando los nombres son los protagonistas del archivo y el
 prefijo se vuelve ruido (un `Punto` que aparece cuarenta veces,
-por ejemplo). El precio es que el lector ya no sabe de dónde
-salió `Punto` sin mirar arriba.
+por ejemplo). A cambio, el lector ya no sabe de dónde salió
+`Punto` sin mirar arriba.
 
 **No hay wildcard import.** Es decir, no existe
 `import math.vector.*` o equivalente que traiga "todo lo que el
@@ -247,7 +247,7 @@ list.map(xs, doble)  # [2, 4, 6]
 xs | doble           # [2, 4, 6]
 ```
 
-Es el precio de que el import gane, y vale la pena pagarlo: la
+Es la consecuencia de que el import gane, y vale la pena: la
 alternativa es que un nombre del core sea intocable y que el
 autor de un módulo no pueda llamar `map` a su `map`.
 
@@ -562,8 +562,8 @@ para satisfacer a alguien. MVS es **predecible**: dado el
 mismo árbol, el resultado es el mismo, sin resolvedor fallido
 ni diamond-dependency hell.
 
-El precio es que la responsabilidad de mantener compatibilidad
-queda en los autores de bibliotecas. Si subes a una versión que
+A cambio, la responsabilidad de mantener compatibilidad queda
+en los autores de bibliotecas. Si subes a una versión que
 rompe, todo el mundo que dependa transitivamente de ti se
 rompe. Eso te obliga a tomar el versionado en serio.
 

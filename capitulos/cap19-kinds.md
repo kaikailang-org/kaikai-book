@@ -204,7 +204,7 @@ física: opina de consistencia.
 
 `Measure` no es especial. La declaración `kind` está disponible
 para ti, con las tres theories no-builtin como opciones. Un caso
-donde esto paga: separar sistemas de unidades que jamás deben
+donde esto rinde: separar sistemas de unidades que jamás deben
 mezclarse, ni siquiera con una conversión accidental.
 
 ```kai
@@ -258,7 +258,7 @@ El capítulo 13 te debe una. Cuando dijimos que Perceus inserta
 increments y decrements en los puntos exactos donde los valores
 mueren, quedó una pregunta abierta: ¿y si un cálculo construye un
 millón de valores efímeros solo para plegarlos a un número? Cada
-celda paga su alta y su baja en el contador, y todo ese
+celda lleva su alta y su baja en el contador, y todo ese
 contabilismo es trabajo que un humano mirando el programa sabría
 innecesario: *nada de esto sobrevive al cálculo*.
 
@@ -289,7 +289,7 @@ $ kai run ejemplos/cap19/03_region_scratch.kai
 Todo constructor escrito léxicamente dentro del bloque asigna en
 una **arena**: un bloque de memoria que crece por bump (un
 puntero que avanza, sin contador alguno) y se libera entero al
-cerrar la llave. Las dos listas de arriba no pagan ni un
+cerrar la llave. Las dos listas de arriba no llevan ni un
 increment ni un decrement. El escalar que sale cruza la frontera
 gratis.
 
@@ -740,9 +740,9 @@ algoritmo pequeño, rápido, sin casos patológicos. Una theory
 arbitraria definida por el usuario sería un problema de
 unificación arbitrario, y la historia de los sistemas de tipos
 está llena de álgebras inocentes con unificación indecidible. El
-precio se pagaría donde kaikai no está dispuesto a pagarlo: en el
-tiempo de compilación y en la calidad de los errores, las dos
-cosas que este libro lleva dieciocho capítulos defendiendo.
+costo caería justo donde kaikai no lo tolera: en el tiempo de
+compilación y en la calidad de los errores, las dos cosas que
+este libro lleva dieciocho capítulos defendiendo.
 
 La apuesta de kaikai es **theory cerrada, modelos abiertos**: el
 lenguaje trae las álgebras y garantiza que unifican rápido; tú

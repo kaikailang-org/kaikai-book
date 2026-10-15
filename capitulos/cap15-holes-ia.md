@@ -162,7 +162,7 @@ fn saludo_interactivo(nombre: String) : String / Ask = ?texto_con_ask
 ```
 
 El primero no tiene `Ask`, así que `Ask.pregunta()` no calza,
-pero el compilador no lo esconde: lo pone aparte con el precio
+pero el compilador no lo esconde: lo pone aparte con el costo
 anotado:
 
 ```
@@ -189,8 +189,8 @@ que calzan sin más:
 
 Ese "fits if you add" es la parte que más me gusta del reporte. No
 te dice solo qué puedes escribir ahí: te dice qué podrías escribir
-si estuvieras dispuesto a pagar un efecto más en la firma. La
-decisión sigue siendo tuya, pero ahora la tomas viendo el precio.
+si estuvieras dispuesto a agregar un efecto más a la firma. La
+decisión sigue siendo tuya, pero ahora la tomas viendo el costo.
 
 ## 15.3 Diseño top-down: empieza por la firma
 
@@ -465,8 +465,8 @@ el flujo razonable es este:
    candidatos son razonables. Genera una propuesta de
    implementación. Usa `typecheck` y no `build` a propósito: el
    reporte es el mismo, pero cada consulta cuesta solo el
-   front-end (cap. 16 §16.1), y en un loop eso se paga muchas
-   veces.
+   front-end (cap. 16 §16.1), y en un loop esa diferencia se
+   multiplica.
 3. **El humano corre `kai check`.** Si los tests pasan, sigue
    adelante. Si no, el contraejemplo le dice al agente qué
    está mal.

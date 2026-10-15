@@ -169,8 +169,8 @@ No hay actores, ni IO, ni sockets: pura lógica. Si en seis
 meses cambiamos cómo se representan los movimientos, estos
 tests aseguran que la invariante sigue cumpliéndose.
 
-Y donde el cap. 11 paga: declaramos también una **versión con
-contrato**:
+Y aquí es donde el cap. 11 rinde: declaramos también una
+**versión con contrato**:
 
 ```kai
 pub fn aplicar_si_cuadra(ms: [dominio.Movimiento]) : [dominio.Movimiento]
@@ -424,7 +424,7 @@ Ideas para profundizar el ejemplo, en orden de dificultad:
 
 Cada una vuelve el sistema más cercano a uno de producción.
 Ninguna obliga a reescribir las piezas anteriores. La
-ortogonalidad paga.
+ortogonalidad rinde.
 
 ## 18.9 Por qué fintech es un buen banco de pruebas
 

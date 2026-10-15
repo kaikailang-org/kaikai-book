@@ -194,7 +194,7 @@ certeza total, el juez sigue siendo `kai build`.
 
 Los flags de reporte estructurado montan sobre `typecheck` igual
 que sobre `build` (`--diags-json`, `--holes-json`): el mismo
-reporte, sin pagar la generación de código. Eso lo vuelve la
+reporte, sin que corra la generación de código. Eso lo vuelve la
 herramienta natural del loop con holes del cap. 15, donde cada
 iteración cuesta lo que cuesta el front-end y nada más.
 
@@ -775,7 +775,7 @@ Convenciones:
 
 No es obligatorio. `kai run archivo.kai` corre cualquier
 archivo .kai sin importar dónde esté. Pero cuando el
-proyecto crece, esta estructura paga.
+proyecto crece, esta estructura rinde.
 
 ## 16.12 Hablar con C: `extern "C"` y el efecto `Ffi`
 
@@ -1228,7 +1228,7 @@ Estas no son palabras vacías. Cada vez que el lenguaje crece
 una característica, la pregunta de "¿cómo se va a sentir en
 el tooling?" se hace antes que la pregunta "¿es elegante
 teóricamente?". A veces gana la elegancia (los efectos
-algebraicos pagan algo de complejidad de tooling); a veces
+algebraicos le cargan complejidad al tooling); a veces
 gana el tooling (las reglas de exhaustividad y la inferencia
 local se ajustan para que los mensajes sean buenos). El
 balance es vivo, y este capítulo es la cara visible de él.
