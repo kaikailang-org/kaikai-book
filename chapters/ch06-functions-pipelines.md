@@ -150,7 +150,7 @@ When to use which? My suggestion:
 - **Named function** when the lambda is used more than once,
   or when the name documents the intent.
 
-### Point-free sections: when the lambda only projects
+### Point-free sections: projecting without naming the parameter
 
 There is a case even more common than the placeholder: the
 lambda that does nothing but **reach into the element** to pull
@@ -162,9 +162,9 @@ or the method call.
 
 ```kai
 type Addr = { city: String }
-type Person = { name: String, addr: Addr }
+type Person = { name: String, age: Int, addr: Addr }
 
-let people = [Person { name: "ana", addr: Addr { city: "Hanga Roa" } }]
+let people = [Person { name: "ana", age: 30, addr: Addr { city: "Hanga Roa" } }]
 let names  = people | .name           # (p) => p.name
 let cities = people | .addr.city       # (p) => p.addr.city
 let lengths = names | .length()        # (s) => s.length()
@@ -182,20 +182,29 @@ let starts = names |? .starts_with("a")  # (s) => s.starts_with("a")
 let n      = Some("hi").map(.length())   # in argument position
 ```
 
-One limit to keep clear from the start: a point-free section
-**only projects**. The moment the body does anything more (an
-operator, a comparison, two uses of the parameter), it stops
-being point-free and you go back to the arrow. This does **not**
-compile:
+Inside a pipe stage the projection does not have to stand alone.
+On the right of `|`, `||` or `|?`, the `.` **is** that stage's
+element, and every `.` in the stage is the same element, so you
+can keep operating on what you project:
 
 ```kai
-let adults = people |? .age > 18         # ERROR: mixes projection with `>`
+let adults = people |? .age > 18         # (p) => p.age > 18
+let tens   = [1, 2, 3] | . * 10          # (n) => n * 10
+let capped = [1, 2, 3] | max(., 2)       # (n) => max(n, 2)
 ```
 
-What you want there is the explicit arrow, `(p) => p.age > 18`.
-The practical rule: if the lambda *only* pulls out a field or
-calls a method, write it point-free; if it does anything else,
-arrow.
+Note the last one: a `.` inside a call argument refers to the
+stage's element, not to the argument. `xs | f(g(.))` means
+`xs | (x) => f(g(x))`.
+
+The explicit arrow cuts that scope off: write it and the `.`
+inside belongs to whatever stage sits within it. Two nested
+stages that both use `.` do not compile, and the error asks you
+to name one of the two elements with `(x) => ...`.
+
+The practical rule: if the stage reads at a glance, leave it
+point-free; if it takes several steps, or the element shows up in
+non-obvious places, give it a name with the arrow.
 
 Lambdas are **first-class values**: you bind them with `let`,
 pass them as arguments, return them from functions, store
@@ -441,7 +450,7 @@ itself**.
 import seq
 
 # The naturals: zero, followed by the naturals plus one.
-const nat: Seq[Int] = lazy [0, ...map(nat, (x) => x + 1)]
+const nat: Seq[Int] = lazy [0, ...seq.map(nat, (x) => x + 1)]
 
 # The unbounded sieve: one filter stage per prime found.
 fn sieve(xs: Seq[Int]) : Seq[Int] = match xs {

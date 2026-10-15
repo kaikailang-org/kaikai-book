@@ -164,7 +164,7 @@ Las reglas del placeholder son tres:
   vez, o cuando el nombre documenta la intención. Si la misma
   lambda aparece en tres lugares, dale un nombre.
 
-### Secciones point-free: cuando la lambda solo proyecta
+### Secciones point-free: proyectar sin nombrar el parámetro
 
 Hay un caso todavía más común que el placeholder: la lambda que
 no hace más que **alcanzar dentro del elemento** para sacarle un
@@ -176,9 +176,9 @@ ruta de campos o la llamada al método.
 
 ```kai
 type Dir = { ciudad: String }
-type Persona = { nombre: String, dir: Dir }
+type Persona = { nombre: String, edad: Int, dir: Dir }
 
-let personas = [Persona { nombre: "ana", dir: Dir { ciudad: "Hanga Roa" } }]
+let personas = [Persona { nombre: "ana", edad: 30, dir: Dir { ciudad: "Hanga Roa" } }]
 let nombres  = personas | .nombre          # (p) => p.nombre
 let ciudades = personas | .dir.ciudad      # (p) => p.dir.ciudad
 let largos   = nombres   | .length()       # (s) => s.length()
@@ -196,19 +196,29 @@ let inicia = nombres |? .starts_with("a")  # (s) => s.starts_with("a")
 let n      = Some("hi").map(.length())     # en posición de argumento
 ```
 
-Hay un límite que conviene tener claro desde el principio: la
-sección point-free **solo proyecta**. En cuanto el cuerpo hace
-algo más (un operador, una comparación, dos usos del
-parámetro), deja de ser point-free y vuelves a la flecha. Esto
-**no** compila:
+Dentro de una etapa de pipe la proyección no tiene que quedarse
+sola. A la derecha de `|`, `||` o `|?`, el `.` **es** el elemento
+de esa etapa, y todos los `.` de la etapa son el mismo elemento,
+así que puedes seguir operando sobre lo que proyectas:
 
 ```kai
-let mayores = personas |? .edad > 18       # ERROR: mezcla proyección con `>`
+let mayores = personas |? .edad > 18       # (p) => p.edad > 18
+let diez    = [1, 2, 3] | . * 10           # (n) => n * 10
+let topes   = [1, 2, 3] | max(., 2)        # (n) => max(n, 2)
 ```
 
-Lo que ahí quieres es la flecha explícita, `(p) => p.edad > 18`.
-La regla práctica: si la lambda *solo* saca un campo o llama un
-método, escríbela point-free; si hace cualquier otra cosa, flecha.
+Fíjate en la última: un `.` dentro de un argumento de llamada se
+refiere al elemento de la etapa, no al argumento. `xs | f(g(.))`
+significa `xs | (x) => f(g(x))`.
+
+La flecha explícita corta ese alcance: si la escribes, el `.` de
+adentro pertenece a la etapa que esté dentro de ella. Dos etapas
+anidadas que ambas usan `.` no compilan, y el error te pide
+nombrar uno de los dos elementos con `(x) => ...`.
+
+La regla práctica: si la etapa se lee de un vistazo, déjala
+point-free; si tiene varios pasos, o el elemento aparece en
+lugares no obvios, dale un nombre con la flecha.
 
 Las lambdas son **valores de primera clase**: las atas a
 `let`, las pasas como argumento, las devuelves de funciones,
@@ -505,7 +515,7 @@ definirse **en términos de sí misma**.
 import seq
 
 # Los naturales: el cero, seguido de los naturales más uno.
-const nat: Seq[Int] = lazy [0, ...map(nat, (x) => x + 1)]
+const nat: Seq[Int] = lazy [0, ...seq.map(nat, (x) => x + 1)]
 
 # La criba sin cota: una etapa de filtro por cada primo encontrado.
 fn criba(xs: Seq[Int]) : Seq[Int] = match xs {
