@@ -430,12 +430,12 @@ ortogonalidad rinde.
 
 Fintech es uno de los pocos dominios donde la industria
 acepta de buen grado que las herramientas pesen más en el
-proceso de desarrollo. Si una función paga, la empresa
-prefiere que el compilador la rechace antes de empujarla a
-producción. Si el sistema garantiza que los débitos cuadran
-con los créditos, el regulador duerme tranquilo. Si los
-tipos distinguen monedas, el cambio del próximo trimestre no
-introduce un bug sutil.
+proceso de desarrollo. Si una función desembolsa el monto
+equivocado, la empresa prefiere que el compilador lo atrape
+antes que descubrirlo en producción. Si el sistema garantiza
+que los débitos cuadran con los créditos, el regulador
+duerme tranquilo. Si los tipos distinguen monedas, el cambio
+del próximo trimestre no introduce un bug sutil.
 
 Lenguajes que ofrecen esas garantías (Haskell, OCaml, F#) han
 tenido buena recepción en fintech histórica. kaikai
