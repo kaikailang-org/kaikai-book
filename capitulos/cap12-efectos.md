@@ -457,8 +457,8 @@ cómputo.
 Y fíjate en qué devolvió `resume`: `42`, el valor que produjo el
 body, no el `()` que `log` declara devolver. Fuera de posición
 de cola, `resume` ya no te está dando el valor de retorno de la
-operación —eso lo recibe el body, allá abajo—; te está dando lo
-que salió del `handle` completo. Confundir los dos es el error
+operación, que eso lo recibe el body allá abajo; te está dando
+lo que salió del `handle` completo. Confundir los dos es el error
 clásico aquí.
 
 Hay una restricción que acompaña: en un mismo camino de
@@ -1077,8 +1077,9 @@ produce `/ Fail` obliga a ser manejada en algún lado antes de
 Vale la pena decir por qué `Fail` vive acá, declarado en el propio
 archivo, y no en el stdlib. Un efecto de falla no aporta nada que
 `Result[a, e]` con `!` postfijo no dé mejor: no hay una sola fila
-`/ Fail` en todo el stdlib. Y su forma —una operación que devuelve
-`Nothing`— es justamente la que *no* puede expresar la falla
+`/ Fail` en todo el stdlib. Y su forma, una operación que
+devuelve `Nothing`, es justamente la que *no* puede expresar la
+falla
 interesante, aquella en la que el consumidor elige si saltear o
 abortar. Para eso el efecto tiene que devolver `Unit` y dejar que
 el handler decida si llama a `resume`. El apéndice D tiene la
@@ -1183,8 +1184,8 @@ una cuarta categoría; son instancias de (2).
 `$extern_handler` puede sonar largo. La razón es que el sigil es
 un sistema, no una sola operación: `$` reserva el espacio de
 nombres de una **familia** de intrinsics, y `$extern_handler` es
-el que vive ahí. Cualquier otro puente al runtime —pedir el
-`errno` actual, llamar a un símbolo de plataforma específica—
+el que vive ahí. Cualquier otro puente al runtime (pedir el
+`errno` actual, llamar a un símbolo de plataforma específica)
 entra por el mismo sigil con un nombre descriptivo: `$os_name`,
 `$panic_with_trace`. Reservar `$<ident>(args)` deja la puerta
 abierta sin volver a discutir la sintaxis cada vez.
@@ -1201,7 +1202,7 @@ generadores, mantuvieras la idea cerca. Es hora de pagar esa
 promesa, y se paga con una pieza que ya conoces.
 
 En §12.5 vimos qué puede hacer un handler con `resume`:
-llamarlo —en posición de cola o no— y el body sigue; o no
+llamarlo, en posición de cola o no, y el body sigue; o no
 llamarlo, y el body se descarta. Falta una, y es la más
 interesante: **guardarlo**.
 
@@ -1296,7 +1297,7 @@ dice en vez de inventar un cero.
 
 Si en el capítulo 6 te quedó la duda de cuándo usar `stream` y
 cuándo esto, la respuesta es de qué lado estás. `stream` consume
-algo que ya existe —una lista, un archivo— y es una receta
+algo que ya existe, una lista o un archivo, y es una receta
 re-ejecutable. `gen` es para cuando el productor lo escribes tú.
 
 Y si lo escribes tú pero es puro, la respuesta es ninguno de los
@@ -1371,8 +1372,9 @@ dueño, y antes de que `main` siguiera. Descartar un generador no es
 olvidarlo: es desarmarlo.
 
 Esa es la división del trabajo que propone la fila. No te prohíbe
-hacer I/O en un productor —sería una regla cómoda de implementar y
-molesta de usar—; te dice en el tipo qué efectos hace falta tener
+hacer I/O en un productor, que sería una regla cómoda de
+implementar y molesta de usar; te dice en el tipo qué efectos
+hace falta tener
 servidos para avanzarlo, y te garantiza que soltarlo a mitad de
 camino sigue siendo una operación limpia.
 

@@ -1070,9 +1070,8 @@ Now the part to be clear about today: **the contract is
 sealed when the edition closes, not before.** `hanga-roa` is
 the edition where that surface is still being decided. An
 incompatible change to the list above isn't a broken
-promise — it's the work of building one. `Fail`'s retirement
-from the stdlib in 0.106 is exactly that: a `pub` signature
-that was put to the test, didn't earn its place, and left.
+promise — it's the work of building one. A `pub` signature is
+put to the test, and if it does not earn its place, it leaves.
 
 Those changes don't get buried in git history. They're
 recorded as they happen in the language repository's

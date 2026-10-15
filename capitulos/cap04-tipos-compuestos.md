@@ -241,7 +241,7 @@ que empieza con `h` y sigue con `t`", que es la misma forma del
 patrón con que la vas a descomponer después, y emite el cons
 directo. `[h] ++ t` dice "pega estas dos listas", y para eso
 construye una lista de un elemento que existe solo para ser
-pegada: una asignación por llamada.
+pegada, y eso pide memoria una vez por llamada.
 
 Medir eso tiene su truco, y vale la pena saberlo antes de
 intentarlo. Si pones las dos formas en un `bench` cuyo cuerpo

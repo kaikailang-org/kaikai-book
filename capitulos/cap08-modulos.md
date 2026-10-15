@@ -168,7 +168,7 @@ error: bare name 'MAX' is exported by multiple modules: sensores, alarmas
 ```
 
 Elegir por ti sería peor que el error. Cualquier regla de
-desempate —el orden de los imports, digamos— haría que *cuál* de
+desempate, el orden de los imports digamos, haría que *cuál* de
 los dos `MAX` obtienes dependa de cómo quedaron ordenadas las
 líneas, y esa es la clase de trampa que se cobra el día que
 alguien las ordena alfabéticamente y el programa cambia de
@@ -222,8 +222,8 @@ stdlib sigue a un calificador de distancia, como `effects.Log`.
 La regla vale igual para las funciones, y ahí es más fácil
 tropezar, porque los nombres del core son los más obvios del
 oficio: `map`, `filter`, `each`, `reduce`. Un archivo que
-importa `gen` —los generadores del §12.13, que traen sus propias
-etapas con esos nombres— cambia a quién llama `map` a secas:
+importa `gen` (los generadores del §12.13, que traen sus propias
+etapas con esos nombres) cambia a quién llama `map` a secas:
 
 ```kai
 import gen
@@ -275,8 +275,8 @@ sale cada nombre sin subir a mirar los imports.
 
 ### Un import que no usas
 
-Un `import` que el archivo nunca menciona —ni como calificador
-ni a través de ningún nombre que el módulo exporte— es una
+Un `import` que el archivo nunca menciona, ni como calificador
+ni a través de ningún nombre que el módulo exporte, es una
 advertencia:
 
 ```

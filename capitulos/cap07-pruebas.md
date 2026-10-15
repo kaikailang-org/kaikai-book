@@ -109,7 +109,7 @@ Tres detalles que vale recordar:
 
 ### Qué efectos puede cargar un test
 
-Un cuerpo de `test` —igual que uno de `bench` o de `check`— no
+Un cuerpo de `test`, igual que uno de `bench` o de `check`, no
 lleva fila de efectos y tampoco puede declararla. La pregunta
 entonces es qué tiene permitido hacer adentro, y la respuesta es:
 lo mismo que una entrada de programa. Absorbe los efectos builtin
@@ -141,7 +141,7 @@ error: effect not handled: Reloj
 
 Esa última nota es la pista: la fila que rodea al test está
 vacía, y no hay dónde declarar una. La salida es instalar el
-handler dentro del cuerpo, que además suele ser lo que querías —
+handler dentro del cuerpo, que además suele ser lo que querías:
 el test decide qué devuelve el reloj en vez de depender del de
 verdad:
 
@@ -212,10 +212,10 @@ las pocas semanas:
 
 ### Resultados para máquinas: `--json`
 
-La salida con colores y palomitas es para ti. Cuando quien
-lee es otro programa —un runner de CI que anota el commit, un
-dashboard, un script que compara dos corridas— hay una
-segunda forma:
+La salida con colores y palomitas es para ti. Cuando quien lee
+es otro programa (un runner de CI que anota el commit, un
+dashboard, un script que compara dos corridas), hay una segunda
+forma:
 
 ```
 $ kai test --json mi_archivo.kai
@@ -230,8 +230,9 @@ en el terminal.
 
 Tres detalles para quien lo consuma. Un bloque que falla trae
 además un `message` con el texto del assert, y el código de
-salida sigue siendo 1. El `id` —`archivo:nombre del test`— es
-la forma canónica de nombrar un bloque: estable entre corridas
+salida sigue siendo 1. El `id`, que es `archivo:nombre del
+test`, es la forma canónica de nombrar un bloque: estable entre
+corridas
 mientras el nombre y el archivo no cambien. Y si el cuerpo de
 un test imprime, esa salida se va a stderr: por stdout salen
 solo los registros, y un parser puede leerlo línea a línea sin
@@ -254,8 +255,8 @@ cuando un test falla en medio de una suite lenta: en vez de
 esperar los otros cien, corres el que te importa.
 
 Un detalle con consecuencias: si el `id` no calza con ningún
-bloque, es **error** —código de salida 1— y no un "cero tests,
-todo bien". La diferencia importa apenas automatizas algo.
+bloque, es **error**, con código de salida 1, y no un "cero
+tests, todo bien". La diferencia importa apenas automatizas algo.
 Un script que pasa ids generados y lee un cero como éxito
 creería que el test pasó, cuando en realidad no corrió
 ninguno. Esa clase de falso verde es peor que un rojo.
@@ -464,8 +465,8 @@ pregunta simple:
 Falta una pregunta que este capítulo no contesta: ¿y la parte
 concurrente? Los actores y las fibras se prueban con estas mismas
 tres construcciones, y el truco está en que el mailbox es un
-handler que puedes reemplazar por un guion — incluido el momento en
-que un plazo se vence, sin esperar. Está en §14.9.
+handler que puedes reemplazar por un guion, incluido el momento
+en que un plazo se vence, sin esperar. Está en §14.9.
 
 Las tres se complementan. Un proyecto serio va a tener las
 tres en el mismo archivo: tests para los casos
@@ -633,8 +634,8 @@ pruebas pasaron. No prueba que habrían fallado si el código
 estuviera mal, y eso es lo que de verdad le pides a una suite.
 
 `kai mutate` lo mide de frente. Rompe el código a propósito, una
-construcción a la vez —un brazo de `match` que desaparece, un
-`>=` que se vuelve `>`, un `false` que se vuelve `true`—, y corre
+construcción a la vez (un brazo de `match` que desaparece, un
+`>=` que se vuelve `>`, un `false` que se vuelve `true`), y corre
 tus pruebas contra cada versión rota. Si alguna prueba falla, el
 mutante muere: algo lo notó. Si todas pasan, el mutante
 sobrevive, y eso es un hueco.
@@ -714,8 +715,8 @@ test "debe_fallar no acepta un resultado" {
 }
 ```
 
-Con ellos —es el mismo evaluador, en
-`ejemplos/cap07/07_mutantes.kai`— la corrida termina así:
+Con ellos, que son el mismo evaluador en
+`ejemplos/cap07/07_mutantes.kai`, la corrida termina así:
 
 ```
 24 mutants in 18s: 5 killed, 19 did not compile, 0 survived

@@ -314,7 +314,7 @@ devolver un `Int` desde `main` (cap. 16 §16.1), que sí usa el
 camino de salida completo de la libc.
 
 `start_piped` es la forma `popen`: conecta pipes al stdin, al
-stdout y/o al stderr del hijo —un flag para cada uno—, y desde
+stdout y/o al stderr del hijo, con un flag para cada uno, y desde
 ahí `write_stdin`, `close_stdin`, `read_stdout` y `read_stderr`
 manejan la conversación. Que stderr sea un pipe aparte es lo que
 permite distinguir un diagnóstico de la salida; fusionar los dos
