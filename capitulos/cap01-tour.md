@@ -17,7 +17,7 @@ las que llegarán en los capítulos siguientes.
 
 Si quieres seguir los ejemplos en tu computador, los archivos
 están en `ejemplos/cap01/` del repositorio del libro. La
-instalación de `kai` viene al final del capítulo, en §1.12; si
+instalación de `kai` viene al final del capítulo, en §1.13; si
 te urge, salta ahí primero y vuelve.
 
 ## 1.1 Hola, kaikai
@@ -168,7 +168,58 @@ estuviera ahí, el compilador no te dejaría llamar a `println`
 adentro. Por ahora no te preocupes; el detalle viene
 más adelante.
 
-## 1.3 Una calculadora con AST recursivo
+## 1.3 Pipes: recorrer sin escribir un loop
+
+Vimos que la iteración se apoya en la recursión. En la
+práctica casi nunca la vas a escribir a mano: para recorrer una
+colección kaikai tiene cinco operadores, los **pipes**, y cada
+uno dice en un símbolo qué le pasa a la colección.
+
+```kai
+# ejemplos/cap01/11_pipes.kai
+fn aprobado(n: Int) : Bool = n >= 40
+
+fn main() {
+  let notas = [55, 32, 70, 41, 28]
+
+  let total = notas |? aprobado | . * 2 |> list.sum
+  println("aprobados, al doble, sumados: #{total}")
+
+  let bordes = notas || [. - 1, . + 1]
+  println("bordes: #{bordes}")
+
+  notas |? aprobado |! println("aprobado con #{.}")
+}
+```
+
+```
+$ kai run ejemplos/cap01/11_pipes.kai
+aprobados, al doble, sumados: 332
+bordes: [54, 56, 31, 33, 69, 71, 40, 42, 27, 29]
+aprobado con 55
+aprobado con 70
+aprobado con 41
+```
+
+`|>` aplica y nada más: `xs |> f` es `f(xs)`. Los otros cuatro
+reciben una **etapa** a la derecha y la corren elemento por
+elemento: `|` transforma, `||` expande y concatena, `|?` filtra,
+y `|!` corre la etapa por su efecto y devuelve `Unit`, así que
+cierra el pipeline.
+
+El `.` de una etapa **es** el elemento. `. * 2` se lee "el
+elemento por dos" y `[. - 1, . + 1]` es "una lista con el
+elemento menos uno y el elemento más uno", sin tener que
+inventarle un nombre al parámetro. Cuando el nombre ayuda, la
+lambda explícita sigue ahí: `notas | (n) => n * 2`.
+
+Lo que no hay es un `for`. El pipeline se lee de izquierda a
+derecha, cada paso hace una cosa sola, y el valor del último es
+el valor de la expresión. El capítulo 6 los toma en serio, con
+las versiones perezosas incluidas; aquí basta con que los
+reconozcas cuando aparezcan.
+
+## 1.4 Una calculadora con AST recursivo
 
 Pasemos a algo un poco más contundente. Una calculadora muy
 simple, con expresiones aritméticas representadas como árbol.
@@ -224,7 +275,7 @@ necesitas mutar algo, kaikai te lo permite, pero te pide
 declararlo (capítulo 13). Esta es la otra mitad del cambio de
 hábito: **inmutabilidad por defecto**.
 
-## 1.4 Un efecto propio con su handler
+## 1.5 Un efecto propio con su handler
 
 Hasta ahora todo el "efecto" que vimos fue `println`, que
 funciona porque kaikai trae un handler por defecto. Veamos
@@ -291,7 +342,7 @@ contexto donde `Log` no esté manejado. Los efectos son **visibles
 en el tipo**, no escondidos. Esto resuelve una incomodidad vieja
 de los lenguajes que tienen excepciones invisibles.
 
-## 1.5 Dos fibras cooperativas
+## 1.6 Dos fibras cooperativas
 
 El quinto programa del tour usa concurrencia.
 
@@ -361,7 +412,7 @@ importa para el tour es que el lenguaje tiene concurrencia
 estructurada de primera clase y que se trata, una vez más,
 como un efecto.
 
-## 1.6 Tipos a la medida con protocolos
+## 1.7 Tipos a la medida con protocolos
 
 A esta altura ya viste tipos primitivos y tipos suma. Falta una
 construcción más: los **records**, que son lo que en la mayoría
@@ -426,7 +477,7 @@ hay polimorfismo paramétrico ad-hoc encadenado. Una sola
 mecánica simple, igual que en Go o Clojure. El capítulo 9
 desarrolla la idea.
 
-## 1.7 Unidades de medida
+## 1.8 Unidades de medida
 
 kaikai trae una herramienta poco común en lenguajes
 *mainstream*: las **unidades de medida**. F# las tiene desde
@@ -486,7 +537,7 @@ y enteros con tags como `UserId` o `OrderId` para que el
 compilador no te deje confundirlos. Todo eso aparece en el
 capítulo 10. Por ahora basta saber que existe.
 
-## 1.8 Programación por contrato
+## 1.9 Programación por contrato
 
 kaikai trae otra herramienta heredada de pocos lenguajes
 (Eiffel en los ochenta, Ada 2012, D) para declarar lo que una
@@ -550,7 +601,7 @@ contraparte estructural de los contratos: el tipo describe qué
 valores son válidos, el contrato describe qué hacen las
 operaciones con ellos. Los dos viven juntos en el capítulo 11.
 
-## 1.9 Pruebas en el mismo archivo
+## 1.10 Pruebas en el mismo archivo
 
 kaikai trata las pruebas como ciudadanas de primera: viven en
 el mismo archivo que el código que prueban, con su propia
@@ -600,7 +651,7 @@ Las tres formas se complementan: `test` para casos fijos,
 entrada, `bench` para medir rendimiento sin adivinar. El
 capítulo 7 entra en cada una con tiempo.
 
-## 1.10 Holes: agujeros que compilan
+## 1.11 Holes: agujeros que compilan
 
 Hay una última construcción del lenguaje que vale la pena
 ver en el tour, porque cambia un poco la forma de escribir
@@ -656,7 +707,7 @@ aun cuando su corpus de entrenamiento contenga poco kaikai,
 porque el compilador hace gran parte del trabajo. El
 capítulo 15 entra en esa apuesta con tiempo.
 
-## 1.11 Dependencias y proyectos: `kai.toml`
+## 1.12 Dependencias y proyectos: `kai.toml`
 
 Hasta aquí los ejemplos del tour fueron archivos sueltos. La
 realidad de un proyecto es distinta: vas a tener varios
@@ -705,7 +756,7 @@ piden cosas distintas. Por ahora basta saber que existe y que
 **no necesitas un sistema de build externo**: `kai` es el
 único binario.
 
-## 1.12 Cómo instalar y correr `kai`
+## 1.13 Cómo instalar y correr `kai`
 
 Para correr cualquiera de los programas anteriores necesitas el
 binario `kai`. La vía corta es el instalador:
@@ -771,7 +822,7 @@ El capítulo 16 cubre el resto del tooling: `fmt`, `lsp`,
 integración con editores, y los comandos de paquetes (`init`,
 `add`, `fetch`, `update`). Por ahora con `run` te basta.
 
-## 1.13 Cómo está organizado el resto del libro
+## 1.14 Cómo está organizado el resto del libro
 
 Vimos en este capítulo, sin profundizar, prácticamente todo lo
 que hace distinto a kaikai. El resto del libro toma cada cosa y

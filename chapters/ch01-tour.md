@@ -20,7 +20,7 @@ follow.
 If you want to follow along on your own machine, the source
 files for this chapter live under `examples/ch01/` in the book
 repository. Installation of `kai` is covered at the end of the
-chapter, in §1.12 — if you need it now, jump there first and come
+chapter, in §1.13 — if you need it now, jump there first and come
 back.
 
 ## 1.1 Hello, kaikai
@@ -174,7 +174,58 @@ after the slash is the set of **effects** the function uses.
 it, the compiler would not let you call `println` inside. Don't
 worry about the details yet — the full story is in chapter 12.
 
-## 1.3 A calculator with a recursive AST
+## 1.3 Pipes: iterating without writing a loop
+
+We saw that iteration rests on recursion. In practice you will
+almost never write that recursion by hand: to walk a collection
+kaikai has five operators — the **pipes** — and each one says in
+a single symbol what happens to the collection.
+
+```kai
+# examples/ch01/11_pipes.kai
+fn passing(n: Int) : Bool = n >= 40
+
+fn main() {
+  let grades = [55, 32, 70, 41, 28]
+
+  let total = grades |? passing | . * 2 |> list.sum
+  println("passing grades, doubled, summed: #{total}")
+
+  let edges = grades || [. - 1, . + 1]
+  println("edges: #{edges}")
+
+  grades |? passing |! println("passed with #{.}")
+}
+```
+
+```
+$ kai run examples/ch01/11_pipes.kai
+passing grades, doubled, summed: 332
+edges: [54, 56, 31, 33, 69, 71, 40, 42, 27, 29]
+passed with 55
+passed with 70
+passed with 41
+```
+
+`|>` applies and nothing else: `xs |> f` is `f(xs)`. The other
+four take a **stage** on their right and run it element by
+element: `|` transforms, `||` expands and concatenates, `|?`
+filters, and `|!` runs the stage for its effect and returns
+`Unit`, so it ends the pipeline.
+
+A stage's `.` **is** the element. `. * 2` reads "the element
+times two", and `[. - 1, . + 1]` is "a list with the element
+minus one and the element plus one", with no parameter name to
+invent. When the name helps, the explicit lambda is still
+there: `grades | (n) => n * 2`.
+
+What there isn't is a `for`. A pipeline reads left to right,
+each step does one thing, and the last one's value is the value
+of the expression. Chapter 6 takes them seriously, lazy
+versions included; here it is enough that you recognize them
+when they show up.
+
+## 1.4 A calculator with a recursive AST
 
 Something with a bit more meat. A small calculator that
 represents arithmetic expressions as a tree.
@@ -230,7 +281,7 @@ kaikai lets you, but it asks you to declare it (chapter 12).
 This is the other half of the habit change: **immutability by
 default**.
 
-## 1.4 A custom effect with a handler
+## 1.5 A custom effect with a handler
 
 Until now, every effect we used was `println`, which works
 because kaikai installs a default handler for it. Let's see
@@ -296,7 +347,7 @@ it from a context where `Log` is not handled. Effects are
 **visible in the type**, not hidden. This solves an old itch
 of languages that have invisible exceptions.
 
-## 1.5 Two cooperative fibers
+## 1.6 Two cooperative fibers
 
 The fifth program of the tour uses concurrency.
 
@@ -364,7 +415,7 @@ but all of it lives in chapter 12. What matters for the tour is
 that the language has structured concurrency as a first-class
 feature, and it is treated, once again, as an effect.
 
-## 1.6 Custom-fitted types with protocols
+## 1.7 Custom-fitted types with protocols
 
 By now you've seen primitive types and sum types. One construct
 is missing: **records**, which are what most languages call a
@@ -425,7 +476,7 @@ inference, no higher-kinded types, no chained ad-hoc
 parametric polymorphism. One simple mechanism, like Go or
 Clojure. Chapter 9 develops the idea.
 
-## 1.7 Units of measure
+## 1.8 Units of measure
 
 kaikai ships an uncommon feature for *mainstream* languages:
 **units of measure**. F# has had them since 2010 and almost no
@@ -484,7 +535,7 @@ integers with names like `UserId` or `OrderId` so the compiler
 won't let you confuse them. All of that lives in chapter 10.
 For now, knowing it exists is enough.
 
-## 1.8 Programming by contract
+## 1.9 Programming by contract
 
 kaikai carries another tool inherited from a short list of
 languages (Eiffel in the eighties, Ada 2012, D) for stating what
@@ -545,7 +596,7 @@ counterpart to contracts, with the type describing which values
 are valid and the contract describing what operations do with
 them. Both live together in chapter 11.
 
-## 1.9 Inline tests
+## 1.10 Inline tests
 
 kaikai treats tests as part of the language proper: they live
 in the same file as the code they exercise, with their own
@@ -595,7 +646,7 @@ cases, `check` for invariants that must hold over any input,
 `bench` to measure performance instead of guessing. Chapter 7
 treats each one in detail.
 
-## 1.10 Holes: gaps that still compile
+## 1.11 Holes: gaps that still compile
 
 There is one last construct worth seeing in the tour, because it
 shifts how you write code a little. kaikai lets you leave
@@ -648,7 +699,7 @@ LLM can write well in even when its training corpus holds little
 kaikai, because the compiler does much of the work. Chapter 15
 takes that bet apart at length.
 
-## 1.11 Dependencies and projects: `kai.toml`
+## 1.12 Dependencies and projects: `kai.toml`
 
 Every example in the tour so far has been a loose file. A real
 project looks different: you will have several files, you will
@@ -694,7 +745,7 @@ works when two dependencies want different things. For now it's
 enough to know it exists, and that **you don't need an external
 build system**: `kai` is the only binary.
 
-## 1.12 Installing and running `kai`
+## 1.13 Installing and running `kai`
 
 To run any of the programs above you need the `kai` binary.
 The short path is the installer:
@@ -757,7 +808,7 @@ file, run it, look at the output, edit again.
 Chapter 16 covers the rest of the tooling: `fmt`, `lsp`,
 `watch`, editor integration. For now, `run` is enough.
 
-## 1.13 How the rest of the book is laid out
+## 1.14 How the rest of the book is laid out
 
 We saw, without going deep, almost everything that makes
 kaikai distinctive. The rest of the book takes each piece and

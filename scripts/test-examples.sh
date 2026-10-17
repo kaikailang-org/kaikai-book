@@ -68,6 +68,7 @@ build|ejemplos/cap01/07_protocolos.kai|ok
 build|ejemplos/cap01/08_unidades.kai|ok
 build|ejemplos/cap01/09_contratos.kai|ok
 build|ejemplos/cap01/10_holes.kai|ok
+run|ejemplos/cap01/11_pipes.kai|ok
 
 # Capítulo 3 — tipos básicos
 run|ejemplos/cap03/01_aritmetica.kai|ok
@@ -240,6 +241,7 @@ build|examples/ch01/07_protocols.kai|ok
 build|examples/ch01/08_units.kai|ok
 build|examples/ch01/09_contracts.kai|ok
 build|examples/ch01/10_holes.kai|ok
+run|examples/ch01/11_pipes.kai|ok
 
 # Chapter 3
 run|examples/ch03/01_arithmetic.kai|ok
