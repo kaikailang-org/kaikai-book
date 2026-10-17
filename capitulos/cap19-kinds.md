@@ -174,7 +174,7 @@ la vista.
 El listado 19.1 es la primera firma, completa y corriendo:
 
 ```kai
-# Listado 19.1 — ejemplos/cap19/01_generica_sobre_unidades.kai
+# Listado 19.1: ejemplos/cap19/01_generica_sobre_unidades.kai
 unit m
 unit s
 
@@ -208,7 +208,7 @@ donde esto rinde: separar sistemas de unidades que jamás deben
 mezclarse, ni siquiera con una conversión accidental.
 
 ```kai
-# Listado 19.2 — ejemplos/cap19/02_kind_propio.kai
+# Listado 19.2: ejemplos/cap19/02_kind_propio.kai
 kind Metrica  : AbelianGroup with metrica
 kind Imperial : AbelianGroup with imperial
 
@@ -265,7 +265,7 @@ innecesario: *nada de esto sobrevive al cálculo*.
 El bloque `region` es la forma de decírselo al compilador:
 
 ```kai
-# Listado 19.3 — ejemplos/cap19/03_region_scratch.kai
+# Listado 19.3: ejemplos/cap19/03_region_scratch.kai
 fn suma(xs: [Int]) : Int = match xs {
   []        -> 0
   [h, ...t] -> h + suma(t)
@@ -299,7 +299,7 @@ liga un nombre para la región, y ese `r` es un habitante fresco
 de `Region` que los tipos pueden cargar:
 
 ```kai
-# Listado 19.4 — ejemplos/cap19/04_arbol_en_arena.kai
+# Listado 19.4: ejemplos/cap19/04_arbol_en_arena.kai
 type Arbol = Hoja | Nodo(Arbol, Int, Arbol)
 
 fn insertar[r: Region](t: Arbol<r>, k: Int) : Arbol<r> =
@@ -386,7 +386,7 @@ no punto flotante, que es lo único defendible. El tipo que vas a
 escribir casi siempre es `Money[Decimal]<USD>`:
 
 ```kai
-# Listado 19.5 — ejemplos/cap19/05_dinero.kai
+# Listado 19.5: ejemplos/cap19/05_dinero.kai
 import money
 import decimal as dec
 
@@ -421,7 +421,7 @@ explícita de `money.convert`, con la moneda destino fijada por la
 anotación. ¿Y multiplicar dos dineros?
 
 ```kai
-# Listado 19.6 — ejemplos/cap19/06_usd_por_eur.kai (no compila)
+# Listado 19.6: ejemplos/cap19/06_usd_por_eur.kai (no compila)
 let u: Money[dec.Decimal]<USD> = 10.00<USD>
 let e: Money[dec.Decimal]<EUR> = 5.00<EUR>
 let sinsentido = u * e          # error: `EUR USD` no existe
@@ -478,7 +478,7 @@ La anotación `#[derive(Layout)]` sobre un record genera su
 desde un buffer:
 
 ```kai
-# Listado 19.7 — ejemplos/cap19/07_layout.kai
+# Listado 19.7: ejemplos/cap19/07_layout.kai
 #[derive(Layout)]
 type Paquete = { magia: U32<be>, puerto: U16<be> }
 
@@ -521,7 +521,7 @@ write>`. Y cada operación pide exactamente lo que usa:
 `read_chunk` exige `<read>`, `write_chunk` exige `<write>`.
 
 ```kai
-# Listado 19.9 — ejemplos/cap19/09_perm.kai
+# Listado 19.9: ejemplos/cap19/09_perm.kai
 fn primera_linea(h: FileHandle<read>) : String / File =
   match File.read_chunk(h, 64) {
     Ok(s)  -> s
@@ -611,7 +611,7 @@ parte del tipo. Un literal con un largo distinto al que anuncia la
 anotación no compila.
 
 ```kai
-# Listado 19.10 — ejemplos/cap19/10_dim.kai
+# Listado 19.10: ejemplos/cap19/10_dim.kai
 fn punto[n: Dim](v: Vec[Real]<n>) : Real = v[0]
 
 fn dot[n: Dim](a: Vec[Real]<n>, b: Vec[Real]<n>, i: Int, acc: Real) : Real =
@@ -682,7 +682,7 @@ contenido. Un parámetro `[s: Shape]` acepta cualquier constructor
 de un argumento, y `s[Int]` lo aplica a un tipo:
 
 ```kai
-# Listado 19.8 — ejemplos/cap19/08_shape.kai
+# Listado 19.8: ejemplos/cap19/08_shape.kai
 protocol Contenedor[s: Shape] {
   primero(xs: s[Int]) : Int
 }
