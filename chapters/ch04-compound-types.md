@@ -331,9 +331,12 @@ carries `Mutable` in its row.
 
 The operations live in `collections.vec` and you call them
 qualified. They are the ones you'd expect: `vec.get`, `vec.set`,
-`vec.push`, `vec.length`, `vec.slice`, `vec.map`, `vec.foldl`,
-`vec.from_list` and `vec.to_list`. The `a[1]` in the example is
-shorthand for `vec.get(a, 1)`.
+`vec.push`, `vec.length`, `vec.slice`, `vec.map`,
+`vec.flat_map`, `vec.filter`, `vec.foldl`, `vec.from_list` and
+`vec.to_list`. The `a[1]` in the example is shorthand for
+`vec.get(a, 1)`. The pipes of chapter 6 run over a `Vec` just
+as they do over a list: `|` dispatches to `vec.map`, `||` to
+`vec.flat_map`, `|?` to `vec.filter` and `|!` to `vec.each`.
 
 A list literal in a `Vec` position builds the vector directly,
 with no linked list in between. And the interesting part is how
