@@ -4,21 +4,21 @@ fn doble(n: Int) : Int = n * 2
 
 fn es_par(n: Int) : Bool = n % 2 == 0
 
-# `|>` — apply: el lado izquierdo es el primer argumento del
+# `|>` (apply): el lado izquierdo es el primer argumento del
 # llamado de la derecha. `xs |> f` ≡ `f(xs)`.
 fn ejemplo_apply() : Int {
   let xs = [1, 2, 3, 4, 5]
   xs |> list.sum  # ≡ list.sum(xs)
 }
 
-# `|` — map sobre listas: `xs | f` ≡ `list.map(xs, f)`.
+# `|` (map) sobre listas: `xs | f` ≡ `list.map(xs, f)`.
 fn ejemplo_map() : Int {
   let xs = [1, 2, 3, 4, 5]
   let dobles = xs | doble
   list.sum(dobles)
 }
 
-# `||` — flat-map: `xs || f` ≡ `list.flat_map(xs, f)`.
+# `||` (flat-map): `xs || f` ≡ `list.flat_map(xs, f)`.
 # Cada elemento produce una lista, y todas se concatenan.
 fn vecinos(n: Int) : [Int] = [n - 1, n, n + 1]
 
@@ -28,7 +28,7 @@ fn ejemplo_flat_map() : Int {
   list.length(extendido)
 }
 
-# `|?` — filter sobre listas: `xs |? p` ≡ `list.filter(xs, p)`.
+# `|?` (filter) sobre listas: `xs |? p` ≡ `list.filter(xs, p)`.
 fn ejemplo_filter() : Int {
   let xs = [1, 2, 3, 4, 5, 6]
   let pares = xs |? es_par

@@ -66,20 +66,20 @@ build|ejemplos/cap01/09_contratos.kai|ok
 build|ejemplos/cap01/10_holes.kai|ok
 
 # Capítulo 3 — tipos básicos
-build|ejemplos/cap03/01_aritmetica.kai|ok
-build|ejemplos/cap03/02_strings.kai|ok
-build|ejemplos/cap03/03_let_if.kai|ok
-build|ejemplos/cap03/04_bloques.kai|ok
+run|ejemplos/cap03/01_aritmetica.kai|ok
+run|ejemplos/cap03/02_strings.kai|ok
+run|ejemplos/cap03/03_let_if.kai|ok
+run|ejemplos/cap03/04_bloques.kai|ok
 build|ejemplos/cap03/05_ancho_fijo.kai|ok
 build|ejemplos/cap03/06_numeros_grandes.kai|ok
 
 # Capítulo 4 — tipos compuestos
-build|ejemplos/cap04/01_records.kai|ok
-build|ejemplos/cap04/02_destructuring.kai|ok
-build|ejemplos/cap04/03_listas.kai|ok
-build|ejemplos/cap04/04_option_result.kai|ok
-build|ejemplos/cap04/05_tuplas.kai|ok
-build|ejemplos/cap04/06_priv.kai|ok
+run|ejemplos/cap04/01_records.kai|ok
+run|ejemplos/cap04/02_destructuring.kai|ok
+run|ejemplos/cap04/03_listas.kai|ok
+run|ejemplos/cap04/04_option_result.kai|ok
+run|ejemplos/cap04/05_tuplas.kai|ok
+run|ejemplos/cap04/06_priv.kai|ok
 build|ejemplos/cap04/07_strings.kai|ok
 build|ejemplos/cap04/08_mapas.kai|ok
 run|ejemplos/cap04/09_string_builder.kai|ok
@@ -87,23 +87,23 @@ run|ejemplos/cap04/10_mayusculas.kai|ok
 run|ejemplos/cap04/11_vec.kai|ok
 
 # Capítulo 5 — pattern matching
-build|ejemplos/cap05/01_sumas_basicas.kai|ok
-build|ejemplos/cap05/02_recursivos.kai|ok
-build|ejemplos/cap05/03_match_guardas.kai|ok
-build|ejemplos/cap05/04_uniones.kai|ok
+run|ejemplos/cap05/01_sumas_basicas.kai|ok
+run|ejemplos/cap05/02_recursivos.kai|ok
+run|ejemplos/cap05/03_match_guardas.kai|ok
+run|ejemplos/cap05/04_uniones.kai|ok
 build|ejemplos/cap05/05_evaluador.kai|ok
 run|ejemplos/cap05/06_patrones_constante.kai|ok
 
 # Capítulo 6 — funciones
-build|ejemplos/cap06/01_funciones.kai|ok
-build|ejemplos/cap06/02_lambdas.kai|ok
-build|ejemplos/cap06/03_orden_superior.kai|ok
-build|ejemplos/cap06/04_pipes.kai|ok
-build|ejemplos/cap06/05_recursion_tco.kai|ok
-build|ejemplos/cap06/06_pipeline.kai|ok
-build|ejemplos/cap06/07_pipe_underscore.kai|ok
-build|ejemplos/cap06/08_trailing_y_bloques.kai|ok
-build|ejemplos/cap06/09_stream.kai|ok
+run|ejemplos/cap06/01_funciones.kai|ok
+run|ejemplos/cap06/02_lambdas.kai|ok
+run|ejemplos/cap06/03_orden_superior.kai|ok
+run|ejemplos/cap06/04_pipes.kai|ok
+run|ejemplos/cap06/05_recursion_tco.kai|ok
+run|ejemplos/cap06/06_pipeline.kai|ok
+run|ejemplos/cap06/07_pipe_underscore.kai|ok
+run|ejemplos/cap06/08_trailing_y_bloques.kai|ok
+run|ejemplos/cap06/09_stream.kai|ok
 run|ejemplos/cap06/10_recursion_mutua.kai|ok
 run|ejemplos/cap06/11_seq.kai|ok
 
@@ -237,20 +237,20 @@ build|examples/ch01/09_contracts.kai|ok
 build|examples/ch01/10_holes.kai|ok
 
 # Chapter 3
-build|examples/ch03/01_arithmetic.kai|ok
-build|examples/ch03/02_strings.kai|ok
-build|examples/ch03/03_let_if.kai|ok
-build|examples/ch03/04_blocks.kai|ok
+run|examples/ch03/01_arithmetic.kai|ok
+run|examples/ch03/02_strings.kai|ok
+run|examples/ch03/03_let_if.kai|ok
+run|examples/ch03/04_blocks.kai|ok
 build|examples/ch03/05_fixed_width.kai|ok
 build|examples/ch03/06_big_numbers.kai|ok
 
 # Chapter 4
-build|examples/ch04/01_records.kai|ok
-build|examples/ch04/02_destructuring.kai|ok
-build|examples/ch04/03_lists.kai|ok
-build|examples/ch04/04_option_result.kai|ok
-build|examples/ch04/05_tuples.kai|ok
-build|examples/ch04/06_priv.kai|ok
+run|examples/ch04/01_records.kai|ok
+run|examples/ch04/02_destructuring.kai|ok
+run|examples/ch04/03_lists.kai|ok
+run|examples/ch04/04_option_result.kai|ok
+run|examples/ch04/05_tuples.kai|ok
+run|examples/ch04/06_priv.kai|ok
 build|examples/ch04/07_strings.kai|ok
 build|examples/ch04/08_maps.kai|ok
 run|examples/ch04/09_string_builder.kai|ok
@@ -258,23 +258,23 @@ run|examples/ch04/10_case_folding.kai|ok
 run|examples/ch04/11_vec.kai|ok
 
 # Chapter 5
-build|examples/ch05/01_basic_sums.kai|ok
-build|examples/ch05/02_recursive.kai|ok
-build|examples/ch05/03_match_guards.kai|ok
-build|examples/ch05/04_unions.kai|ok
+run|examples/ch05/01_basic_sums.kai|ok
+run|examples/ch05/02_recursive.kai|ok
+run|examples/ch05/03_match_guards.kai|ok
+run|examples/ch05/04_unions.kai|ok
 build|examples/ch05/05_evaluator.kai|ok
 run|examples/ch05/06_constant_patterns.kai|ok
 
 # Chapter 6
-build|examples/ch06/01_functions.kai|ok
-build|examples/ch06/02_lambdas.kai|ok
-build|examples/ch06/03_higher_order.kai|ok
-build|examples/ch06/04_pipes.kai|ok
-build|examples/ch06/05_recursion_tco.kai|ok
-build|examples/ch06/06_pipeline.kai|ok
-build|examples/ch06/07_pipe_underscore.kai|ok
-build|examples/ch06/08_trailing_blocks.kai|ok
-build|examples/ch06/09_stream.kai|ok
+run|examples/ch06/01_functions.kai|ok
+run|examples/ch06/02_lambdas.kai|ok
+run|examples/ch06/03_higher_order.kai|ok
+run|examples/ch06/04_pipes.kai|ok
+run|examples/ch06/05_recursion_tco.kai|ok
+run|examples/ch06/06_pipeline.kai|ok
+run|examples/ch06/07_pipe_underscore.kai|ok
+run|examples/ch06/08_trailing_blocks.kai|ok
+run|examples/ch06/09_stream.kai|ok
 run|examples/ch06/10_mutual_recursion.kai|ok
 run|examples/ch06/11_seq.kai|ok
 

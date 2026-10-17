@@ -130,6 +130,48 @@ strings, `Char`, triple-quoted bodies, and interpolation.
 types. That avoids a class of bugs typical of languages that
 conflate the two.
 
+All three mechanisms together, in a program that runs:
+
+```kai
+# examples/ch03/02_strings.kai
+fn main() {
+  let name = "kaikai"
+  let age = 1
+
+  # Interpolation with #{...}
+  println("Hello, #{name}. The language is #{age} year old.")
+
+  # Concatenation with ++
+  let greeting = "Hello, " ++ name
+  println(greeting)
+
+  # Any expression fits inside #{...}
+  let a = 7
+  let b = 2
+  println("The sum of #{a} and #{b} is #{a + b}.")
+
+  # Triple-quote for multi-line
+  let message = """
+    This is a multi-line
+    message that preserves indentation
+    relative to the closing fence.
+    """
+  println(message)
+}
+```
+
+```
+$ kai run examples/ch03/02_strings.kai
+Hello, kaikai. The language is 1 year old.
+Hello, kaikai
+The sum of 7 and 2 is 9.
+
+    This is a multi-line
+    message that preserves indentation
+    relative to the closing fence.
+    
+```
+
 ## 3.3 Arithmetic, logical and comparison operators
 
 The arithmetic operators:
@@ -237,6 +279,35 @@ the next comparison would charge you for it anyway. If what you
 are carrying is money, or any quantity where that cannot be
 tolerated, the type you want is not `Real`, and it is in the
 section that follows.
+
+This section's arithmetic in a program, with integer and real
+division side by side:
+
+```kai
+# examples/ch03/01_arithmetic.kai
+fn main() {
+  let a: Int = 7
+  let b: Int = 2
+
+  println("a + b = #{a + b}")
+  println("a * b = #{a * b}")
+  println("a / b = #{a / b}")  # 3 (on Int, / truncates)
+  println("a % b = #{a % b}")  # 1
+
+  println("7.0 / 2.0 = #{7.0 / 2.0}")  # 3.5
+  println("9.0 / 2.0 = #{9.0 / 2.0}")  # 4.5
+}
+```
+
+```
+$ kai run examples/ch03/01_arithmetic.kai
+a + b = 9
+a * b = 14
+a / b = 3
+a % b = 1
+7.0 / 2.0 = 3.5
+9.0 / 2.0 = 4.5
+```
 
 ## 3.4 More numbers: fixed widths and arbitrary precision
 
@@ -472,6 +543,40 @@ The practical rule is simple: if **you care about the value**,
 write a full `if/else`; if **you care about the side effect**,
 write a bare `if` and don't bind it to anything.
 
+`let` with and without an annotation, and a chained `if/else`
+that returns the function's value:
+
+```kai
+# examples/ch03/03_let_if.kai
+fn sign(n: Int) : String =
+  if n < 0 {
+    "negative"
+  } else if n == 0 {
+    "zero"
+  } else {
+    "positive"
+  }
+
+fn main() {
+  let x = 42  # inferred type: Int
+  let y: Real = 3.14  # explicit annotation
+  let message = "x is #{x}, y is #{y}"
+  println(message)
+
+  println("sign(-5) = #{sign(-5)}")
+  println("sign(0)  = #{sign(0)}")
+  println("sign(7)  = #{sign(7)}")
+}
+```
+
+```
+$ kai run examples/ch03/03_let_if.kai
+x is 42, y is 3.14
+sign(-5) = negative
+sign(0)  = zero
+sign(7)  = positive
+```
+
 ## 3.7 Blocks and the value of a block
 
 A block `{ ... }` is an **expression** whose value is the value
@@ -480,10 +585,22 @@ and their values are discarded — except where you bind them
 with `let`.
 
 ```kai
+# examples/ch03/04_blocks.kai
 fn square_plus_one(x: Int) : Int {
   let square = x * x
-  square + 1
+  square + 1  # the block's value
 }
+
+fn main() {
+  println("f(3) = #{square_plus_one(3)}")  # 10
+  println("f(5) = #{square_plus_one(5)}")  # 26
+}
+```
+
+```
+$ kai run examples/ch03/04_blocks.kai
+f(3) = 10
+f(5) = 26
 ```
 
 `square` is a local binding. The last line, `square + 1`, is

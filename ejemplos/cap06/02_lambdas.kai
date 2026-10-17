@@ -3,15 +3,15 @@
 fn aplica(f: (Int) -> Int, x: Int) : Int = f(x)
 
 fn main() {
-  # Forma 1 — flecha con un argumento.
+  # Forma 1: flecha con un argumento.
   let cuadrado = x => x * x
   println("cuadrado(7)  = #{cuadrado(7)}")
 
-  # Forma 2 — flecha con varios argumentos.
+  # Forma 2: flecha con varios argumentos.
   let suma = (a, b) => a + b
   println("suma(3, 4)   = #{suma(3, 4)}")
 
-  # Forma 3 — placeholder, lambda implícita unaria.
+  # Forma 3: placeholder, lambda implícita unaria.
   # Solo válida en posición donde se espera una función.
   let xs = [1, 2, 3, 4, 5]
   let dobles = xs |> list.map(n => n * 2)

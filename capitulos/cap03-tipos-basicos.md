@@ -134,6 +134,48 @@ Los `Char` se escriben con comilla simple: `'a'`, `'\n'`,
 tipos distintos. Eso evita una familia de errores propios de
 los lenguajes que confunden ambos.
 
+Los tres mecanismos juntos, en un programa que corre:
+
+```kai
+# ejemplos/cap03/02_strings.kai
+fn main() {
+  let nombre = "kaikai"
+  let edad = 1
+
+  # Interpolación con #{...}
+  println("Hola, #{nombre}. El lenguaje tiene #{edad} año.")
+
+  # Concatenación con ++
+  let saludo = "Hola, " ++ nombre
+  println(saludo)
+
+  # Cualquier expresión cabe dentro de #{...}
+  let a = 7
+  let b = 2
+  println("La suma de #{a} y #{b} es #{a + b}.")
+
+  # Triple-quote para multi-línea
+  let mensaje = """
+    Esto es un mensaje
+    de varias líneas, que mantiene
+    la indentación relativa al cierre.
+    """
+  println(mensaje)
+}
+```
+
+```
+$ kai run ejemplos/cap03/02_strings.kai
+Hola, kaikai. El lenguaje tiene 1 año.
+Hola, kaikai
+La suma de 7 y 2 es 9.
+
+    Esto es un mensaje
+    de varias líneas, que mantiene
+    la indentación relativa al cierre.
+    
+```
+
 ## 3.3 Operadores aritméticos, lógicos y de comparación
 
 Los operadores aritméticos:
@@ -242,6 +284,35 @@ estaría redondeando para que la cuenta se vea bien, y la
 próxima comparación te lo cobraría igual. Si lo que llevas es
 dinero, o cualquier cantidad donde eso no se tolera, el tipo
 que quieres no es `Real`, y está en la sección que sigue.
+
+La aritmética de esta sección en un programa, con la división
+entera y la real una al lado de la otra:
+
+```kai
+# ejemplos/cap03/01_aritmetica.kai
+fn main() {
+  let a: Int = 7
+  let b: Int = 2
+
+  println("a + b = #{a + b}")
+  println("a * b = #{a * b}")
+  println("a / b = #{a / b}")  # 3 (sobre Int, / trunca)
+  println("a % b = #{a % b}")  # 1
+
+  println("7.0 / 2.0 = #{7.0 / 2.0}")  # 3.5
+  println("9.0 / 2.0 = #{9.0 / 2.0}")  # 4.5
+}
+```
+
+```
+$ kai run ejemplos/cap03/01_aritmetica.kai
+a + b = 9
+a * b = 14
+a / b = 3
+a % b = 1
+7.0 / 2.0 = 3.5
+9.0 / 2.0 = 4.5
+```
 
 ## 3.4 Más números: anchos fijos y precisión arbitraria
 
@@ -477,6 +548,40 @@ La regla práctica es simple: si **te interesa el valor**, escribe
 un `if/else` exhaustivo; si **te interesa el efecto**, escribe
 un `if` solo, sin atarlo a nada.
 
+`let` con y sin anotación, y un `if/else` encadenado que
+devuelve el valor de la función:
+
+```kai
+# ejemplos/cap03/03_let_if.kai
+fn signo(n: Int) : String =
+  if n < 0 {
+    "negativo"
+  } else if n == 0 {
+    "cero"
+  } else {
+    "positivo"
+  }
+
+fn main() {
+  let x = 42  # tipo inferido: Int
+  let y: Real = 3.14  # con anotación explícita
+  let mensaje = "x es #{x}, y es #{y}"
+  println(mensaje)
+
+  println("signo(-5) = #{signo(-5)}")
+  println("signo(0)  = #{signo(0)}")
+  println("signo(7)  = #{signo(7)}")
+}
+```
+
+```
+$ kai run ejemplos/cap03/03_let_if.kai
+x es 42, y es 3.14
+signo(-5) = negativo
+signo(0)  = cero
+signo(7)  = positivo
+```
+
 ## 3.7 Bloques y el valor de un bloque
 
 Un bloque `{ ... }` es una **expresión** cuyo valor es el de la
@@ -485,10 +590,22 @@ orden y sus valores se descartan, salvo cuando los atas con
 `let`.
 
 ```kai
+# ejemplos/cap03/04_bloques.kai
 fn cuadrado_mas_uno(x: Int) : Int {
   let cuadrado = x * x
-  cuadrado + 1
+  cuadrado + 1  # valor del bloque
 }
+
+fn main() {
+  println("f(3) = #{cuadrado_mas_uno(3)}")  # 10
+  println("f(5) = #{cuadrado_mas_uno(5)}")  # 26
+}
+```
+
+```
+$ kai run ejemplos/cap03/04_bloques.kai
+f(3) = 10
+f(5) = 26
 ```
 
 `cuadrado` es un binding local. La última línea, `cuadrado + 1`,
