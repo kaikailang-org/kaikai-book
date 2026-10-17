@@ -790,6 +790,7 @@ sin perder el sistema de tipos ni la fila de efectos.
 El caso más simple es atarse a una función de libc directo:
 
 ```kai
+# ejemplos/cap16/ffi/01_libc_abs.kai
 extern "C" fn llabs(n: Int) : Int / Ffi
 
 fn main() : Unit / Stdout + Ffi {
@@ -798,7 +799,7 @@ fn main() : Unit / Stdout + Ffi {
 ```
 
 ```
-$ kai run abs.kai
+$ kai run ejemplos/cap16/ffi/01_libc_abs.kai
 |-7| = 7
 ```
 
@@ -868,6 +869,22 @@ tipo C no tiene mapeo kaikai (`size_t`, un struct de libc)
 no se ata directo: lo envuelves en un `.c` chico, como
 vemos a continuación.
 
+El binding completo, con su llamada:
+
+```kai
+# ejemplos/cap16/ffi/02_renombre.kai
+extern "C"("abs") fn c_abs(n: I32) : I32 / Ffi
+
+fn main() : Unit / Stdout + Ffi {
+  print("|-7| = #{c_abs(-7)}")
+}
+```
+
+```
+$ kai run ejemplos/cap16/ffi/02_renombre.kai
+|-7| = 7
+```
+
 ### Enlazar contra tu propio código C
 
 Para bibliotecas que no estén en libc, la forma típica es:
@@ -880,20 +897,24 @@ que otra gente va a usar.
 Un ejemplo mínimo. El lado C:
 
 ```c
-// shim.h
+// ejemplos/cap16/ffi/03_shim/shim.h
 #include <stdint.h>
 int64_t my_double(int64_t x);
 ```
 
 ```c
-// shim.c
+// ejemplos/cap16/ffi/03_shim/shim.c
 #include "shim.h"
-int64_t my_double(int64_t x) { return x * 2; }
+
+int64_t my_double(int64_t x) {
+  return x * 2;
+}
 ```
 
 El lado kaikai:
 
 ```kai
+# ejemplos/cap16/ffi/03_shim/app.kai
 extern "C" fn my_double(x: Int) : Int / Ffi
 
 fn main() : Unit / Stdout + Ffi {
@@ -906,6 +927,7 @@ de entorno `CFLAGS`, que `kai` pasa al compilador C
 anfitrión:
 
 ```
+$ cd ejemplos/cap16/ffi/03_shim
 $ CFLAGS="shim.c" kai build app.kai -o app
 $ ./app
 doble(21) = 42

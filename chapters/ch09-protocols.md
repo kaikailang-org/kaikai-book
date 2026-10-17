@@ -142,6 +142,38 @@ holds by itself. You also gain what a bare `Int` never gave
 you: `Score` and `Age` stop being the same type, and the
 compiler stops letting you add them together.
 
+A hand-written impl, and the interpolation that starts using
+it without being asked:
+
+```kai
+# examples/ch09/01_basic_protocol.kai
+type Point = { x: Int, y: Int }
+
+# Manual implementation: format as Cartesian "(x, y)".
+impl Show for Point {
+  fn show(p: Point) : String =
+    "(#{p.x}, #{p.y})"
+}
+
+fn main() {
+  let origin = Point { x: 0, y: 0 }
+  let p = Point { x: 3, y: 4 }
+  println(show(origin))
+  println(show(p))
+
+  # Since Show is implemented, interpolation uses it
+  # automatically:
+  println("p is at #{p}")
+}
+```
+
+```
+$ kai run examples/ch09/01_basic_protocol.kai
+(0, 0)
+(3, 4)
+p is at (3, 4)
+```
+
 ## 9.3 The five stdlib protocols
 
 kaikai ships five protocols in `stdlib/protocols.kai` you'll
@@ -185,6 +217,65 @@ impl Ord for Account {
 If implementing three operations of `Ord` feels like too much
 work, hold on for §9.4: in many cases, the compiler derives
 them for you.
+
+`Eq` by id and `Ord` by balance on the same type, which is
+exactly the case where deriving doesn't help:
+
+```kai
+# examples/ch09/02_eq_ord.kai
+type Account = {
+  id: Int,
+  balance: Int
+}
+
+impl Eq for Account {
+  fn eq(a: Account, b: Account) : Bool = a.id == b.id
+}
+
+# Ordering by balance, not id. The implementor chooses.
+impl Ord for Account {
+  fn cmp(a: Account, b: Account) : Int =
+    if a.balance < b.balance {
+      -1
+    } else if a.balance > b.balance {
+      1
+    } else {
+      0
+    }
+  fn min(a: Account, b: Account) : Account =
+    if a.balance < b.balance { a } else { b }
+  fn max(a: Account, b: Account) : Account =
+    if a.balance > b.balance { a } else { b }
+}
+
+fn main() {
+  let a1 = Account { id: 1, balance: 100 }
+  let a2 = Account { id: 1, balance: 999 }  # same id, different balance
+  let a3 = Account { id: 2, balance: 50 }
+
+  let same_id_12 = eq(a1, a2)
+  let same_id_13 = eq(a1, a3)
+  println("a1 == a2: #{same_id_12}")  # true: id wins
+  println("a1 == a3: #{same_id_13}")  # false
+
+  let cmp12 = cmp(a1, a2)
+  let cmp13 = cmp(a1, a3)
+  println("cmp(a1, a2): #{cmp12}")  # negative: 100 < 999
+  println("cmp(a1, a3): #{cmp13}")  # positive: 100 > 50
+
+  let smaller = min(a1, a3)
+  println("smaller balance: #{smaller.balance}")  # 50
+}
+```
+
+```
+$ kai run examples/ch09/02_eq_ord.kai
+a1 == a2: true
+a1 == a3: false
+cmp(a1, a2): -1
+cmp(a1, a3): 1
+smaller balance: 50
+```
 
 ## 9.4 `#[derive(...)]` and when to use it
 
@@ -239,6 +330,48 @@ The practical rule:
 You already saw `#[derive(Show)]` over `Point` in the tour
 (§1.6); here we show the manual implementation too and when
 each form pays off.
+
+Two derived types, one with `Show` and one with both:
+
+```kai
+# examples/ch09/03_derive.kai
+#[derive(Show)]
+type Person = {
+  name: String,
+  age: Int
+}
+
+#[derive(Show, Eq)]
+type Point = {
+  x: Int,
+  y: Int
+}
+
+fn main() {
+  let ada = Person { name: "Ada", age: 30 }
+  println(show(ada))
+
+  # Automatic Show in interpolation.
+  println("record: #{ada}")
+
+  let p = Point { x: 3, y: 4 }
+  let q = Point { x: 3, y: 4 }
+  let r = Point { x: 5, y: 5 }
+
+  let pq_eq = eq(p, q)
+  let pr_eq = eq(p, r)
+  println("p == q: #{pq_eq}")  # true
+  println("p == r: #{pr_eq}")  # false
+}
+```
+
+```
+$ kai run examples/ch09/03_derive.kai
+Person { name: Ada, age: 30 }
+record: Person { name: Ada, age: 30 }
+p == q: true
+p == r: false
+```
 
 ### Derives that aren't protocols: `Json`
 
@@ -360,6 +493,55 @@ kaikai code include `Encodable` for various formats,
 `Loggable` so the logging system knows how to represent
 your type, `Validable` for validation rules, etc. Any
 "behavior several types share" is a candidate.
+
+A custom protocol with three implementations, one per type:
+
+```kai
+# examples/ch09/04_own_protocol.kai
+protocol Drawable {
+  draw(x: Self) : String
+}
+
+# Three different types, three implementations.
+
+type Circle = { radius: Int }
+
+type Square = { side: Int }
+
+type Triangle = { base: Int, height: Int }
+
+impl Drawable for Circle {
+  fn draw(c: Circle) : String =
+    "Circle of radius #{c.radius}"
+}
+
+impl Drawable for Square {
+  fn draw(s: Square) : String =
+    "Square of side #{s.side}"
+}
+
+impl Drawable for Triangle {
+  fn draw(t: Triangle) : String =
+    "Triangle #{t.base}x#{t.height}"
+}
+
+fn main() {
+  let c = Circle { radius: 5 }
+  let s = Square { side: 3 }
+  let t = Triangle { base: 4, height: 6 }
+
+  println(draw(c))
+  println(draw(s))
+  println(draw(t))
+}
+```
+
+```
+$ kai run examples/ch09/04_own_protocol.kai
+Circle of radius 5
+Square of side 3
+Triangle 4x6
+```
 
 ## 9.6 Why no Haskell-style typeclasses
 
@@ -509,6 +691,50 @@ function works for any type that knows how to `show`". The
 bound doesn't give you Haskell's implicit resolver or its
 propagation; it gives you the contract written where it's
 read, which is almost always what you wanted.
+
+The three shapes of bound in one program: one from the stdlib,
+one of your own, and one demanding two protocols at once.
+
+```kai
+# examples/ch09/05_bounds.kai
+protocol Drawable {
+  draw(x: Self) : String
+}
+
+type Circle = { radius: Int }
+
+impl Drawable for Circle {
+  fn draw(c: Circle) : String = "circle of radius #{show(c.radius)}"
+}
+
+fn larger[T: Ord](a: T, b: T) : T = max(a, b)
+
+fn render[T: Drawable](x: T) : String = "[" ++ draw(x) ++ "]"
+
+fn label[T: Show + Eq](a: T, b: T) : String =
+  if eq(a, b) {
+    "equal: #{show(a)}"
+  } else {
+    "#{show(a)} and #{show(b)}"
+  }
+
+fn main() : Unit / Stdout {
+  Stdout.print(show(larger(3, 7)))
+  Stdout.print(show(larger("a", "b")))
+  Stdout.print(render(Circle { radius: 5 }))
+  Stdout.print(label(1, 1))
+  Stdout.print(label(2, 9))
+}
+```
+
+```
+$ kai run examples/ch09/05_bounds.kai
+7
+b
+[circle of radius 5]
+equal: 1
+2 and 9
+```
 
 ## 9.8 Operators: `+`, `==`, `<` as protocols
 

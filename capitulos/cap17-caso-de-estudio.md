@@ -425,6 +425,7 @@ El efecto `Signal` convierte esa interrupción en algo que tu
 programa decide cuándo atender:
 
 ```kai
+# ejemplos/cap17/01_senal.kai
 import effects.os
 
 fn main() : Unit / Stdout + Signal = {
@@ -434,6 +435,10 @@ fn main() : Unit / Stdout + Signal = {
   println("señal recibida, salgo ordenado")
 }
 ```
+
+Para verlo, córrelo y manda un Ctrl-C: queda esperando hasta
+que la señal llegue, así que no hay salida que mostrar antes
+de eso.
 
 `Signal.on(SigInt)` se suscribe; `Signal.await()` suspende la
 fibra hasta que llegue. Como suspende, es un punto de yield

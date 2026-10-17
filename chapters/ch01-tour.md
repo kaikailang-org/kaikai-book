@@ -71,6 +71,7 @@ picks it up.
 The classic interview exercise, in kaikai:
 
 ```kai
+# examples/ch01/02_fizzbuzz.kai
 type Tag
   = Both
   | Fizz
@@ -94,6 +95,9 @@ fn label(c: Tag) : String {
 }
 
 fn loop(i: Int, n: Int) : Unit / Stdout {
+  # An `if` with no `else` yields an implicit `()` when the
+  # condition is false — the usual way to say "do something or
+  # stop the recursion".
   if i <= n {
     println(label(classify(i)))
     loop(i + 1, n)
@@ -103,6 +107,25 @@ fn loop(i: Int, n: Int) : Unit / Stdout {
 fn main() {
   loop(1, 15)
 }
+```
+
+```
+$ kai run examples/ch01/02_fizzbuzz.kai
+1
+2
+Fizz
+4
+Buzz
+Fizz
+7
+8
+Fizz
+Buzz
+11
+Fizz
+13
+14
+FizzBuzz
 ```
 
 What is interesting about this version is not that it prints

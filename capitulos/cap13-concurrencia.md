@@ -247,6 +247,7 @@ solo puede vivir dentro de un nursery, y el nursery espera a
 todas sus hijas antes de salir.
 
 ```kai
+# ejemplos/cap13/02_nursery.kai
 import spawn
 
 fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
@@ -263,6 +264,19 @@ fn main() : Unit / Stdout + Spawn + Cancel {
     n.spawn(() => worker("B", 3))
   }
 }
+```
+
+Una salida posible:
+
+<!-- transcripto: orden no determinista, como dice el texto -->
+```
+$ kai run ejemplos/cap13/02_nursery.kai
+A
+A
+A
+B
+B
+B
 ```
 
 El `let _` envuelve al `nursery` entero: el bloque devuelve el
@@ -317,6 +331,52 @@ kaikai integra el patrón en el sistema de efectos: la capacidad
 `Spawn` solo está disponible dentro de un nursery, y eso es lo
 que el sistema de tipos exige.
 
+`n.select` en uso, que es la primitiva de carrera: el nursery
+devuelve el valor de la primera hija que termina y cancela a la
+otra sin que tú lo pidas.
+
+```kai
+# ejemplos/cap13/04_race.kai
+import spawn
+
+fn rapido() : Int / Stdout + Spawn {
+  println("rapido: empieza")
+  spawn.yield()
+  println("rapido: termina")
+  1
+}
+
+fn lento() : Int / Stdout + Spawn {
+  println("lento: empieza")
+  spawn.yield()
+  spawn.yield()
+  spawn.yield()
+  println("lento: termina")
+  2
+}
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  let ganador = nursery { n ->
+    let a = n.spawn(() => rapido())
+    let b = n.spawn(() => lento())
+    n.select([a, b])
+  }
+  println("ganó: #{ganador}")
+}
+```
+
+Una salida posible:
+
+<!-- transcripto: orden no determinista, como dice el texto -->
+```
+$ kai run ejemplos/cap13/04_race.kai
+rapido: empieza
+lento: empieza
+lento: termina
+rapido: termina
+ganó: 1
+```
+
 ### Por qué `Cancel` aparece en la firma de `main`
 
 Fíjate que `main` declara `/ Stdout + Spawn + Cancel`. ¿Por qué
@@ -356,6 +416,47 @@ mismo para los actores (efecto `Actor[Msg]`), y el patrón se
 repite: lo distintivo de kaikai no es la lista de
 construcciones, sino que **todas son la misma construcción**
 (efectos algebraicos) con nombres distintos.
+
+Tres hijas y un `await` por cada una, que es la forma de
+quedarse con los resultados en vez de solo esperarlos:
+
+```kai
+# ejemplos/cap13/05_worker_pool.kai
+import spawn
+
+fn procesar(id: Int, x: Int) : Int / Stdout + Spawn {
+  println("worker #{id}: procesando #{x}")
+  spawn.yield()
+  spawn.yield()
+  let r = x * x
+  println("worker #{id}: listo #{x} -> #{r}")
+  r
+}
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  let resultados = nursery { n ->
+    let a = n.spawn(() => procesar(1, 3))
+    let b = n.spawn(() => procesar(2, 5))
+    let c = n.spawn(() => procesar(3, 7))
+    [n.await(a), n.await(b), n.await(c)]
+  }
+  println("resultados: #{resultados}")
+}
+```
+
+Una salida posible:
+
+<!-- transcripto: orden no determinista, como dice el texto -->
+```
+$ kai run ejemplos/cap13/05_worker_pool.kai
+worker 1: procesando 3
+worker 2: procesando 5
+worker 2: listo 5 -> 25
+worker 1: listo 3 -> 9
+worker 3: procesando 7
+worker 3: listo 7 -> 49
+resultados: [9, 25, 49]
+```
 
 ## 13.5 Cancelación cooperativa
 
@@ -424,6 +525,100 @@ sus pares se conviertan en mensajes en su mailbox en vez de
 gatillar cancelación, pero esa es una opción explícita y
 local; el default sigue siendo la cancelación cooperativa
 descrita aquí.
+
+Una hija que se rinde por su cuenta, las hermanas que reciben
+la cancelación, el cleanup de cada una y la caída que el
+nursery re-lanza al salir:
+
+```kai
+# ejemplos/cap13/03_cancel.kai
+import spawn
+
+# Una fibra que cuenta mientras nadie la cancela.
+fn trabajador_largo(tag: String) : Unit / Stdout + Spawn + Cancel {
+  handle {
+    contar(tag, 0)
+  } with Cancel {
+    raise(resume) -> {
+      println("#{tag}: cancelado, hago cleanup")
+      # no llamamos a resume: la fibra se desenrolla
+    }
+  }
+}
+
+fn contar(tag: String, n: Int) : Unit / Stdout + Spawn + Cancel {
+  println("#{tag}: #{n}")
+  spawn.yield()
+  contar(tag, n + 1)
+}
+
+# Una fibra que se rinde después de unos pasos.
+fn renunciar(n: Int) : Unit / Stdout + Spawn + Fail {
+  if n > 2 {
+    Fail.fail("renuncio después de 3 pasos")
+  } else {
+    println("paso #{n}")
+    spawn.yield()
+    renunciar(n + 1)
+  }
+}
+
+effect Fail {
+  fail(motivo: String) : Nothing
+}
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  nursery { n ->
+    n.spawn(() => trabajador_largo("A"))
+    n.spawn(() => trabajador_largo("B"))
+    let r = n.spawn(
+      () => handle {
+        renunciar(0)
+      } with Fail {
+        fail(motivo, resume) -> {
+          println("la fibra se rinde: #{motivo}")
+          Cancel.raise()
+        }
+      }
+    )
+    n.await(r)
+  }
+}
+```
+
+Una salida posible:
+
+<!-- transcripto: orden no determinista, como dice el texto -->
+```
+$ kai run ejemplos/cap13/03_cancel.kai
+A: 0
+A: 1
+B: 0
+A: 2
+A: 3
+A: 4
+B: 1
+B: 2
+B: 3
+A: 5
+paso 0
+paso 1
+B: 4
+paso 2
+A: 6
+A: 7
+A: 8
+A: 9
+B: 5
+A: 10
+la fibra se rinde: renuncio después de 3 pasos
+A: 11
+A: 12
+A: cancelado, hago cleanup
+B: 6
+B: cancelado, hago cleanup
+kai: nursery child cancelled; no survivors
+```
 
 ## 13.6 Memoria mutable por fibra
 

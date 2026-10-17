@@ -176,6 +176,36 @@ En kaikai los records son inmutables: el `c` que entra y el
 alcance, sin necesidad de un mecanismo para "el valor antes
 de la llamada".
 
+Las dos cláusulas en firmas que corren, con `result` nombrando
+el valor de retorno:
+
+```kai
+# ejemplos/cap11/01_contratos_basicos.kai
+fn divide(a: Int, b: Int) : Int
+  requires b != 0
+  ensures result * b + a % b == a
+= a / b
+
+fn factorial(n: Int) : Int
+  requires n >= 0
+= if n <= 1 { 1 } else { n * factorial(n - 1) }
+
+fn main() {
+  println("10 / 3 = #{divide(10, 3)}")
+  println("17 / 5 = #{divide(17, 5)}")
+  println("5! = #{factorial(5)}")
+  println("10! = #{factorial(10)}")
+}
+```
+
+```
+$ kai run ejemplos/cap11/01_contratos_basicos.kai
+10 / 3 = 3
+17 / 5 = 3
+5! = 120
+10! = 3628800
+```
+
 ## 11.4 Refinement types
 
 Mientras que los contratos hablan de operaciones, los
@@ -207,6 +237,41 @@ let y: NoNeg = -5     # ERROR: -5 no satisface self >= 0
 Si lo cumples con un valor dinámico, el compilador inserta una
 verificación en runtime: igual que con un `requires` cuyo argumento
 no se puede deducir estáticamente.
+
+Dos refinements declarados y usados, con las dos líneas que el
+compilador rechaza comentadas al final:
+
+```kai
+# ejemplos/cap11/04_refinements.kai
+type NoNeg = Int where self >= 0
+
+type Probabilidad = Real where self >= 0.0 and self <= 1.0
+
+fn doblar(n: NoNeg) : NoNeg = n + n
+
+fn evento(p: Probabilidad, descripcion: String) : Unit / Stdout =
+  println("#{descripcion} con prob #{p}")
+
+fn main() {
+  let x: NoNeg = 16
+  println("doblar(16) = #{doblar(x)}")
+
+  let pr: Probabilidad = 0.3
+  evento(pr, "lluvia mañana")
+
+  # Lo siguiente NO compila: -5 no satisface NoNeg.
+  # let y : NoNeg = -5
+
+  # Y esto tampoco: 1.5 no satisface 0.0 <= self <= 1.0.
+  # let pr2 : Probabilidad = 1.5
+}
+```
+
+```
+$ kai run ejemplos/cap11/04_refinements.kai
+doblar(16) = 32
+lluvia mañana con prob 0.3
+```
 
 ### Dónde se chequea: no solo en un `let`
 
@@ -343,6 +408,38 @@ La regla mental: **lo que el compilador puede probar barato, lo
 prueba; lo demás se prueba al ejecutarse**. El binario lleva
 ambos casos sin que tengas que distinguir cuál de los dos
 aplicó.
+
+Un programa con las dos caras: la línea comentada no compila
+porque el cero es literal, y la que queda sí compila y aborta
+al llegar al cero por cálculo.
+
+```kai
+# ejemplos/cap11/02_violacion.kai
+fn divide(a: Int, b: Int) : Int
+  requires b != 0
+= a / b
+
+fn main() {
+  println("antes")
+  # Esto NO compila: el compilador detecta b == 0 con literal:
+  # let bad = divide(10, 0)
+
+  # Pero esto sí compila, y aborta en runtime:
+  let cero_dinamico = 10 - 10
+  let r = divide(10, cero_dinamico)
+  println("nunca llegamos aquí: #{r}")
+}
+```
+
+```
+$ kai run ejemplos/cap11/02_violacion.kai
+antes
+panic: requires violated in `divide`
+required: b != 0
+declared at line 9, col 14
+  = help: narrow `b` to `Int where != 0`
+argument b was: 0
+```
 
 ## 11.6 Tres formas de garantía
 

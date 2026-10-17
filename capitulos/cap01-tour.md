@@ -65,6 +65,7 @@ Este es el típico ejercicio de entrevista. Escrito en kaikai, se ve
 así:
 
 ```kai
+# ejemplos/cap01/02_fizzbuzz.kai
 type Tag
   = Both
   | Fizz
@@ -88,6 +89,8 @@ fn label(c: Tag) : String {
 }
 
 fn loop(i: Int, n: Int) : Unit / Stdout {
+  # Un `if` sin `else` devuelve `()` implícito cuando la condición
+  # es falsa, la forma habitual de "haz algo o detén la recursión".
   if i <= n {
     println(label(classify(i)))
     loop(i + 1, n)
@@ -97,6 +100,25 @@ fn loop(i: Int, n: Int) : Unit / Stdout {
 fn main() {
   loop(1, 15)
 }
+```
+
+```
+$ kai run ejemplos/cap01/02_fizzbuzz.kai
+1
+2
+Fizz
+4
+Buzz
+Fizz
+7
+8
+Fizz
+Buzz
+11
+Fizz
+13
+14
+FizzBuzz
 ```
 
 Lo interesante de esta versión no es la salida (`1, 2, Fizz,

@@ -2,7 +2,7 @@
 # El padre obtiene un `Pid[Msg]` que es el handle para mandarle
 # mensajes.
 #
-# Acá el padre arranca un "trabajador" que lee tres tareas y las
+# Aquí el padre arranca un "trabajador" que lee tres tareas y las
 # procesa. Después el padre le manda las tres tareas y termina.
 
 import actor

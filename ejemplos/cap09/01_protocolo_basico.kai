@@ -1,6 +1,6 @@
 # Declarar un protocolo y dar una implementación para un tipo
 # propio. El stdlib ya provee Show para los tipos primitivos;
-# acá lo extendemos a un record nuevo.
+# aquí lo extendemos a un record nuevo.
 
 type Punto = { x: Int, y: Int }
 

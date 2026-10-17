@@ -782,6 +782,7 @@ type system or the effect row.
 The simplest case is binding a libc function directly:
 
 ```kai
+# examples/ch16/ffi/01_libc_abs.kai
 extern "C" fn llabs(n: Int) : Int / Ffi
 
 fn main() : Unit / Stdout + Ffi {
@@ -790,7 +791,7 @@ fn main() : Unit / Stdout + Ffi {
 ```
 
 ```
-$ kai run abs.kai
+$ kai run examples/ch16/ffi/01_libc_abs.kai
 |-7| = 7
 ```
 
@@ -856,6 +857,22 @@ redeclaration. And a symbol whose C type has no kaikai
 mapping (`size_t`, a libc struct) isn't bound directly: you
 wrap it in a small `.c`, as we'll see next.
 
+The complete binding, with its call site:
+
+```kai
+# examples/ch16/ffi/02_rename.kai
+extern "C"("abs") fn c_abs(n: I32) : I32 / Ffi
+
+fn main() : Unit / Stdout + Ffi {
+  print("|-7| = #{c_abs(-7)}")
+}
+```
+
+```
+$ kai run examples/ch16/ffi/02_rename.kai
+|-7| = 7
+```
+
 ### Linking against your own C code
 
 For libraries that aren't already in libc, the typical
@@ -868,20 +885,24 @@ something other people will use.
 A minimal example. The C side:
 
 ```c
-// shim.h
+// examples/ch16/ffi/03_shim/shim.h
 #include <stdint.h>
 int64_t my_double(int64_t x);
 ```
 
 ```c
-// shim.c
+// examples/ch16/ffi/03_shim/shim.c
 #include "shim.h"
-int64_t my_double(int64_t x) { return x * 2; }
+
+int64_t my_double(int64_t x) {
+  return x * 2;
+}
 ```
 
 The kaikai side:
 
 ```kai
+# examples/ch16/ffi/03_shim/app.kai
 extern "C" fn my_double(x: Int) : Int / Ffi
 
 fn main() : Unit / Stdout + Ffi {
@@ -894,6 +915,7 @@ For a one-off program you wire it by hand through the
 C compiler:
 
 ```
+$ cd examples/ch16/ffi/03_shim
 $ CFLAGS="shim.c" kai build app.kai -o app
 $ ./app
 double(21) = 42

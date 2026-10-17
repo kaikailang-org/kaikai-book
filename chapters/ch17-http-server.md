@@ -424,6 +424,7 @@ The `Signal` effect turns that interruption into something
 your program decides when to handle:
 
 ```kai
+# examples/ch17/01_signal.kai
 import effects.os
 
 fn main() : Unit / Stdout + Signal = {
@@ -433,6 +434,9 @@ fn main() : Unit / Stdout + Signal = {
   println("signal received, shutting down cleanly")
 }
 ```
+
+To see it, run it and send a Ctrl-C: it waits until the signal
+arrives, so there is no output to show before that.
 
 `Signal.on(SigInt)` subscribes; `Signal.await()` suspends the
 fiber until one arrives. Because it suspends, it is a yield

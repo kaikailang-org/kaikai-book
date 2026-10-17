@@ -291,6 +291,43 @@ comes out without `Log`. The type system stays strict, but
 the handler is the door through which an effect leaves the
 scope.
 
+The effect, its operation and the handler that serves it, in a
+complete program:
+
+```kai
+# examples/ch12/01_log_basic.kai
+effect Log {
+  log(msg: String) : Unit
+}
+
+# `greet` uses `Log.log` and so its row carries `/ Log`.
+# The function doesn't know whether messages go to the
+# console, to a file, or nowhere: it only knows the effect
+# is available.
+
+fn greet(name: String) : Unit / Log {
+  Log.log("hello, " ++ name)
+}
+
+fn main() {
+  handle {
+    greet("kaikai")
+    greet("Ada")
+  } with Log {
+    log(msg, resume) -> {
+      println("[INFO] " ++ msg)
+      resume(())
+    }
+  }
+}
+```
+
+```
+$ kai run examples/ch12/01_log_basic.kai
+[INFO] hello, kaikai
+[INFO] hello, Ada
+```
+
 ### The same body with two handlers
 
 The power shows when you notice that `greet` doesn't change
@@ -324,6 +361,49 @@ function `greet` is **handler-agnostic**.
 This is what replaces dependency injection. No constructor to
 pass around, no service to mock; the handler is the
 implementation.
+
+The same body under two handlers, one that prints and one that
+stays quiet:
+
+```kai
+# examples/ch12/02_two_handlers.kai
+effect Log {
+  log(msg: String) : Unit
+}
+
+fn greet(name: String) : Unit / Log {
+  Log.log("hello, " ++ name)
+}
+
+fn main() {
+  # Handler 1: prints with prefix.
+  handle {
+    greet("verbose mode")
+  } with Log {
+    log(msg, resume) -> {
+      println("[INFO] " ++ msg)
+      resume(())
+    }
+  }
+
+  # Handler 2: drops the messages.
+  handle {
+    greet("silent mode")
+  } with Log {
+    log(msg, resume) -> {
+      resume(())
+    }
+  }
+
+  println("(end)")
+}
+```
+
+```
+$ kai run examples/ch12/02_two_handlers.kai
+[INFO] hello, verbose mode
+(end)
+```
 
 ## 12.5 `resume`: the handler decides what happens next
 
@@ -384,6 +464,34 @@ you "ask" for it via an effect, and the handler in `main`
 decides the answer. In tests, a different handler answers
 something else.
 
+The operation that returns a value, and the `resume` that
+hands it back:
+
+```kai
+# examples/ch12/03_ask.kai
+effect Ask {
+  name() : String
+}
+
+fn greeting() : String / Ask {
+  "hello, " ++ Ask.name()
+}
+
+fn main() : Unit / Stdout {
+  let message = handle {
+    greeting()
+  } with Ask {
+    name(resume) -> resume("world")
+  }
+  println(message)
+}
+```
+
+```
+$ kai run examples/ch12/03_ask.kai
+hello, world
+```
+
 ### Handlers that DON'T call `resume`
 
 If the handler **doesn't** call `resume`, the body is
@@ -428,6 +536,44 @@ That's the key: kaikai's "exceptions" are a special case of
 the general mechanism. There's no special syntax for
 `try/catch`; there's `handle` and an effect whose operation
 returns `Nothing`.
+
+A handler that never calls `resume`: the operation cuts the
+body short and the whole `handle` returns something else.
+
+```kai
+# examples/ch12/04_fail.kai
+effect Fail {
+  fail(reason: String) : Nothing
+}
+
+fn divide(a: Int, b: Int) : Int / Fail {
+  if b == 0 {
+    Fail.fail("division by zero")
+  } else {
+    a / b
+  }
+}
+
+fn main() : Unit / Stdout {
+  let r = handle {
+    let x = divide(10, 2)
+    let y = divide(20, 0)  # this is where `Fail.fail` fires
+    x + y  # never evaluated
+  } with Fail {
+    fail(reason, resume) -> {
+      println("failed: " ++ reason)
+      0  # replacement value
+    }
+  }
+  println("result: #{r}")
+}
+```
+
+```
+$ kai run examples/ch12/04_fail.kai
+failed: division by zero
+result: 0
+```
 
 ### Code after `resume`
 
@@ -544,6 +690,41 @@ This pattern is generic: with the same shape you build
 accumulation), counters, caches, sessions. All without
 touching global variables, all without threading parameters.
 
+An accumulator that lives in the handler, not in the body:
+
+```kai
+# examples/ch12/05_state.kai
+effect State[T] {
+  get() : T
+  set(v: T) : Unit
+}
+
+# Sum the elements of a list using a "mutable" accumulator
+# encapsulated in the handler.
+
+fn sum(xs: [Int]) : Int {
+  handle {
+    list.foreach(xs, x => State.set(State.get() + x))
+    State.get()
+  } with State[Int](0) {
+    get(resume) -> resume(state)  # return the state, unchanged
+    set(v, resume) -> resume((), v)  # return (), state becomes v
+    return(x) -> x
+  }
+}  # drop the final state
+
+fn main() : Unit / Stdout {
+  println("sum([1,2,3,4,5]) = #{sum([1,2,3,4,5])}")
+  println("sum([]) = #{sum([])}")
+}
+```
+
+```
+$ kai run examples/ch12/05_state.kai
+sum([1,2,3,4,5]) = 15
+sum([]) = 0
+```
+
 ## 12.7 `var`, `Ref[T]` and `Array[T]`: two distinct mechanisms
 
 `State[T]` is the general tool for carrying a changing value,
@@ -608,6 +789,33 @@ And it isn't slow: the compiler detects the pattern "local
 cell with one-shot resume" and specializes it down to a stack
 frame slot, equivalent to a C mutable variable. Zero cost
 compared to the imperative code you'd otherwise write.
+
+A counter with `var`, which is the same `State[T]` written the
+way you'd write it in an imperative language:
+
+```kai
+# examples/ch12/10_local_var.kai
+fn count_evens(xs: [Int]) : Int {
+  var n := 0
+  list.foreach(xs, x => {
+    if x % 2 == 0 {
+      n := n + 1
+    }
+  })
+  n
+}
+
+fn main() : Unit / Stdout {
+  println("evens in [1..10] = #{count_evens([1,2,3,4,5,6,7,8,9,10])}")
+  println("evens in [] = #{count_evens([])}")
+}
+```
+
+```
+$ kai run examples/ch12/10_local_var.kai
+evens in [1..10] = 5
+evens in [] = 0
+```
 
 ### `Mutable`: the effect behind `Ref[T]` and `Array[T]`
 
@@ -738,6 +946,58 @@ This is a deep difference with `try/catch + global
 variables`: there, the order is implicit and runtime-
 dependent. Here it's explicit and you decide it in the
 signature of the `handle`s.
+
+Two effects in one body and two nested handlers serving them:
+
+```kai
+# examples/ch12/06_composition.kai
+effect Log {
+  log(msg: String) : Unit
+}
+
+effect State[T] {
+  get() : T
+  set(v: T) : Unit
+}
+
+# `accumulate` uses two effects: it reads and writes state,
+# and it logs each step. The signature declares both with
+# `Log + State[Int]`.
+
+fn accumulate(xs: [Int]) : Int / Log + State[Int] {
+  list.foreach(xs, x => {
+    Log.log("adding #{x}")
+    State.set(State.get() + x)
+  })
+  State.get()
+}
+
+fn main() : Unit / Stdout {
+  let total = handle {
+    handle {
+      accumulate([10, 20, 30])
+    } with State[Int](0) {
+      get(resume) -> resume(state)
+      set(v, resume) -> resume((), v)
+      return(x) -> x
+    }
+  } with Log {
+    log(msg, resume) -> {
+      println("[LOG] " ++ msg)
+      resume(())
+    }
+  }
+  println("total = #{total}")
+}
+```
+
+```
+$ kai run examples/ch12/06_composition.kai
+[LOG] adding 10
+[LOG] adding 20
+[LOG] adding 30
+total = 60
+```
 
 ### Guaranteed cleanup: `initially` and `finally`
 
@@ -943,6 +1203,58 @@ One restriction: aliases must be **closed**. You can't write
 `type WithIo[e] = Io + e` (with a row variable). The
 restriction sidesteps unification complications the compiler
 doesn't need to pay for.
+
+An alias used across several signatures, which is where the
+saving shows:
+
+```kai
+# examples/ch12/07_alias.kai
+effect Log {
+  log(msg: String) : Unit
+}
+
+effect Audit {
+  audit(user: String, action: String) : Unit
+}
+
+# `Tracing` groups the two instrumentation effects.
+type Tracing = Log + Audit
+
+fn make_purchase(user: String, amount: Int) : Unit / Tracing {
+  Log.log("start: purchase by #{user} for #{amount}")
+  Audit.audit(user, "purchase($#{amount})")
+  Log.log("end: purchase by #{user}")
+}
+
+fn main() : Unit / Stdout {
+  handle {
+    handle {
+      make_purchase("ada", 100)
+      make_purchase("turing", 250)
+    } with Audit {
+      audit(user, action, resume) -> {
+        println("[AUDIT] #{user}: #{action}")
+        resume(())
+      }
+    }
+  } with Log {
+    log(msg, resume) -> {
+      println("[LOG] " ++ msg)
+      resume(())
+    }
+  }
+}
+```
+
+```
+$ kai run examples/ch12/07_alias.kai
+[LOG] start: purchase by ada for 100
+[AUDIT] ada: purchase($100)
+[LOG] end: purchase by ada
+[LOG] start: purchase by turing for 250
+[AUDIT] turing: purchase($250)
+[LOG] end: purchase by turing
+```
 
 ## 12.11 Default handlers: the effect carries its own
 
@@ -1153,6 +1465,59 @@ If your effect has one reasonable default for production and a
 different one for tests, expose both as wrapper functions
 (`with_test_log`, `with_quiet_log`) and let `main` use the
 default. Whoever writes tests calls the wrapper.
+
+The wrapper in a program: the body names no handler and the
+function decides which one gets installed.
+
+```kai
+# examples/ch12/09_wrapper_default.kai
+effect Log {
+  log(msg: String) : Unit
+}
+
+fn greet(name: String) : Unit / Log {
+  Log.log("hello, " ++ name)
+}
+
+# The user's "default": a function that takes a body and runs
+# it under the standard handler for Log.
+fn with_default_log[A](body: () -> A / Log) : A / Stdout {
+  handle {
+    body()
+  } with Log {
+    log(msg, resume) -> {
+      println("[LOG] " ++ msg)
+      resume(())
+    }
+  }
+}
+
+fn main() {
+  # Use 1: with the default. greet knows nothing about the
+  # handler.
+  with_default_log(() => {
+    greet("kaikai")
+    greet("ada")
+  })
+
+  # Use 2: the caller picks another handler. with_default_log
+  # is not involved.
+  handle {
+    greet("silent mode")
+  } with Log {
+    log(msg, resume) -> resume(())
+  }
+
+  println("(end)")
+}
+```
+
+```
+$ kai run examples/ch12/09_wrapper_default.kai
+[LOG] hello, kaikai
+[LOG] hello, ada
+(end)
+```
 
 ## 12.12 The stdlib handlers are kaikai code
 
