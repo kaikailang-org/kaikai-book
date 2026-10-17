@@ -1,0 +1,19 @@
+# The five pipes over a list. `|>` applies, `|` maps, `||`
+# expands, `|?` filters, and `|!` runs the stage for its effect.
+#
+# The `.` of a stage is the element: `. * 2` needs no name for
+# the parameter.
+
+fn passing(n: Int) : Bool = n >= 40
+
+fn main() {
+  let grades = [55, 32, 70, 41, 28]
+
+  let total = grades |? passing | . * 2 |> list.sum
+  println("passing grades, doubled, summed: #{total}")
+
+  let edges = grades || [. - 1, . + 1]
+  println("edges: #{edges}")
+
+  grades |? passing |! println("passed with #{.}")
+}

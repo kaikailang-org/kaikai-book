@@ -307,7 +307,7 @@ La regla práctica:
   campos, comparación según un campo específico (no el orden
   natural).
 
-Ya viste `#[derive(Show)]` sobre `Punto` en el tour (§1.6); aquí
+Ya viste `#[derive(Show)]` sobre `Punto` en el tour (§1.7); aquí
 mostramos también la implementación manual y cuándo conviene
 una sobre la otra.
 

@@ -1,0 +1,19 @@
+# Los cinco pipes sobre una lista. `|>` aplica, `|` mapea, `||`
+# expande, `|?` filtra y `|!` corre la etapa por su efecto.
+#
+# El `.` de una etapa es el elemento: `. * 2` no necesita que le
+# pongas nombre al parámetro.
+
+fn aprobado(n: Int) : Bool = n >= 40
+
+fn main() {
+  let notas = [55, 32, 70, 41, 28]
+
+  let total = notas |? aprobado | . * 2 |> list.sum
+  println("aprobados, al doble, sumados: #{total}")
+
+  let bordes = notas || [. - 1, . + 1]
+  println("bordes: #{bordes}")
+
+  notas |? aprobado |! println("aprobado con #{.}")
+}

@@ -92,17 +92,18 @@ Materia prima: los cinco programas de
 
 - 1.1 Hola, kaikai
 - 1.2 Tipos algebraicos y `match`: FizzBuzz
-- 1.3 Una calculadora con AST recursivo
-- 1.4 Un efecto propio con su handler
-- 1.5 Dos fibras cooperativas
-- 1.6 Tipos a la medida con protocolos
-- 1.7 Unidades de medida
-- 1.8 Programación por contrato
-- 1.9 Pruebas en el mismo archivo
-- 1.10 Holes: agujeros que compilan
-- 1.11 Dependencias y proyectos: `kai.toml`
-- 1.12 Cómo instalar y correr `kai`
-- 1.13 Cómo está organizado el resto del libro
+- 1.3 Pipes: recorrer sin escribir un loop
+- 1.4 Una calculadora con AST recursivo
+- 1.5 Un efecto propio con su handler
+- 1.6 Dos fibras cooperativas
+- 1.7 Tipos a la medida con protocolos
+- 1.8 Unidades de medida
+- 1.9 Programación por contrato
+- 1.10 Pruebas en el mismo archivo
+- 1.11 Holes: agujeros que compilan
+- 1.12 Dependencias y proyectos: `kai.toml`
+- 1.13 Cómo instalar y correr `kai`
+- 1.14 Cómo está organizado el resto del libro
 - *Sin ejercicios*: el lector aún no tiene herramientas para
   inventar.
 

@@ -328,7 +328,7 @@ The practical rule:
   the natural ordering).
 
 You already saw `#[derive(Show)]` over `Point` in the tour
-(§1.6); here we show the manual implementation too and when
+(§1.7); here we show the manual implementation too and when
 each form pays off.
 
 Two derived types, one with `Show` and one with both:
