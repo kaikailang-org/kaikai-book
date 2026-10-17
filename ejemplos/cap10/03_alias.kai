@@ -17,7 +17,7 @@ fn main() {
   let fuerza: Real<Newton> = masa * g
   println("F = #{fuerza}")
 
-  # Newton y kg*m/sec^2 son la misma unidad — el compilador los
+  # Newton y kg*m/sec^2 son la misma unidad: el compilador las
   # acepta intercambiables.
   let fuerza_explicita: Real<kg * m / sec^2> = fuerza
   println("misma unidad: #{fuerza_explicita}")
