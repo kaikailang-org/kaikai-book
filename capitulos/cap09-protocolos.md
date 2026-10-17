@@ -370,7 +370,7 @@ El código generado usa el modelo de JSON que vive en
 importarlo.
 
 ```kai
-# Listado 9.6 — ejemplos/cap09/06_json.kai
+# Listado 9.6: ejemplos/cap09/06_json.kai
 import encoding.json.{json_decode, json_encode}
 import encoding.json_bind
 
