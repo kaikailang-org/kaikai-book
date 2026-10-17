@@ -1,9 +1,9 @@
 # Branded types: marcar un valor con una etiqueta que el
 # compilador respeta como un tipo distinto.
 #
-# En v1 las unidades aplican a `Real` e `Int`. La extensión a
-# `String<UserId>` está post-MVP — este ejemplo asume el fix.
-# Mientras tanto, `Int<UserId>` cubre el patrón.
+# Las unidades aplican a `Real` e `Int`, así que `Int<UserId>`
+# alcanza para distinguir identificadores que comparten el tipo
+# subyacente.
 
 unit UserId
 

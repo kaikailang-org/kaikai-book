@@ -1,9 +1,8 @@
 # Branded types: tag a value with a label the compiler
 # respects as a distinct type.
 #
-# In v1, units apply to `Real` and `Int`. The extension to
-# `String<UserId>` is post-MVP — this example assumes the
-# fix. Meanwhile, `Int<UserId>` covers the pattern.
+# Units apply to `Real` and `Int`, so `Int<UserId>` is enough
+# to tell apart identifiers that share an underlying type.
 
 unit UserId
 

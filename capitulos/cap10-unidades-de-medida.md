@@ -87,9 +87,30 @@ La aritmética entre valores con la misma unidad funciona
 como esperarías. Sumar dos `Real<USD>` da otro `Real<USD>`:
 
 ```kai
-let precio: Real<USD> = 1.50<USD>
-let propina: Real<USD> = 0.30<USD>
-let total: Real<USD> = precio + propina    # 1.80 USD
+# ejemplos/cap10/01_unidades_basicas.kai
+unit USD
+
+unit EUR
+
+fn main() {
+  let precio: Real<USD> = 1.50<USD>
+  let propina: Real<USD> = 0.30<USD>
+  let total: Real<USD> = precio + propina
+  println("total = #{total}")
+
+  # Las unidades se preservan en el tipo de retorno.
+  let valor_eur: Real<EUR> = 1.20<EUR>
+  println("valor_eur = #{valor_eur}")
+
+  # Lo siguiente NO compila: USD + EUR es error de tipo.
+  # let mezcla = precio + valor_eur
+}
+```
+
+```
+$ kai run ejemplos/cap10/01_unidades_basicas.kai
+total = 1.8 USD
+valor_eur = 1.2 EUR
 ```
 
 Pero **mezclar unidades incompatibles es un error de
@@ -147,6 +168,46 @@ simplifica a `m^2`, `sec / sec` se cancela a sin-unidad,
 sobre los símbolos de unidad, y cualquier expresión legal en
 matemática elemental sobre unidades es legal en kaikai.
 
+Puesto en un programa, lo que se ve es que la unidad viaja con
+el valor hasta la impresión, incluido el `sec^2` que nadie
+declaró:
+
+```kai
+# ejemplos/cap10/02_algebra_unidades.kai
+unit m
+
+unit sec
+
+unit kg
+
+fn main() {
+  let velocidad: Real<m / sec> = 9.81<m/sec>
+  println("v = #{velocidad}")
+
+  # Unidad compuesta: aceleración.
+  let g: Real<m / sec^2> = 9.81<m/sec^2>
+  println("g = #{g}")
+
+  # Producto de unidades: F = m * a tiene unidad kg*m/sec^2.
+  let masa: Real<kg> = 70.0<kg>
+  let fuerza: Real<kg * m / sec^2> = masa * g
+  println("F = m * g = #{fuerza}")
+
+  # Producto de la misma unidad consigo misma: tiempo cuadrado.
+  let t: Real<sec> = 3.0<sec>
+  let t2: Real<sec^2> = t * t
+  println("t² = #{t2}")
+}
+```
+
+```
+$ kai run ejemplos/cap10/02_algebra_unidades.kai
+v = 9.81 m/sec
+g = 9.81 m/sec^2
+F = m * g = 686.7 kg m/sec^2
+t² = 9 sec^2
+```
+
 ### Alias para unidades derivadas
 
 Cuando una composición aparece a menudo, puedes darle un
@@ -163,6 +224,38 @@ Y a partir de ahí, `Real<Newton>` es exactamente lo mismo que
 intercambiables. La diferencia es para quien lee:
 `Real<Newton>` comunica intención; `Real<kg * m / sec^2>`
 comunica derivación.
+
+`Newton` en uso, junto con la prueba de que las dos escrituras
+son la misma unidad para el compilador:
+
+```kai
+# ejemplos/cap10/03_alias.kai
+unit m
+
+unit sec
+
+unit kg
+
+unit Newton = kg*m/sec^2
+
+fn main() {
+  let g: Real<m / sec^2> = 9.81<m/sec^2>
+  let masa: Real<kg> = 70.0<kg>
+  let fuerza: Real<Newton> = masa * g
+  println("F = #{fuerza}")
+
+  # Newton y kg*m/sec^2 son la misma unidad: el compilador las
+  # acepta intercambiables.
+  let fuerza_explicita: Real<kg * m / sec^2> = fuerza
+  println("misma unidad: #{fuerza_explicita}")
+}
+```
+
+```
+$ kai run ejemplos/cap10/03_alias.kai
+F = 686.7 kg m/sec^2
+misma unidad: 686.7 kg m/sec^2
+```
 
 ### Redondear sin perder la unidad
 
@@ -235,9 +328,36 @@ un `Real<u>`: el "para cualquier u" es lo que permite usarla
 con `USD`, `kg`, `m/sec`, lo que sea, **siempre y cuando los
 dos argumentos tengan la misma unidad**.
 
+El archivo completo, con la función y sus dos usos:
+
 ```kai
-let pp: Real<USD> = promedio(10.0<USD>, 20.0<USD>)   # 15 USD
-let pm: Real<kg>  = promedio(70.0<kg>, 80.0<kg>)     # 75 kg
+# ejemplos/cap10/04_genericas.kai
+fn promedio[u: Measure](a: Real<u>, b: Real<u>) : Real<u> =
+  (a + b) / 2.0
+
+unit USD
+
+unit kg
+
+fn main() {
+  let p1: Real<USD> = 10.0<USD>
+  let p2: Real<USD> = 20.0<USD>
+  let pp: Real<USD> = promedio(p1, p2)
+  println("promedio precios = #{pp}")
+
+  let m1: Real<kg> = 70.0<kg>
+  let m2: Real<kg> = 80.0<kg>
+  let pm: Real<kg> = promedio(m1, m2)
+  println("promedio masas = #{pm}")
+
+  # promedio(p1, m1) sería un error de tipo: USD ≠ kg.
+}
+```
+
+```
+$ kai run ejemplos/cap10/04_genericas.kai
+promedio precios = 15 USD
+promedio masas = 75 kg
 ```
 
 Pero esto es error de tipo:
@@ -353,6 +473,51 @@ implementados parcialmente; el manejo completo de branded
 types sobre `String` y records arbitrarios es una extensión
 que la doc del lenguaje lista como próximo hito.
 
+Los dos casos sobre `Int` en un programa que corre. Las líneas
+comentadas son justamente las que el compilador rechaza:
+
+```kai
+# ejemplos/cap10/05_branded.kai
+unit UserId
+
+unit OrderId
+
+unit Seconds
+
+unit Milliseconds
+
+fn cancelar_orden(id: Int<OrderId>) : Unit / Stdout =
+  println("cancelando orden #{id}")
+
+fn timeout_ms(t: Int<Milliseconds>) : Unit / Stdout =
+  println("timeout = #{t}")
+
+fn main() {
+  let _uid: Int<UserId> = 42<UserId>
+  let oid: Int<OrderId> = 99<OrderId>
+
+  cancelar_orden(oid)
+
+  # Lo siguiente NO compila: el compilador no deja pasar un
+  # UserId donde se espera un OrderId, aunque ambos son Int.
+  # cancelar_orden(_uid)
+
+  let _espera_seg: Int<Seconds> = 30<Seconds>
+  let espera_ms: Int<Milliseconds> = 30<Milliseconds>
+
+  timeout_ms(espera_ms)
+
+  # Y esto tampoco: pasar segundos donde se esperaban milisegundos.
+  # timeout_ms(_espera_seg)
+}
+```
+
+```
+$ kai run ejemplos/cap10/05_branded.kai
+cancelando orden 99
+timeout = 30
+```
+
 ### Costo cero en runtime
 
 Las unidades se borran después de la verificación de tipos. El
@@ -370,13 +535,22 @@ saldos en distintas monedas. Sumar saldos de la misma moneda
 es trivial; combinarlos en un total exige convertir.
 
 ```kai
+# ejemplos/cap10/06_cartera.kai
 unit USD
+
 unit EUR
+
 unit CLP
 
 fn sumar[c: Measure](a: Real<c>, b: Real<c>) : Real<c> = a + b
 
-fn convertir[origen: Measure, destino: Measure](monto: Real<origen>, tasa: Real<destino / origen>) : Real<destino> = monto * tasa
+# Conversión explícita: el factor lleva la unidad cociente
+# `destino/origen` y multiplicar por él cancela la unidad
+# origen y deja la destino.
+fn convertir[origen: Measure, destino: Measure](
+  monto: Real<origen>,
+  tasa: Real<destino / origen>
+) : Real<destino> = monto * tasa
 ```
 
 Tres declaraciones. `sumar` es genérica sobre la moneda y
@@ -391,18 +565,31 @@ Y el cálculo principal:
 fn main() {
   let saldo_usd_1: Real<USD> = 100.0<USD>
   let saldo_usd_2: Real<USD> = 50.0<USD>
-  let total_usd: Real<USD> = sumar(saldo_usd_1, saldo_usd_2)    # 150
+  let total_usd: Real<USD> = sumar(saldo_usd_1, saldo_usd_2)
+  println("total USD = #{total_usd}")
 
   let saldo_eur: Real<EUR> = 80.0<EUR>
-  let tasa_eur_usd: Real<USD / EUR> = 1.10<USD / EUR>
-  let eur_en_usd: Real<USD> = convertir(saldo_eur, tasa_eur_usd)
-  let total_global: Real<USD> = sumar(total_usd, eur_en_usd)     # 238
 
+  # Para combinar USD y EUR hay que convertir explícito:
+  let tasa_eur_usd: Real<USD / EUR> = 1.10<USD/EUR>
+  let eur_en_usd: Real<USD> = convertir(saldo_eur, tasa_eur_usd)
+  let total_global: Real<USD> = sumar(total_usd, eur_en_usd)
+  println("total convertido a USD = #{total_global}")
+
+  # Convertir CLP a USD con su propia tasa.
   let saldo_clp: Real<CLP> = 100000.0<CLP>
-  let tasa_clp_usd: Real<USD / CLP> = 0.0011<USD / CLP>
+  let tasa_clp_usd: Real<USD / CLP> = 0.0011<USD/CLP>
   let clp_en_usd: Real<USD> = convertir(saldo_clp, tasa_clp_usd)
-  let total_final: Real<USD> = sumar(total_global, clp_en_usd)   # 348
+  let total_final: Real<USD> = sumar(total_global, clp_en_usd)
+  println("total final = #{total_final}")
 }
+```
+
+```
+$ kai run ejemplos/cap10/06_cartera.kai
+total USD = 150 USD
+total convertido a USD = 238 USD
+total final = 348 USD
 ```
 
 Tres conversiones, tres aplicaciones de `sumar`. Cada una

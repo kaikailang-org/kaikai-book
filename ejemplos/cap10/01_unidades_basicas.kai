@@ -19,6 +19,6 @@ fn main() {
   let valor_eur: Real<EUR> = 1.20<EUR>
   println("valor_eur = #{valor_eur}")
 
-  # Lo siguiente NO compila — USD + EUR es error de tipo.
+  # Lo siguiente NO compila: USD + EUR es error de tipo.
   # let mezcla = precio + valor_eur
 }

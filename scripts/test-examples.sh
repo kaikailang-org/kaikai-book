@@ -134,12 +134,12 @@ build|ejemplos/cap09/04_protocolo_propio.kai|ok
 run|ejemplos/cap09/06_json.kai|ok
 
 # Capítulo 10 — unidades
-build|ejemplos/cap10/01_unidades_basicas.kai|ok
-build|ejemplos/cap10/02_algebra_unidades.kai|ok
-build|ejemplos/cap10/03_alias.kai|ok
-build|ejemplos/cap10/04_genericas.kai|ok
-build|ejemplos/cap10/05_branded.kai|ok
-build|ejemplos/cap10/06_cartera.kai|ok
+run|ejemplos/cap10/01_unidades_basicas.kai|ok
+run|ejemplos/cap10/02_algebra_unidades.kai|ok
+run|ejemplos/cap10/03_alias.kai|ok
+run|ejemplos/cap10/04_genericas.kai|ok
+run|ejemplos/cap10/05_branded.kai|ok
+run|ejemplos/cap10/06_cartera.kai|ok
 run|ejemplos/cap10/07_redondeo.kai|ok
 
 # Capítulo 11 — contratos
@@ -305,12 +305,12 @@ build|examples/ch09/04_own_protocol.kai|ok
 run|examples/ch09/06_json.kai|ok
 
 # Chapter 10
-build|examples/ch10/01_basic_units.kai|ok
-build|examples/ch10/02_unit_algebra.kai|ok
-build|examples/ch10/03_alias.kai|ok
-build|examples/ch10/04_generic.kai|ok
-build|examples/ch10/05_branded.kai|ok
-build|examples/ch10/06_wallet.kai|ok
+run|examples/ch10/01_basic_units.kai|ok
+run|examples/ch10/02_unit_algebra.kai|ok
+run|examples/ch10/03_alias.kai|ok
+run|examples/ch10/04_generic.kai|ok
+run|examples/ch10/05_branded.kai|ok
+run|examples/ch10/06_wallet.kai|ok
 run|examples/ch10/07_rounding.kai|ok
 
 # Chapter 11

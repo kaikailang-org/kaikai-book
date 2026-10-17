@@ -84,9 +84,30 @@ Arithmetic between values of the same unit works as you'd
 expect. Adding two `Real<USD>` gives another `Real<USD>`:
 
 ```kai
-let price: Real<USD> = 1.50<USD>
-let tip: Real<USD> = 0.30<USD>
-let total: Real<USD> = price + tip    # 1.80 USD
+# examples/ch10/01_basic_units.kai
+unit USD
+
+unit EUR
+
+fn main() {
+  let price: Real<USD> = 1.50<USD>
+  let tip: Real<USD> = 0.30<USD>
+  let total: Real<USD> = price + tip
+  println("total = #{total}")
+
+  # Units are preserved in return types.
+  let value_eur: Real<EUR> = 1.20<EUR>
+  println("value_eur = #{value_eur}")
+
+  # The next line does NOT compile — USD + EUR is a type error.
+  # let mix = price + value_eur
+}
+```
+
+```
+$ kai run examples/ch10/01_basic_units.kai
+total = 1.8 USD
+value_eur = 1.2 EUR
 ```
 
 But **mixing incompatible units is a compile error**. If you
@@ -144,6 +165,46 @@ to `m^2`, `sec / sec` cancels to no-unit, `(m / sec) *
 symbols — and any expression legal in elementary math over
 units is legal in kaikai.
 
+Put in a program, what you see is the unit riding along with
+the value all the way to the print, `sec^2` included — a unit
+nobody declared:
+
+```kai
+# examples/ch10/02_unit_algebra.kai
+unit m
+
+unit sec
+
+unit kg
+
+fn main() {
+  let velocity: Real<m / sec> = 9.81<m/sec>
+  println("v = #{velocity}")
+
+  # Composite unit: acceleration.
+  let g: Real<m / sec^2> = 9.81<m/sec^2>
+  println("g = #{g}")
+
+  # Product of units: F = m * a has unit kg*m/sec^2.
+  let mass: Real<kg> = 70.0<kg>
+  let force: Real<kg * m / sec^2> = mass * g
+  println("F = m * g = #{force}")
+
+  # Product of the same unit with itself: time squared.
+  let t: Real<sec> = 3.0<sec>
+  let t2: Real<sec^2> = t * t
+  println("t² = #{t2}")
+}
+```
+
+```
+$ kai run examples/ch10/02_unit_algebra.kai
+v = 9.81 m/sec
+g = 9.81 m/sec^2
+F = m * g = 686.7 kg m/sec^2
+t² = 9 sec^2
+```
+
 ### Aliases for derived units
 
 When a composition appears often, you can name it with a
@@ -161,10 +222,41 @@ interchangeably. The difference is for the reader:
 `Real<Newton>` communicates intent; `Real<kg * m / sec^2>`
 communicates derivation.
 
+`Newton` in use, next to the proof that both spellings are the
+same unit as far as the compiler is concerned:
+
+```kai
+# examples/ch10/03_alias.kai
+unit m
+
+unit sec
+
+unit kg
+
+unit Newton = kg*m/sec^2
+
+fn main() {
+  let g: Real<m / sec^2> = 9.81<m/sec^2>
+  let mass: Real<kg> = 70.0<kg>
+  let force: Real<Newton> = mass * g
+  println("F = #{force}")
+
+  # Newton and kg*m/sec^2 are the same unit — interchangeable.
+  let force_explicit: Real<kg * m / sec^2> = force
+  println("same unit: #{force_explicit}")
+}
+```
+
+```
+$ kai run examples/ch10/03_alias.kai
+F = 686.7 kg m/sec^2
+same unit: 686.7 kg m/sec^2
+```
+
 ### Rounding without losing the unit
 
 Dividing two measurements rarely lands on a round number. A
-hundred metres in 9.58 seconds is 10.438413361169102 m/sec, and
+hundred meters in 9.58 seconds is 10.438413361169102 m/sec, and
 that is what a `Real` prints: as many digits as it takes to read
 back as the same number. For a report you want two decimals, and
 the natural question follows: does rounding hand me back a bare
@@ -231,9 +323,36 @@ a `Real<u>` — the "for any u" lets you use it with `USD`,
 `kg`, `m/sec`, anything, **as long as the two arguments
 have the same unit**.
 
+The whole file, with the function and both of its uses:
+
 ```kai
-let pp: Real<USD> = average(10.0<USD>, 20.0<USD>)   # 15 USD
-let pm: Real<kg>  = average(70.0<kg>, 80.0<kg>)     # 75 kg
+# examples/ch10/04_generic.kai
+fn average[u: Measure](a: Real<u>, b: Real<u>) : Real<u> =
+  (a + b) / 2.0
+
+unit USD
+
+unit kg
+
+fn main() {
+  let p1: Real<USD> = 10.0<USD>
+  let p2: Real<USD> = 20.0<USD>
+  let pp: Real<USD> = average(p1, p2)
+  println("avg prices = #{pp}")
+
+  let m1: Real<kg> = 70.0<kg>
+  let m2: Real<kg> = 80.0<kg>
+  let pm: Real<kg> = average(m1, m2)
+  println("avg masses = #{pm}")
+
+  # average(p1, m1) would be a type error: USD ≠ kg.
+}
+```
+
+```
+$ kai run examples/ch10/04_generic.kai
+avg prices = 15 USD
+avg masses = 75 kg
 ```
 
 But this is a type error:
@@ -351,6 +470,51 @@ implemented; full handling of branded types over `String`
 and arbitrary records is an extension the language doc lists
 as a near milestone.
 
+The two `Int` cases in a program that runs. The commented-out
+lines are precisely the ones the compiler rejects:
+
+```kai
+# examples/ch10/05_branded.kai
+unit UserId
+
+unit OrderId
+
+unit Seconds
+
+unit Milliseconds
+
+fn cancel_order(id: Int<OrderId>) : Unit / Stdout =
+  println("cancelling order #{id}")
+
+fn timeout_ms(t: Int<Milliseconds>) : Unit / Stdout =
+  println("timeout = #{t}")
+
+fn main() {
+  let _uid: Int<UserId> = 42<UserId>
+  let oid: Int<OrderId> = 99<OrderId>
+
+  cancel_order(oid)
+
+  # The next line does NOT compile: a UserId where an OrderId
+  # is expected, even though both are Int.
+  # cancel_order(_uid)
+
+  let _wait_sec: Int<Seconds> = 30<Seconds>
+  let wait_ms: Int<Milliseconds> = 30<Milliseconds>
+
+  timeout_ms(wait_ms)
+
+  # Nor this: passing seconds where milliseconds were expected.
+  # timeout_ms(_wait_sec)
+}
+```
+
+```
+$ kai run examples/ch10/05_branded.kai
+cancelling order 99
+timeout = 30
+```
+
 ### Zero cost at runtime
 
 Units are erased after type checking. The binary that `kai
@@ -368,13 +532,22 @@ same currency is trivial; combining them into a total
 requires conversion.
 
 ```kai
+# examples/ch10/06_wallet.kai
 unit USD
+
 unit EUR
+
 unit CLP
 
 fn add[c: Measure](a: Real<c>, b: Real<c>) : Real<c> = a + b
 
-fn convert[source: Measure, dest: Measure](amount: Real<source>, rate: Real<dest / source>) : Real<dest> = amount * rate
+# Explicit conversion: the factor carries the quotient unit
+# `dest/source`; multiplying cancels the source unit and
+# leaves the destination one.
+fn convert[source: Measure, dest: Measure](
+  amount: Real<source>,
+  rate: Real<dest / source>
+) : Real<dest> = amount * rate
 ```
 
 Three declarations. `add` is generic over the currency and
@@ -388,18 +561,31 @@ And the main calculation:
 fn main() {
   let usd_balance_1: Real<USD> = 100.0<USD>
   let usd_balance_2: Real<USD> = 50.0<USD>
-  let total_usd: Real<USD> = add(usd_balance_1, usd_balance_2)    # 150
+  let total_usd: Real<USD> = add(usd_balance_1, usd_balance_2)
+  println("total USD = #{total_usd}")
 
   let eur_balance: Real<EUR> = 80.0<EUR>
-  let eur_to_usd_rate: Real<USD / EUR> = 1.10<USD / EUR>
-  let eur_in_usd: Real<USD> = convert(eur_balance, eur_to_usd_rate)
-  let global_total: Real<USD> = add(total_usd, eur_in_usd)         # 238
 
+  # To combine USD and EUR, convert explicitly:
+  let eur_to_usd_rate: Real<USD / EUR> = 1.10<USD/EUR>
+  let eur_in_usd: Real<USD> = convert(eur_balance, eur_to_usd_rate)
+  let global_total: Real<USD> = add(total_usd, eur_in_usd)
+  println("total converted to USD = #{global_total}")
+
+  # Convert CLP to USD with its own rate.
   let clp_balance: Real<CLP> = 100000.0<CLP>
-  let clp_to_usd_rate: Real<USD / CLP> = 0.0011<USD / CLP>
+  let clp_to_usd_rate: Real<USD / CLP> = 0.0011<USD/CLP>
   let clp_in_usd: Real<USD> = convert(clp_balance, clp_to_usd_rate)
-  let final_total: Real<USD> = add(global_total, clp_in_usd)        # 348
+  let final_total: Real<USD> = add(global_total, clp_in_usd)
+  println("final total = #{final_total}")
 }
+```
+
+```
+$ kai run examples/ch10/06_wallet.kai
+total USD = 150 USD
+total converted to USD = 238 USD
+final total = 348 USD
 ```
 
 Three conversions, three uses of `add`. Each verified by
