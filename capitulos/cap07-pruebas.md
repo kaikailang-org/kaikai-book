@@ -188,12 +188,14 @@ Las compilaciones corren en paralelo, hasta una por CPU por defecto;
 archivo, en orden.
 
 Si llamas a `kai test mi_archivo.kai` apuntando a un archivo
-suelto, el runner corre lo que ese archivo y los módulos
-vecinos que importa declaren con `test`. Los bloques `test` del
-stdlib y de las dependencias no entran: la cuenta que ves es la
-de tu código. No hay descubrimiento estilo `pytest` en archivos
-sueltos; el modelo descubre solo cuando hay un `kai.toml` que
-defina el paquete.
+suelto, el runner corre los bloques `test` de ese archivo y
+nada más. Cada archivo que declara bloques es la raíz de su
+propia corrida, así que los bloques de un módulo corren una
+sola vez, cuando el módulo es el que apuntas, por muchos
+archivos que lo importen. Los del stdlib y de las dependencias
+tampoco entran: la cuenta que ves es la de tu código. No hay
+descubrimiento estilo `pytest` en archivos sueltos; el modelo
+descubre solo cuando hay un `kai.toml` que defina el paquete.
 
 Hay tres recomendaciones prácticas que vas a internalizar a
 las pocas semanas:
