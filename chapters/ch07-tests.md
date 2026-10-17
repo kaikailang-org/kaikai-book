@@ -186,12 +186,14 @@ Builds run in parallel, up to one per CPU by default; `-j <n>` sets
 the cap. Tests still run one file at a time, in order.
 
 If you call `kai test my_file.kai` against a loose file, the
-runner runs what that file and the neighboring modules it
-imports declare with `test`. The `test` blocks of the stdlib and
-of your dependencies stay out of it: the count you see is your
-own code's. There is no `pytest`-style discovery on loose files;
-the model only discovers when there is a `kai.toml` defining the
-package.
+runner runs that file's own `test` blocks and nothing else.
+Every file that declares blocks is the root of its own run, so a
+module's blocks run exactly once — when the module is the file
+you named — however many files import it. The `test` blocks of
+the stdlib and of your dependencies stay out too: the count you
+see is your own code's. There is no `pytest`-style discovery on
+loose files; the model only discovers when there is a `kai.toml`
+defining the package.
 
 Three practical recommendations you'll internalize within
 weeks:
