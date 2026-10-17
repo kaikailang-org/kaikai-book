@@ -248,6 +248,7 @@ only live inside a nursery, and the nursery waits for all
 its children before exiting.
 
 ```kai
+# examples/ch13/02_nursery.kai
 import spawn
 
 fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
@@ -264,6 +265,19 @@ fn main() : Unit / Stdout + Spawn + Cancel {
     n.spawn(() => worker("B", 3))
   }
 }
+```
+
+One possible output:
+
+<!-- transcripto: nondeterministic order, as the text says -->
+```
+$ kai run examples/ch13/02_nursery.kai
+A
+A
+A
+B
+B
+B
 ```
 
 The `let _` wraps the whole `nursery`: the block returns the
@@ -318,6 +332,51 @@ OCaml 5 Eio. kaikai's version integrates the pattern into
 the effect system: the `Spawn` capability is only available
 inside a nursery, and that's what the type system enforces.
 
+`n.select` at work, the racing primitive: the nursery returns
+the value of whichever child finishes first and cancels the
+other without being asked.
+
+```kai
+# examples/ch13/04_race.kai
+import spawn
+
+fn fast() : Int / Stdout + Spawn {
+  println("fast: start")
+  spawn.yield()
+  println("fast: done")
+  1
+}
+
+fn slow() : Int / Stdout + Spawn {
+  println("slow: start")
+  spawn.yield()
+  spawn.yield()
+  spawn.yield()
+  println("slow: done")
+  2
+}
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  let winner = nursery { n ->
+    let a = n.spawn(() => fast())
+    let b = n.spawn(() => slow())
+    n.select([a, b])
+  }
+  println("winner: #{winner}")
+}
+```
+
+One possible output:
+
+<!-- transcripto: nondeterministic order, as the text says -->
+```
+$ kai run examples/ch13/04_race.kai
+fast: start
+fast: done
+slow: start
+winner: 1
+```
+
 ### Why `Cancel` appears in `main`'s signature
 
 Notice that `main` declares `/ Stdout + Spawn + Cancel`.
@@ -358,6 +417,47 @@ actors (effect `Actor[Msg]`), and the pattern repeats:
 what's distinctive about kaikai isn't the list of
 constructs but that all of them are the same construct —
 algebraic effects — under different names.
+
+Three children and one `await` each, which is how you keep the
+results instead of merely waiting for them:
+
+```kai
+# examples/ch13/05_worker_pool.kai
+import spawn
+
+fn process(id: Int, x: Int) : Int / Stdout + Spawn {
+  println("worker #{id}: processing #{x}")
+  spawn.yield()
+  spawn.yield()
+  let r = x * x
+  println("worker #{id}: done #{x} -> #{r}")
+  r
+}
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  let results = nursery { n ->
+    let a = n.spawn(() => process(1, 3))
+    let b = n.spawn(() => process(2, 5))
+    let c = n.spawn(() => process(3, 7))
+    [n.await(a), n.await(b), n.await(c)]
+  }
+  println("results: #{results}")
+}
+```
+
+One possible output:
+
+<!-- transcripto: nondeterministic order, as the text says -->
+```
+$ kai run examples/ch13/05_worker_pool.kai
+worker 1: processing 3
+worker 1: done 3 -> 9
+worker 2: processing 5
+worker 3: processing 7
+worker 3: done 7 -> 49
+worker 2: done 5 -> 25
+results: [9, 25, 49]
+```
 
 ## 13.5 Cooperative cancellation
 
@@ -424,6 +524,99 @@ The one exception is **trap-exit** in the actor model
 into mailbox messages instead of triggering cancellation, but
 that's an explicit local opt-in — the default remains the
 cooperative cancellation described here.
+
+A child that gives up on its own, the siblings that get the
+cancellation, each one's cleanup, and the failure the nursery
+re-raises on the way out:
+
+```kai
+# examples/ch13/03_cancel.kai
+import spawn
+
+# A fiber that counts as long as nobody cancels it.
+fn long_worker(tag: String) : Unit / Stdout + Spawn + Cancel {
+  handle {
+    count(tag, 0)
+  } with Cancel {
+    raise(resume) -> {
+      println("#{tag}: canceled, doing cleanup")
+      # not calling resume: the fiber unwinds
+    }
+  }
+}
+
+fn count(tag: String, n: Int) : Unit / Stdout + Spawn + Cancel {
+  println("#{tag}: #{n}")
+  spawn.yield()
+  count(tag, n + 1)
+}
+
+# A fiber that gives up after a few steps.
+fn quit(n: Int) : Unit / Stdout + Spawn + Fail {
+  if n > 2 {
+    Fail.fail("quitting after 3 steps")
+  } else {
+    println("step #{n}")
+    spawn.yield()
+    quit(n + 1)
+  }
+}
+
+effect Fail {
+  fail(reason: String) : Nothing
+}
+
+fn main() : Unit / Stdout + Spawn + Cancel {
+  nursery { n ->
+    n.spawn(() => long_worker("A"))
+    n.spawn(() => long_worker("B"))
+    let r = n.spawn(
+      () => handle {
+        quit(0)
+      } with Fail {
+        fail(reason, resume) -> {
+          println("the fiber gives up: #{reason}")
+          Cancel.raise()
+        }
+      }
+    )
+    n.await(r)
+  }
+}
+```
+
+One possible output:
+
+<!-- transcripto: nondeterministic order, as the text says -->
+```
+$ kai run examples/ch13/03_cancel.kai
+A: 0
+A: 1
+A: 2
+A: 3
+B: 0
+A: 4
+A: 5
+B: 1
+A: 6
+B: 2
+A: 7
+A: 8
+A: 9
+A: 10
+B: 3
+A: 11
+step 0
+step 1
+B: 4
+step 2
+the fiber gives up: quitting after 3 steps
+A: 12
+A: canceled, doing cleanup
+B: 5
+B: canceled, doing cleanup
+kai: nursery child cancelled; no survivors
+```
 
 ## 13.6 Per-fiber mutable memory
 

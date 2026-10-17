@@ -120,6 +120,39 @@ impl Show for Puntaje {
 
 Ahora el `impl` vive en el módulo de su propio tipo y la regla se cumple sola. De paso ganas lo que un `Int` desnudo no te daba: `Puntaje` y `Edad` dejan de ser el mismo tipo, y el compilador deja de aceptar que los sumes.
 
+Un `impl` escrito a mano, y la interpolación que lo empieza a
+usar sin que se lo pidas:
+
+```kai
+# ejemplos/cap09/01_protocolo_basico.kai
+type Punto = { x: Int, y: Int }
+
+# Implementación manual: damos al record un Show que produzca
+# el formato cartesiano "(x, y)".
+impl Show for Punto {
+  fn show(p: Punto) : String =
+    "(#{p.x}, #{p.y})"
+}
+
+fn main() {
+  let origen = Punto { x: 0, y: 0 }
+  let p = Punto { x: 3, y: 4 }
+  println(show(origen))
+  println(show(p))
+
+  # Como Show está implementado, la interpolación lo usa
+  # automáticamente:
+  println("p está en #{p}")
+}
+```
+
+```
+$ kai run ejemplos/cap09/01_protocolo_basico.kai
+(0, 0)
+(3, 4)
+p está en (3, 4)
+```
+
 ## 9.3 Los cinco protocolos del stdlib
 
 kaikai trae cinco protocolos en `stdlib/protocols.kai` que
@@ -163,6 +196,66 @@ impl Ord for Cuenta {
 
 Si `Ord` te da pereza implementar tres operaciones, espera a
 §9.4: en muchos casos, el compilador las deriva por ti.
+
+`Eq` por id y `Ord` por saldo sobre el mismo tipo, que es
+exactamente el caso donde derivar no sirve:
+
+```kai
+# ejemplos/cap09/02_eq_ord.kai
+type Cuenta = {
+  id: Int,
+  saldo: Int
+}
+
+impl Eq for Cuenta {
+  fn eq(a: Cuenta, b: Cuenta) : Bool = a.id == b.id
+}
+
+# Ordenamos por saldo. Las tres ops del protocolo Ord viven
+# juntas en la misma `impl`.
+impl Ord for Cuenta {
+  fn cmp(a: Cuenta, b: Cuenta) : Int =
+    if a.saldo < b.saldo {
+      -1
+    } else if a.saldo > b.saldo {
+      1
+    } else {
+      0
+    }
+  fn min(a: Cuenta, b: Cuenta) : Cuenta =
+    if a.saldo < b.saldo { a } else { b }
+  fn max(a: Cuenta, b: Cuenta) : Cuenta =
+    if a.saldo > b.saldo { a } else { b }
+}
+
+fn main() {
+  let c1 = Cuenta { id: 1, saldo: 100 }
+  let c2 = Cuenta { id: 1, saldo: 999 }  # mismo id, distinto saldo
+  let c3 = Cuenta { id: 2, saldo: 50 }
+
+  let mismo_id_12 = eq(c1, c2)
+  let mismo_id_13 = eq(c1, c3)
+  println("c1 == c2: #{mismo_id_12}")  # true: el id manda
+  println("c1 == c3: #{mismo_id_13}")  # false
+
+  let cmp12 = cmp(c1, c2)
+  let cmp13 = cmp(c1, c3)
+  println("cmp(c1, c2): #{cmp12}")  # negativo: 100 < 999
+  println("cmp(c1, c3): #{cmp13}")  # positivo: 100 > 50
+
+  let menor = min(c1, c3)
+  println("menor saldo: #{menor.saldo}")  # 50
+}
+```
+
+```
+$ kai run ejemplos/cap09/02_eq_ord.kai
+c1 == c2: true
+c1 == c3: false
+cmp(c1, c2): -1
+cmp(c1, c3): 1
+menor saldo: 50
+```
 
 ## 9.4 `#[derive(...)]` y cuándo usarlo
 
@@ -217,6 +310,48 @@ La regla práctica:
 Ya viste `#[derive(Show)]` sobre `Punto` en el tour (§1.6); aquí
 mostramos también la implementación manual y cuándo conviene
 una sobre la otra.
+
+Dos tipos derivados, uno con `Show` y otro con los dos:
+
+```kai
+# ejemplos/cap09/03_derive.kai
+#[derive(Show)]
+type Persona = {
+  nombre: String,
+  edad: Int
+}
+
+#[derive(Show, Eq)]
+type Punto = {
+  x: Int,
+  y: Int
+}
+
+fn main() {
+  let ada = Persona { nombre: "Ada", edad: 30 }
+  println(show(ada))
+
+  # Show automático en interpolación.
+  println("registro: #{ada}")
+
+  let p = Punto { x: 3, y: 4 }
+  let q = Punto { x: 3, y: 4 }
+  let r = Punto { x: 5, y: 5 }
+
+  let igual_pq = eq(p, q)
+  let igual_pr = eq(p, r)
+  println("p == q: #{igual_pq}")  # true
+  println("p == r: #{igual_pr}")  # false
+}
+```
+
+```
+$ kai run ejemplos/cap09/03_derive.kai
+Persona { nombre: Ada, edad: 30 }
+registro: Persona { nombre: Ada, edad: 30 }
+p == q: true
+p == r: false
+```
 
 ### Derives que no son protocolos: `Json`
 
@@ -339,6 +474,55 @@ formatos, `Loggable` para que el sistema de logging sepa
 representar tu tipo, `Validable` para reglas de validación,
 etc. Cualquier "comportamiento que comparten varios tipos"
 es candidato.
+
+Un protocolo propio con tres implementaciones, una por tipo:
+
+```kai
+# ejemplos/cap09/04_protocolo_propio.kai
+protocol Drawable {
+  dibujar(x: Self) : String
+}
+
+# Tres tipos distintos, tres implementaciones.
+
+type Circulo = { radio: Int }
+
+type Cuadrado = { lado: Int }
+
+type Triangulo = { base: Int, altura: Int }
+
+impl Drawable for Circulo {
+  fn dibujar(c: Circulo) : String =
+    "Círculo de radio #{c.radio}"
+}
+
+impl Drawable for Cuadrado {
+  fn dibujar(c: Cuadrado) : String =
+    "Cuadrado de lado #{c.lado}"
+}
+
+impl Drawable for Triangulo {
+  fn dibujar(t: Triangulo) : String =
+    "Triángulo #{t.base}x#{t.altura}"
+}
+
+fn main() {
+  let c = Circulo { radio: 5 }
+  let s = Cuadrado { lado: 3 }
+  let t = Triangulo { base: 4, altura: 6 }
+
+  println(dibujar(c))
+  println(dibujar(s))
+  println(dibujar(t))
+}
+```
+
+```
+$ kai run ejemplos/cap09/04_protocolo_propio.kai
+Círculo de radio 5
+Cuadrado de lado 3
+Triángulo 4x6
+```
 
 ## 9.6 Por qué no hay typeclasses al estilo Haskell
 
@@ -489,6 +673,50 @@ cualquiera: de "esta función sirve para cualquier tipo" a
 La cota no te da el resolver implícito de Haskell ni la
 propagación; te da el contrato escrito donde se lee, que casi
 siempre es lo que querías.
+
+Las tres formas de cota en un programa: una del stdlib, una
+propia, y una que exige dos protocolos a la vez.
+
+```kai
+# ejemplos/cap09/05_cotas.kai
+protocol Dibujable {
+  dibujar(x: Self) : String
+}
+
+type Circulo = { radio: Int }
+
+impl Dibujable for Circulo {
+  fn dibujar(c: Circulo) : String = "círculo de radio #{show(c.radio)}"
+}
+
+fn mayor[T: Ord](a: T, b: T) : T = max(a, b)
+
+fn render[T: Dibujable](x: T) : String = "[" ++ dibujar(x) ++ "]"
+
+fn etiquetar[T: Show + Eq](a: T, b: T) : String =
+  if eq(a, b) {
+    "iguales: #{show(a)}"
+  } else {
+    "#{show(a)} y #{show(b)}"
+  }
+
+fn main() : Unit / Stdout {
+  Stdout.print(show(mayor(3, 7)))
+  Stdout.print(show(mayor("a", "b")))
+  Stdout.print(render(Circulo { radio: 5 }))
+  Stdout.print(etiquetar(1, 1))
+  Stdout.print(etiquetar(2, 9))
+}
+```
+
+```
+$ kai run ejemplos/cap09/05_cotas.kai
+7
+b
+[círculo de radio 5]
+iguales: 1
+2 y 9
+```
 
 ## 9.8 Operadores: `+`, `==`, `<` como protocolos
 

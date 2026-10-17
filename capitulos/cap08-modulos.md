@@ -53,6 +53,27 @@ sin contaminar el namespace del consumidor. En `aritmetica`,
 `helper` solo existe dentro del archivo; quien importa el
 módulo no la ve.
 
+El ejemplo que corre es ese mismo archivo con un `main` que
+usa las dos funciones públicas:
+
+```kai
+# ejemplos/cap08/01_un_archivo/main.kai
+pub fn duplicar(x: Int) : Int = x * 2
+
+fn helper(x: Int) : Int = x + 1
+
+pub fn doble_mas_uno(x: Int) : Int = helper(duplicar(x))
+
+fn main() {
+  println("doble_mas_uno(5) = #{doble_mas_uno(5)}")
+}
+```
+
+```
+$ kai run ejemplos/cap08/01_un_archivo/main.kai
+doble_mas_uno(5) = 11
+```
+
 ## 8.2 `import` y nombres calificados
 
 Para usar `aritmetica` desde otro archivo:
@@ -80,6 +101,18 @@ El mismo prefijo se usa para los tipos que el módulo exporta y
 para construirlos:
 
 ```kai
+# ejemplos/cap08/02_dos_archivos/geometria.kai
+pub type Punto = { x: Real, y: Real }
+
+pub fn distancia(a: Punto, b: Punto) : Real {
+  let dx = a.x - b.x
+  let dy = a.y - b.y
+  real_sqrt(dx * dx + dy * dy)
+}
+
+fn cuadrado(x: Real) : Real = x * x
+
+# ejemplos/cap08/02_dos_archivos/main.kai
 import geometria
 
 fn main() {
@@ -87,6 +120,11 @@ fn main() {
   let b: geometria.Punto = geometria.Punto { x: 3.0, y: 4.0 }
   println("distancia = #{geometria.distancia(a, b)}")
 }
+```
+
+```
+$ kai run ejemplos/cap08/02_dos_archivos/main.kai
+distancia = 5
 ```
 
 Tres usos del prefijo, los tres coherentes: en la anotación
@@ -98,11 +136,26 @@ Si el módulo está bajo un subdirectorio, el import usa el
 mismo nombre punteado que el módulo:
 
 ```kai
+# ejemplos/cap08/05_proyecto/util/matematica.kai
+pub fn pow(base: Int, exp: Int) : Int {
+  if exp == 0 {
+    1
+  } else {
+    base * pow(base, exp - 1)
+  }
+}
+
+# ejemplos/cap08/05_proyecto/main.kai
 import util.matematica
 
 fn main() {
   println("3^4 = #{matematica.pow(3, 4)}")
 }
+```
+
+```
+$ kai run ejemplos/cap08/05_proyecto/main.kai
+3^4 = 81
 ```
 
 Fíjate en dos detalles: el archivo está en `util/matematica.kai`,
@@ -136,6 +189,57 @@ por ejemplo). A cambio, el lector ya no sabe de dónde salió
 módulo exporta" al namespace local. Es una decisión
 deliberada: el wildcard parece cómodo al escribir pero hace que
 el lector futuro no sepa de dónde vino un nombre.
+
+Las tres formas como tres proyectos que corren. Cada uno trae
+su propio `geometria.kai`; lo que cambia es la línea del
+`import` y, con ella, cómo se escribe la llamada:
+
+```kai
+# ejemplos/cap08/03_qualified/main.kai
+import geometria
+
+fn main() {
+  # Un constructor de un módulo importado se accede con prefijo,
+  # pero la sintaxis de record literal con prefijo no está
+  # disponible: hay que importar el constructor explícito si se
+  # necesita aquí (ver `02_dos_archivos`). Aquí usamos solo la
+  # función pública.
+  let d = geometria.distancia_origen(3.0, 4.0)
+  println("distancia al origen = #{d}")
+}
+
+# ejemplos/cap08/04_alias/main.kai
+import geometria as G
+
+fn main() {
+  let d = G.distancia_origen(3.0, 4.0)
+  println("distancia al origen = #{d}")
+}
+
+# ejemplos/cap08/02b_selectivo/main.kai
+import geometria.{Punto, distancia}
+
+fn main() {
+  let a: Punto = Punto { x: 0.0, y: 0.0 }
+  let b: Punto = Punto { x: 3.0, y: 4.0 }
+  println("distancia = #{distancia(a, b)}")
+}
+```
+
+```
+$ kai run ejemplos/cap08/03_qualified/main.kai
+distancia al origen = 5
+```
+
+```
+$ kai run ejemplos/cap08/04_alias/main.kai
+distancia al origen = 5
+```
+
+```
+$ kai run ejemplos/cap08/02b_selectivo/main.kai
+distancia = 5
+```
 
 ### Cuando dos módulos exportan el mismo nombre
 
@@ -362,9 +466,44 @@ patrón; lo importante para el cap. 8 es que `priv` opera a
 visibilidad a nivel de declaración, y juntos cubren un caso
 muy común: "el tipo se exporta, su interior no".
 
-El ejemplo `cap08/06_priv/` es un proyecto de dos archivos
-que demuestra exactamente este rechazo desde el otro lado del
-límite del módulo.
+Un proyecto de dos archivos lo muestra desde el otro lado del
+límite del módulo. El cliente construye y lee la cuenta solo
+por las funciones del módulo; las dos líneas comentadas son los
+rechazos:
+
+```kai
+# ejemplos/cap08/06_priv/caja.kai
+pub type Cuenta = {
+  nombre: String,
+  priv saldo: Real
+}
+
+pub fn abrir(nombre: String) : Cuenta =
+  Cuenta { nombre: nombre, saldo: 0.0 }
+
+pub fn depositar(c: Cuenta, monto: Real) : Cuenta =
+  Cuenta { ...c, saldo: c.saldo + monto }
+
+pub fn saldo_de(c: Cuenta) : Real = c.saldo
+
+# ejemplos/cap08/06_priv/main.kai
+import caja
+
+fn main() {
+  let c0 = caja.abrir("ahorros")
+  let c1 = caja.depositar(c0, 100.0)
+  let c2 = caja.depositar(c1, 50.0)
+  println("#{c2.nombre}: #{caja.saldo_de(c2)}")
+
+  # println("#{c2.saldo}")
+  # let _ = caja.Cuenta { nombre: "x", saldo: 999.0 }
+}
+```
+
+```
+$ kai run ejemplos/cap08/06_priv/main.kai
+ahorros: 150
+```
 
 ## 8.4 El stdlib que ya tienes
 

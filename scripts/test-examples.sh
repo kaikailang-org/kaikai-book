@@ -46,7 +46,11 @@ done
 #     main es el código de salida; sale con 1 a propósito → expect=fail
 #   - cap19/06_usd_por_eur: no compila a propósito, Currency no tiene
 #     producto → expect=fail
-#   - cap15/01: hole que aborta en runtime → expect=run_panic
+#   - cap15/01 y cap15/03: holes que abortan en runtime al llegar a
+#     ellos → expect=run_panic
+#   - cap11/02_violacion: el programa demuestra que un contrato violado
+#     con un valor dinámico aborta; termina con panic a propósito →
+#     expect=fail
 #   - cap13/03_cancel: una hija que se cae cancela a sus hermanas y el
 #     nursery re-lanza la caída; en la fibra raíz eso termina el proceso
 #     con código 1 → expect=fail
@@ -55,7 +59,7 @@ done
 read -r -d '' MANIFEST <<'EOF' || true
 # Capítulo 1 — tour
 build|ejemplos/cap01/01_hola.kai|ok
-build|ejemplos/cap01/02_fizzbuzz.kai|ok
+run|ejemplos/cap01/02_fizzbuzz.kai|ok
 build|ejemplos/cap01/03_calculadora.kai|ok
 build|ejemplos/cap01/04_efecto.kai|ok
 build|ejemplos/cap01/05_concurrente.kai|ok
@@ -127,10 +131,11 @@ project|ejemplos/cap08/06_priv|ok
 project|ejemplos/cap08/07_colisiones|ok
 
 # Capítulo 9 — protocolos
-build|ejemplos/cap09/01_protocolo_basico.kai|ok
-build|ejemplos/cap09/02_eq_ord.kai|ok
-build|ejemplos/cap09/03_derive.kai|ok
-build|ejemplos/cap09/04_protocolo_propio.kai|ok
+run|ejemplos/cap09/01_protocolo_basico.kai|ok
+run|ejemplos/cap09/02_eq_ord.kai|ok
+run|ejemplos/cap09/03_derive.kai|ok
+run|ejemplos/cap09/04_protocolo_propio.kai|ok
+run|ejemplos/cap09/05_cotas.kai|ok
 run|ejemplos/cap09/06_json.kai|ok
 
 # Capítulo 10 — unidades
@@ -143,22 +148,22 @@ run|ejemplos/cap10/06_cartera.kai|ok
 run|ejemplos/cap10/07_redondeo.kai|ok
 
 # Capítulo 11 — contratos
-build|ejemplos/cap11/01_contratos_basicos.kai|ok
-build|ejemplos/cap11/02_violacion.kai|ok
+run|ejemplos/cap11/01_contratos_basicos.kai|ok
+run|ejemplos/cap11/02_violacion.kai|fail
 build|ejemplos/cap11/03_cuenta_bancaria.kai|ok
-build|ejemplos/cap11/04_refinements.kai|ok
+run|ejemplos/cap11/04_refinements.kai|ok
 
 # Capítulo 12 — efectos
-build|ejemplos/cap12/01_log_basico.kai|ok
-build|ejemplos/cap12/02_dos_handlers.kai|ok
-build|ejemplos/cap12/03_ask.kai|ok
-build|ejemplos/cap12/04_fail.kai|ok
-build|ejemplos/cap12/05_state.kai|ok
-build|ejemplos/cap12/06_composicion.kai|ok
-build|ejemplos/cap12/07_alias.kai|ok
-build|ejemplos/cap12/08_parser_config.kai|ok
-build|ejemplos/cap12/09_wrapper_default.kai|ok
-build|ejemplos/cap12/10_var_local.kai|ok
+run|ejemplos/cap12/01_log_basico.kai|ok
+run|ejemplos/cap12/02_dos_handlers.kai|ok
+run|ejemplos/cap12/03_ask.kai|ok
+run|ejemplos/cap12/04_fail.kai|ok
+run|ejemplos/cap12/05_state.kai|ok
+run|ejemplos/cap12/06_composicion.kai|ok
+run|ejemplos/cap12/07_alias.kai|ok
+run|ejemplos/cap12/08_parser_config.kai|ok
+run|ejemplos/cap12/09_wrapper_default.kai|ok
+run|ejemplos/cap12/10_var_local.kai|ok
 build|ejemplos/cap12/11_instancias.kai|ok
 run|ejemplos/cap12/12_limpieza.kai|ok
 run|ejemplos/cap12/13_generadores.kai|ok
@@ -189,9 +194,9 @@ run|ejemplos/cap14/08_probar_mailbox.kai|ok
 
 # Capítulo 15 — holes (compilan, abortan en runtime al llegar al hole)
 run|ejemplos/cap15/01_hole_basico.kai|run_panic
-build|ejemplos/cap15/02_programa_parcial.kai|ok
-build|ejemplos/cap15/03_hole_compartido.kai|ok
-build|ejemplos/cap15/04_hole_en_patron.kai|ok
+run|ejemplos/cap15/02_programa_parcial.kai|ok
+run|ejemplos/cap15/03_hole_compartido.kai|run_panic
+run|ejemplos/cap15/04_hole_en_patron.kai|ok
 build|ejemplos/cap15/05_diseno_top_down.kai|ok
 build|ejemplos/cap15/06_hole_con_efectos.kai|ok
 
@@ -199,8 +204,8 @@ build|ejemplos/cap15/06_hole_con_efectos.kai|ok
 # Sale con 1 a propósito: el ejemplo demuestra que el Int que
 # devuelve main es el código de salida del proceso.
 run|ejemplos/cap16/01_estado_de_salida.kai|fail
-build|ejemplos/cap16/ffi/01_libc_abs.kai|ok
-build|ejemplos/cap16/ffi/02_renombre.kai|ok
+run|ejemplos/cap16/ffi/01_libc_abs.kai|ok
+run|ejemplos/cap16/ffi/02_renombre.kai|ok
 project|ejemplos/cap16/ffi/03_shim|ok|app.kai|shim.c|c
 
 # Capítulo 17 — caso notas
@@ -226,7 +231,7 @@ run|ejemplos/cap19/10_dim.kai|ok
 
 # Chapter 1
 build|examples/ch01/01_hello.kai|ok
-build|examples/ch01/02_fizzbuzz.kai|ok
+run|examples/ch01/02_fizzbuzz.kai|ok
 build|examples/ch01/03_calculator.kai|ok
 build|examples/ch01/04_effect.kai|ok
 build|examples/ch01/05_concurrent.kai|ok
@@ -298,10 +303,11 @@ project|examples/ch08/06_priv|ok
 project|examples/ch08/07_collisions|ok
 
 # Chapter 9
-build|examples/ch09/01_basic_protocol.kai|ok
-build|examples/ch09/02_eq_ord.kai|ok
-build|examples/ch09/03_derive.kai|ok
-build|examples/ch09/04_own_protocol.kai|ok
+run|examples/ch09/01_basic_protocol.kai|ok
+run|examples/ch09/02_eq_ord.kai|ok
+run|examples/ch09/03_derive.kai|ok
+run|examples/ch09/04_own_protocol.kai|ok
+run|examples/ch09/05_bounds.kai|ok
 run|examples/ch09/06_json.kai|ok
 
 # Chapter 10
@@ -314,22 +320,22 @@ run|examples/ch10/06_wallet.kai|ok
 run|examples/ch10/07_rounding.kai|ok
 
 # Chapter 11
-build|examples/ch11/01_basic_contracts.kai|ok
-build|examples/ch11/02_violation.kai|ok
+run|examples/ch11/01_basic_contracts.kai|ok
+run|examples/ch11/02_violation.kai|fail
 build|examples/ch11/03_bank_account.kai|ok
-build|examples/ch11/04_refinements.kai|ok
+run|examples/ch11/04_refinements.kai|ok
 
 # Chapter 12
-build|examples/ch12/01_log_basic.kai|ok
-build|examples/ch12/02_two_handlers.kai|ok
-build|examples/ch12/03_ask.kai|ok
-build|examples/ch12/04_fail.kai|ok
-build|examples/ch12/05_state.kai|ok
-build|examples/ch12/06_composition.kai|ok
-build|examples/ch12/07_alias.kai|ok
-build|examples/ch12/08_config_parser.kai|ok
-build|examples/ch12/09_wrapper_default.kai|ok
-build|examples/ch12/10_local_var.kai|ok
+run|examples/ch12/01_log_basic.kai|ok
+run|examples/ch12/02_two_handlers.kai|ok
+run|examples/ch12/03_ask.kai|ok
+run|examples/ch12/04_fail.kai|ok
+run|examples/ch12/05_state.kai|ok
+run|examples/ch12/06_composition.kai|ok
+run|examples/ch12/07_alias.kai|ok
+run|examples/ch12/08_config_parser.kai|ok
+run|examples/ch12/09_wrapper_default.kai|ok
+run|examples/ch12/10_local_var.kai|ok
 build|examples/ch12/11_instances.kai|ok
 run|examples/ch12/12_cleanup.kai|ok
 run|examples/ch12/13_generators.kai|ok
@@ -360,9 +366,9 @@ run|examples/ch14/08_test_mailbox.kai|ok
 
 # Chapter 15 — holes
 run|examples/ch15/01_basic_hole.kai|run_panic
-build|examples/ch15/02_partial_program.kai|ok
-build|examples/ch15/03_shared_hole.kai|ok
-build|examples/ch15/04_hole_in_pattern.kai|ok
+run|examples/ch15/02_partial_program.kai|ok
+run|examples/ch15/03_shared_hole.kai|run_panic
+run|examples/ch15/04_hole_in_pattern.kai|ok
 build|examples/ch15/05_top_down_design.kai|ok
 build|examples/ch15/06_hole_with_effects.kai|ok
 
@@ -370,8 +376,8 @@ build|examples/ch15/06_hole_with_effects.kai|ok
 # Exits 1 on purpose: the example demonstrates that the Int main
 # returns is the process exit status.
 run|examples/ch16/01_exit_status.kai|fail
-build|examples/ch16/ffi/01_libc_abs.kai|ok
-build|examples/ch16/ffi/02_rename.kai|ok
+run|examples/ch16/ffi/01_libc_abs.kai|ok
+run|examples/ch16/ffi/02_rename.kai|ok
 project|examples/ch16/ffi/03_shim|ok|app.kai|shim.c|c
 
 # Chapter 17

@@ -222,6 +222,7 @@ actores distintos.
 Para arrancar un actor que corre en su propia fibra:
 
 ```kai
+# ejemplos/cap14/02_spawn_actor.kai
 import actor
 import spawn
 
@@ -246,6 +247,13 @@ fn main() : Unit / Console + Spawn + Cancel {
     spawn.yield()
   }
 }
+```
+
+```
+$ kai run ejemplos/cap14/02_spawn_actor.kai
+trabajando: tarea-1
+trabajando: tarea-2
+trabajando: tarea-3
 ```
 
 `spawn_actor` arranca una fibra nueva, le instala un mailbox,
@@ -386,10 +394,12 @@ incluye el `Pid[Reply]` del cliente para que el servidor sepa
 dónde responder.
 
 ```kai
+# ejemplos/cap14/03_request_reply.kai
 import actor
 
 type Request = Query(String, Pid[Reply])
-type Reply   = Answer(String)
+
+type Reply = Answer(String)
 
 fn servidor() : Unit / Actor[Request] + Stdout {
   match Actor.receive() {
@@ -409,8 +419,21 @@ fn main() : Unit / Stdout + Spawn + Cancel {
     match Actor.receive() {
       Answer(r) -> Stdout.print("cliente: " ++ r)
     }
+
+    Actor.send(server, Query("la vida", Actor.self()))
+    match Actor.receive() {
+      Answer(r) -> Stdout.print("cliente: " ++ r)
+    }
   }
 }
+```
+
+```
+$ kai run ejemplos/cap14/03_request_reply.kai
+servidor: recibí 'dos+dos'
+cliente: respuesta a 'dos+dos'
+servidor: recibí 'la vida'
+cliente: respuesta a 'la vida'
 ```
 
 ![Figura 14.1](../figuras/fig14-1-request-reply-es.png)

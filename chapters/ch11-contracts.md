@@ -174,6 +174,36 @@ in and the `result` that comes out are **distinct values**,
 both in scope, no need for a "value before the call"
 mechanism.
 
+Both clauses in signatures that run, with `result` naming the
+return value:
+
+```kai
+# examples/ch11/01_basic_contracts.kai
+fn divide(a: Int, b: Int) : Int
+  requires b != 0
+  ensures result * b + a % b == a
+= a / b
+
+fn factorial(n: Int) : Int
+  requires n >= 0
+= if n <= 1 { 1 } else { n * factorial(n - 1) }
+
+fn main() {
+  println("10 / 3 = #{divide(10, 3)}")
+  println("17 / 5 = #{divide(17, 5)}")
+  println("5! = #{factorial(5)}")
+  println("10! = #{factorial(10)}")
+}
+```
+
+```
+$ kai run examples/ch11/01_basic_contracts.kai
+10 / 3 = 3
+17 / 5 = 3
+5! = 120
+10! = 3628800
+```
+
 ## 11.4 Refinement types
 
 While contracts speak about operations, **refinement types**
@@ -204,6 +234,41 @@ let y: NonNeg = -5     # ERROR: -5 doesn't satisfy self >= 0
 If you satisfy it with a dynamic value, the compiler inserts
 a runtime check — same as a `requires` whose argument can't
 be deduced statically.
+
+Two refinements declared and used, with the two lines the
+compiler rejects commented out at the end:
+
+```kai
+# examples/ch11/04_refinements.kai
+type NonNeg = Int where self >= 0
+
+type Probability = Real where self >= 0.0 and self <= 1.0
+
+fn double(n: NonNeg) : NonNeg = n + n
+
+fn event(p: Probability, description: String) : Unit / Stdout =
+  println("#{description} with prob #{p}")
+
+fn main() {
+  let x: NonNeg = 16
+  println("double(16) = #{double(x)}")
+
+  let pr: Probability = 0.3
+  event(pr, "rain tomorrow")
+
+  # The next line does NOT compile: -5 doesn't satisfy NonNeg.
+  # let y : NonNeg = -5
+
+  # Nor this: 1.5 doesn't satisfy 0.0 <= self <= 1.0.
+  # let pr2 : Probability = 1.5
+}
+```
+
+```
+$ kai run examples/ch11/04_refinements.kai
+double(16) = 32
+rain tomorrow with prob 0.3
+```
 
 ### Where it's checked: not just in a `let`
 
@@ -338,6 +403,38 @@ dependencies.
 Mental rule: **what the compiler can prove cheaply, it
 proves; the rest is checked at runtime**. The binary carries
 both cases without you having to distinguish which applied.
+
+A program with both faces: the commented line doesn't compile
+because the zero is a literal, and the one left standing does
+compile and aborts when it reaches a zero by arithmetic.
+
+```kai
+# examples/ch11/02_violation.kai
+fn divide(a: Int, b: Int) : Int
+  requires b != 0
+= a / b
+
+fn main() {
+  println("before")
+  # This does NOT compile — the compiler detects b == 0 with literal:
+  # let bad = divide(10, 0)
+
+  # But this does compile, and aborts at runtime:
+  let dynamic_zero = 10 - 10
+  let r = divide(10, dynamic_zero)
+  println("we never get here: #{r}")
+}
+```
+
+```
+$ kai run examples/ch11/02_violation.kai
+before
+panic: requires violated in `divide`
+required: b != 0
+declared at line 9, col 14
+  = help: narrow `b` to `Int where != 0`
+argument b was: 0
+```
 
 ## 11.6 Three forms of guarantee
 

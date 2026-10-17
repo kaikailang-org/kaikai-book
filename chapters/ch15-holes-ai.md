@@ -81,6 +81,31 @@ a `match`.
 
 Anonymous holes (`?` with no name) are each independent.
 
+The same `?word` in both branches, and what happens when the
+program reaches it:
+
+```kai
+# examples/ch15/03_shared_hole.kai
+fn classify(n: Int) : String {
+  if n < 0 {
+    ?word
+  } else {
+    ?word
+  }
+}
+
+fn main() : Unit / Stdout {
+  # Both branches are `?word`, so the compiler knows that
+  # any value you pick for one works for the other.
+  println(classify(-5))
+}
+```
+
+```
+$ kai run examples/ch15/03_shared_hole.kai
+panic: unfilled hole: ?word at line 8 col 5
+```
+
 ## 15.2 The conversation with the compiler
 
 The point of holes isn't that they abort nicely, it's what the
@@ -282,6 +307,29 @@ you a generic stub — `unimplemented()`, `return null` — in
 kaikai the `?` is a primitive of the idiom, and the compiler
 knows what type it has.
 
+One function written and another pending in the same file.
+What's done runs; the hole waits:
+
+```kai
+# examples/ch15/02_partial_program.kai
+fn double(x: Int) : Int = x * 2
+
+fn average(a: Int, b: Int) : Int = ?formula
+
+fn main() : Unit / Stdout {
+  # double works, we can test it:
+  println("double(5) = #{double(5)}")
+  # average doesn't yet, but the file still compiles.
+  # If you uncomment the next line, the program aborts:
+  # println("average(4, 8) = #{average(4, 8)}")
+}
+```
+
+```
+$ kai run examples/ch15/02_partial_program.kai
+double(5) = 10
+```
+
 ### `todo!` — the other stub, and when to use it
 
 There is a second form, and the two are worth keeping apart:
@@ -348,6 +396,49 @@ If you haven't yet decided whether you want `Triangle` in
 the type, you remove it and the compiler tells you `match`
 is no longer exhaustive. Holes are orthogonal to pattern
 checking; each one does its job.
+
+The `match` with one arm pending: the two resolved cases run,
+and the warnings point at the bindings the hole doesn't use
+yet.
+
+```kai
+# examples/ch15/04_hole_in_pattern.kai
+type Shape
+  = Circle(Real)
+  | Square(Real)
+  | Triangle(Real, Real)
+
+fn area(s: Shape) : Real {
+  match s {
+    Circle(r) -> 3.14 * r * r
+    Square(l) -> l * l
+    Triangle(b, h) -> ?triangle_formula
+  }
+}
+
+fn main() : Unit / Stdout {
+  println("circle 3 -> #{area(Circle(3.0))}")
+  println("square 4 -> #{area(Square(4.0))}")
+}
+```
+
+```
+$ kai run examples/ch15/04_hole_in_pattern.kai
+warning: unused binding `h`
+  --> examples/ch15/04_hole_in_pattern.kai:15:17
+     |
+  15 |     Triangle(b, h) -> ?triangle_formula
+     |                 ^
+  = help: prefix with `_` to mark as intentionally unused
+warning: unused binding `b`
+  --> examples/ch15/04_hole_in_pattern.kai:15:14
+     |
+  15 |     Triangle(b, h) -> ?triangle_formula
+     |              ^
+  = help: prefix with `_` to mark as intentionally unused
+circle 3 -> 28.259999999999998
+square 4 -> 16
+```
 
 ## 15.6 The LLM bet: a language designed for agents
 

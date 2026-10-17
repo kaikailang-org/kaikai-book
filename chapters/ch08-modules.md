@@ -53,6 +53,27 @@ without polluting the consumer's namespace. In `arithmetic`,
 `helper` exists only inside the file; whoever imports the
 module never sees it.
 
+The example that runs is that same file with a `main` using
+both public functions:
+
+```kai
+# examples/ch08/01_one_file/main.kai
+pub fn double(x: Int) : Int = x * 2
+
+fn helper(x: Int) : Int = x + 1
+
+pub fn double_plus_one(x: Int) : Int = helper(double(x))
+
+fn main() {
+  println("double_plus_one(5) = #{double_plus_one(5)}")
+}
+```
+
+```
+$ kai run examples/ch08/01_one_file/main.kai
+double_plus_one(5) = 11
+```
+
 ## 8.2 `import` and qualified names
 
 To use `arithmetic` from another file:
@@ -80,6 +101,18 @@ The same prefix is used for types the module exports and for
 constructing them:
 
 ```kai
+# examples/ch08/02_two_files/geometry.kai
+pub type Point = { x: Real, y: Real }
+
+pub fn distance(a: Point, b: Point) : Real {
+  let dx = a.x - b.x
+  let dy = a.y - b.y
+  real_sqrt(dx * dx + dy * dy)
+}
+
+fn square(x: Real) : Real = x * x
+
+# examples/ch08/02_two_files/main.kai
 import geometry
 
 fn main() {
@@ -87,6 +120,11 @@ fn main() {
   let b: geometry.Point = geometry.Point { x: 3.0, y: 4.0 }
   println("distance = #{geometry.distance(a, b)}")
 }
+```
+
+```
+$ kai run examples/ch08/02_two_files/main.kai
+distance = 5
 ```
 
 Three uses of the prefix, all consistent: in the type
@@ -98,11 +136,26 @@ If a module lives under a subdirectory, the import uses the
 same dotted name as the module:
 
 ```kai
+# examples/ch08/05_project/util/math.kai
+pub fn pow(base: Int, exp: Int) : Int {
+  if exp == 0 {
+    1
+  } else {
+    base * pow(base, exp - 1)
+  }
+}
+
+# examples/ch08/05_project/main.kai
 import util.math
 
 fn main() {
   println("3^4 = #{math.pow(3, 4)}")
 }
+```
+
+```
+$ kai run examples/ch08/05_project/main.kai
+3^4 = 81
 ```
 
 Two details: the file lives at `util/math.kai`, the module is
@@ -136,6 +189,52 @@ instance). The cost is that the reader no longer knows where
 module exports" into the local namespace. This is deliberate:
 wildcards look convenient at write-time but make future
 readers unable to trace where a name came from.
+
+The three forms as three projects that run. Each carries its
+own `geometry.kai`; what changes is the `import` line and,
+with it, how the call reads:
+
+```kai
+# examples/ch08/03_qualified/main.kai
+import geometry
+
+fn main() {
+  let d = geometry.distance_from_origin(3.0, 4.0)
+  println("distance from origin = #{d}")
+}
+
+# examples/ch08/04_alias/main.kai
+import geometry as G
+
+fn main() {
+  let d = G.distance_from_origin(3.0, 4.0)
+  println("distance from origin = #{d}")
+}
+
+# examples/ch08/02b_selective/main.kai
+import geometry.{Point, distance}
+
+fn main() {
+  let a: Point = Point { x: 0.0, y: 0.0 }
+  let b: Point = Point { x: 3.0, y: 4.0 }
+  println("distance = #{distance(a, b)}")
+}
+```
+
+```
+$ kai run examples/ch08/03_qualified/main.kai
+distance from origin = 5
+```
+
+```
+$ kai run examples/ch08/04_alias/main.kai
+distance from origin = 5
+```
+
+```
+$ kai run examples/ch08/02b_selective/main.kai
+distance = 5
+```
 
 ### When two modules export the same name
 
@@ -358,9 +457,44 @@ controls visibility at the declaration level, and together
 they cover a very common case: "export the type, hide its
 interior."
 
-The `ch08/06_priv/` example is a two-file project that shows
-exactly this rejection from the other side of the module
-boundary.
+A two-file project shows it from the other side of the module
+boundary. The client builds and reads the account only through
+the module's functions; the two commented lines are the
+rejections:
+
+```kai
+# examples/ch08/06_priv/safe.kai
+pub type Account = {
+  name: String,
+  priv balance: Real
+}
+
+pub fn open(name: String) : Account =
+  Account { name: name, balance: 0.0 }
+
+pub fn deposit(a: Account, amount: Real) : Account =
+  Account { ...a, balance: a.balance + amount }
+
+pub fn balance_of(a: Account) : Real = a.balance
+
+# examples/ch08/06_priv/main.kai
+import safe
+
+fn main() {
+  let a0 = safe.open("savings")
+  let a1 = safe.deposit(a0, 100.0)
+  let a2 = safe.deposit(a1, 50.0)
+  println("#{a2.name}: #{safe.balance_of(a2)}")
+
+  # println("#{a2.balance}")
+  # let _ = safe.Account { name: "x", balance: 999.0 }
+}
+```
+
+```
+$ kai run examples/ch08/06_priv/main.kai
+savings: 150
+```
 
 ## 8.4 The stdlib you get for free
 

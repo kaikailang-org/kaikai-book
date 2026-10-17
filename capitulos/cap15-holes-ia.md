@@ -80,6 +80,32 @@ implementaciones inconsistentes entre brazos de un `if` o de un
 
 Anónimos (`?` sin nombre) cada uno es independiente.
 
+El mismo `?palabra` en las dos ramas, y lo que pasa cuando el
+programa llega a él:
+
+```kai
+# ejemplos/cap15/03_hole_compartido.kai
+fn clasificar(n: Int) : String {
+  if n < 0 {
+    ?palabra
+  } else {
+    ?palabra
+  }
+}
+
+fn main() : Unit / Stdout {
+  # Ambas ramas son `?palabra`, así que el compilador sabe
+  # que cualquier valor que escojas para una vale para la
+  # otra.
+  println(clasificar(-5))
+}
+```
+
+```
+$ kai run ejemplos/cap15/03_hole_compartido.kai
+panic: unfilled hole: ?palabra at line 9 col 5
+```
+
 ## 15.2 La conversación con el compilador
 
 La gracia de los holes no está en abortar bonito, sino en lo
@@ -279,6 +305,29 @@ dan un stub cualquiera (`unimplemented()`, `return null`), en
 kaikai el `?` es una primitiva del idioma y el compilador sabe
 qué tipo tiene.
 
+Una función escrita y otra pendiente en el mismo archivo. Lo
+que está listo corre; el hole espera:
+
+```kai
+# ejemplos/cap15/02_programa_parcial.kai
+fn duplicar(x: Int) : Int = x * 2
+
+fn promedio(a: Int, b: Int) : Int = ?formula
+
+fn main() : Unit / Stdout {
+  # duplicar funciona, podemos probarlo:
+  println("duplicar(5) = #{duplicar(5)}")
+  # promedio todavía no, pero el archivo compila igual.
+  # Si descomentas la línea siguiente, el programa aborta:
+  # println("promedio(4, 8) = #{promedio(4, 8)}")
+}
+```
+
+```
+$ kai run ejemplos/cap15/02_programa_parcial.kai
+duplicar(5) = 10
+```
+
 ### `todo!`: el otro stub, y cuándo usarlo
 
 Hay una segunda forma, y conviene no confundirlas:
@@ -346,6 +395,49 @@ Si todavía no decidiste si quieres `Triangulo` en el tipo, lo
 borras y el compilador te avisa que ahora `match` no es
 exhaustivo. Los holes son ortogonales a la verificación de
 patrones; cada uno hace su trabajo.
+
+El `match` con un brazo pendiente: los dos casos resueltos
+corren, y las advertencias señalan los bindings que el hole
+todavía no usa.
+
+```kai
+# ejemplos/cap15/04_hole_en_patron.kai
+type Forma
+  = Circulo(Real)
+  | Cuadrado(Real)
+  | Triangulo(Real, Real)
+
+fn area(f: Forma) : Real {
+  match f {
+    Circulo(r) -> 3.14 * r * r
+    Cuadrado(l) -> l * l
+    Triangulo(b, h) -> ?formula_triangulo
+  }
+}
+
+fn main() : Unit / Stdout {
+  println("círculo 3 -> #{area(Circulo(3.0))}")
+  println("cuadrado 4 -> #{area(Cuadrado(4.0))}")
+}
+```
+
+```
+$ kai run ejemplos/cap15/04_hole_en_patron.kai
+warning: unused binding `h`
+  --> ejemplos/cap15/04_hole_en_patron.kai:15:18
+     |
+  15 |     Triangulo(b, h) -> ?formula_triangulo
+     |                  ^
+  = help: prefix with `_` to mark as intentionally unused
+warning: unused binding `b`
+  --> ejemplos/cap15/04_hole_en_patron.kai:15:15
+     |
+  15 |     Triangulo(b, h) -> ?formula_triangulo
+     |               ^
+  = help: prefix with `_` to mark as intentionally unused
+círculo 3 -> 28.259999999999998
+cuadrado 4 -> 16
+```
 
 ## 15.6 La apuesta LLM: lenguaje diseñado para agentes
 
