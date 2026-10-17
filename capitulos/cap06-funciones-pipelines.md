@@ -221,7 +221,8 @@ La sección se lee como la proyección misma, sin tener que
 inventar un nombre para el parámetro. El receptor se entrega de
 forma implícita (es el primer argumento por UFCS), así que
 `.starts_with("a")` lee su argumento escrito *después* del
-receptor. Funciona como la función de `|`, `||`, `|?` y como
+receptor. Funciona como la función de `|`, `||`, `|?`, `|!` y
+como
 argumento de un combinador (`.map`, `.and_then`, `.filter`):
 
 ```kai
@@ -230,7 +231,8 @@ let n      = Some("hi").map(.length())     # en posición de argumento
 ```
 
 Dentro de una etapa de pipe la proyección no tiene que quedarse
-sola. A la derecha de `|`, `||` o `|?`, el `.` **es** el elemento
+sola. A la derecha de `|`, `||`, `|?` o `|!`, el `.` **es** el
+elemento
 de esa etapa, y todos los `.` de la etapa son el mismo elemento,
 así que puedes seguir operando sobre lo que proyectas:
 
@@ -387,7 +389,7 @@ mas_diez(7) = 17
 (cuadrado . +1)(4) = 25
 ```
 
-## 6.4 Pipes: `|>`, `|`, `||`
+## 6.4 Pipes: `|>`, `|`, `||`, `|?`, `|!`
 
 kaikai trae cuatro operadores para encadenar. Los cuatro son
 distintos y cada uno comunica una intención específica.
@@ -555,14 +557,54 @@ xs |? (n) => n > 3                 # flecha
 xs |? { n -> n % 3 == 0 }          # bloque
 ```
 
-`|?` cierra la familia de pipes específicos para listas: `|`
-es map, `||` es flat-map, `|?` es filter. Las tres
-operaciones canónicas de transformación de secuencias tienen
-su propio operador.
+Con `|?` se completan las tres transformaciones canónicas de
+secuencias: `|` es map, `||` es flat-map, `|?` es filter. Cada
+una tiene su propio operador. Queda uno, el que no transforma
+nada.
+
+### `|!`: each
+
+Los cuatro pipes anteriores producen un valor. `|!` no: corre
+la etapa por su **efecto** sobre cada elemento y devuelve
+`Unit`. `xs |! f` es exactamente `list.each(xs, f)`.
+
+```kai
+[1, 2, 3] |! println("n = #{.}")   # ≡ list.each(xs, (n) => println("n = #{n}"))
+```
+
+Es el pipe que ocupa el lugar del `for` de otros lenguajes.
+Cuando recorres una colección para imprimir, escribir o mandar
+un mensaje, el operador correcto es `|!` y no `|`: `|` arma una
+lista de resultados que nadie va a usar, y sobre un `Stream` no
+corre nada hasta que alguien consuma esa lista.
+
+Como devuelve `Unit`, `|!` **cierra** el pipeline. Primero
+filtras y transformas, al final consumes:
+
+```kai
+[1, 2, 3, 4, 5, 6] |? es_par | . * 10 |! println("#{.}")
+```
+
+Ningún pipe puede seguir a un `|!`, y el compilador lo dice con
+esas palabras:
+
+```kai
+# no compila
+[1, 2, 3] |! println("#{.}") | . * 2
+```
+
+```
+error: `|!` ends a pipeline; it returns `Unit`
+```
+
+El chequeo corre también en la otra dirección: si la etapa
+devuelve un valor en vez de `Unit`, el error apunta al operador
+y te ofrece la salida, `|` para transformar o `|> ignore` para
+descartar el resultado.
 
 ### Todo junto
 
-Los cuatro operadores se mezclan libremente:
+Los cinco operadores se mezclan libremente:
 
 ```kai
 let total =
@@ -576,7 +618,7 @@ let total =
 Cada paso del pipeline hace una sola cosa. La firma del
 resultado se entiende de izquierda a derecha. No hay
 variables temporales, no hay anidamiento de paréntesis. Esto
-es la principal razón de que kaikai tenga cuatro operadores
+es la principal razón de que kaikai tenga cinco operadores
 y no uno.
 
 Y cada operador por separado, con su equivalencia al lado:
@@ -618,11 +660,20 @@ fn ejemplo_filter() : Int {
   list.sum(pares)
 }
 
+# `|!` (each): corre la etapa por su efecto en cada elemento y
+# devuelve `Unit`, así que cierra el pipeline.
+# `xs |! f` ≡ `list.each(xs, f)`.
+fn ejemplo_each() : Unit / Stdout {
+  let xs = [1, 2, 3]
+  xs |! println("|!: elemento           = #{.}")
+}
+
 fn main() {
   println("|>: total              = #{ejemplo_apply()}")
   println("|:  suma de dobles     = #{ejemplo_map()}")
   println("||: longitud extendido = #{ejemplo_flat_map()}")
   println("|?: suma de pares      = #{ejemplo_filter()}")
+  ejemplo_each()
 }
 ```
 
@@ -632,6 +683,9 @@ $ kai run ejemplos/cap06/04_pipes.kai
 |:  suma de dobles     = 30
 ||: longitud extendido = 9
 |?: suma de pares      = 12
+|!: elemento           = 1
+|!: elemento           = 2
+|!: elemento           = 3
 ```
 
 ### Los mismos pipes, pero lazy: `Stream`
@@ -643,12 +697,14 @@ paso siguiente. Para una lista de diez elementos da igual;
 para una de diez millones, son diez millones de celdas
 intermedias por cada `|` del pipeline.
 
-El módulo `stream` te da los mismos tres operadores (`|`,
-`|?`, `||`) sobre un `Stream`: un pipeline **lazy** que corre
-en memoria constante. Nada se computa cuando escribes el
+El módulo `stream` te da los mismos cuatro operadores (`|`,
+`|?`, `||`, `|!`) sobre un `Stream`: un pipeline **lazy** que
+corre en memoria constante. Nada se computa cuando escribes el
 `map` o el `filter`; el trabajo ocurre recién cuando un
 *sink* (`foldl`, `to_list`, `count`, `each`) recorre el stream
-y lo fuerza. Y entre paso y paso no hay lista intermedia: cada
+y lo fuerza. `|!` es ese `each` escrito como pipe, la forma más
+corta de consumir un stream. Y entre paso y paso no hay lista
+intermedia: cada
 elemento atraviesa todo el pipeline antes de que el siguiente
 empiece.
 

@@ -20,7 +20,7 @@ el nivel inmediatamente superior.
 | 5     | `==`, `!=`, `<`, `>`, `<=`, `>=`                 | **No-asociativa** |
 | 6     | `and`                                            | Izquierda (corto) |
 | 7     | `or`                                             | Izquierda (corto) |
-| 8     | `\|>`, `\|`, `\|\|`, `\|?`                       | Izquierda         |
+| 8     | `\|>`, `\|`, `\|\|`, `\|?`, `\|!`                | Izquierda         |
 
 ### Detalles por nivel
 
@@ -40,9 +40,11 @@ el nivel inmediatamente superior.
 - **Nivel 6 (`and`) y 7 (`or`).** Lógicos con corto-circuito.
   `and` aprieta más fuerte que `or`, así que
   `a or b and c` es `a or (b and c)`.
-- **Nivel 8 (pipes).** Cuatro operadores al mismo nivel:
-  `|>` (apply), `|` (map), `||` (flat-map), `|?` (filter).
-  Todos asocian a izquierda. `xs | f |> g` es `(xs | f) |> g`.
+- **Nivel 8 (pipes).** Cinco operadores al mismo nivel:
+  `|>` (apply), `|` (map), `||` (flat-map), `|?` (filter) y
+  `|!` (each). Todos asocian a izquierda: `xs | f |> g` es
+  `(xs | f) |> g`. `|!` devuelve `Unit`, así que cierra el
+  pipeline y ningún pipe puede seguirlo.
 
 ## C.2 Operadores que **no** son operadores
 
@@ -90,6 +92,7 @@ mecanismo subyacente.
 | `xs | f`        | `list.map(xs, f)`                       |
 | `xs || f`       | `list.flat_map(xs, f)`                  |
 | `xs |? p`       | `list.filter(xs, p)`                    |
+| `xs |! f`       | `list.each(xs, f)`                      |
 | `a ++ b`        | `string_concat(a, b)` (cuando son `String`) |
 | `a[i]`          | `Mutable.array_get(a, i)`               |
 | `a[i] := v`     | `Mutable.array_set(a, i, v)`            |

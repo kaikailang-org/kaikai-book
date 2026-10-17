@@ -532,8 +532,9 @@ Topics:
   mutate       Break the code on purpose and ask whether anything notices.
   net          Byte-level networking — TCP, UDP, DNS, and Unix-domain sockets.
   packages     `kai.toml`, imports, visibility.
-  pipes        Apply (`|>`), map (`|`), flat-map (`||`), filter (`|?`) — four pipe
+  pipes        Apply (`|>`), map (`|`), flat-map (`||`), filter (`|?`), each (`|!`) —
   protocols    Single-dispatch protocols, Go/Clojure/Elixir-style.
+  seq          `Seq[t]` — the lazy sequence: pure, shared, possibly endless. Written
   syntax       One-page reference of the forms kaikai actually has. Every form on
   testing      Test blocks, assertions, benchmarks, property checks.
   units        Units of measure on `Real` — phantom-type discipline, zero runtime

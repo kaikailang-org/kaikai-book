@@ -160,6 +160,12 @@ variable, the exact point of its last use is identified.
 Perceus uses this analysis to insert `drop`s in the right
 place.
 
+**Lazy.** A computation described without running it: the work
+happens when someone reads the result. kaikai has three lazy
+forms — `Stream`, `Seq` and `Gen` — told apart by who produces
+the elements and by what happens when you read them again.
+Chapter 6 §6.4 and chapter 12.
+
 **Linked (in actors).** Two actors linked with
 `Link.link(pid)` find out about each other's termination:
 if one falls, the other receives `Cancel.raise()`.
@@ -227,8 +233,9 @@ Appendix B and chapter 13 §13.2.
 `Pid[Msg]`. Identifies a mailbox and also guarantees that
 only messages of type `Msg` can be sent to it.
 
-**Pipe.** Operators `|>`, `|`, `||`, `|?`. Chain
-transformations. Chapter 6.
+**Pipe.** Operators `|>`, `|`, `||`, `|?`, `|!`. Chain
+transformations; `|!` consumes the result for its effect.
+Chapter 6.
 
 **Polymorphism.** A function's ability to operate over
 multiple types. In kaikai it appears as generics
@@ -269,6 +276,11 @@ rest of the effects" in a signature: `fn map[A, B, e](xs:
 the same language it compiles. The kaikai compiler
 `kaic2` is written in kaikai. Appendix A.
 
+**Seq[t].** The lazy sequence: pure and shared. Its cells are
+computed when read and then kept, so reading it again recomputes
+nothing. Written with `lazy` before a list literal, and inside
+`lazy` a range may have no end. Chapter 6 §6.4.
+
 **Span.** The byte range in the source file where a
 construct lives. Compiler messages use spans to point to
 where an error occurred.
@@ -288,6 +300,12 @@ to `handle ... with State[T](init)` (chapter 12 §12.7).
 standard input. In kaikai each is its own effect, one per file
 descriptor, and `Console` is the alias bundling all three. All
 three also expose `is_tty()`. Appendix D §D.1.
+
+**Stream.** A lazy pipeline over something that already exists,
+even a resource such as a file. It runs in constant memory and
+is a re-runnable recipe: every walk runs the stages again. The
+`|`, `|?`, `||` and `|!` pipes run over a `Stream`.
+Chapter 6 §6.4.
 
 **Sum type (algebraic data type).** A type with several
 constructors, each carrying different data. The construct

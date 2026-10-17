@@ -166,7 +166,7 @@ los tipos algebraicos son la herramienta central, no un adorno.
 - 6.1 Declaración
 - 6.2 Lambdas
 - 6.3 Funciones de orden superior
-- 6.4 Pipes: `|>`, `|`, `||`
+- 6.4 Pipes: `|>`, `|`, `||`, `|?`, `|!`
 - 6.5 Trailing lambdas y otros azúcares
 - 6.6 Recursión y TCO obligatoria
 - 6.7 Caso de estudio: pipeline de transformación

@@ -35,9 +35,18 @@ fn ejemplo_filter() : Int {
   list.sum(pares)
 }
 
+# `|!` (each): corre la etapa por su efecto en cada elemento y
+# devuelve `Unit`, así que cierra el pipeline.
+# `xs |! f` ≡ `list.each(xs, f)`.
+fn ejemplo_each() : Unit / Stdout {
+  let xs = [1, 2, 3]
+  xs |! println("|!: elemento           = #{.}")
+}
+
 fn main() {
   println("|>: total              = #{ejemplo_apply()}")
   println("|:  suma de dobles     = #{ejemplo_map()}")
   println("||: longitud extendido = #{ejemplo_flat_map()}")
   println("|?: suma de pares      = #{ejemplo_filter()}")
+  ejemplo_each()
 }
