@@ -11,7 +11,7 @@ fn divide(a: Int, b: Int) : Int
 
 fn main() {
   println("antes")
-  # Esto NO compila — el compilador detecta b == 0 con literal:
+  # Esto NO compila: el compilador detecta b == 0 con literal:
   # let bad = divide(10, 0)
 
   # Pero esto sí compila, y aborta en runtime:

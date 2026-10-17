@@ -73,6 +73,57 @@ down:
   punned or positional. These are deliberate: they make it
   obvious who wins on a duplicate.
 
+Declaration, construction, access and functional update in one
+program:
+
+```kai
+# examples/ch04/01_records.kai
+type Point = { x: Int, y: Int }
+
+type Employee = {
+  name: String,
+  age: Int,
+  salary: Int
+}
+
+fn distance(a: Point, b: Point) : Int {
+  let dx = a.x - b.x
+  let dy = a.y - b.y
+  dx * dx + dy * dy
+}
+
+fn main() {
+  let origin = Point { x: 0, y: 0 }
+  let p = Point { x: 3, y: 4 }
+
+  println("origin.x = #{origin.x}, origin.y = #{origin.y}")
+  println("p at (#{p.x}, #{p.y})")
+  println("distance² = #{distance(origin, p)}")
+
+  # Functional update with `...`: copies all fields and
+  # overrides the named ones.
+  let p2 = Point { ...p, x: 7 }
+  println("p2 at (#{p2.x}, #{p2.y})")
+
+  let ada = Employee { name: "Ada", age: 30, salary: 1500 }
+  println("#{ada.name} is #{ada.age}, salary #{ada.salary}")
+
+  # Promotion: same employee, new salary.
+  let ada_post = Employee { ...ada, salary: 2200 }
+  println("#{ada_post.name} now earns #{ada_post.salary}")
+}
+```
+
+```
+$ kai run examples/ch04/01_records.kai
+origin.x = 0, origin.y = 0
+p at (3, 4)
+distance² = 25
+p2 at (7, 4)
+Ada is 30, salary 1500
+Ada now earns 2200
+```
+
 ### 4.1.1 Private fields
 
 Record fields are public by default: any module that imports
@@ -128,6 +179,37 @@ in ch. 17 to hide the store actor's state, and in ch. 18 so
 ledger balances can't be constructed from outside the domain
 module.
 
+The type with a private field, its constructor, and the line
+the compiler won't let through:
+
+```kai
+# examples/ch04/06_priv.kai
+type Account = {
+  name: String,
+  priv balance: Real
+}
+
+fn open(name: String) : Account =
+  Account { name: name, balance: 0.0 }
+
+fn deposit(a: Account, amount: Real) : Account =
+  Account { ...a, balance: a.balance + amount }
+
+fn balance_of(a: Account) : Real = a.balance
+
+fn main() {
+  let a0 = open("savings")
+  let a1 = deposit(a0, 100.0)
+  let a2 = deposit(a1, 50.0)
+  println("#{a2.name}: #{balance_of(a2)}")
+}
+```
+
+```
+$ kai run examples/ch04/06_priv.kai
+savings: 150
+```
+
 ## 4.2 Field access and destructuring
 
 Accessing with `.` is fine for one or two fields. When you
@@ -173,6 +255,43 @@ remove the last arm and it stops compiling. Exhaustiveness
 over `Int` fields is covered by the final `Point { x, y }`
 arm, which matches any `Point`. Without that catch-all arm
 the `match` is not total.
+
+The three ways of opening a record, one after the other:
+
+```kai
+# examples/ch04/02_destructuring.kai
+type Point = { x: Int, y: Int }
+
+fn describe(p: Point) : String {
+  let Point { x, y } = p
+  "(#{x}, #{y})"
+}
+
+fn classify(p: Point) : String =
+  match p {
+    Point { x: 0, y: 0 } -> "origin"
+    Point { x: 0, y: _ } -> "Y axis"
+    Point { x: _, y: 0 } -> "X axis"
+    Point { x, y } -> "point at (#{x}, #{y})"
+  }
+
+fn main() {
+  println(describe(Point { x: 3, y: 4 }))
+  println(classify(Point { x: 0, y: 0 }))
+  println(classify(Point { x: 0, y: 7 }))
+  println(classify(Point { x: 5, y: 0 }))
+  println(classify(Point { x: 2, y: 9 }))
+}
+```
+
+```
+$ kai run examples/ch04/02_destructuring.kai
+(3, 4)
+origin
+Y axis
+X axis
+point at (2, 9)
+```
 
 ## 4.3 Lists
 
@@ -321,6 +440,44 @@ process lists.
 
 Lists are **immutable**. There is no `xs[0] = 99`. If you
 need a modified list, you build a new one.
+
+Construction, ranges, recursive traversal and patterns in a
+single program:
+
+```kai
+# examples/ch04/03_lists.kai
+fn sum(xs: [Int]) : Int =
+  match xs {
+    [] -> 0
+    [h, ...t] -> h + sum(t)
+  }
+
+fn length[a](xs: [a]) : Int =
+  match xs {
+    [] -> 0
+    [_, ...t] -> 1 + length(t)
+  }
+
+fn main() {
+  let primes = [2, 3, 5, 7, 11]
+  let r = [1..10]  # [1, ..., 10]
+  let evens = [2, 4..20]  # [2, 4, ..., 20]
+  let combo = [0, ...primes, 13]  # spread
+
+  println("primes: length=#{length(primes)}, sum=#{sum(primes)}")
+  println("r:      length=#{length(r)}, sum=#{sum(r)}")
+  println("evens:  length=#{length(evens)}, sum=#{sum(evens)}")
+  println("combo:  length=#{length(combo)}, sum=#{sum(combo)}")
+}
+```
+
+```
+$ kai run examples/ch04/03_lists.kai
+primes: length=5, sum=28
+r:      length=10, sum=55
+evens:  length=10, sum=110
+combo:  length=7, sum=41
+```
 
 ### `Vec[T]` — indexing without giving up values
 
@@ -695,6 +852,58 @@ separated them from chapter 5 because their role in
 day-to-day design is central — you'll use them before you
 start declaring your own sum types.
 
+Both types at work: a search that may find nothing, and a
+validation that explains why it failed:
+
+```kai
+# examples/ch04/04_option_result.kai
+type AgeError = NotNumeric | OutOfRange
+
+fn first_even(xs: [Int]) : Option[Int] =
+  match xs {
+    [] -> None
+    [h, ...t] -> if h % 2 == 0 { Some(h) } else { first_even(t) }
+  }
+
+fn parse_age(s: String) : Result[Int, AgeError] =
+  match string_to_int(s) {
+    None -> Err(NotNumeric)
+    Some(n) ->
+      if n < 0 or n > 130 {
+        Err(OutOfRange)
+      } else {
+        Ok(n)
+      }
+  }
+
+fn describe_age(s: String) : String =
+  match parse_age(s) {
+    Ok(n) -> "valid age: #{n}"
+    Err(NotNumeric) -> "not a number"
+    Err(OutOfRange) -> "out of range"
+  }
+
+fn main() {
+  let xs = [1, 3, 5, 6, 7]
+  match first_even(xs) {
+    Some(n) -> println("first even: #{n}")
+    None -> println("no evens")
+  }
+
+  println(describe_age("42"))
+  println(describe_age("hello"))
+  println(describe_age("999"))
+}
+```
+
+```
+$ kai run examples/ch04/04_option_result.kai
+first even: 6
+valid age: 42
+not a number
+out of range
+```
+
 ## 4.6 Tuples
 
 A tuple is a **positional** aggregate: like a record, but
@@ -745,6 +954,30 @@ This is useful to know when you see a type `Pair[Int, String]`
 in a stdlib signature: now you know it's the same as
 `(Int, String)`, and you can destructure it with
 `let (a, b) = p`.
+
+A function that returns two values, and a caller that splits
+them in the `let`:
+
+```kai
+# examples/ch04/05_tuples.kai
+fn divmod(a: Int, b: Int) : (Int, Int) = (a / b, a % b)
+
+fn main() {
+  let (quotient, remainder) = divmod(17, 5)
+  println("17 / 5 = #{quotient}, remainder = #{remainder}")
+
+  # A 3-tuple
+  let point3d = (1, 2, 3)
+  let (x, y, z) = point3d
+  println("(#{x}, #{y}, #{z})")
+}
+```
+
+```
+$ kai run examples/ch04/05_tuples.kai
+17 / 5 = 3, remainder = 2
+(1, 2, 3)
+```
 
 ### Tuple or record?
 

@@ -75,6 +75,57 @@ que conviene tener presentes:
   posicionales. Estas restricciones son a propósito: hacen
   obvio quién gana cuando hay duplicados.
 
+Declaración, construcción, acceso y actualización funcional en
+un programa:
+
+```kai
+# ejemplos/cap04/01_records.kai
+type Punto = { x: Int, y: Int }
+
+type Empleado = {
+  nombre: String,
+  edad: Int,
+  sueldo: Int
+}
+
+fn distancia(a: Punto, b: Punto) : Int {
+  let dx = a.x - b.x
+  let dy = a.y - b.y
+  dx * dx + dy * dy
+}
+
+fn main() {
+  let origen = Punto { x: 0, y: 0 }
+  let p = Punto { x: 3, y: 4 }
+
+  println("origen.x = #{origen.x}, origen.y = #{origen.y}")
+  println("p en (#{p.x}, #{p.y})")
+  println("distancia² = #{distancia(origen, p)}")
+
+  # Update funcional con `...`: copia todos los campos y
+  # reemplaza los que se nombran después.
+  let p2 = Punto { ...p, x: 7 }
+  println("p2 en (#{p2.x}, #{p2.y})")
+
+  let ada = Empleado { nombre: "Ada", edad: 30, sueldo: 1500 }
+  println("#{ada.nombre} tiene #{ada.edad} años, sueldo #{ada.sueldo}")
+
+  # Promoción: mismo empleado, sueldo nuevo.
+  let ada_post = Empleado { ...ada, sueldo: 2200 }
+  println("#{ada_post.nombre} ahora gana #{ada_post.sueldo}")
+}
+```
+
+```
+$ kai run ejemplos/cap04/01_records.kai
+origen.x = 0, origen.y = 0
+p en (3, 4)
+distancia² = 25
+p2 en (7, 4)
+Ada tiene 30 años, sueldo 1500
+Ada ahora gana 2200
+```
+
 ### 4.1.1 Campos privados
 
 Por defecto los campos de un record son públicos: cualquier
@@ -130,6 +181,37 @@ así en el cap. 17 para esconder el estado del actor del
 almacén, y en el cap. 18 para que los saldos del libro mayor
 no se construyan por fuera del módulo de dominio.
 
+El tipo con un campo privado, su constructor y la línea que el
+compilador no deja pasar:
+
+```kai
+# ejemplos/cap04/06_priv.kai
+type Cuenta = {
+  nombre: String,
+  priv saldo: Real
+}
+
+fn abrir(nombre: String) : Cuenta =
+  Cuenta { nombre: nombre, saldo: 0.0 }
+
+fn depositar(c: Cuenta, monto: Real) : Cuenta =
+  Cuenta { ...c, saldo: c.saldo + monto }
+
+fn saldo_de(c: Cuenta) : Real = c.saldo
+
+fn main() {
+  let c0 = abrir("ahorros")
+  let c1 = depositar(c0, 100.0)
+  let c2 = depositar(c1, 50.0)
+  println("#{c2.nombre}: #{saldo_de(c2)}")
+}
+```
+
+```
+$ kai run ejemplos/cap04/06_priv.kai
+ahorros: 150
+```
+
 ## 4.2 Acceso a campos y destructuring
 
 Acceder con `.` está bien para uno o dos campos. Cuando
@@ -179,6 +261,43 @@ si quitas la última rama, no compila. La exhaustividad sobre
 campos `Int` la cubre el patrón final `Punto { x, y }`, que
 calza con cualquier `Punto`. Sin esa rama, el `match` no es
 total.
+
+Las tres formas de abrir un record, una después de la otra:
+
+```kai
+# ejemplos/cap04/02_destructuring.kai
+type Punto = { x: Int, y: Int }
+
+fn describir(p: Punto) : String {
+  let Punto { x, y } = p
+  "(#{x}, #{y})"
+}
+
+fn clasificar(p: Punto) : String =
+  match p {
+    Punto { x: 0, y: 0 } -> "origen"
+    Punto { x: 0, y: _ } -> "eje Y"
+    Punto { x: _, y: 0 } -> "eje X"
+    Punto { x, y } -> "punto en (#{x}, #{y})"
+  }
+
+fn main() {
+  println(describir(Punto { x: 3, y: 4 }))
+  println(clasificar(Punto { x: 0, y: 0 }))
+  println(clasificar(Punto { x: 0, y: 7 }))
+  println(clasificar(Punto { x: 5, y: 0 }))
+  println(clasificar(Punto { x: 2, y: 9 }))
+}
+```
+
+```
+$ kai run ejemplos/cap04/02_destructuring.kai
+(3, 4)
+origen
+eje Y
+eje X
+punto en (2, 9)
+```
 
 ## 4.3 Listas
 
@@ -330,6 +449,44 @@ forma natural de procesar listas.
 
 Las listas son **inmutables**. No hay `xs[0] = 99`. Si
 necesitas una lista modificada, construyes una nueva.
+
+Construcción, rangos, recorrido recursivo y patrones en un solo
+programa:
+
+```kai
+# ejemplos/cap04/03_listas.kai
+fn suma(xs: [Int]) : Int =
+  match xs {
+    [] -> 0
+    [h, ...t] -> h + suma(t)
+  }
+
+fn longitud[a](xs: [a]) : Int =
+  match xs {
+    [] -> 0
+    [_, ...t] -> 1 + longitud(t)
+  }
+
+fn main() {
+  let primos = [2, 3, 5, 7, 11]
+  let rango = [1..10]  # [1, ..., 10]
+  let pares = [2, 4..20]  # [2, 4, ..., 20]
+  let combinada = [0, ...primos, 13]  # spread
+
+  println("primos: longitud=#{longitud(primos)}, suma=#{suma(primos)}")
+  println("rango : longitud=#{longitud(rango)}, suma=#{suma(rango)}")
+  println("pares : longitud=#{longitud(pares)}, suma=#{suma(pares)}")
+  println("combo : longitud=#{longitud(combinada)}, suma=#{suma(combinada)}")
+}
+```
+
+```
+$ kai run ejemplos/cap04/03_listas.kai
+primos: longitud=5, suma=28
+rango : longitud=10, suma=55
+pares : longitud=10, suma=110
+combo : longitud=7, suma=41
+```
 
 ### `Vec[T]`: indexar sin renunciar a los valores
 
@@ -707,6 +864,58 @@ hemos separado del capítulo 5 porque su rol en el diseño
 cotidiano es central: los vas a usar antes de empezar a
 declarar tus propios tipos suma.
 
+Los dos tipos trabajando juntos: una búsqueda que puede no
+encontrar nada y una validación que explica por qué falló:
+
+```kai
+# ejemplos/cap04/04_option_result.kai
+type ErrorEdad = NoNumerica | FueraDeRango
+
+fn primer_par(xs: [Int]) : Option[Int] =
+  match xs {
+    [] -> None
+    [h, ...t] -> if h % 2 == 0 { Some(h) } else { primer_par(t) }
+  }
+
+fn parsear_edad(s: String) : Result[Int, ErrorEdad] =
+  match string_to_int(s) {
+    None -> Err(NoNumerica)
+    Some(n) ->
+      if n < 0 or n > 130 {
+        Err(FueraDeRango)
+      } else {
+        Ok(n)
+      }
+  }
+
+fn describir_edad(s: String) : String =
+  match parsear_edad(s) {
+    Ok(n) -> "edad válida: #{n}"
+    Err(NoNumerica) -> "no es un número"
+    Err(FueraDeRango) -> "fuera de rango"
+  }
+
+fn main() {
+  let xs = [1, 3, 5, 6, 7]
+  match primer_par(xs) {
+    Some(n) -> println("primer par: #{n}")
+    None -> println("no hay pares")
+  }
+
+  println(describir_edad("42"))
+  println(describir_edad("hola"))
+  println(describir_edad("999"))
+}
+```
+
+```
+$ kai run ejemplos/cap04/04_option_result.kai
+primer par: 6
+edad válida: 42
+no es un número
+fuera de rango
+```
+
 ## 4.6 Tuplas
 
 Una tupla es un agregado **posicional**: como un record, pero
@@ -756,6 +965,30 @@ Esto es útil saberlo cuando ves un tipo `Pair[Int, String]`
 en una firma de stdlib: ahora sabes que es lo mismo que
 `(Int, String)`, y que puedes destructurarlo con
 `let (a, b) = p`.
+
+Una función que devuelve dos valores y quien la llama los
+separa en el `let`:
+
+```kai
+# ejemplos/cap04/05_tuplas.kai
+fn divmod(a: Int, b: Int) : (Int, Int) = (a / b, a % b)
+
+fn main() {
+  let (cociente, resto) = divmod(17, 5)
+  println("17 / 5 = #{cociente}, resto = #{resto}")
+
+  # Una tupla de tres
+  let punto3d = (1, 2, 3)
+  let (x, y, z) = punto3d
+  println("(#{x}, #{y}, #{z})")
+}
+```
+
+```
+$ kai run ejemplos/cap04/05_tuplas.kai
+17 / 5 = 3, resto = 2
+(1, 2, 3)
+```
 
 ### ¿Tupla o record?
 

@@ -41,7 +41,7 @@ fn label(c: Tag) : String {
 
 fn loop(i: Int, n: Int) : Unit / Stdout {
   # Un `if` sin `else` devuelve `()` implícito cuando la condición
-  # es falsa — la forma habitual de "haz algo o detén la recursión".
+  # es falsa, la forma habitual de "haz algo o detén la recursión".
   if i <= n {
     println(label(classify(i)))
     loop(i + 1, n)

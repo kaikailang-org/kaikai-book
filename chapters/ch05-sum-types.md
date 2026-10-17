@@ -157,6 +157,51 @@ itself by position — a point is `(Real, Real)` — keep it
 positional. If the data forces the reader to remember the
 order, use a record.
 
+Both flavors of constructor in one program: three cases with no
+payload and two that carry data.
+
+```kai
+# examples/ch05/01_basic_sums.kai
+type Color = Red | Green | Blue
+
+type Shape
+  = Circle(Real)
+  | Rectangle(Real, Real)
+  | Triangle(Real, Real, Real)
+
+fn area(s: Shape) : Real =
+  match s {
+    Circle(r) -> 3.14159 * r * r
+    Rectangle(w, h) -> w * h
+    Triangle(a, b, c) -> {
+      let s = (a + b + c) / 2.0
+      s
+    }
+  }
+
+fn name(c: Color) : String =
+  match c {
+    Red -> "red"
+    Green -> "green"
+    Blue -> "blue"
+  }
+
+fn main() {
+  println("color: #{name(Red)}, #{name(Green)}, #{name(Blue)}")
+  let c = Circle(2.0)
+  let r = Rectangle(3.0, 4.0)
+  println("circle: area = #{area(c)}")
+  println("rectangle: area = #{area(r)}")
+}
+```
+
+```
+$ kai run examples/ch05/01_basic_sums.kai
+color: red, green, blue
+circle: area = 12.56636
+rectangle: area = 12
+```
+
 ## 5.3 Recursion in types
 
 Now the construction earns its keep: a constructor of a sum
@@ -221,6 +266,59 @@ codebase becomes a compile error pointing at the spots that
 need attention. In a visitor pattern, you add a new method
 in each subclass and the compiler does not help you avoid
 forgetting any.
+
+A tree and an arithmetic expression, each with its recursive
+function:
+
+```kai
+# examples/ch05/02_recursive.kai
+type Tree
+  = Leaf
+  | Node(Int, Tree, Tree)
+
+fn height(t: Tree) : Int {
+  case Leaf -> 0
+  case Node(_, l, r) -> 1 + max_int(height(l), height(r))
+}
+
+fn max_int(a: Int, b: Int) : Int =
+  if a > b { a } else { b }
+
+# Arithmetic expression AST
+type Expr
+  = Lit(Int)
+  | Add(Expr, Expr)
+  | Mul(Expr, Expr)
+  | Neg(Expr)
+
+fn eval(e: Expr) : Int =
+  match e {
+    Lit(n) -> n
+    Add(a, b) -> eval(a) + eval(b)
+    Mul(a, b) -> eval(a) * eval(b)
+    Neg(x) -> -eval(x)
+  }
+
+fn main() {
+  # Tree:    1
+  #         / \
+  #        2   3
+  #       /
+  #      4
+  let t = Node(1, Node(2, Node(4, Leaf, Leaf), Leaf), Node(3, Leaf, Leaf))
+  println("height = #{height(t)}")
+
+  # Expression: -(2 + 3) * 4
+  let e = Mul(Neg(Add(Lit(2), Lit(3))), Lit(4))
+  println("eval = #{eval(e)}")
+}
+```
+
+```
+$ kai run examples/ch05/02_recursive.kai
+height = 3
+eval = -20
+```
 
 ## 5.4 `match`: patterns, guards, exhaustiveness
 
@@ -352,6 +450,57 @@ the warning.
 Practical rule: use `_` only when you really don't care about
 distinguishing the rest. If there are three cases and all
 three matter, write the three.
+
+Constant pattern, guard and wildcard in the same `match`:
+
+```kai
+# examples/ch05/03_match_guards.kai
+fn sign(n: Int) : String =
+  match n {
+    0 -> "zero"
+    k if k > 0 -> "positive"
+    _ -> "negative"
+  }
+
+# Guards with bindings and patterns
+type Point = { x: Int, y: Int }
+
+fn quadrant(p: Point) : String {
+  let Point { x, y } = p
+  if x == 0 and y == 0 {
+    "origin"
+  } else if x > 0 and y > 0 {
+    "I"
+  } else if x < 0 and y > 0 {
+    "II"
+  } else if x < 0 and y < 0 {
+    "III"
+  } else if x > 0 and y < 0 {
+    "IV"
+  } else {
+    "on an axis"
+  }
+}
+
+fn main() {
+  println("sign(-5) = #{sign(-5)}")
+  println("sign(0)  = #{sign(0)}")
+  println("sign(7)  = #{sign(7)}")
+  println("quadrant(3,4)   = #{quadrant(Point{x: 3, y: 4})}")
+  println("quadrant(-1,-1) = #{quadrant(Point{x: -1, y: -1})}")
+  println("quadrant(0,0)   = #{quadrant(Point{x: 0, y: 0})}")
+}
+```
+
+```
+$ kai run examples/ch05/03_match_guards.kai
+sign(-5) = negative
+sign(0)  = zero
+sign(7)  = positive
+quadrant(3,4)   = I
+quadrant(-1,-1) = III
+quadrant(0,0)   = origin
+```
 
 ## 5.5 Unions of existing types
 
@@ -485,6 +634,54 @@ inference
 brittle and error messages hard to phrase. The "one step"
 rule keeps kaikai with a predictable type system whose
 messages point to the right place.
+
+Two error families declared separately, joined in one
+signature, and the `match` that tells them apart:
+
+```kai
+# examples/ch05/04_unions.kai
+type IdentityError = AccountNotFound | KycExpired | Frozen
+
+type AuthError = InsufficientBalance | OverDailyLimit
+
+# Union of two already-declared types.
+type QueryError = IdentityError | AuthError
+
+fn id_str(e: IdentityError) : String =
+  match e {
+    AccountNotFound -> "account not found"
+    KycExpired -> "KYC expired"
+    Frozen -> "frozen account"
+  }
+
+fn auth_str(e: AuthError) : String =
+  match e {
+    InsufficientBalance -> "insufficient balance"
+    OverDailyLimit -> "over daily limit"
+  }
+
+# Match with narrowing: each component delegates to its handler.
+fn describe(e: QueryError) : String =
+  match e {
+    ie : IdentityError -> "id: " ++ id_str(ie)
+    ae : AuthError -> "auth: " ++ auth_str(ae)
+  }
+
+fn main() {
+  # Implicit upcast: IdentityError <: QueryError
+  let e1: QueryError = AccountNotFound
+  let e2: QueryError = OverDailyLimit
+
+  println(describe(e1))
+  println(describe(e2))
+}
+```
+
+```
+$ kai run examples/ch05/04_unions.kai
+id: account not found
+auth: over daily limit
+```
 
 ## 5.6 Errors as unions, no wrappers
 

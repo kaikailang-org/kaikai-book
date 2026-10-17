@@ -163,6 +163,52 @@ datos se nombran solos por su posición (un punto es `(Real,
 Real)`), quedan posicionales. Si los datos requieren que el
 lector recuerde el orden, conviene un record.
 
+Los dos sabores de constructor en un programa: tres casos sin
+payload y dos que llevan datos.
+
+```kai
+# ejemplos/cap05/01_sumas_basicas.kai
+type Color = Rojo | Verde | Azul
+
+type Forma
+  = Circulo(Real)
+  | Rectangulo(Real, Real)
+  | Triangulo(Real, Real, Real)
+
+fn area(f: Forma) : Real =
+  match f {
+    Circulo(r) -> 3.14159 * r * r
+    Rectangulo(w, h) -> w * h
+    Triangulo(a, b, c) -> {
+      let s = (a + b + c) / 2.0
+      # Heron: los Reales se manipulan sin coerción a Int.
+      s
+    }
+  }
+
+fn nombre(c: Color) : String =
+  match c {
+    Rojo -> "rojo"
+    Verde -> "verde"
+    Azul -> "azul"
+  }
+
+fn main() {
+  println("color: #{nombre(Rojo)}, #{nombre(Verde)}, #{nombre(Azul)}")
+  let c = Circulo(2.0)
+  let r = Rectangulo(3.0, 4.0)
+  println("círculo: área = #{area(c)}")
+  println("rectángulo: área = #{area(r)}")
+}
+```
+
+```
+$ kai run ejemplos/cap05/01_sumas_basicas.kai
+color: rojo, verde, azul
+círculo: área = 12.56636
+rectángulo: área = 12
+```
+
 ## 5.3 Recursión en tipos
 
 Aquí empieza lo poderoso. Un constructor de un tipo suma puede
@@ -230,6 +276,59 @@ sobre `Expr` en el código se vuelven errores de compilación que
 apuntan a los lugares que necesitan atención. En un visitor
 pattern, agregas un método nuevo en cada subclase y el
 compilador no te ayuda a no olvidar ninguno.
+
+Un árbol y una expresión aritmética, cada uno con su función
+recursiva:
+
+```kai
+# ejemplos/cap05/02_recursivos.kai
+type Arbol
+  = Hoja
+  | Nodo(Int, Arbol, Arbol)
+
+fn altura(t: Arbol) : Int {
+  case Hoja -> 0
+  case Nodo(_, izq, der) -> 1 + max_int(altura(izq), altura(der))
+}
+
+fn max_int(a: Int, b: Int) : Int =
+  if a > b { a } else { b }
+
+# AST de expresiones aritméticas
+type Expr
+  = Lit(Int)
+  | Suma(Expr, Expr)
+  | Mul(Expr, Expr)
+  | Neg(Expr)
+
+fn eval(e: Expr) : Int =
+  match e {
+    Lit(n) -> n
+    Suma(a, b) -> eval(a) + eval(b)
+    Mul(a, b) -> eval(a) * eval(b)
+    Neg(x) -> -eval(x)
+  }
+
+fn main() {
+  # Árbol:    1
+  #          / \
+  #         2   3
+  #        /
+  #       4
+  let t = Nodo(1, Nodo(2, Nodo(4, Hoja, Hoja), Hoja), Nodo(3, Hoja, Hoja))
+  println("altura = #{altura(t)}")
+
+  # Expresión: -(2 + 3) * 4
+  let e = Mul(Neg(Suma(Lit(2), Lit(3))), Lit(4))
+  println("eval = #{eval(e)}")
+}
+```
+
+```
+$ kai run ejemplos/cap05/02_recursivos.kai
+altura = 3
+eval = -20
+```
 
 ## 5.4 `match`: patrones, guardas, exhaustividad
 
@@ -364,6 +463,57 @@ quejarse, y vas a perder el aviso.
 La regla práctica: usa `_` solo cuando de verdad no te
 interesa distinguir el resto. Si los casos son tres y los tres
 te importan, escribe los tres.
+
+Patrón constante, guarda y comodín en el mismo `match`:
+
+```kai
+# ejemplos/cap05/03_match_guardas.kai
+fn signo(n: Int) : String =
+  match n {
+    0 -> "cero"
+    k if k > 0 -> "positivo"
+    _ -> "negativo"
+  }
+
+# Guardas con bindings y patrones
+type Punto = { x: Int, y: Int }
+
+fn cuadrante(p: Punto) : String {
+  let Punto { x, y } = p
+  if x == 0 and y == 0 {
+    "origen"
+  } else if x > 0 and y > 0 {
+    "I"
+  } else if x < 0 and y > 0 {
+    "II"
+  } else if x < 0 and y < 0 {
+    "III"
+  } else if x > 0 and y < 0 {
+    "IV"
+  } else {
+    "sobre un eje"
+  }
+}
+
+fn main() {
+  println("signo(-5) = #{signo(-5)}")
+  println("signo(0)  = #{signo(0)}")
+  println("signo(7)  = #{signo(7)}")
+  println("cuadrante(3,4)   = #{cuadrante(Punto{x: 3, y: 4})}")
+  println("cuadrante(-1,-1) = #{cuadrante(Punto{x: -1, y: -1})}")
+  println("cuadrante(0,0)   = #{cuadrante(Punto{x: 0, y: 0})}")
+}
+```
+
+```
+$ kai run ejemplos/cap05/03_match_guardas.kai
+signo(-5) = negativo
+signo(0)  = cero
+signo(7)  = positivo
+cuadrante(3,4)   = I
+cuadrante(-1,-1) = III
+cuadrante(0,0)   = origen
+```
 
 ## 5.5 Uniones de tipos existentes
 
@@ -500,6 +650,54 @@ Lo dejé así a propósito. Subtipado encadenado vuelve la
 inferencia de tipos frágil y los mensajes de error confusos. La regla
 "un paso" mantiene a kaikai con un sistema de tipos
 predecible y con mensajes que apuntan al lugar correcto.
+
+Dos familias de error declaradas por separado, unidas en una
+firma, y el `match` que las distingue:
+
+```kai
+# ejemplos/cap05/04_uniones.kai
+type ErrorIdentidad = CuentaNoExiste | KycVencido | Congelada
+
+type ErrorAuth = SaldoInsuficiente | LimiteDiario
+
+# Union de dos tipos ya declarados.
+type ErrorConsulta = ErrorIdentidad | ErrorAuth
+
+fn id_str(e: ErrorIdentidad) : String =
+  match e {
+    CuentaNoExiste -> "cuenta no existe"
+    KycVencido -> "KYC vencido"
+    Congelada -> "cuenta congelada"
+  }
+
+fn auth_str(e: ErrorAuth) : String =
+  match e {
+    SaldoInsuficiente -> "saldo insuficiente"
+    LimiteDiario -> "límite diario"
+  }
+
+# Match con narrowing: cada componente se delega a su handler.
+fn describir(e: ErrorConsulta) : String =
+  match e {
+    ie : ErrorIdentidad -> "id: " ++ id_str(ie)
+    ae : ErrorAuth -> "auth: " ++ auth_str(ae)
+  }
+
+fn main() {
+  # Upcast implícito: ErrorIdentidad <: ErrorConsulta
+  let e1: ErrorConsulta = CuentaNoExiste
+  let e2: ErrorConsulta = LimiteDiario
+
+  println(describir(e1))
+  println(describir(e2))
+}
+```
+
+```
+$ kai run ejemplos/cap05/04_uniones.kai
+id: cuenta no existe
+auth: límite diario
+```
 
 ## 5.6 Errores como uniones, sin wrappers
 

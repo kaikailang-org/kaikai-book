@@ -14,7 +14,7 @@ fn area(f: Forma) : Real =
     Rectangulo(w, h) -> w * h
     Triangulo(a, b, c) -> {
       let s = (a + b + c) / 2.0
-      # Heron — los Reales se manipulan sin coerción a Int.
+      # Heron: los Reales se manipulan sin coerción a Int.
       s
     }
   }

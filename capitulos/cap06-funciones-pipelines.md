@@ -119,6 +119,39 @@ fn anunciar(mensaje: String) : Unit / Stdout =
 `main` es la única función donde el tipo de retorno es
 opcional. Si lo omites, kaikai asume `Unit`.
 
+Los dos cuerpos y una función con efecto, en un programa:
+
+```kai
+# ejemplos/cap06/01_funciones.kai
+# Cuerpo corto: una expresión, separada por `=`.
+fn doble(x: Int) : Int = x * 2
+
+# Cuerpo largo: bloque con `let`s y expresión final.
+fn cuadrado_mas_uno(x: Int) : Int {
+  let cuadrado = x * x
+  cuadrado + 1
+}
+
+# Función pura sin valor útil de retorno: sirve para efectos.
+# Aunque devolver `Unit` es opcional en `main`, en una función
+# auxiliar conviene anotarlo cuando hay efectos involucrados.
+fn anunciar(mensaje: String) : Unit / Stdout =
+  println("[ANUNCIO] " ++ mensaje)
+
+fn main() {
+  println("doble(7) = #{doble(7)}")
+  println("f(3)     = #{cuadrado_mas_uno(3)}")
+  anunciar("listo")
+}
+```
+
+```
+$ kai run ejemplos/cap06/01_funciones.kai
+doble(7) = 14
+f(3)     = 10
+[ANUNCIO] listo
+```
+
 ## 6.2 Lambdas
 
 Una **lambda** es una función anónima, una expresión que se
@@ -225,6 +258,42 @@ Las lambdas son **valores de primera clase**: las atas a
 las guardas en records. Eso es lo que hace que las funciones
 de orden superior sean naturales.
 
+Las tres formas, más una lambda atada a un `let` y pasada como
+argumento:
+
+```kai
+# ejemplos/cap06/02_lambdas.kai
+fn aplica(f: (Int) -> Int, x: Int) : Int = f(x)
+
+fn main() {
+  # Forma 1: flecha con un argumento.
+  let cuadrado = x => x * x
+  println("cuadrado(7)  = #{cuadrado(7)}")
+
+  # Forma 2: flecha con varios argumentos.
+  let suma = (a, b) => a + b
+  println("suma(3, 4)   = #{suma(3, 4)}")
+
+  # Forma 3: placeholder, lambda implícita unaria.
+  # Solo válida en posición donde se espera una función.
+  let xs = [1, 2, 3, 4, 5]
+  let dobles = xs |> list.map(n => n * 2)
+  println("dobles[0..4] = #{list.sum(dobles)}")
+
+  # Las lambdas son valores de primera clase: se pasan como
+  # argumento, se atan a `let`, se devuelven de funciones.
+  println("aplica(cuadrado, 5) = #{aplica(cuadrado, 5)}")
+}
+```
+
+```
+$ kai run ejemplos/cap06/02_lambdas.kai
+cuadrado(7)  = 49
+suma(3, 4)   = 7
+dobles[0..4] = 30
+aplica(cuadrado, 5) = 25
+```
+
 ## 6.3 Funciones de orden superior
 
 Una **función de orden superior** es una que recibe o
@@ -283,6 +352,41 @@ parámetro. Así nacen `list.map`, `list.filter`,
 `list.foldl`, las tres funciones que más vas a usar en
 programación funcional.
 
+Una función que recibe otra, una que devuelve una nueva, y la
+composición de las dos:
+
+```kai
+# ejemplos/cap06/03_orden_superior.kai
+# Acepta una función como argumento.
+fn dos_veces[a](f: (a) -> a, x: a) : a = f(f(x))
+
+# Devuelve una función nueva (closure que captura `n`).
+fn sumar(n: Int) : (Int) -> Int = x => x + n
+
+# Componer dos funciones es una función de orden superior
+# que acepta dos funciones y devuelve una nueva.
+fn componer[a, b, c](f: (b) -> c, g: (a) -> b) : (a) -> c = x => f(g(x))
+
+fn main() {
+  let mas_uno = x => x + 1
+  println("dos_veces(+1, 5) = #{dos_veces(mas_uno, 5)}")
+
+  let mas_diez = sumar(10)
+  println("mas_diez(7) = #{mas_diez(7)}")
+
+  let cuadrado = x => x * x
+  let comp = componer(cuadrado, mas_uno)
+  println("(cuadrado . +1)(4) = #{comp(4)}")
+}
+```
+
+```
+$ kai run ejemplos/cap06/03_orden_superior.kai
+dos_veces(+1, 5) = 7
+mas_diez(7) = 17
+(cuadrado . +1)(4) = 25
+```
+
 ## 6.4 Pipes: `|>`, `|`, `||`
 
 kaikai trae cuatro operadores para encadenar. Los cuatro son
@@ -330,6 +434,43 @@ fn entre(low: Int, x: Int, high: Int) : Bool =
 
 Es lo que viene de Elixir y F#: un pipe **general** con
 control de posición opcional.
+
+Las tres posiciones en un programa, con la forma corta y la
+explícita dando el mismo resultado:
+
+```kai
+# ejemplos/cap06/07_pipe_underscore.kai
+fn divide(a: Int, b: Int) : Int = a / b
+
+fn entre(low: Int, x: Int, high: Int) : Bool =
+  x >= low and x <= high
+
+fn main() {
+  # Sin _: el valor va al primer argumento.
+  let r1 = 100 |> divide(4)  # ≡ divide(100, 4) = 25
+  println("100 / 4    = #{r1}")
+
+  # Con _ en posición 1: explícito, mismo efecto.
+  let r2 = 100 |> divide(_, 4)
+  println("100 / 4    = #{r2}")
+
+  # Con _ en posición 2: el valor va como divisor.
+  let r3 = 100 |> divide(1000, _)
+  println("1000 / 100 = #{r3}")
+
+  # Con _ en una posición intermedia.
+  let r4 = 50 |> entre(0, _, 100)
+  println("entre 0 y 100: #{r4}")
+}
+```
+
+```
+$ kai run ejemplos/cap06/07_pipe_underscore.kai
+100 / 4    = 25
+100 / 4    = 25
+1000 / 100 = 10
+entre 0 y 100: true
+```
 
 ### `|`: map
 
@@ -438,6 +579,61 @@ variables temporales, no hay anidamiento de paréntesis. Esto
 es la principal razón de que kaikai tenga cuatro operadores
 y no uno.
 
+Y cada operador por separado, con su equivalencia al lado:
+
+```kai
+# ejemplos/cap06/04_pipes.kai
+fn doble(n: Int) : Int = n * 2
+
+fn es_par(n: Int) : Bool = n % 2 == 0
+
+# `|>` (apply): el lado izquierdo es el primer argumento del
+# llamado de la derecha. `xs |> f` ≡ `f(xs)`.
+fn ejemplo_apply() : Int {
+  let xs = [1, 2, 3, 4, 5]
+  xs |> list.sum  # ≡ list.sum(xs)
+}
+
+# `|` (map) sobre listas: `xs | f` ≡ `list.map(xs, f)`.
+fn ejemplo_map() : Int {
+  let xs = [1, 2, 3, 4, 5]
+  let dobles = xs | doble
+  list.sum(dobles)
+}
+
+# `||` (flat-map): `xs || f` ≡ `list.flat_map(xs, f)`.
+# Cada elemento produce una lista, y todas se concatenan.
+fn vecinos(n: Int) : [Int] = [n - 1, n, n + 1]
+
+fn ejemplo_flat_map() : Int {
+  let xs = [10, 20, 30]
+  let extendido = xs || vecinos
+  list.length(extendido)
+}
+
+# `|?` (filter) sobre listas: `xs |? p` ≡ `list.filter(xs, p)`.
+fn ejemplo_filter() : Int {
+  let xs = [1, 2, 3, 4, 5, 6]
+  let pares = xs |? es_par
+  list.sum(pares)
+}
+
+fn main() {
+  println("|>: total              = #{ejemplo_apply()}")
+  println("|:  suma de dobles     = #{ejemplo_map()}")
+  println("||: longitud extendido = #{ejemplo_flat_map()}")
+  println("|?: suma de pares      = #{ejemplo_filter()}")
+}
+```
+
+```
+$ kai run ejemplos/cap06/04_pipes.kai
+|>: total              = 15
+|:  suma de dobles     = 30
+||: longitud extendido = 9
+|?: suma de pares      = 12
+```
+
 ### Los mismos pipes, pero lazy: `Stream`
 
 Hay un detalle de los pipes sobre listas que conviene tener
@@ -479,6 +675,33 @@ pipeline y se descarta antes de leer la siguiente. Un `Stream`
 no es un cursor que avanza una vez; es una **receta
 re-ejecutable**. El catálogo completo está en `kai doc
 stream`.
+
+Un pipeline lazy de punta a punta: dos etapas que no producen
+nada y un sink que recorre el stream una sola vez.
+
+```kai
+# ejemplos/cap06/09_stream.kai
+import stream
+
+fn main() : Unit / Stdout {
+  # map y filter son lazy: ninguno produce una lista intermedia.
+  # `stream.foldl` es el sink que recorre el stream una vez y
+  # acumula el resultado.
+  let total = stream.from_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    | (x => x * x)
+    # map lazy: eleva al cuadrado
+    |? (x => x % 2 == 0)
+    # filter lazy: deja los pares
+    |> stream.foldl(0, (acc, x) => acc + x)
+
+  Stdout.print("suma de cuadrados pares = #{total}")
+}
+```
+
+```
+$ kai run ejemplos/cap06/09_stream.kai
+suma de cuadrados pares = 220
+```
 
 ### Perezoso y además compartido: `Seq`
 
@@ -685,6 +908,52 @@ formas alternativas de escribir lambdas que el compilador
 desazucara antes de la inferencia de tipos. Úsalos cuando la
 lectura mejore, ignóralos cuando no.
 
+Las formas una tras otra: las tres primeras dan el mismo
+resultado, y las dos últimas muestran para qué sirven las
+llaves cuando el cuerpo crece o el parámetro es un par.
+
+```kai
+# ejemplos/cap06/08_trailing_y_bloques.kai
+fn main() {
+  let xs = [1, 2, 3, 4, 5]
+
+  # 1. Forma con paréntesis y flecha clásica.
+  let a = list.map(xs, n => n * 2)
+  println("a sum=#{list.sum(a)}")
+
+  # 2. Trailing lambda: el cuerpo va en llaves al final.
+  let b = list.map(xs) { n -> n * 2 }
+  println("b sum=#{list.sum(b)}")
+
+  # 3. Bloque-lambda en pipe: la forma más compacta.
+  let c = xs | { n -> n * 2 }
+  println("c sum=#{list.sum(c)}")
+
+  # Cuerpos de varias líneas: la forma con llaves se lee mejor.
+  let d = xs
+    | { n ->
+      let cuadrado = n * n
+      cuadrado + 1
+    }
+  println("d sum=#{list.sum(d)}")
+
+  # 4. El parámetro puede ser un patrón de tupla: destructura
+  #    el par en el acto, sin `let` intermedio.
+  let pares = list.zip(xs, [10, 20, 30, 40, 50])
+  let e = pares | { (a, b) -> a + b }
+  println("e sum=#{list.sum(e)}")
+}
+```
+
+```
+$ kai run ejemplos/cap06/08_trailing_y_bloques.kai
+a sum=30
+b sum=30
+c sum=30
+d sum=60
+e sum=165
+```
+
 ## 6.6 Recursión y TCO obligatoria
 
 Una promesa importante de kaikai: **toda llamada recursiva
@@ -811,6 +1080,47 @@ operaciones más complejas, las funciones de orden superior
 (`list.foldl`, `reduce`) ya están escritas con TCO y son
 casi siempre lo que querías.
 
+Las dos versiones en un programa, y la lista de cien mil
+elementos que solo la segunda recorre sin crecer en stack:
+
+```kai
+# ejemplos/cap06/05_recursion_tco.kai
+# Recursión lineal NO en posición de cola: cada llamada deja
+# pendiente la suma `h + ...`. Funciona pero crece en stack.
+fn suma_naive(xs: [Int]) : Int {
+  case [] -> 0
+  case [h, ...t] -> h + suma_naive(t)
+}
+
+# Recursión en posición de cola: la última cosa que hace cada
+# rama recursiva es **solo** la llamada, sin operación
+# pendiente. kaikai la convierte a un loop.
+fn suma_tco_loop(xs: [Int], acc: Int) : Int {
+  case [], a -> a
+  case [h, ...t], a -> suma_tco_loop(t, a + h)
+}
+
+fn suma(xs: [Int]) : Int = suma_tco_loop(xs, 0)
+
+fn main() {
+  let mil = [1..1000]
+  println("suma 1..1000 (naive) = #{suma_naive(mil)}")
+  println("suma 1..1000 (tco)   = #{suma(mil)}")
+
+  # Con TCO podemos sumar listas mucho más grandes sin
+  # preocuparnos por el stack:
+  let cien_mil = [1..100_000]
+  println("suma 1..100_000 (tco) = #{suma(cien_mil)}")
+}
+```
+
+```
+$ kai run ejemplos/cap06/05_recursion_tco.kai
+suma 1..1000 (naive) = 500500
+suma 1..1000 (tco)   = 500500
+suma 1..100_000 (tco) = 5000050000
+```
+
 ## 6.7 Caso de estudio: pipeline de transformación
 
 Cerramos con un caso integrador. Tienes una lista de
@@ -820,21 +1130,24 @@ pedidos pendientes** y **aplicando un 10% de descuento a los
 montos altos**:
 
 ```kai
+# ejemplos/cap06/06_pipeline.kai
 type Estado = Pendiente | Pagado | Cancelado
 
 type Pedido = {
   id: Int,
   monto: Int,
-  estado: Estado,
+  estado: Estado
 }
 
+# Funciones pequeñas, cada una hace una sola cosa.
 fn esta_pendiente(p: Pedido) : Bool =
   match p.estado {
     Pendiente -> true
-    Pagado    -> false
+    Pagado -> false
     Cancelado -> false
   }
 
+# Descuento: 10% sobre montos >= 1000, 0% en el resto.
 fn aplicar_descuento(p: Pedido) : Pedido =
   if p.monto >= 1000 {
     Pedido { ...p, monto: p.monto - p.monto / 10 }
@@ -853,12 +1166,30 @@ pipeline; todas son útiles por separado.
 Y el pipeline las compone:
 
 ```kai
-let total =
-  pedidos
-  |? esta_pendiente
-  | aplicar_descuento
-  | monto_de
-  |> list.sum
+fn main() {
+  let pedidos = [
+    Pedido { id: 1, monto: 500, estado: Pendiente },
+    Pedido { id: 2, monto: 2000, estado: Pendiente },
+    Pedido { id: 3, monto: 1500, estado: Pagado },
+    Pedido { id: 4, monto: 800, estado: Cancelado },
+    Pedido { id: 5, monto: 1200, estado: Pendiente }
+  ]
+
+  # Pipeline: filtrar pendientes, aplicar descuento, sumar.
+  let total =
+    pedidos
+      |? esta_pendiente
+      | aplicar_descuento
+      | monto_de
+      |> list.sum
+
+  println("total a cobrar: #{total}")
+}
+```
+
+```
+$ kai run ejemplos/cap06/06_pipeline.kai
+total a cobrar: 3380
 ```
 
 Cinco líneas, cuatro pasos. Filtra los pendientes, aplica
