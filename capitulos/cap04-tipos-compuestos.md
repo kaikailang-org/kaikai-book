@@ -340,9 +340,12 @@ operación es mutable.
 
 Las operaciones viven en `collections.vec` y se usan
 calificadas. Son las que esperas: `vec.get`, `vec.set`,
-`vec.push`, `vec.length`, `vec.slice`, `vec.map`, `vec.foldl`,
-`vec.from_list` y `vec.to_list`. El `a[1]` del ejemplo es la
-forma corta de `vec.get(a, 1)`.
+`vec.push`, `vec.length`, `vec.slice`, `vec.map`,
+`vec.flat_map`, `vec.filter`, `vec.foldl`, `vec.from_list` y
+`vec.to_list`. El `a[1]` del ejemplo es la forma corta de
+`vec.get(a, 1)`. Los pipes del capítulo 6 corren sobre un
+`Vec` igual que sobre una lista: `|` va a `vec.map`, `||` a
+`vec.flat_map`, `|?` a `vec.filter` y `|!` a `vec.each`.
 
 Un literal de lista en posición `Vec` construye el vector
 directo, sin pasar por una lista enlazada. Y lo interesante está
