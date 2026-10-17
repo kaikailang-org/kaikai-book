@@ -171,6 +171,12 @@ compilador donde se identifica, para cada variable, el punto
 exacto en el que se usa por última vez. Perceus usa este
 análisis para insertar `drop`s en el lugar correcto.
 
+**Lazy** *(perezoso)*. Una computación que se describe sin
+ejecutarla: el trabajo ocurre cuando alguien lee el resultado.
+kaikai tiene tres formas perezosas, `Stream`, `Seq` y `Gen`, que
+se distinguen por quién produce los elementos y por lo que pasa
+al leerlos de nuevo. Cap. 6 §6.4 y cap. 12.
+
 **Linked** *(enlazado, en actores)*. Dos actores enlazados con
 `Link.link(pid)` se enteran mutuamente cuando uno termina:
 si uno cae, el otro recibe `Cancel.raise()`. Cap. 14.
@@ -230,8 +236,9 @@ tipado de un actor: `Pid[Msg]`. Identifica un mailbox y
 también garantiza que solo se pueden enviar mensajes de tipo
 `Msg` a ese mailbox.
 
-**Pipe** *(pipe, tubería)*. Operadores `|>`, `|`, `||`, `|?`.
-Encadenan transformaciones. Cap. 6.
+**Pipe** *(pipe, tubería)*. Operadores `|>`, `|`, `||`, `|?`,
+`|!`. Encadenan transformaciones; `|!` consume el resultado por
+su efecto. Cap. 6.
 
 **Polymorphism** *(polimorfismo)*. La capacidad de una función
 de operar sobre múltiples tipos. En kaikai aparece como
@@ -272,6 +279,12 @@ firma: `fn map[A, B, e](xs: [A], f: (A) -> B / e) : [B] / e`.
 en el mismo lenguaje que compila. El compilador `kaic2` de
 kaikai está escrito en kaikai. Apéndice A.
 
+**Seq[t]** *(secuencia perezosa)*. Lista perezosa y compartida:
+sus celdas se computan al leerlas y quedan guardadas, así que
+leerla de nuevo no recomputa nada. Se escribe con `lazy` delante
+de un literal de lista, y dentro de `lazy` un rango puede no
+tener fin. Cap. 6 §6.4.
+
 **Span.** El rango de bytes en el archivo fuente donde vive
 una construcción. Los mensajes del compilador usan spans para
 señalar dónde ocurrió un error.
@@ -292,6 +305,12 @@ estándar, entrada estándar. En kaikai cada una es un efecto
 propio, uno por descriptor, y `Console` es el alias que junta
 a los tres. Los tres exponen además `is_tty()`. Apéndice D
 §D.1.
+
+**Stream.** Pipeline perezoso sobre algo que ya existe, incluso
+un recurso como un archivo. Corre en memoria constante y es una
+receta re-ejecutable: cada recorrido vuelve a correr las etapas.
+Los pipes `|`, `|?`, `||` y `|!` corren sobre un `Stream`.
+Cap. 6 §6.4.
 
 **Sum type** *(tipo suma, tipo algebraico de datos)*. Un tipo
 con varios constructores, cada uno cargando datos distintos.

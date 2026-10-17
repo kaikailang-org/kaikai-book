@@ -35,9 +35,18 @@ fn example_filter() : Int {
   list.sum(evens)
 }
 
+# `|!` — each: runs the stage for its effect on every element
+# and returns `Unit`, so it ends the pipeline.
+# `xs |! f` ≡ `list.each(xs, f)`.
+fn example_each() : Unit / Stdout {
+  let xs = [1, 2, 3]
+  xs |! println("|!: element            = #{.}")
+}
+
 fn main() {
   println("|>: total              = #{example_apply()}")
   println("|:  sum of doubles     = #{example_map()}")
   println("||: length of extended = #{example_flat_map()}")
   println("|?: sum of evens       = #{example_filter()}")
+  example_each()
 }
