@@ -140,6 +140,7 @@ build|ejemplos/cap10/03_alias.kai|ok
 build|ejemplos/cap10/04_genericas.kai|ok
 build|ejemplos/cap10/05_branded.kai|ok
 build|ejemplos/cap10/06_cartera.kai|ok
+run|ejemplos/cap10/07_redondeo.kai|ok
 
 # Capítulo 11 — contratos
 build|ejemplos/cap11/01_contratos_basicos.kai|ok
@@ -310,6 +311,7 @@ build|examples/ch10/03_alias.kai|ok
 build|examples/ch10/04_generic.kai|ok
 build|examples/ch10/05_branded.kai|ok
 build|examples/ch10/06_wallet.kai|ok
+run|examples/ch10/07_rounding.kai|ok
 
 # Chapter 11
 build|examples/ch11/01_basic_contracts.kai|ok

@@ -1,0 +1,21 @@
+# Rounding a `Real` with a unit does not strip it: the rounding
+# family in `math.real` is generic over `Measure`, so what goes
+# in measuring m/sec comes out measuring m/sec. The annotation
+# on `vr` is the proof: the type has to line up, it is not
+# enough that the unit shows up in the printed text.
+
+import math.real
+
+unit m
+
+unit sec
+
+fn main() : Unit / Stdout {
+  let v: Real<m / sec> = 100.0<m> / 9.58<sec>
+  let vr: Real<m / sec> = real.round_to(v, 2)
+
+  println("#{v}")
+  println("#{vr}")
+  println("#{real.round_to(v, 1)}")
+  println("#{real.round(v)}")
+}

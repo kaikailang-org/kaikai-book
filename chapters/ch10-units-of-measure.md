@@ -161,6 +161,52 @@ interchangeably. The difference is for the reader:
 `Real<Newton>` communicates intent; `Real<kg * m / sec^2>`
 communicates derivation.
 
+### Rounding without losing the unit
+
+Dividing two measurements rarely lands on a round number. A
+hundred metres in 9.58 seconds is 10.438413361169102 m/sec, and
+that is what a `Real` prints: as many digits as it takes to read
+back as the same number. For a report you want two decimals, and
+the natural question follows: does rounding hand me back a bare
+number?
+
+It does not. The rounding family in `math.real` — `trunc`,
+`floor`, `ceil`, `round`, `round_half_even`, `round_to` — is
+generic over `Measure`, the same way the `average` you write in
+§10.4 is. A `Real<u>` goes in and a `Real<u>` comes out.
+
+```kai
+# examples/ch10/07_rounding.kai
+import math.real
+
+unit m
+
+unit sec
+
+fn main() : Unit / Stdout {
+  let v: Real<m / sec> = 100.0<m> / 9.58<sec>
+  let vr: Real<m / sec> = real.round_to(v, 2)
+
+  println("#{v}")
+  println("#{vr}")
+  println("#{real.round_to(v, 1)}")
+  println("#{real.round(v)}")
+}
+```
+
+```
+$ kai run examples/ch10/07_rounding.kai
+10.438413361169102 m/sec
+10.44 m/sec
+10.4 m/sec
+10 m/sec
+```
+
+The annotation on `vr` is the part that matters. The unit
+appearing in the printed text proves little; `Real<m / sec>`
+accepting the result proves the unit survived in the type, which
+is where the compiler checks it.
+
 ## 10.4 Generic units
 
 So far, each function operates on a concrete unit. But many

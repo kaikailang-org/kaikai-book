@@ -164,6 +164,52 @@ intercambiables. La diferencia es para quien lee:
 `Real<Newton>` comunica intención; `Real<kg * m / sec^2>`
 comunica derivación.
 
+### Redondear sin perder la unidad
+
+Dividir dos medidas rara vez da un número redondo. Cien metros
+en 9.58 segundos son 10.438413361169102 m/sec, y eso es lo que
+imprime un `Real`: los dígitos que hacen falta para releerlo
+como el mismo número. Para un informe quieres dos decimales, y
+aquí aparece la pregunta natural: ¿redondear me deja un número
+pelado?
+
+No. La familia de redondeo de `math.real` (`trunc`, `floor`,
+`ceil`, `round`, `round_half_even`, `round_to`) es genérica
+sobre `Measure`, de la misma forma que el `promedio` que
+escribes en el §10.4. Entra un `Real<u>` y sale un `Real<u>`.
+
+```kai
+# ejemplos/cap10/07_redondeo.kai
+import math.real
+
+unit m
+
+unit sec
+
+fn main() : Unit / Stdout {
+  let v: Real<m / sec> = 100.0<m> / 9.58<sec>
+  let vr: Real<m / sec> = real.round_to(v, 2)
+
+  println("#{v}")
+  println("#{vr}")
+  println("#{real.round_to(v, 1)}")
+  println("#{real.round(v)}")
+}
+```
+
+```
+$ kai run ejemplos/cap10/07_redondeo.kai
+10.438413361169102 m/sec
+10.44 m/sec
+10.4 m/sec
+10 m/sec
+```
+
+La anotación de `vr` es la parte que importa. Que la unidad
+aparezca impresa prueba poco; que `Real<m / sec>` acepte el
+resultado prueba que la unidad sobrevivió en el tipo, que es
+donde el compilador la revisa.
+
 ## 10.4 Unidades genéricas
 
 Hasta aquí, cada función opera sobre una unidad concreta. Pero

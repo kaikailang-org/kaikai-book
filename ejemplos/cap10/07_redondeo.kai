@@ -1,0 +1,21 @@
+# Redondear un `Real` con unidad no se la quita: la familia de
+# redondeo de `math.real` es genérica sobre `Measure`, así que
+# lo que entra midiendo m/sec sale midiendo m/sec. La anotación
+# de `vr` es la prueba: el tipo tiene que calzar, no basta con
+# que la unidad salga impresa.
+
+import math.real
+
+unit m
+
+unit sec
+
+fn main() : Unit / Stdout {
+  let v: Real<m / sec> = 100.0<m> / 9.58<sec>
+  let vr: Real<m / sec> = real.round_to(v, 2)
+
+  println("#{v}")
+  println("#{vr}")
+  println("#{real.round_to(v, 1)}")
+  println("#{real.round(v)}")
+}
