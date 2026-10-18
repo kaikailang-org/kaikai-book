@@ -6,11 +6,11 @@ sus dos formas de cuerpo, las recursivas del cap. 5 que
 descomponen tipos suma. Este capítulo pone todo junto y
 agrega lo que faltaba: cómo declarar funciones con cuidado,
 cómo escribir lambdas, qué son las funciones de orden
-superior, y los cuatro operadores pipe que kaikai usa para
+superior, y los cinco operadores pipe que kaikai usa para
 encadenar transformaciones.
 
-Los cuatro pipes son, de todo lo que decidí, lo que más discusión
-me generó conmigo mismo: cuatro operadores es mucho para un
+Los cinco pipes son, de todo lo que decidí, lo que más discusión
+me generó conmigo mismo: cinco operadores es mucho para un
 lenguaje que presume de tener pocas formas. Al final los dejé, y
 en §6.4 explico por qué.
 
@@ -391,7 +391,7 @@ mas_diez(7) = 17
 
 ## 6.4 Pipes: `|>`, `|`, `||`, `|?`, `|!`
 
-kaikai trae cuatro operadores para encadenar. Los cuatro son
+kaikai trae cinco operadores para encadenar. Los cinco son
 distintos y cada uno comunica una intención específica.
 
 ### `|>`: apply

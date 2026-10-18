@@ -5,11 +5,11 @@ first ones in the tour, those of chapter 3 with their two
 body forms, the recursive ones of chapter 5 that decompose
 sum types. This chapter puts everything together and adds
 what was missing: how to declare functions carefully, how to
-write lambdas, what higher-order functions are, and the four
+write lambdas, what higher-order functions are, and the five
 pipe operators kaikai uses to chain transformations.
 
-Of everything I decided, the four pipes are what I argued with
-myself about the longest: four operators is a lot for a language
+Of everything I decided, the five pipes are what I argued with
+myself about the longest: five operators is a lot for a language
 that prides itself on having few forms. I kept them in the end,
 and §6.4 explains why.
 
@@ -373,7 +373,7 @@ plus_ten(7)         = 17
 
 ## 6.4 Pipes: `|>`, `|`, `||`, `|?`, `|!`
 
-kaikai has four pipe operators. All four are distinct and
+kaikai has five pipe operators. All five are distinct and
 each communicates a specific intent.
 
 ### `|>` — apply
