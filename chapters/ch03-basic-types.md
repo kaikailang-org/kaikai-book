@@ -83,6 +83,40 @@ let b = 2
 println("The sum of #{a} and #{b} is #{a + b}.")
 ```
 
+When the value has to fit a layout, the hole takes a spec after
+a colon. `#{x:.2}` shows a `Real` with two decimals, `#{n:5}`
+pads to a width of five, right-aligned, `#{s:<8}` aligns left
+(`^` centers), and `#{n:06}` pads with zeros. Width and decimals
+combine: `#{price:9.2}`. That is enough to lay out a table with
+no helper functions:
+
+```kai
+# examples/ch03/07_formatting.kai
+fn row(product: String, price: Real, qty: Int) : String =
+  "#{product:<8}#{price:9.2}#{qty:5}"
+
+fn main() {
+  println("#{"product":<8}#{"price":>9}#{"qty":>5}")
+  println(row("bread", 1290.0, 3))
+  println(row("milk", 1090.5, 12))
+  println(row("cheese", 4590.75, 1))
+  println("receipt #{427:06}")
+}
+```
+
+```
+$ kai run examples/ch03/07_formatting.kai
+product     price  qty
+bread     1290.00    3
+milk      1090.50   12
+cheese    4590.75    1
+receipt 000427
+```
+
+The spec is checked at compile time. `.2` on an `Int` is a type
+error pointing at the hole, and a malformed spec such as
+`#{n:5x}` never gets as far as running.
+
 To concatenate without interpolation, use `++`:
 
 ```kai

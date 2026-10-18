@@ -1,0 +1,13 @@
+# Format specs go after a `:` inside the hole: width, alignment,
+# zero padding, and the decimals of a Real.
+
+fn row(product: String, price: Real, qty: Int) : String =
+  "#{product:<8}#{price:9.2}#{qty:5}"
+
+fn main() {
+  println("#{"product":<8}#{"price":>9}#{"qty":>5}")
+  println(row("bread", 1290.0, 3))
+  println(row("milk", 1090.5, 12))
+  println(row("cheese", 4590.75, 1))
+  println("receipt #{427:06}")
+}
