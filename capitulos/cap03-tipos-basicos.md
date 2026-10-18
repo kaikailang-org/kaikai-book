@@ -101,7 +101,7 @@ fn fila(producto: String, precio: Real, unidades: Int) : String =
 fn main() {
   println("#{"producto":<8}#{"precio":>9}#{"uds":>5}")
   println(fila("pan", 1290.0, 3))
-  println(fila("leche", 1090.5, 12))
+  println(fila("café", 1090.5, 12))
   println(fila("queso", 4590.75, 1))
   println("boleta #{427:06}")
 }
@@ -111,7 +111,7 @@ fn main() {
 $ kai run ejemplos/cap03/07_formato.kai
 producto   precio  uds
 pan       1290.00    3
-leche     1090.50   12
+café      1090.50   12
 queso     4590.75    1
 boleta 000427
 ```

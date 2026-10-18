@@ -1,7 +1,7 @@
-# A hole can go in pattern position too. The compiler tells
-# you which inhabitants of the type are left to cover.
-# Useful when you're writing a match and you know which case
-# is missing but haven't yet decided how to handle it.
+# A hole can be the body of an arm: the match already covers
+# every constructor and only the expression is missing.
+# Useful when you know which case is pending but haven't yet
+# decided how to handle it.
 
 type Shape
   = Circle(Real)

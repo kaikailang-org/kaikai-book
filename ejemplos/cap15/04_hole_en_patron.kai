@@ -1,7 +1,7 @@
-# Un hole puede ir en posición de patrón también. El
-# compilador te dice qué inhabitantes del tipo faltan cubrir.
-# Útil cuando estás escribiendo un match y sabes el caso que
-# te falta pero todavía no decidiste cómo manejarlo.
+# Un hole puede ser el cuerpo de un brazo: el match ya cubre
+# todos los constructores y solo falta la expresión. Útil
+# cuando sabes qué caso falta pero todavía no decidiste cómo
+# manejarlo.
 
 type Forma
   = Circulo(Real)
