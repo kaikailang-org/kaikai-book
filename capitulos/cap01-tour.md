@@ -10,7 +10,7 @@ vez en el resto del libro: declaraciones, tipos algebraicos,
 pattern matching, efectos, fibras, protocolos, unidades de
 medida, contratos, pruebas inline y holes tipados.
 
-No vamos a explicar cada detalle todavía. La idea es que termines
+Todavía no necesitas cada detalle. La idea es que termines
 el capítulo con el lenguaje mirado desde arriba y la sensación de
 que ya puedes leer código kaikai aunque te falten precisiones,
 las que llegarán en los capítulos siguientes.
@@ -47,8 +47,8 @@ Hay cuatro cosas que mirar antes de seguir:
   es el valor del bloque. Aquí no nos interesa, pero lo vas a usar.
 - `println` no requiere `import`. Está disponible en todos los
   programas porque escribe a la salida estándar mediante un
-  efecto que kaikai trae por omisión. En el capítulo 12 vamos a
-  profundizar en esto, por ahora basta con saber que funciona.
+  efecto que kaikai trae por omisión. En el capítulo 12
+  profundizas en esto, por ahora basta con saber que funciona.
 
 No hay punto y coma al final de la línea. No hay `return` para
 funciones que no devuelven nada. Tampoco hace falta declarar el
@@ -139,7 +139,7 @@ que ves: cuatro maneras de construir un valor de tipo `Tag`.
 condición, y cada rama es un bloque que produce un valor. El
 `if` mismo es una expresión que devuelve `Tag`, y el cuerpo de
 la función es esa expresión, sin `return` ni asignación
-intermedia. Esto es lo que en el capítulo 2 vamos a llamar
+intermedia. Esto es lo que en el capítulo 2 vas a llamar
 **expresión, no sentencia**, y es uno de los pocos cambios de
 hábito que vas a tener que hacer.
 
@@ -277,9 +277,9 @@ hábito: **inmutabilidad por defecto**.
 
 ## 1.5 Un efecto propio con su handler
 
-Hasta ahora todo el "efecto" que vimos fue `println`, que
-funciona porque kaikai trae un handler por defecto. Veamos
-qué pasa cuando declaramos un efecto nuevo.
+Hasta ahora el único "efecto" que usaste fue `println`, que
+funciona porque kaikai trae un handler por defecto. Ahora
+declaras un efecto nuevo.
 
 ```kai
 effect Log {

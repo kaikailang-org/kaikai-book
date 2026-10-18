@@ -504,7 +504,7 @@ primero.
 Cerramos con un ejemplo integrador: un evaluador chico de
 expresiones aritméticas con manejo de errores, probado con
 las tres herramientas. El código completo está en
-`ejemplos/cap07/05_evaluador_pruebas.kai`; aquí lo recorremos
+`ejemplos/cap07/05_evaluador_pruebas.kai`; aquí lo recorres
 por partes.
 
 ### El AST y el evaluador

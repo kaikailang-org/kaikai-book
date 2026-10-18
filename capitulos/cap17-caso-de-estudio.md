@@ -30,7 +30,7 @@ archivos.
 
 ## 17.1 La forma del programa
 
-Antes del código, veamos las piezas y sus responsabilidades:
+Antes de leer el código, ubica las piezas y sus responsabilidades:
 
 ```
 notas/

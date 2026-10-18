@@ -1,7 +1,7 @@
 # Capítulo 12 · Efectos algebraicos
 
 Este es el capítulo donde kaikai paga su novedad. Hasta ahora
-hemos visto tipos, pattern matching, protocolos, unidades de
+usaste tipos, pattern matching, protocolos, unidades de
 medida, contratos. Todas son piezas elegantes pero no únicas: las
 encontrarías parecidas en Haskell, en Rust, en F#. Los **efectos
 algebraicos** son lo que distingue a kaikai de casi cualquier
@@ -31,7 +31,7 @@ sienta obvio.
 
 ## 12.1 La fricción que los efectos resuelven
 
-Antes de mostrar la sintaxis, veamos los problemas concretos que
+Antes de la sintaxis, piensa en los problemas concretos que
 los efectos resuelven. Si reconoces el patrón en tu trabajo,
 sabrás por qué vale la pena aprender una herramienta nueva.
 
@@ -202,7 +202,7 @@ fn main() : Unit / Log {       # propaga el efecto
 }
 ```
 
-Es el mismo principio del contagio que vimos en `async`/`await`,
+Es el mismo principio del contagio que conoces de `async`/`await`,
 pero sin el problema de los colores: aquí no hay sintaxis especial
 para "anunciar el efecto" en la llamada. `Log.log(...)` es una
 llamada como cualquier otra. La fila en la firma es donde vive la
@@ -1233,7 +1233,7 @@ $ kai run ejemplos/cap12/07_alias.kai
 
 ## 12.11 Default handlers: el efecto trae el suyo
 
-Hasta aquí cada `handle` que vimos lo escribimos a mano. Pero hay
+Hasta aquí escribiste a mano cada `handle`. Pero hay
 efectos donde una de las implementaciones es tan obvia que pedirle
 al usuario que la escriba cada vez es ceremonia pura: si tu efecto
 es `Log` y la implementación "razonable" imprime con timestamp,
@@ -1563,7 +1563,7 @@ En la apertura del capítulo dije que si esto te sonaba a
 generadores, mantuvieras la idea cerca. Es hora de pagar esa
 promesa, y se paga con una pieza que ya conoces.
 
-En §12.5 vimos qué puede hacer un handler con `resume`:
+En §12.5 aprendiste qué puede hacer un handler con `resume`:
 llamarlo, en posición de cola o no, y el body sigue; o no
 llamarlo, y el body se descarta. Falta una, y es la más
 interesante: **guardarlo**.
@@ -1759,7 +1759,7 @@ nadie haya tenido que agregárselos.
 
 ## 12.14 Caso de estudio: procesador de configuración
 
-Cerramos con un ejemplo que mezcla los tres patrones que vimos:
+Cerramos con un ejemplo que mezcla los tres patrones que ya usaste:
 logueo, estado, fallo. El programa procesa una lista de líneas
 con formato `clave=valor`, las parsea, registra cada paso, cuenta
 cuántas pasaron, y aborta si alguna línea no tiene el formato

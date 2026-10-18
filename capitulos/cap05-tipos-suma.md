@@ -86,12 +86,12 @@ Tres detalles que vas a usar siempre:
   cuatro símbolos: `Color` es el tipo, y `Rojo`, `Verde`,
   `Azul` son tres tipos a la vez (cada uno con un solo
   habitante, equivalente al de un valor). En el capítulo 9
-  vamos a ver cómo este detalle te deja extender un sum type
+  verás cómo este detalle te deja extender un sum type
   con protocolos definidos para sus constructores
   individualmente.
 
 - **El operador `|` siempre significa unión de tipos.** Lo
-  vamos a ver más en §5.5: `Color = Rojo | Verde | Azul`,
+  usas a fondo en §5.5: `Color = Rojo | Verde | Azul`,
   `ErrorEval = ErrorAritmetico | ErrorAmbiente` y
   `Resultado = Ok(Int) | Err(String)` son la misma
   construcción. La diferencia entre "declarar tipos nuevos" y
@@ -517,7 +517,7 @@ cuadrante(0,0)   = origen
 
 ## 5.5 Uniones de tipos existentes
 
-Hasta ahora todos los `|` que hemos visto tenían **nombres
+Hasta ahora todos los `|` que escribiste tenían **nombres
 nuevos** del lado derecho (`Rojo`, `Verde`, `Lit`,
 `Circulo`) que kaikai auto-declara como constructores. Pero
 el operador `|` no exige nombres nuevos. Si los nombres del
@@ -791,7 +791,7 @@ saber qué excepciones esperar. En kaikai, la firma se lo dice.
 
 ## 5.7 Caso de estudio: evaluador con errores tipados
 
-Cerramos el capítulo con un caso integrador. Vamos a construir
+Cerramos el capítulo con un caso integrador. Vas a construir
 un evaluador de expresiones aritméticas con tres categorías de
 error:
 
