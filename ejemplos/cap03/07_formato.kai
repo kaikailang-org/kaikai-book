@@ -1,0 +1,13 @@
+# Los format specs van después de un `:` dentro del hueco: ancho,
+# alineación, relleno con ceros y decimales de un Real.
+
+fn fila(producto: String, precio: Real, unidades: Int) : String =
+  "#{producto:<8}#{precio:9.2}#{unidades:5}"
+
+fn main() {
+  println("#{"producto":<8}#{"precio":>9}#{"uds":>5}")
+  println(fila("pan", 1290.0, 3))
+  println(fila("leche", 1090.5, 12))
+  println(fila("queso", 4590.75, 1))
+  println("boleta #{427:06}")
+}

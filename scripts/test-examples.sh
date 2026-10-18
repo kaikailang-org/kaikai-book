@@ -77,6 +77,7 @@ run|ejemplos/cap03/03_let_if.kai|ok
 run|ejemplos/cap03/04_bloques.kai|ok
 build|ejemplos/cap03/05_ancho_fijo.kai|ok
 build|ejemplos/cap03/06_numeros_grandes.kai|ok
+run|ejemplos/cap03/07_formato.kai|ok
 
 # Capítulo 4 — tipos compuestos
 run|ejemplos/cap04/01_records.kai|ok
@@ -250,6 +251,7 @@ run|examples/ch03/03_let_if.kai|ok
 run|examples/ch03/04_blocks.kai|ok
 build|examples/ch03/05_fixed_width.kai|ok
 build|examples/ch03/06_big_numbers.kai|ok
+run|examples/ch03/07_formatting.kai|ok
 
 # Chapter 4
 run|examples/ch04/01_records.kai|ok

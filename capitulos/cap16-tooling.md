@@ -331,21 +331,40 @@ Dos propiedades definen su carácter:
   textual no puede.
 
 El ejemplo más claro de esa conciencia es la regla
-`discard_pure_value`. Un bloque descarta el valor de toda
-sentencia que no sea su cola; si ese valor descartado es
-**puro y no-Unit**, es código muerto o un uso olvidado:
+`non_tail_list_recursion`. Una función que se llama a sí misma
+sobre la cola de una lista, fuera de posición de cola, gasta un
+marco de pila por elemento, y la pila de una fibra es chica:
 
 ```kai
-fn run() : Int {
-  area(3, 4)        # warning: el Int se descarta
-  0
+pub fn intercalar(xs: [String], sep: String) : [String] = match xs {
+  []           -> []
+  [x, ...rest] -> [sep, x, ...intercalar(rest, sep)]   # warning
 }
 ```
 
-Pero si la llamada descartada **carga efectos**, el descarte
-es legítimo, porque llamaste por el efecto y no por el valor, y la
-regla se queda callada. Esa distinción requiere la fila de
-efectos; un linter textual no la tiene.
+Pero con una sola cabeza, `[x * 2, ...duplicar(rest)]`, el
+compilador convierte la recursión en un ciclo cuando la fila de
+efectos de la función está vacía, y la regla se queda callada.
+Si esa misma función hace `println`, la fila ya no está vacía,
+el ciclo no ocurre y la regla avisa. Esa distinción requiere la
+fila de efectos; un linter textual no la tiene.
+
+La regla que más vas a ver es `discard_pure_value`. Un bloque
+descarta el valor de toda sentencia que no sea su cola; si ese
+valor no es `Unit`, es un uso olvidado, haga o no efectos la
+llamada que lo produjo:
+
+```kai
+fn run() : Unit / Stdout {
+  area(3, 4)        # warning: el Int se descarta
+  parse("42")       # warning: el Result se descarta
+  println("listo")
+}
+```
+
+Para descartar a propósito, hay que decirlo: `parse("42") |>
+ignore` o `let _ = parse("42")`. Ninguna de las dos formas
+genera advertencia.
 
 Otras reglas del catálogo empujan hacia el kaikai idiomático.
 `point_free_nudge` sugiere la sección point-free (§6.2) cuando
@@ -360,7 +379,7 @@ memoria. El resto barre residuos: `redundant_if_bool`,
 `redundant_match_catchall`, `dead_code_unused_priv`,
 `effect_over_declared` y `effect_ffi_without_extern`.
 
-Son diez al día de hoy, y el número va a subir. Cada regla
+Son once al día de hoy, y el número va a subir. Cada regla
 entra cuando se puede demostrar que las dos formas son
 equivalentes, porque un linter ruidoso es peor que ninguno.
 `kai info lint` lista el estado actual.
@@ -702,9 +721,11 @@ del binario `kai` para casos especiales:
 - **`KAI_BACKEND`** (`c` | `native`, por defecto `native`): el
   backend que se usa cuando no pasas `--backend`. Lo sobreescribe
   la flag.
-- **`KAI_NATIVE_OPT`** (`0|1|2|3|s|z`, por defecto `2`): nivel
-  de optimización del pipeline LLVM del backend nativo.
-  `--debug` lo baja a `0`, `--release` lo deja en `2`.
+- **`KAI_NATIVE_OPT`** (`0|1|2|3|s|z`): nivel de optimización del pipeline LLVM
+  del backend nativo. `kai build` usa `2` y `kai run` usa `1`,
+  porque un programa que se compila para correr una vez no
+  recupera el tiempo de `-O2`. `--debug` lo baja a `0` y
+  `--release` lo deja en `2`.
 - **`CC`** (por defecto `cc`) y **`CFLAGS`**: el compilador de
   C y sus flags, usados **solo por el backend `c`** para
   producir el ejecutable final (`CC=clang`, `CFLAGS=-O3`).
@@ -1140,7 +1161,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.161.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.163.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org

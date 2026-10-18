@@ -327,21 +327,39 @@ Two properties define its character:
   text scanner can't.
 
 The clearest example of that awareness is the
-`discard_pure_value` rule. A block drops the value of every
-statement that isn't its tail; if that dropped value is
-**pure and non-Unit**, it's dead code or a forgotten use:
+`non_tail_list_recursion` rule. A function that calls itself on
+the tail of a list, outside tail position, spends one stack
+frame per element, and a fiber's stack is small:
 
 ```kai
-fn run() : Int {
-  area(3, 4)        # warning: the Int is dropped
-  0
+pub fn interleave(xs: [String], sep: String) : [String] = match xs {
+  []           -> []
+  [x, ...rest] -> [sep, x, ...interleave(rest, sep)]   # warning
 }
 ```
 
-But if the discarded call **carries effects**, the discard
-is legitimate — you called for the effect, not the value —
-and the rule stays quiet. That distinction requires the
-effect row; a textual linter doesn't have it.
+With a single head, though — `[x * 2, ...double(rest)]` — the
+compiler turns the recursion into a loop when the function's
+effect row is empty, and the rule stays quiet. Make that same
+function call `println` and the row is no longer empty, the loop
+doesn't happen, and the rule speaks up. That distinction
+requires the effect row; a textual linter doesn't have it.
+
+The rule you'll see most is `discard_pure_value`. A block drops
+the value of every statement that isn't its tail; if that value
+isn't `Unit`, it's a forgotten use, whether or not the call that
+produced it performs an effect:
+
+```kai
+fn run() : Unit / Stdout {
+  area(3, 4)        # warning: the Int is dropped
+  parse("42")       # warning: the Result is dropped
+  println("done")
+}
+```
+
+To drop a value on purpose, say so: `parse("42") |> ignore` or
+`let _ = parse("42")`. Neither form is flagged.
 
 Other rules in the catalog nudge toward idiomatic kaikai.
 `point_free_nudge` suggests the point-free section (§6.2)
@@ -356,7 +374,7 @@ allocation. The rest sweep up residue: `redundant_if_bool`,
 `redundant_match_catchall`, `dead_code_unused_priv`,
 `effect_over_declared` and `effect_ffi_without_extern`.
 
-Ten as of today, and the number will climb. A rule earns its
+Eleven as of today, and the number will climb. A rule earns its
 place only when the two forms can be shown equivalent, because
 a noisy linter is worse than none. `kai info lint` lists the
 current state.
@@ -696,9 +714,11 @@ behavior for special cases:
 - **`KAI_BACKEND`** (`c` | `native`, default `native`): the
   backend used when you don't pass `--backend`. The flag
   overrides it.
-- **`KAI_NATIVE_OPT`** (`0|1|2|3|s|z`, default `2`): the
-  optimization level of the native backend's LLVM pipeline.
-  `--debug` lowers it to `0`, `--release` keeps it at `2`.
+- **`KAI_NATIVE_OPT`** (`0|1|2|3|s|z`): the optimization
+  level of the native backend's LLVM pipeline. `kai build` uses
+  `2` and `kai run` uses `1`, since a program compiled to run once
+  never earns back the time `-O2` takes. `--debug` lowers it to
+  `0`, `--release` keeps it at `2`.
 - **`CC`** (default `cc`) and **`CFLAGS`**: the C compiler and
   its flags, used **only by the `c` backend** to produce the
   final executable (`CC=clang`, `CFLAGS=-O3`).
@@ -1128,7 +1148,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.161.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.163.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org

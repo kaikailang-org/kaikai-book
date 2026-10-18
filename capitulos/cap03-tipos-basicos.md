@@ -85,6 +85,41 @@ let b = 2
 println("La suma de #{a} y #{b} es #{a + b}.")
 ```
 
+Cuando el valor tiene que calzar en un formato, el hueco acepta
+una especificación después de dos puntos. `#{x:.2}` muestra un
+`Real` con dos decimales, `#{n:5}` rellena hasta un ancho de
+cinco alineando a la derecha, `#{s:<8}` alinea a la izquierda
+(`^` centra) y `#{n:06}` rellena con ceros. Ancho y decimales se
+combinan: `#{precio:9.2}`. Con eso una tabla se arma sin
+funciones auxiliares:
+
+```kai
+# ejemplos/cap03/07_formato.kai
+fn fila(producto: String, precio: Real, unidades: Int) : String =
+  "#{producto:<8}#{precio:9.2}#{unidades:5}"
+
+fn main() {
+  println("#{"producto":<8}#{"precio":>9}#{"uds":>5}")
+  println(fila("pan", 1290.0, 3))
+  println(fila("leche", 1090.5, 12))
+  println(fila("queso", 4590.75, 1))
+  println("boleta #{427:06}")
+}
+```
+
+```
+$ kai run ejemplos/cap03/07_formato.kai
+producto   precio  uds
+pan       1290.00    3
+leche     1090.50   12
+queso     4590.75    1
+boleta 000427
+```
+
+La especificación se revisa al compilar. `.2` sobre un `Int` es
+un error de tipos que apunta al hueco, y una especificación mal
+escrita, como `#{n:5x}`, ni siquiera llega a ejecutarse.
+
 Para concatenar strings sin interpolación se usa `++`:
 
 ```kai
