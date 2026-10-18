@@ -725,12 +725,9 @@ import spawn
 import core.list
 
 fn process_batch(id: Int, batch: [String]) : [String] / Spawn =
-  match batch {
-    []           -> []
-    [t, ...rest] -> {
-      spawn.yield()
-      ["worker #{id}: #{t}", ...process_batch(id, rest)]
-    }
+  batch | (t) => {
+    spawn.yield()
+    "worker #{id}: #{t}"
   }
 ```
 
@@ -750,13 +747,10 @@ fn main() : Unit / Stdout + Spawn + Cancel {
     let c = n.spawn(() => process_batch(3, ["echo", "foxtrot"]))
     n.await(a) ++ n.await(b) ++ n.await(c)
   }
-  print_all(results)
+  results |! println(.)
   println("(#{list.length(results)} tasks processed)")
 }
 ```
-
-(`print_all` is a trivial walk over the list; it's complete in
-the example file.)
 
 Output:
 

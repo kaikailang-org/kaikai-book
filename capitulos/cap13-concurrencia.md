@@ -729,12 +729,9 @@ import spawn
 import core.list
 
 fn procesar_lote(id: Int, lote: [String]) : [String] / Spawn =
-  match lote {
-    []           -> []
-    [t, ...rest] -> {
-      spawn.yield()
-      ["worker #{id}: #{t}", ...procesar_lote(id, rest)]
-    }
+  lote | (t) => {
+    spawn.yield()
+    "worker #{id}: #{t}"
   }
 ```
 
@@ -753,13 +750,10 @@ fn main() : Unit / Stdout + Spawn + Cancel {
     let c = n.spawn(() => procesar_lote(3, ["echo", "foxtrot"]))
     n.await(a) ++ n.await(b) ++ n.await(c)
   }
-  imprimir(resultados)
+  resultados |! println(.)
   println("(#{list.length(resultados)} tareas procesadas)")
 }
 ```
-
-(`imprimir` es un recorrido trivial de la lista; está completo
-en el archivo del ejemplo.)
 
 Salida:
 
