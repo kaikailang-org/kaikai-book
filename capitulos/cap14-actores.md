@@ -223,7 +223,7 @@ Para arrancar un actor que corre en su propia fibra:
 import actor
 import spawn
 
-fn trabajador() : Unit / Actor[String] + Console {
+fn trabajador() : Unit / Actor[String] + Stdout {
   let t1 = Actor.receive()
   Stdout.print("trabajando: " ++ t1)
   let t2 = Actor.receive()
@@ -232,7 +232,7 @@ fn trabajador() : Unit / Actor[String] + Console {
   Stdout.print("trabajando: " ++ t3)
 }
 
-fn main() : Unit / Console + Spawn + Cancel {
+fn main() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
     let pid = spawn_actor(() => trabajador())
     Actor.send(pid, "tarea-1")
@@ -258,12 +258,12 @@ y devuelve el `Pid` para que el padre pueda mandarle mensajes.
 La firma del trabajador declara `Actor[String]`: necesita el
 efecto para llamar a `Actor.receive()`.
 
-`main` también tiene `Actor[String]` en su fila, porque
-`Actor.send(pid, "tarea-1")` invoca una operación del efecto
-`Actor[String]`, y toda invocación a un efecto requiere que el
-efecto esté disponible en el contexto. El `with_mailbox` de
-`main` provee esa capacidad; el `pid` ya identifica al mailbox
-destino, y el handler solo despacha la operación.
+`main` también invoca una operación de `Actor[String]`
+(`Actor.send(pid, "tarea-1")`), pero su fila no lo lleva: el
+`with_mailbox` que envuelve esas llamadas es el handler que
+las atiende, y un efecto manejado no sale del bloque. El `pid`
+ya identifica al mailbox destino; el handler solo despacha la
+operación.
 
 Los `spawn.yield()` del final le dan al scheduler la chance de
 correr al trabajador. Sin ellos, `main` saldría antes de que el
@@ -287,9 +287,17 @@ import time
 
 fn main() : Unit / Stdout + Spawn + Cancel + Clock + Actor[String] {
   with_mailbox {
+    # Mailbox vacío: el deadline expira antes de que llegue nada.
+    match receive_timeout(time.millis(10)) {
+      Some(m) -> Stdout.print("inesperado: " ++ m)
+      None -> Stdout.print("timeout: nadie respondió")
+    }
+
+    # Ahora sí hay un mensaje a la mano: llega antes del deadline.
+    Actor.send(Actor.self(), "pong")
     match receive_timeout(time.millis(10)) {
       Some(m) -> Stdout.print("recibido: " ++ m)
-      None    -> Stdout.print("timeout: nadie respondió")
+      None -> Stdout.print("inesperado: timeout")
     }
   }
 }
@@ -496,11 +504,12 @@ reciben mensajes, solo registran observación sobre su vida.
 ### Links: bidireccionales
 
 `Link.link(pid)` declara que el actor actual y `pid` están
-ligados: si cualquiera de los dos termina con un fallo, el
-otro recibe `Cancel.raise()`. Es el patrón para dos actores
-que dependen simétricamente uno del otro (un worker y su
-cola, los dos lados de un handshake). Para "supervisor observa
-worker" están los monitores.
+ligados: cuando cualquiera de los dos termina, sea porque
+retornó, se cayó o lo cancelaron, el otro recibe
+`Cancel.raise()`. Es el patrón para dos actores que dependen
+simétricamente uno del otro (un worker y su cola, los dos
+lados de un handshake). Para observar a otro actor sin atar
+tu vida a la suya están los monitores.
 
 ### `set_trap_exit`: recibir la caída en vez de sufrirla
 
@@ -531,7 +540,10 @@ padre: recibo -> Crashed
 
 Sin esa línea, la caída del hijo alcanza al padre y el
 programa se va al piso. Con ella, el padre queda en posición
-de decidir. Es la pieza que convierte un link en supervisión.
+de decidir. El link deja de ser un pacto simétrico y pasa a
+ser un canal de avisos en una sola dirección: es la forma de
+supervisar cuando necesitas saber *cómo* terminó el hijo, algo
+que un monitor no te dice.
 
 Dos condiciones que muerden si faltan. La fibra tiene que
 estar **dentro de un `with_mailbox`** para que el mensaje
@@ -550,7 +562,7 @@ dejar de observar.
 Cuando el observado muere, el aviso te llega **por el mailbox
 de siempre**: el runtime empuja ahí el pid del muerto y lo
 recibes con el mismo `Actor.receive()` que cualquier otro
-mensaje. Eso es todo lo que dice hoy un monitor: *este actor
+mensaje. Eso es todo lo que dice un monitor: *este actor
 terminó*. No te dice cómo.
 
 ### Saber cómo murió: `Link` + trap exit
@@ -561,7 +573,7 @@ distingue: al mailbox llega `"Normal"` o `"Crashed"`.
 
 ```kai
 # ejemplos/cap14/07_trap_exit.kai (extracto)
-fn supervisar() : Unit / Actor[String] + Spawn + Console + Link + Cancel {
+fn supervisar() : Unit / Actor[String] + Spawn + Stdout + Link + Cancel {
   spawn.set_trap_exit(true)
   let yo = Actor.self()
 
@@ -580,27 +592,14 @@ murió un hijo: Crashed
 ```
 
 El hijo se liga con `Link.link(padre)` y después termina bien o
-llama a `Cancel.raise()`. Sin `set_trap_exit`, la primera caída
-cancelaría al supervisor y la segunda no se vería nunca.
+llama a `Cancel.raise()`. Sin `set_trap_exit`, el primer hijo
+en terminar cancelaría al supervisor y el segundo aviso no se
+vería nunca.
 
-Ese `String` es una simplificación de v1. El diseño del
-lenguaje (`docs/actors.md`) especifica algo más
-rico: un `MonitorDown(ref, cause)` con
-`cause = Normal | Crashed(String) | Cancelled`, viajando por el
-mailbox tipado del actor como una variante más de tu propio
-tipo de mensaje:
-
-```kai
-# La forma especificada, todavía no implementada.
-type MsgSupervisor
-  = Trabajo(Tarea)
-  | Down(MonitorDown)
-```
-
-Cuando eso aterrice, la causa dejará de ser un string y pasará
-a ser un valor que puedes hacer `match`. Mientras tanto, las
-dos rutas de arriba son lo que hay: el monitor te dice *quién*,
-el trap exit te dice *cómo*.
+El aviso es un `String`, así que el mailbox del supervisor
+tiene que ser `Actor[String]`. Las dos rutas se reparten el
+trabajo: el monitor te dice *quién*, el trap exit te dice
+*cómo*.
 
 ### Cuándo elegir cada uno
 
@@ -613,7 +612,8 @@ el trap exit te dice *cómo*.
   terminaciones que el actor no controla: crashes, cancelación
   desde afuera, panics. El supervisor sigue vivo y decide.
 - **`Link`**, cuando dos actores forman una unidad y no tiene
-  sentido que uno sobreviva sin el otro.
+  sentido que uno sobreviva sin el otro. Con trap exit, cuando
+  el supervisor necesita además la causa de la terminación.
 
 El patrón de §14.7 usa notificación explícita. Es el más
 simple, y además el único donde el supervisor recibe la razón
@@ -647,19 +647,19 @@ fn procesar(tareas: [(Int, Int)], acc: Int) : ResultadoLote {
 }
 
 fn trabajador(supervisor: Pid[ResultadoLote], tareas: [(Int, Int)])
-    : Unit / Actor[ResultadoLote] + Console {
+    : Unit / Actor[ResultadoLote] + Stdout {
   let r = procesar(tareas, 0)
   Stdout.print("trabajador: lote terminó como #{r}")
   Actor.send(supervisor, r)
 }
 
 fn intento(me: Pid[ResultadoLote], lote: [(Int, Int)])
-    : ResultadoLote / Console + Spawn + Cancel + Actor[ResultadoLote] {
+    : ResultadoLote / Stdout + Spawn + Cancel + Actor[ResultadoLote] {
   let _ = spawn_actor(() => trabajador(me, lote))
   Actor.receive()
 }
 
-fn supervisor() : Unit / Console + Spawn + Cancel {
+fn supervisor() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
     let me = Actor.self()
     let primer_lote = [(10, 2), (20, 4), (30, 0)]
@@ -677,7 +677,7 @@ fn supervisor() : Unit / Console + Spawn + Cancel {
   }
 }
 
-fn main() : Unit / Console + Spawn + Cancel {
+fn main() : Unit / Stdout + Spawn + Cancel {
   supervisor()
 }
 ```
@@ -718,16 +718,17 @@ cosas:
 - **Cancelación del trabajador si el supervisor decide
   rendirse.** Si el supervisor se rinde mientras el trabajador
   sigue procesando, el trabajador también debería terminar.
-  Con `Link.link(worker)` después del spawn, la
-  decisión del supervisor de retornar cancela el worker
-  automáticamente. La alternativa explícita es agregar un
+  Con `Link.link(worker)` después del spawn, el
+  supervisor que retorna cancela al worker automáticamente,
+  porque un link reacciona a cualquier terminación, no solo a
+  las caídas. La alternativa explícita es agregar un
   `Stop` al protocolo del trabajador y mandárselo antes de
   rendirse.
 - **Logging persistente.** En vez de `Stdout.print`, mandar a
   un actor logger con su propio mailbox bounded
   (`Bounded(1024, DropOldest)`).
 
-Cada uno es un capítulo aparte. Pero la base está: tres
+Cada uno es trabajo de una tarde. Pero la base está: tres
 actores, dos tipos de mensaje, un sistema de tipos que
 garantiza que los mailboxes se respetan.
 
@@ -879,8 +880,8 @@ procese cinco tareas en vez de tres. ¿Qué pasa si reduces los
 `spawn.yield()` del padre? ¿Cuál es el mínimo que hace que
 todas las tareas se procesen?
 
-**14.2.** Toma el `BoundedDropOldest` de §14.4 y cámbialo a
-`BoundedDropNewest`. ¿Cuál es la salida esperada? Justifica con
+**14.2.** Toma el `Bounded(2, DropOldest)` de §14.4 y cámbialo
+a `Bounded(2, DropNewest)`. ¿Cuál es la salida esperada? Justifica con
 un razonamiento sobre qué mensajes quedan en el mailbox cuando
 llega cada `send`.
 
@@ -888,8 +889,8 @@ llega cada `send`.
 manda una sola pregunta y se va. Si quisieras un cliente que
 hace cinco preguntas en serie, ¿qué cambiarías? ¿Y si las
 quisieras lanzar todas a la vez y recibir las respuestas
-conforme lleguen (concurrentemente, no en paralelo: el
-scheduler las intercala en el mismo hilo)? Pista: necesitas
+conforme lleguen, en el orden en que el scheduler las
+termine? Pista: necesitas
 abrir varias fibras dentro de un nursery o agrupar respuestas
 con un correlation id.
 

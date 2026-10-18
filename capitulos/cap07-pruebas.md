@@ -189,9 +189,12 @@ descubre solo cuando hay un `kai.toml` que defina el paquete.
 
 Tres hábitos que internalizas en pocas semanas:
 
-- **Tests al lado del código, en el mismo archivo.** No los
-  separes en `tests/` o en archivos paralelos. Cuando tocas
-  una función, los tests de esa función están al ojo.
+- **Tests al lado del código, en el mismo archivo.** Cuando
+  tocas una función, sus tests están al ojo, y solo desde ahí
+  alcanzas las funciones que no son `pub`. Un `*_test.kai` o
+  un archivo de `tests/` importa el módulo como cualquier
+  cliente y ve solo su API pública: guárdalos para probar el
+  paquete desde afuera.
 - **Un test por aspecto, no por línea.** Si tu función tiene
   un caso base, casos pequeños y un caso límite, escribe
   tres `test`. Si dentro de "casos pequeños" hay tres
@@ -361,12 +364,16 @@ bench "aritmética: 2 + 3 * 4" {
   2 + 3 * 4
 }
 
-bench "fib(10)" {
+bench "fib(10): recursión sin memo" {
   fib(10)
 }
 
-bench "fib(15)" {
+bench "fib(15): el costo crece exponencial" {
   fib(15)
+}
+
+bench "list.sum [1..100]" {
+  list.sum([1..100])
 }
 ```
 
@@ -399,9 +406,12 @@ trabajo entre ellas; compararlas es leer ruido.
 
 `median 0 / MAD 0` es un aviso de que hay que medir de otra
 forma: haz que cada iteración trabaje
-más, o escribe un programa que repita la operación en un loop,
-consuma el resultado para que el optimizador no pueda borrarlo,
-y cronometra el programa completo. Una medición sólida se ve
+más, o escribe un programa que repita la operación en un loop
+y cronometra el programa completo. Fuera de `bench` el
+optimizador sí actúa: borra una llamada pura cuyo resultado
+nadie usa y calcula una sola vez la que recibe siempre la misma
+entrada. Por eso el loop consume el resultado y cambia la
+entrada en cada vuelta. Una medición sólida se ve
 como la de `fib(15)`: mediana y media en el mismo orden, y la
 MAD chica al lado de ambas.
 
@@ -422,11 +432,11 @@ Tres consejos prácticos:
 - **El cuerpo del `bench` es lo que se mide.** Si tu setup es
   caro y no quieres incluirlo, hazlo afuera del bloque y deja
   solo la operación a medir adentro.
-- **kaikai no descarta llamadas "puras" sin efecto observable.**
-  `bench "fib(10)" { fib(10) }` realmente computa `fib(10)`
-  cada iteración. En otros lenguajes con optimizaciones más
-  agresivas hay que usar trucos para evitar dead-code
-  elimination; aquí no.
+- **El runner evalúa el cuerpo en cada iteración.**
+  `bench "fib(10)" { fib(10) }` computa `fib(10)` en cada
+  vuelta, aunque nadie use el resultado. Dentro de un `bench` no
+  necesitas trucos contra el optimizador; en un programa propio
+  que cronometras, sí.
 - **El número absoluto es solo indicativo.** Para comparar,
   mide en la misma máquina, en la misma sesión, sin otras
   cargas pesadas en paralelo.

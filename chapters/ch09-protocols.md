@@ -305,7 +305,7 @@ Person { name: Ada, age: 30 }
 That canonical format, `TypeName { field: value, ... }`, is
 fine for debugging and logs. If you want a different format (say,
 the classic `(3, 4)` for a point), you write the `impl` by
-hand, like §9.1.
+hand, like §9.2.
 
 `#[derive(...)]` works for the five stdlib protocols, as long as
 **every field of the record also implements** the protocol

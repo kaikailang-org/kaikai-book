@@ -9,7 +9,7 @@ fn primer_par(xs: [Int]) : Option[Int] =
   }
 
 fn parsear_edad(s: String) : Result[Int, ErrorEdad] =
-  match string_to_int(s) {
+  match string.to_int(s) {
     None -> Err(NoNumerica)
     Some(n) ->
       if n < 0 or n > 130 {

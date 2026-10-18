@@ -4,12 +4,13 @@ In chapter 17 you built an HTTP server: many clients, one
 fiber per connection, actors encapsulating state. There,
 concurrency dominates.
 
-This chapter closes the book with **a double-entry accounting
-ledger**, where precision is what counts. A debit that doesn't
-match its credit is a bug your auditor finds before you do,
-and "it works and the tests pass" isn't enough — you have to
-show **why** it works. I picked it because it's where a type
-error stops being an annoyance and starts being money.
+This chapter closes the case studies with **a double-entry
+accounting ledger**, where precision is what counts. A debit
+that doesn't match its credit is a bug your auditor finds
+before you do, and "it works and the tests pass" isn't
+enough — you have to show **why** it works. I picked it
+because it's where a type error stops being an annoyance and
+starts being money.
 
 Fintech is one of the domains where mistakes cost the most
 and guarantees in the type pay off the most. Mixing USD with
@@ -438,7 +439,7 @@ the guarantees of a strong type system.
 Whether the promise holds is up to whoever writes the code.
 This chapter showed you a domain where the bet pays off.
 
-## 18.10 Philosophy: the book's closing
+## 18.10 Philosophy: the pattern behind the book
 
 The book has proposed a pattern chapter after chapter
 without naming it. Time to name it.
@@ -465,19 +466,3 @@ functions are cheap because immutability is the default.
 Actors are a library because algebraic effects make them
 possible. Domain invariants live in the signature because
 contracts live in the language.
-
-If you keep one idea from reading this book, let it be
-this: **the language isn't what matters; what matters is
-what it lets you build, and what it helps you avoid
-building wrong**. kaikai bets that with effects, fibers,
-contracts, units, and holes in place, the programmer
-writes less wrong code and more code that deserves to be
-in production. If the bet works for you, this book has
-done its job.
-
-Thanks for reading this far. The compiler, the stdlib,
-the design documents, and the examples live at
-`github.com/kaikailang-org/kaikai`. There are issues to
-close and language pieces still taking shape. If this
-experiment interests you, there's room for you to help make
-it better.

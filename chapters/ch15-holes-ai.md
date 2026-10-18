@@ -358,9 +358,9 @@ compiler stops offering help it actually had.
 One detail: `todo!`'s message is a plain string literal, no
 interpolation. `todo!("missing #{n}")` does not compile.
 
-## 15.5 Holes in patterns: the incomplete match
+## 15.5 Holes in a match: the pending arm
 
-A hole in pattern position works too:
+A hole can be the body of a `match` arm:
 
 ```kai
 type Shape
@@ -383,9 +383,9 @@ compiler verifies exhaustiveness (chapter 5 §5.4), accepts
 the `match` as complete, and reports the hole with `Real`
 as expected type and `b`, `h` in scope.
 
-If you haven't yet decided whether you want `Triangle` in
-the type, you remove it and the compiler tells you `match`
-is no longer exhaustive. Holes are orthogonal to pattern
+If you delete the arm instead of leaving a hole in it, the
+compiler tells you the `match` is no longer exhaustive and
+names the missing variant. Holes are orthogonal to pattern
 checking; each one does its job.
 
 The `match` with one arm pending: the two resolved cases run,
@@ -454,17 +454,20 @@ The key piece is **structured output**: the compiler emits
 JSON that the agent reads directly, without heuristic
 parsing. Three relevant channels:
 
-1. **`kai build --holes-json`**: the hole report in JSON.
-2. **`kai type --json`**: the type of any expression.
-3. **Compiler diagnostics in JSON**: type errors,
-   non-exhaustive matches, unhandled effects.
+1. **`kai typecheck --holes-json`**: the hole report in JSON.
+2. **`kai typecheck --library-mode`**: the type of the
+   expression at a line and column, among other queries.
+3. **`kai typecheck --diags-json`**: compiler diagnostics
+   (type errors, non-exhaustive matches, unhandled effects)
+   in JSON.
 
 In chapter 5 §5.4 you saw how a non-exhaustive match message
-looks in human form. The JSON version has the same fields
-as data: scrutinee type, list of missing variants, list of
-covered variants, suggestion. An agent can parse it and
-produce the code that covers the missing variant without
-needing to read natural language.
+looks in human form. The JSON version carries the same
+diagnostic as data: severity, file, line, column and message,
+and in the `related` list each note (the missing variant, the
+covered ones, the suggestion) with its own location. An agent
+walks it without parsing heuristics and knows where to add
+the missing arm.
 
 ## 15.7 The JSON output of holes
 
@@ -483,7 +486,7 @@ the formatting:
     "in_scope": [
       {"name": "r", "type": "Real"}
     ],
-    "scope_elided": 561,
+    "scope_elided": 563,
     "candidates": [
       {"expr": "r", "kind": "synth"},
       {"expr": "real_sqrt(r)", "kind": "synth"},
@@ -521,18 +524,18 @@ Holes are the first piece of a general pattern. Other
 compiler tools follow the same principle: emit structured
 information that an agent can consume.
 
-- **`kai type <expr>`** returns the type of an expression in
-  the context of a file. With `--json`, the result is an
-  object with fields `type`, `effects` (the row), and
-  `notes` (references to the definition).
-- **`kai check`** runs the file's properties and tests and
-  reports results. With `--json`, each test/check/bench is
-  an object with `name`, `status`, `duration_ms`, and a
-  `counterexample` field for `check`s that failed (with the
-  exact value that broke the property).
-- **Compiler diagnostics** (errors and warnings) have a
-  `--json` form: error type, location, span, human message,
-  structured message, list of suggestions.
+- **`kai typecheck --library-mode`** answers queries the file
+  carries in `# @probe <kind> L:C` comments. With
+  `# @probe type 4:14` it returns a JSON object whose `type`
+  field is the type of the expression at that position; `def`
+  says where a name is declared, and `sig` gives the signature
+  of the enclosing call.
+- **`kai test --json`** runs the tests and emits one JSON line
+  per test, with `id`, `file`, `line`, `status` and
+  `duration_ms`, plus a `message` when it fails, and a final
+  `summary` line with the totals.
+- **`kai typecheck --effects-json`** reports, per function,
+  the inferred effect row and the handlers it installs.
 
 The common rule: the agent never has to parse text. The
 information arrives already structured.
@@ -552,11 +555,12 @@ flow is this:
    purpose: the report is the same, but each query costs only
    the front-end (chapter 16 §16.1), and in a loop that gets
    paid many times over.
-3. **The human runs `kai check`.** If the tests pass, things
-   proceed. If not, the counterexample tells the agent
-   what's wrong.
-4. **The agent iterates.** Reads the counterexample,
-   adjusts, proposes another implementation.
+3. **The agent runs `kai test`**, and `kai check` if there
+   are properties. If everything passes, things proceed. If
+   not, the failing test or the property's counterexample
+   tells it what's wrong.
+4. **The agent iterates.** Reads the failure, adjusts,
+   proposes another implementation.
 
 Three things about this flow:
 
@@ -592,9 +596,9 @@ will deliver:
   what effects each function should expose, when to extract
   an abstraction: that's design, and design is human.
 
-The author has a recurring idea about this on the blog:
+I keep coming back to one idea about this on my blog:
 tools don't replace judgment, they amplify it when they're
-well designed. The compiler with holes and agents reads a
+well designed. The compiler with holes and agents carries a
 mechanical part of the work (the details that satisfy the
 type constraints). The other part (what to build, what to
 abstract, what to prioritize) remains the programmer's.
@@ -621,8 +625,7 @@ test "filter and sort" {
 }
 ```
 
-The human runs `kai build --holes-json`. The agent
-receives:
+The agent runs `kai typecheck --holes-json` and receives:
 
 ```json
 [
@@ -636,7 +639,7 @@ receives:
     "in_scope": [
       {"name": "grades", "type": "[Pair[String, Int]]"}
     ],
-    "scope_elided": 560,
+    "scope_elided": 562,
     "candidates": [],
     "candidates_needing_effects": [
       {"expr": "Env.args()", "kind": "synth", "effects": ["Env"]},
@@ -659,15 +662,15 @@ agent has to propose something substantial. A first proposal:
 ```kai
 fn passed(grades: [(String, Int)]) : [String] =
   grades
-    |? . .1 >= 4
-    | . .0
+    |? (.snd >= 4)
+    | .fst
     |> list.sort
 ```
 
-The agent runs `kai check`. Both tests pass: the filter
-keeps Carmen and Berta (grades 5 and 6) and drops Ana
-(grade 3), then `list.sort` over `[String]` puts them in
-ascending lexicographic order. If both pass, the agent is
+The agent runs `kai test`. Both tests pass: the filter keeps
+Carmen and Berta (grades 5 and 6) and drops Ana (grade 3),
+then `list.sort` over `[String]` puts them in ascending
+lexicographic order. With both tests green, the agent is
 done.
 
 The human never touched the body. The compiler validated

@@ -351,7 +351,7 @@ Cuándo usar uno u otro:
   largo" es del comportamiento de la función.
 
 Cuando los dos aplican, eliges por legibilidad. La cuenta
-bancaria del §11.7 usa contratos porque "el saldo no se puede
+bancaria del §11.9 usa contratos porque "el saldo no se puede
 dejar negativo" es una propiedad del **comportamiento de las
 operaciones**.
 
@@ -428,9 +428,9 @@ declared at line 9, col 14
 argument b was: 0
 ```
 
-## 11.6 Tres formas de garantía
+## 11.6 Cuatro formas de garantía
 
-Ya conoces tres mecanismos para "garantizar que el código hace
+Ya conoces cuatro mecanismos para "garantizar que el código hace
 lo correcto", repartidos en tres capítulos:
 
 | Mecanismo | Cap. | Qué garantiza | Cuándo se verifica |
@@ -454,11 +454,11 @@ probablemente las use todas:
   el largo").
 
 Cada uno atrapa una clase distinta de bugs, y juntos protegen
-mucho más que cualquiera por separado. Los cuatro tienen costo
-cero en runtime cuando no fallan: un `test` que pasa no se
-ejecuta en producción; un contrato que se puede probar
-estáticamente no genera assert; un refinement legal no genera
-verificación dinámica.
+mucho más que cualquiera por separado. En producción cuestan
+poco: los `test` y los `check` no se ejecutan, el `match`
+exhaustivo se verifica al compilar, y un contrato o refinement
+que el compilador prueba no genera assert. Lo que no puede
+probar queda como una comparación que se evalúa en runtime.
 
 ## 11.7 La familia Design by Contract
 
@@ -589,7 +589,7 @@ fn retirar(c: Cuenta, monto: Int) : Cuenta
   Cuenta { ...c, saldo: c.saldo - monto }
 ```
 
-Tres operaciones, cinco precondiciones, tres postcondiciones.
+Tres operaciones, cuatro precondiciones, tres postcondiciones.
 En palabras:
 
 - **`abrir`** abre una cuenta con saldo inicial no negativo.
@@ -623,7 +623,7 @@ también aborta. La postcondición es tu seguro contra bugs
 internos, así como el `requires` es tu seguro contra abusos
 de quien llama.
 
-Con cuatro líneas de contratos, esta cuenta documenta sus
+Con siete líneas de contratos, esta cuenta documenta sus
 reglas, las verifica al ejecutarse y deja un diagnóstico claro
 cuando se rompen. Compárala con la versión sin contratos:
 

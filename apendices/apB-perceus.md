@@ -20,11 +20,11 @@ para ver los engranajes.
 
 El paper que inventó Perceus es **"Perceus: Garbage Free
 Reference Counting with Reuse"** (Reinking, Xie, de Moura,
-Leijen, PLDI 2021). La frase central:
-
-> Inserting reference count operations *after* type checking,
-> using *precise last-use information*, makes RC competitive
-> with tracing GC while keeping deterministic deallocation.
+Leijen, PLDI 2021). Su idea central, en paráfrasis mía:
+insertar las operaciones de conteo *después* del chequeo de
+tipos, con información *precisa de último uso*, vuelve al RC
+competitivo con un GC de trazado sin perder la liberación
+determinista.
 
 Tres palabras pesan ahí:
 
@@ -132,8 +132,9 @@ patrón "liberar + asignar". Tú no lo notas.
 
 Esta optimización vuelve a `map`, `filter`, los árboles AVL o
 el parseo de listas **tan rápidos como las versiones con
-mutación** de los lenguajes imperativos. Por eso Koka y Lean 4,
-que también usan Perceus, compilan a código competitivo con C.
+mutación** de los lenguajes imperativos. Por eso Koka, que usa
+Perceus, y Lean 4, cuyo RC con reuse es el antecesor directo de
+Perceus, compilan a código competitivo con C.
 
 ## B.4 Comparación con `Rc<RefCell<T>>` de Rust
 
@@ -182,8 +183,9 @@ Las únicas excepciones son los mecanismos de mutación que kaikai
 provee deliberadamente: `var` local (que el compilador enmascara
 y limita), `Ref[T]`, mailboxes de actores, arrays mutables.
 Todos ellos tienen disciplinas específicas que evitan ciclos
-(las mailboxes, por ejemplo, viven en un actor específico y el
-GC del runtime las maneja).
+(cada mailbox, por ejemplo, pertenece a un solo actor, y el
+handler del actor la libera en su `finally` cuando el actor
+termina o lo cancelan).
 
 En la práctica, un programa kaikai típico no construye ciclos:
 sus estructuras son árboles (listas, AVL, JSON, ASTs). Si
@@ -254,17 +256,19 @@ Las fuentes, si quieres más:
 
 - **Reinking, Xie, de Moura, Leijen. "Perceus: Garbage Free
   Reference Counting with Reuse"**. PLDI 2021. El paper.
-- **Lorenz, Leijen. "Reference Counting with Frame Limited
-  Reuse"**. ICFP 2023. Una extensión que mejora reuse cuando
-  el shape no calza exactamente.
+- **Lorenzen, Leijen. "Reference Counting with Frame Limited
+  Reuse"**. ICFP 2022. Reemplaza el reuse de Perceus por uno
+  guiado por los drops, más estable ante cambios pequeños del
+  programa y con una cota para el heap máximo.
 - **Koka language documentation** (Daan Leijen et al.). Koka es
   el lenguaje donde Perceus nació; mucho del vocabulario
   ("reuse in place", "borrowed binds", "drop specialisation")
   viene de ahí.
-- **Lean 4 RC implementation** (de Moura et al.). Lean 4
-  también usa Perceus, con un enfoque más cercano a
-  certificación formal.
+- **Ullrich, de Moura. "Counting Immutable Beans: Reference
+  Counting Optimized for Purely Functional Programming"**. IFL
+  2019. El RC del compilador de Lean 4, con reuse in place y
+  referencias prestadas; Perceus parte de ese trabajo.
 
 En el código de kaikai, el análisis vive en
-`stage2/perceus.kai`. Si quieres ver cómo se implementa,
-empieza ahí.
+`stage2/compiler/perceus.kai`. Si quieres ver cómo se
+implementa, empieza ahí.

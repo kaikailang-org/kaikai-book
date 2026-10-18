@@ -4,12 +4,13 @@ En el capítulo 17 construiste un servidor HTTP: muchos
 clientes, una fibra por conexión, actores para encapsular
 estado. Ahí lo que pesa es la concurrencia.
 
-Este capítulo cierra el libro con **un libro mayor contable**,
-donde lo que pesa es la precisión. Un débito que no calza con
-su crédito es un bug que tu auditor va a encontrar antes que
-tú, y "funciona y pasa los tests" no alcanza: tienes que poder
-mostrar **por qué** funciona. Lo elegí porque es donde un error
-de tipos deja de ser una molestia y se convierte en plata.
+Este capítulo cierra los casos de estudio con **un libro
+mayor contable**, donde lo que pesa es la precisión. Un débito
+que no calza con su crédito es un bug que tu auditor va a
+encontrar antes que tú, y "funciona y pasa los tests" no
+alcanza: tienes que poder mostrar **por qué** funciona. Lo
+elegí porque es donde un error de tipos deja de ser una
+molestia y se convierte en plata.
 
 Fintech es uno de los dominios donde más caro sale equivocarse
 y donde más rinde tener garantías en el tipo. Mezclar USD con
@@ -432,7 +433,7 @@ Si la promesa se cumple lo decide quien escribe el código.
 Este capítulo te mostró un dominio donde la apuesta vale la
 pena.
 
-## 18.10 Filosofía: el cierre del libro
+## 18.10 Filosofía: el patrón detrás del libro
 
 El libro propone un patrón capítulo a capítulo sin haberlo
 nombrado. Es hora de nombrarlo.
@@ -460,19 +461,3 @@ es por defecto.
 Los actores son una biblioteca porque los efectos
 algebraicos lo permiten. Las invariantes del dominio están
 en la firma porque los contratos están en el lenguaje.
-
-Si después de leer el libro te quedas con una sola idea, que
-sea esta: **el lenguaje no es lo que importa; lo que importa
-es qué te permite construir, y qué te ayuda a evitar
-construir mal**. kaikai apuesta a que con efectos, fibras,
-contratos, unidades y holes en su lugar, el programador
-escribe menos código equivocado y más código que merece
-estar en producción. Si la apuesta funciona para ti, este
-libro cumplió su propósito.
-
-Gracias por leer hasta aquí. El compilador, el stdlib, los
-documentos de diseño y los ejemplos viven en
-`github.com/kaikailang-org/kaikai`. Hay issues que cerrar y
-piezas del lenguaje que todavía toman forma. Si este
-experimento te interesa, hay lugar para que ayudes a
-mejorarlo.

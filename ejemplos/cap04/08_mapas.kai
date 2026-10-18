@@ -1,20 +1,21 @@
 # HashMap y HashSet: las dos estructuras asociativas del
 # stdlib. El HashMap asocia claves a valores; el HashSet
 # guarda un conjunto sin duplicados. A diferencia de records
-# y listas, son mutables: sus operaciones rinden el efecto
-# `Mutable`, así que las funciones que las tocan lo declaran.
+# y listas, son mutables: sus escrituras rinden el efecto
+# `Mutable`, que queda enmascarado cuando la estructura nace y
+# se llena dentro de la misma función.
 
 import collections.hashmap as hashmap
 import collections.hashset as hashset
 
 # Cuenta cuántas veces aparece cada palabra de una lista.
-fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] / Mutable {
+fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] {
   let m = hashmap.empty()
   palabras |! hashmap.put(m, ., m[.].unwrap_or(0) + 1)
   m
 }
 
-fn main() : Unit / Stdout + Mutable {
+fn main() : Unit / Stdout {
   let texto = ["sol", "mar", "sol", "viento", "mar", "sol"]
   let m = frecuencias(texto)
 

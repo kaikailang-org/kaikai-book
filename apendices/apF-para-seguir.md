@@ -37,12 +37,14 @@ ir al original.
   Reference Counting with Reuse"*** (PLDI 2021). El paper que
   inventa el sistema que kaikai usa para liberar memoria. Es
   legible.
-- **Lorenz, Leijen, *"Reference Counting with Frame Limited
-  Reuse"*** (ICFP 2023). Extensión que mejora reuse cuando el
-  shape no calza exactamente.
-- **Lean 4** (`leanprover.github.io`). Sistema de pruebas que
-  usa una variante de Perceus en su runtime. Es más complejo
-  que Koka pero también está bien documentado.
+- **Lorenzen, Leijen, *"Reference Counting with Frame Limited
+  Reuse"*** (ICFP 2022). Reemplaza el reuse de Perceus por uno
+  guiado por los drops, más estable ante cambios pequeños del
+  programa.
+- **Ullrich, de Moura, *"Counting Immutable Beans"*** (IFL
+  2019). El RC del asistente de pruebas Lean 4 y el antecesor
+  directo de Perceus. Es más complejo que Koka pero
+  también está bien documentado.
 
 ## F.3 Modelo de actores y BEAM
 
@@ -84,7 +86,7 @@ ir al original.
   video en infoq.com). Una hora de Rich Hickey distinguiendo
   *simple* de *easy*. Cambia la forma de evaluar APIs y
   lenguajes.
-- **Marlow, Goldsmith et al., *"Out of the Tar Pit"*** (paper
+- **Moseley, Marks, *"Out of the Tar Pit"*** (paper
   2006, accesible online). Diagnóstico de por qué el software
   se vuelve complicado y propuesta de cómo evitarlo. Muy
   influyente en el pensamiento funcional moderno.
@@ -116,7 +118,7 @@ ir al original.
   kaikai, los argumentos sobre por qué los contratos importan
   son los mismos.
 - **John Barnes, *Programming in Ada 2012 with a Preview of
-  Ada 2022*** (Cambridge University Press, 2014). Ada es el
+  Ada 2022*** (Cambridge University Press, 2022). Ada es el
   otro gran exponente de contratos en un lenguaje de uso
   industrial. Para entender cómo se ven en producción.
 

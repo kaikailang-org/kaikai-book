@@ -55,8 +55,8 @@ fn area(s: Shape) : Real =
     Circle(r)         -> 3.14159 * r * r
     Rectangle(w, h)   -> w * h
     Triangle(a, b, c) -> {
-      let s = (a + b + c) / 2.0
-      s
+      let s = (a + b + c) / 2.0          # Heron
+      real_sqrt(s * (s - a) * (s - b) * (s - c))
     }
   }
 ```
@@ -67,6 +67,8 @@ expression that arm produces. The patterns unpack the data at
 the same time: in `Circle(r)`, `r` is the variable bound to
 the `Real` that came inside the constructor. There is no
 separate cast or indexed access; the pattern does the work.
+The triangle arm applies Heron's formula with `real_sqrt`, the
+square root that comes built in, no `import` needed.
 
 Three details you'll use all the time:
 
@@ -157,7 +159,7 @@ positional. If the data forces the reader to remember the
 order, use a record.
 
 Both flavors of constructor in one program: three cases with no
-payload and two that carry data.
+payload and three that carry data.
 
 ```kai
 # examples/ch05/01_basic_sums.kai
@@ -173,8 +175,9 @@ fn area(s: Shape) : Real =
     Circle(r) -> 3.14159 * r * r
     Rectangle(w, h) -> w * h
     Triangle(a, b, c) -> {
+      # Heron's formula, with s as the semi-perimeter.
       let s = (a + b + c) / 2.0
-      s
+      real_sqrt(s * (s - a) * (s - b) * (s - c))
     }
   }
 
@@ -189,8 +192,10 @@ fn main() {
   println("color: #{name(Red)}, #{name(Green)}, #{name(Blue)}")
   let c = Circle(2.0)
   let r = Rectangle(3.0, 4.0)
+  let t = Triangle(3.0, 4.0, 5.0)
   println("circle: area = #{area(c)}")
   println("rectangle: area = #{area(r)}")
+  println("triangle: area = #{area(t)}")
 }
 ```
 
@@ -199,6 +204,7 @@ $ kai run examples/ch05/01_basic_sums.kai
 color: red, green, blue
 circle: area = 12.56636
 rectangle: area = 12
+triangle: area = 6
 ```
 
 ## 5.3 Recursion in types
@@ -710,6 +716,49 @@ wrappers, zero `map_err`, zero `From`. The signature of
 and the compiler ensures every one of them is covered when
 something consumes the result.
 
+### What `!` does internally
+
+`!` is a **return** in disguise. The line
+
+```kai
+let acc = check_identity(req)!
+```
+
+is exactly equivalent to:
+
+```kai
+let acc = match check_identity(req) {
+  Ok(x)  -> x                  # unpack and continue
+  Err(e) -> return Err(e)      # exit query_balance with that error
+}
+```
+
+For `Option[A]` the desugar is analogous: `Some(x)` unpacks,
+`None` triggers `return None`.
+
+Three things to pin down:
+
+- **It's not a `panic` or an exception.** The program does
+  not abort; the current function ends normally returning the
+  `Err` or `None` to its caller. Control flows out **one level
+  only**, no further.
+- **It only works if the current function returns a
+  compatible type.** If your function returns `Int`, you
+  can't use `!` on a `Result` inside — the `return Err(e)`
+  has nowhere to land. The compiler tells you so clearly.
+- **The upcast happens at the `return`.** When
+  `check_identity(req)` returns `Result[_, IdentityError]`
+  but `query_balance` declares `Result[_, QueryError]`, the
+  `return Err(e)` applies the upcast `IdentityError <:
+  QueryError` on the way out. That's why `!` and union
+  errors compose so well: each level of the cascade absorbs
+  the error of the layer below without writing conversions.
+
+If you come from Rust, this is exactly the `?` operator. If
+you come from Swift, it's what `try` with `throws` does. If
+you come from Haskell, it's the `do`-notation over `Either`
+collapsed into a single symbol.
+
 Compare it with the typical imperative version:
 
 ```python
@@ -750,7 +799,7 @@ type Expr
   | Sqrt(Expr)
 ```
 
-Six constructors, two of them recursive. `Var(String)`
+Six constructors, four of them recursive. `Var(String)`
 introduces something new compared to the chapter 1
 evaluator: expressions can now reference variables, so the
 evaluator needs an **environment** that associates names with
@@ -764,7 +813,7 @@ type EnvError   = Undefined(String)
 type EvalError  = ArithError | EnvError
 ```
 
-Three types: two categories and the union. Four constructors in
+Three types: two categories and the union. Three constructors in
 total, distributed over categories that make sense on their own.
 `NegativeSqrt(Real)` carries the value that was passed to sqrt,
 useful for the final error message. `Undefined(String)` carries
@@ -826,7 +875,7 @@ fn eval(env: Env, e: Expr) : Result[Real, EvalError] =
     }
     Sqrt(x) -> {
       let v = eval(env, x)!
-      if v < 0.0 { Err(NegativeSqrt(v)) } else { Ok(sqrt(v)) }
+      if v < 0.0 { Err(NegativeSqrt(v)) } else { Ok(real_sqrt(v)) }
     }
   }
 ```
@@ -841,49 +890,6 @@ The `!` appears several times; read it carefully.
 `eval(env, a)!` means: if `eval(env, a)` returns
 `Ok(v)`, bind `va` to `v`; if it returns `Err(e)`, **exit
 immediately** from the current function returning that `Err`.
-
-### What `!` does internally
-
-`!` is a **return** in disguise. The line
-
-```kai
-let acc = check_identity(req)!
-```
-
-is exactly equivalent to:
-
-```kai
-let acc = match check_identity(req) {
-  Ok(x)  -> x                  # unpack and continue
-  Err(e) -> return Err(e)      # exit query_balance with that error
-}
-```
-
-For `Option[A]` the desugar is analogous: `Some(x)` unpacks,
-`None` triggers `return None`.
-
-Three things to pin down:
-
-- **It's not a `panic` or an exception.** The program does
-  not abort; the current function ends normally returning the
-  `Err` or `None` to its caller. Control flows out **one level
-  only**, no further.
-- **It only works if the current function returns a
-  compatible type.** If your function returns `Int`, you
-  can't use `!` on a `Result` inside — the `return Err(e)`
-  has nowhere to land. The compiler tells you so clearly.
-- **The upcast happens at the `return`.** When
-  `check_identity(req)` returns `Result[_, IdentityError]`
-  but `query_balance` declares `Result[_, QueryError]`, the
-  `return Err(e)` applies the upcast `IdentityError <:
-  QueryError` on the way out. That's why `!` and union
-  errors compose so well: each level of the cascade absorbs
-  the error of the layer below without writing conversions.
-
-If you come from Rust, this is exactly the `?` operator. If
-you come from Swift, it's what `try` with `throws` does. If
-you come from Haskell, it's the `do`-notation over `Either`
-collapsed into a single symbol.
 
 ### Printing the result
 
@@ -914,11 +920,11 @@ expressions, and prints them:
 fn main() {
   let env: Env = [("x", 9.0), ("y", 4.0)]
 
-  print_result(eval(env, Add(Var("x"), Var("y"))))    # ok: 13
-  print_result(eval(env, Sqrt(Var("x"))))             # ok: 3
-  print_result(eval(env, Div(Lit(10.0), Lit(0.0))))   # division by zero
-  print_result(eval(env, Sqrt(Lit(-1.0))))       # negative sqrt
-  print_result(eval(env, Var("z")))                    # undefined variable
+  print_result(eval(env, Add(Var("x"), Var("y"))))  # ok: 13
+  print_result(eval(env, Sqrt(Var("x"))))            # ok: 3
+  print_result(eval(env, Div(Lit(10.0), Lit(0.0))))  # error: division by zero
+  print_result(eval(env, Sqrt(Lit(-1.0))))           # error: sqrt of negative (-1)
+  print_result(eval(env, Var("z")))                  # error: undefined variable: z
 }
 ```
 

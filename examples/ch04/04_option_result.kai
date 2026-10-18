@@ -9,7 +9,7 @@ fn first_even(xs: [Int]) : Option[Int] =
   }
 
 fn parse_age(s: String) : Result[Int, AgeError] =
-  match string_to_int(s) {
+  match string.to_int(s) {
     None -> Err(NotNumeric)
     Some(n) ->
       if n < 0 or n > 130 {

@@ -87,7 +87,7 @@ cuando no. Cap. 11.
 
 **Default handler** *(handler por defecto)*. El handler que
 el runtime instala automáticamente alrededor de `main` para
-ciertos efectos (`Console`, `File`, `Spawn`, etc.). Los
+ciertos efectos (`Stdout`, `File`, `Spawn`, etc.). Los
 handlers del usuario instalados con `handle ... with X` se
 imponen sobre el handler por defecto mientras están en scope.
 
@@ -124,7 +124,10 @@ literal (`42i32`, `42u64`). Son distintos de `Int`: no se
 mezclan sin conversión explícita, y su aritmética envuelve en
 complemento a dos en el ancho del tipo. En una firma
 `extern "C"` cruzan con el ancho exacto que declaran. Cap. 3
-§3.4.
+§3.4. Otra familia, `U8`, `U16`, `U32`, `U64`, `I8`, `I16`,
+`I32` e `I64`, solo anota un ancho: del lado de kaikai el valor
+es un `Int` común, y el ancho cuenta en la frontera con C y en
+los campos de `Layout` (`U32<be>`, cap. 19 §19.8).
 
 **Fiber** *(fibra)*. Unidad de ejecución cooperativa. En
 kaikai una fibra es liviana (cientos de bytes), tiene su
@@ -329,10 +332,12 @@ en el que se empieza por la firma de las funciones de nivel
 superior, dejando holes en los cuerpos, y se completan las
 piezas internas después. Cap. 15.
 
-**Trap exit.** Capacidad de un actor de **no** propagarse
-automáticamente cuando una fibra hermana cae. Se activa con
-`fiber_set_trap_exit(true)`; el actor recibe un mensaje
-informativo en vez de un `Cancel.raise()`. Cap. 14.
+**Trap exit.** Capacidad de un actor de **no** caer junto a
+un peer ligado cuando este termina. Se activa con
+`spawn.set_trap_exit(true)`, que invoca la operación
+`set_trap_exit` del efecto `Spawn`; el actor recibe en su
+mailbox un mensaje (como `"Normal"` o `"Crashed"`) en vez de un
+`Cancel.raise()`. Cap. 14.
 
 ## U
 

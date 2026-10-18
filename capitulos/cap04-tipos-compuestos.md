@@ -157,7 +157,7 @@ fn main() {
   println("#{caja.saldo_de(c)}")  # OK, paso por el getter
 
   # Las dos líneas siguientes no compilan:
-  # println("#{c.saldo}")             # ← field `saldo` is private to module `caja`
+  # println("#{c.saldo}")             # ← field `saldo` of `Cuenta` is private to module `caja`
   # let d = caja.Cuenta {              # ← cannot construct `Cuenta` from outside …
   #   nombre: "x",
   #   saldo: 1000.0,
@@ -177,8 +177,10 @@ cap. 17 para esconder el estado del actor del almacén, y en
 el cap. 18 para que los saldos del libro mayor no se
 construyan por fuera del módulo de dominio.
 
-El tipo con un campo privado, su constructor y la línea que el
-compilador no deja pasar:
+El tipo con un campo privado y sus operaciones, en un solo
+archivo. Dentro del módulo que lo declara, `priv` no restringe
+nada: las líneas rechazadas de arriba fallan solo desde otro
+módulo, y el cap. 8 las muestra con dos archivos.
 
 ```kai
 # ejemplos/cap04/06_priv.kai
@@ -594,16 +596,20 @@ cruzarlas por descuido: pasarle a
 octeto no es un carácter y el compilador lo sabe.
 
 ```kai
+# ejemplos/cap04/07_strings.kai
 import core.string
 import core.list
 
 fn main() {
   let s = "café"
-  println("bytes:      #{string.length(s)}")              # 5
-  println("codepoints: #{string.char_count(s)}")          # 4
+  println("bytes:      #{string.length(s)}")  # 5
+  println("codepoints: #{string.char_count(s)}")  # 4
   println("chars:      #{list.length(string.chars(s))}")  # 4
   println("bytes list: #{list.length(string.bytes(s))}")  # 5
   println("de vuelta:  #{string.from_bytes(string.bytes(s))}")
+  println("slice(2,2):      #{string.slice(s, 2, 2)}")
+  println("byte_slice(2,3): #{string.byte_slice(s, 2, 3)}")
+  println("byte_slice(2,2): #{string.byte_slice(s, 2, 2)}")
 }
 ```
 
@@ -628,10 +634,10 @@ byte_slice(s: String, desde: Int, largo: Int) : Option[String]
 ```
 
 `slice` cuenta **codepoints**. Sacar `"fé"` de `"café"` es pedir dos
-caracteres a partir del segundo: `slice(s, 2, 2)`. Si te pasas del
-largo recorta en vez de fallar (`slice(s, 1, 9)` devuelve `"afé"`)
-y nunca te puede entregar un string roto, porque no sabe cortar por
-la mitad de un carácter.
+caracteres desde el índice 2, contando desde cero:
+`slice(s, 2, 2)`. Si te pasas del largo recorta en vez de fallar
+(`slice(s, 1, 9)` devuelve `"afé"`) y nunca te puede entregar un
+string roto, porque no sabe cortar por la mitad de un carácter.
 
 `byte_slice` cuenta **bytes**, que es lo que necesitas cuando los
 offsets vienen de otra parte: de un `index_of`, de un parser, de un
@@ -786,8 +792,7 @@ type Result[a, e] = Ok(a) | Err(e)
 
 Ahora los pones a trabajar. Son tipos suma genéricos del
 stdlib que vas a usar **constantemente**. `Option` dice "puede
-no haber valor"; `Result`, "puede no haber valor o haber un
-error".
+no haber valor"; `Result`, "hay un valor o hay un error".
 
 Una función que busca el primer elemento par de una lista:
 
@@ -817,7 +822,7 @@ dos formas distintas, y eso es exactamente para lo que sirve
 type ErrorEdad = NoNumerica | FueraDeRango
 
 fn parsear_edad(s: String) : Result[Int, ErrorEdad] =
-  match string_to_int(s) {
+  match string.to_int(s) {
     None -> Err(NoNumerica)
     Some(n) ->
       if n < 0 or n > 130 { Err(FueraDeRango) }
@@ -862,7 +867,7 @@ fn primer_par(xs: [Int]) : Option[Int] =
   }
 
 fn parsear_edad(s: String) : Result[Int, ErrorEdad] =
-  match string_to_int(s) {
+  match string.to_int(s) {
     None -> Err(NoNumerica)
     Some(n) ->
       if n < 0 or n > 130 {
@@ -1002,14 +1007,19 @@ record nuevo en cada inserción no sirve. Para eso el stdlib
 trae dos estructuras **mutables**: `HashMap[k, v]`, que asocia
 claves a valores, y `HashSet[a]`, un conjunto sin duplicados.
 
-Que sean mutables se nota en la fila de efectos: sus
-operaciones rinden `Mutable`. Si vienes de Python o Java, un
-diccionario que cambia en el lugar te suena obvio; lo nuevo
-aquí es que el lenguaje lo dice en el tipo. Una función que
-toca un `HashMap` lleva `/ Mutable` en su firma, y el
-compilador te obliga a declararlo, con la misma honestidad con
-que kaikai trata el resto de los efectos: la inmutabilidad
-sigue siendo la regla y la mutación queda marcada donde ocurre.
+Que sean mutables se nota en la fila de efectos: las
+operaciones que escriben (`put`, `add`, `remove`) rinden
+`Mutable`. Si vienes de Python o Java, un diccionario que
+cambia en el lugar te suena obvio; lo nuevo aquí es que el
+lenguaje lo dice en el tipo cuando alguien de afuera puede
+notarlo. La regla es la del `StringBuilder` de §4.4: si la
+función crea la tabla y la llena ella misma, nadie más ve la
+mutación y kaikai enmascara el efecto en el borde, aunque la
+función devuelva la tabla ya llena. Una función que modifica
+una tabla que recibió como parámetro sí lleva `/ Mutable` en
+su firma, y el compilador te obliga a declararlo: la
+inmutabilidad sigue siendo la regla y la mutación visible
+queda marcada donde ocurre.
 
 El acceso por clave usa la indexación `m[clave]`, que devuelve
 un `Option` (`Some(v)` si la clave está, `None` si no), así
@@ -1018,12 +1028,16 @@ que la ausencia nunca te explota en la cara:
 ```kai
 import collections.hashmap as hashmap
 
-let actual = match m[p] {
-  Some(n) -> n
-  None    -> 0
+fn contar(m: hashmap.HashMap[String, Int], p: String) : Unit / Mutable {
+  let actual = match m[p] {
+    Some(n) -> n
+    None    -> 0
+  }
+  hashmap.put(m, p, actual + 1)
 }
-hashmap.put(m, p, actual + 1)
 ```
+
+`contar` escribe en una tabla ajena, así que declara `Mutable`.
 
 El `match` sobre el `Option` tiene atajo: `m[p].unwrap_or(0)`
 hace lo mismo en una expresión, y es lo que usa el ejemplo.
@@ -1036,13 +1050,13 @@ una lista, primero con un `HashMap`, y de paso usar un
 import collections.hashmap as hashmap
 import collections.hashset as hashset
 
-fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] / Mutable {
+fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] {
   let m = hashmap.empty()
   palabras |! hashmap.put(m, ., m[.].unwrap_or(0) + 1)
   m
 }
 
-fn main() : Unit / Stdout + Mutable {
+fn main() : Unit / Stdout {
   let texto = ["sol", "mar", "sol", "viento", "mar", "sol"]
   let m = frecuencias(texto)
   match m["sol"] {
@@ -1064,6 +1078,10 @@ sol aparece 3 veces
 palabras distintas: 3
 únicas vía set: 3
 ```
+
+Ni `frecuencias` ni `main` declaran `Mutable`: cada estructura
+nace dentro de la función que la llena, y quien llama solo
+recibe el resultado.
 
 `hashmap.put` inserta o reemplaza en el lugar; `hashmap.get`
 es la forma con nombre de `m[clave]`; `size`, `keys`,

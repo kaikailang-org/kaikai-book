@@ -357,9 +357,9 @@ deja de ofrecerte ayuda que sí tenía.
 Un detalle: el mensaje de `todo!` es un literal de string sin
 interpolación. `todo!("falta #{n}")` no compila.
 
-## 15.5 Holes en patrones: el match incompleto
+## 15.5 Holes en un match: el brazo pendiente
 
-Un hole en posición de patrón funciona también:
+Un hole puede ser el cuerpo de un brazo de `match`:
 
 ```kai
 type Forma
@@ -382,10 +382,10 @@ exhaustividad (cap. 5 §5.4), da el `match` por completo y
 reporta el hole con `Real` como tipo esperado y `b`, `h` en
 alcance.
 
-Si todavía no decidiste si quieres `Triangulo` en el tipo, lo
-borras y el compilador te avisa que ahora `match` no es
-exhaustivo. Los holes son ortogonales a la verificación de
-patrones; cada uno hace su trabajo.
+Si en vez de dejar el brazo con un hole lo borras, el
+compilador te avisa que el `match` ya no es exhaustivo y te
+nombra la variante que falta. Los holes son ortogonales a la
+verificación de patrones; cada uno hace su trabajo.
 
 El `match` con un brazo pendiente: los dos casos resueltos
 corren, y las advertencias señalan los bindings que el hole
@@ -453,18 +453,21 @@ La pieza clave es la **salida estructurada**: el compilador
 emite JSON que el agente lee directamente, sin parseo
 heurístico. Tres canales son relevantes:
 
-1. **`kai build --holes-json`**: el reporte de holes en
+1. **`kai typecheck --holes-json`**: el reporte de holes en
    formato JSON.
-2. **`kai type --json`**: el tipo de cualquier expresión.
-3. **Diagnósticos del compilador en JSON**: errores de tipo,
-   matches no exhaustivos, efectos no manejados.
+2. **`kai typecheck --library-mode`**: el tipo de la expresión
+   en una línea y columna, entre otras consultas.
+3. **`kai typecheck --diags-json`**: los diagnósticos del
+   compilador (errores de tipo, matches no exhaustivos,
+   efectos no manejados) en JSON.
 
 En el cap. 5 §5.4 viste cómo se ve un mensaje de match no
-exhaustivo en formato humano. La versión JSON contiene los
-mismos campos como datos: tipo del escrutinio, lista de
-variantes faltantes, lista de variantes cubiertas, sugerencia.
-Un agente puede parsearlo y producir el código que cubre la
-variante faltante sin necesidad de leer texto natural.
+exhaustivo en formato humano. La versión JSON trae el mismo
+diagnóstico como datos: severidad, archivo, línea, columna y
+mensaje, y en la lista `related` cada nota (la variante que
+falta, las cubiertas, la sugerencia) con su propia ubicación.
+Un agente lo recorre sin heurísticas de parseo y sabe dónde
+agregar el brazo que falta.
 
 ## 15.7 La salida JSON de los holes
 
@@ -483,7 +486,7 @@ sin el formateo:
     "in_scope": [
       {"name": "r", "type": "Real"}
     ],
-    "scope_elided": 561,
+    "scope_elided": 563,
     "candidates": [
       {"expr": "r", "kind": "synth"},
       {"expr": "real_sqrt(r)", "kind": "synth"},
@@ -520,18 +523,18 @@ Los holes son la primera pieza del patrón general. Otras
 herramientas del compilador siguen el mismo principio: emitir
 información estructurada que un agente puede consumir.
 
-- **`kai type <expr>`** devuelve el tipo de una expresión en
-  el contexto de un archivo. Con `--json`, el resultado es un
-  objeto con campos `type`, `effects` (la fila), y `notes`
-  (referencias a la definición).
-- **`kai check`** corre las propiedades y tests del archivo y
-  reporta resultados. Con `--json`, cada test/check/bench es
-  un objeto con `name`, `status`, `duration_ms`, y un campo
-  `counterexample` para los `check` que fallaron (con el valor
-  exacto que rompió la propiedad).
-- **Diagnósticos del compilador** (errores y warnings) tienen
-  forma `--json`: tipo del error, ubicación, span, mensaje
-  humano, mensaje estructurado, lista de sugerencias.
+- **`kai typecheck --library-mode`** responde consultas que
+  el archivo trae en comentarios `# @probe <tipo> L:C`. Con
+  `# @probe type 4:14`, devuelve un objeto JSON con el campo
+  `type` de la expresión en esa posición; `def` dice dónde
+  está declarado un nombre, y `sig` la firma de la llamada
+  que lo encierra.
+- **`kai test --json`** corre los tests y emite una línea JSON
+  por test, con `id`, `file`, `line`, `status` y
+  `duration_ms`, más un `message` cuando falla, y al final una
+  línea `summary` con los totales.
+- **`kai typecheck --effects-json`** entrega, por función, la
+  fila de efectos inferida y los handlers que instala.
 
 La regla común: el agente nunca tiene que parsear texto. La
 información llega ya estructurada.
@@ -550,11 +553,12 @@ razonable es este:
    reporte es el mismo, pero cada consulta cuesta solo el
    front-end (cap. 16 §16.1), y en un loop esa diferencia se
    multiplica.
-3. **El humano corre `kai check`.** Si los tests pasan, sigue
-   adelante. Si no, el contraejemplo le dice al agente qué
+3. **El agente corre `kai test`**, y `kai check` si hay
+   propiedades. Si todo pasa, sigue adelante. Si no, el test
+   que falla o el contraejemplo de la propiedad le dice qué
    está mal.
-4. **El agente itera.** Lee el contraejemplo, ajusta, propone
-   otra implementación.
+4. **El agente itera.** Lee el fallo, ajusta, propone otra
+   implementación.
 
 De este flujo, tres cosas:
 
@@ -591,9 +595,9 @@ ningún `--holes-json` va a entregarte:
   expone cada función, cuándo extraer una abstracción: eso es
   diseño, y el diseño es humano.
 
-Hay una idea recurrente en el blog del autor sobre esto: las
+Hay una idea recurrente en mi blog sobre esto: las
 herramientas no reemplazan el juicio, lo apalancan cuando
-están bien diseñadas. El compilador con holes y agentes lee
+están bien diseñadas. El compilador con holes y agentes lleva
 una parte mecánica del trabajo (los detalles que satisfacen
 las restricciones de tipo). La otra parte (qué construir, qué
 abstraer, qué priorizar) sigue siendo del programador.
@@ -621,7 +625,7 @@ test "filtra y ordena" {
 }
 ```
 
-El humano corre `kai build --holes-json`. El agente recibe:
+El agente corre `kai typecheck --holes-json` y recibe:
 
 ```json
 [
@@ -635,7 +639,7 @@ El humano corre `kai build --holes-json`. El agente recibe:
     "in_scope": [
       {"name": "notas", "type": "[Pair[String, Int]]"}
     ],
-    "scope_elided": 560,
+    "scope_elided": 562,
     "candidates": [],
     "candidates_needing_effects": [
       {"expr": "Env.args()", "kind": "synth", "effects": ["Env"]},
@@ -658,16 +662,15 @@ agente tiene que proponer algo sustantivo. Una primera propuesta:
 ```kai
 fn aprobados(notas: [(String, Int)]) : [String] =
   notas
-    |? . .1 >= 4
-    | . .0
+    |? (.snd >= 4)
+    | .fst
     |> list.sort
 ```
 
-El agente corre `kai check`. El primer test pasa. El segundo
-falla: el orden es `["Berta", "Carmen"]` y devuelve eso, pero
-también necesita probar que filtra. Visto a la inversa: el
-test asume orden lexicográfico ascendente; `list.sort` sobre
-`[String]` debería hacer eso. Si pasa, el agente termina.
+El agente corre `kai test`. Los dos tests pasan: el filtro deja
+a Carmen y Berta (notas 5 y 6) y descarta a Ana (nota 3), y
+`list.sort` sobre `[String]` las deja en orden lexicográfico
+ascendente. Con los dos tests en verde, el agente termina.
 
 El humano nunca tocó el cuerpo. El compilador validó tipos y
 tests. El agente iteró si hizo falta.

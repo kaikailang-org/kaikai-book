@@ -106,16 +106,16 @@ Dos detalles:
 `kai run` y `kai build` están diseñados para sentirse
 inmediatos: un programa de unos cientos de líneas compila en
 menos de un segundo en una máquina razonable. No es accidental.
-El compilador es self-hosted (kaikai compilado en kaikai),
-evita pases costosos como inferencia global de tipos sin
-necesidad, y baja a LLVM en el mismo proceso, sin escribir
-archivos intermedios ni lanzar un linker externo en el camino
-común. Para programas grandes hay un cache (cap. 8 §8.8 cubre
-el cache de paquetes; el cache de compilación del propio
-archivo `.kai` es otra historia).
+El compilador es self-hosted (kaikai compilado en kaikai) y
+baja a LLVM en el mismo proceso: arma el módulo con la API de
+LLVM y emite el objeto nativo directamente, sin texto `.ll`
+intermedio ni un `clang` aparte. Solo el enlace final contra
+el runtime pasa por `cc`. Para programas grandes hay un cache
+(cap. 8 §8.8 cubre el cache de paquetes; el cache de
+compilación del propio archivo `.kai` es otra historia).
 
 Ese "menos de un segundo" es el estado estacionario, el que vas
-a vivir: el caso de estudio del cap. 17, 420 líneas en cinco
+a vivir: el caso de estudio del cap. 17, unas 440 líneas en cinco
 módulos, compila en unos 0,6 segundos. Con el cache frío cuesta
 varias veces eso; en mi máquina, 4,1 segundos para ese mismo
 proyecto. Tenlo presente antes de cronometrar una compilación
@@ -645,6 +645,8 @@ $ kai doc date
   to_string              `YYYY-MM-DD`, zero-padded (year to 4 digits, month/day to 2).
   today                  Today's civil date in UTC.
   ...
+
+Run 'kai doc date.<symbol>' for a symbol's signature and full doc.
 ```
 
 Y con `módulo.símbolo`, la firma y el doc completo de un
@@ -989,6 +991,25 @@ el struct devuelto en un record fresco. La clasificación del
 ABI (struct chico en registros vs memoria, según SysV o
 AAPCS) la decide el compilador C, no kaikai.
 
+Del lado C, el shim incluye el `kai_ffi.h` que kaikai genera
+junto al build, con un `typedef` por cada `extern "C" type`, y
+nombra esos mismos tipos. Así hay una sola definición de cada
+struct, y un layout que no calza es un error de compilación de
+C, no un borde corrupto en silencio:
+
+```c
+#include "kai_ffi.h"        /* trae Color, Vector2 */
+
+Vector2 vec_add(Vector2 a, Vector2 b) {
+    Vector2 r = { a.x + b.x, a.y + b.y };
+    return r;
+}
+```
+
+El ejemplo canónico vive en
+`examples/ffi/v2_struct_by_value.kai` del repositorio del
+lenguaje; `kai info ffi` trae la referencia.
+
 El struct-by-value funciona en **ambos backends**. En el
 nativo, el emitter clasifica el struct según la ABI de C
 (registros vs memoria) directamente; en el backend C esa
@@ -1188,7 +1209,7 @@ Al cierre de este libro, kaikai conoce tres:
 |---|---|---|
 | `tongariki` | cerrada | Fase de iteración rápida pre-2026. Solo paquetes que aún no migraron. |
 | `hanga-roa` | activa (default) | La primera edición pública. El libro está escrito contra esta. |
-| `orongo` | futura | La edición de estabilización. Todavía no tiene número de versión asignado: `hanga-roa` ya cruzó la serie 0.100.x sin cambiar de edición, que es justo la demostración de que el compromiso vive en la edición y no en un número. El rótulo "1.0" está postergado indefinidamente. |
+| `orongo` | futura | La edición de estabilización. Todavía no tiene número de versión asignado: una edición abarca muchas versiones del compilador, porque el compromiso vive en la edición y no en un número. El rótulo "1.0" está postergado indefinidamente. |
 
 Los nombres siguen la cantera rapanui del resto del
 ecosistema: lugares de Rapa Nui en orden cronológico.
@@ -1214,8 +1235,8 @@ El tooling se resume en tres ideas:
    corriendo.
 
 2. **Una forma correcta para cada cosa.** Un formateador
-   canónico sin opciones. Un gestor de paquetes con MVS sin
-   resolución compleja. Un sistema de tests integrado con el
+   canónico sin opciones de estilo. Un gestor de paquetes con
+   MVS sin resolución compleja. Un sistema de tests integrado con el
    lenguaje. La filosofía es la de Go: minimizar las
    decisiones sobre cómo usar las herramientas, para que tu
    tiempo vaya a decidir qué construir.

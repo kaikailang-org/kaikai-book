@@ -22,7 +22,7 @@ how it's wired: effects in the signatures, actors to
 encapsulate state, fibers for concurrent connections, modules
 to separate domain, HTTP parser, storage, persistence.
 
-It runs to about 250 lines, across five files.
+It runs to about 430 lines, across five files.
 
 ## 17.1 The shape of the program
 
@@ -438,9 +438,11 @@ waits.
 In a server, a dedicated fiber waits on the signal and cancels
 the listener when it fires. The
 cancellation descends through the nursery, each connection
-fiber runs its `Cancel` handler, and the store's `finally`
-gets to write to disk. It is chapter 13's mechanism, with the
-operating system's signal as the trigger.
+fiber runs its `Cancel` handler at its next yield point. The
+log doesn't depend on that shutdown: the persistence actor
+appends each event to the file as soon as it arrives. It is
+chapter 13's mechanism, with the operating system's signal as
+the trigger.
 
 And per connection, the handler:
 
@@ -512,7 +514,7 @@ You can take this program further in several directions:
 - **TTL per note.** Each note has an expiration. The
   store, on each `Get`, checks whether the note expired
   and removes it if so. A `created_at` field joins
-  `Note`; the `Time` effect appears in `loop`'s row.
+  `Note`; the `Clock` effect appears in `store_loop`'s row.
 - **Multiple instances.** Today there's one store. For a
   bigger service, partition notes across several actors by
   id hash. `main` starts N stores and routes each request
@@ -542,13 +544,13 @@ What you just put together follows a clear pattern:
   the note list; the persister holds the log file. Mutation
   stays locked inside each actor, invisible to the rest of
   the program.
-- **Fibers handle concurrent work cooperatively.** One
-  fiber per connection. The nursery guarantees that none
-  survives the server.
+- **Fibers handle concurrent work.** One fiber per
+  connection, spread by the scheduler across OS threads. The
+  nursery guarantees that none survives the server.
 - **Modules separate responsibilities.** Five files, each
   owning one topic, so each can be swapped without touching the
-  other three.
+  other four.
 
 In chapter 18 you apply the same pattern to a very different
 domain, financial accounting, and the structure holds even
-though the problem changes. The book's closing comes there.
+though the problem changes.

@@ -36,23 +36,6 @@ fn lookup(env: Env, nombre: String) : Result[Real, ErrorEval] {
   case [_, ...resto], n -> lookup(resto, n)
 }
 
-# Aproximación entera de raíz cuadrada (para no depender de
-# math.sqrt). Solo para Reales >= 0.
-# El caso negativo lo protege el caller con `requires`.
-fn raiz(x: Real) : Real =
-  if x < 0.0 {
-    0.0
-  } else {
-    raiz_loop(x, x / 2.0 + 1.0, 20)
-  }
-
-fn raiz_loop(x: Real, guess: Real, fuel: Int) : Real =
-  if fuel <= 0 {
-    guess
-  } else {
-    raiz_loop(x, (guess + x / guess) / 2.0, fuel - 1)
-  }
-
 fn eval(env: Env, e: Expr) : Result[Real, ErrorEval] =
   match e {
     Lit(n) -> Ok(n)
@@ -74,7 +57,7 @@ fn eval(env: Env, e: Expr) : Result[Real, ErrorEval] =
     }
     Raiz(x) -> {
       let v = eval(env, x)!
-      if v < 0.0 { Err(RaizNegativa(v)) } else { Ok(raiz(v)) }
+      if v < 0.0 { Err(RaizNegativa(v)) } else { Ok(real_sqrt(v)) }
     }
   }
 

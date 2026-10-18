@@ -24,7 +24,7 @@ las firmas, actores para encapsular estado, fibras para servir
 conexiones concurrentes, módulos para separar dominio, parser
 HTTP, almacenamiento, persistencia.
 
-Son unas 250 líneas, repartidas en cinco archivos.
+Son unas 440 líneas, repartidas en cinco archivos.
 
 ## 17.1 La forma del programa
 
@@ -439,10 +439,11 @@ fibra espera.
 
 En un servidor, una fibra dedicada espera la señal y, al
 recibirla, cancela el listener. La cancelación
-desciende por el nursery, cada fibra de conexión corre su
-handler de `Cancel`, y el `finally` del almacén alcanza a
-escribir a disco. Es el mismo mecanismo del cap. 13, con la
-señal del sistema operativo como disparador.
+desciende por el nursery y cada fibra de conexión corre su
+handler de `Cancel` en su próximo punto de yield. El log no
+depende de ese cierre: el actor de persistencia anexa cada
+evento al archivo apenas lo recibe. Es el mismo mecanismo del
+cap. 13, con la señal del sistema operativo como disparador.
 
 Y por cada conexión, el handler:
 
@@ -514,7 +515,7 @@ profundizar lo que aprendiste:
 - **TTL por nota.** Cada nota tiene una expiración. El
   almacén, en cada `Obtener`, verifica si la nota expiró y la
   borra si sí. El campo `created_at` se agrega a `Nota`; el
-  efecto `Time` aparece en la fila del `bucle`.
+  efecto `Clock` aparece en la fila de `almacen_loop`.
 - **Múltiples instancias.** Hoy hay un solo almacén. Para un
   servicio más grande, particionar las notas en varios actores
   por hash del id. El `main` arranca N almacenes y enruta cada
@@ -543,14 +544,14 @@ Lo que armaste sigue un patrón claro:
   mantiene la lista de notas; el persistor mantiene el archivo
   de log. La mutación queda encerrada dentro de cada actor,
   invisible para el resto del programa.
-- **Las fibras paralelizan el trabajo concurrente
-  (cooperativamente).** Una fibra por conexión. El nursery
-  garantiza que ninguna sobreviva al servidor.
+- **Las fibras atienden el trabajo concurrente.** Una fibra
+  por conexión, y el scheduler las reparte entre los hilos
+  del sistema. El nursery garantiza que ninguna sobreviva al
+  servidor.
 - **Los módulos separan responsabilidades.** Cinco archivos
   para cinco temas, y cualquiera se puede reemplazar sin tocar
-  los otros tres.
+  los otros cuatro.
 
 En el cap. 18 aplicas el mismo patrón a un dominio muy
 distinto, la contabilidad financiera, y la estructura se
-mantiene aunque el problema cambie. El cierre del libro viene
-allá.
+mantiene aunque el problema cambie.

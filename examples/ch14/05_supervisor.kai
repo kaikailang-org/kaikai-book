@@ -1,10 +1,9 @@
 # Case study: a supervisor that starts a worker, lets it
 # process some tasks, and retries the batch if a task fails.
 #
-# The pattern is what the language docs recommend for v1:
-# instead of Link/Monitor (still experimental), the worker
-# explicitly notifies its supervisor via a Done or Failed
-# message. The supervisor decides whether to retry.
+# No Link or Monitor: the worker explicitly notifies its
+# supervisor via a Done or Failed message, and the supervisor
+# decides whether to retry.
 #
 # Each task is a division: the worker divides the first
 # number by the second. If the divisor is zero, the task
@@ -29,7 +28,7 @@ fn process(tasks: [(Int, Int)], acc: Int) : BatchResult {
 
 # The worker computes the batch result and sends it to the
 # supervisor.
-fn worker(supervisor: Pid[BatchResult], tasks: [(Int, Int)]) : Unit / Actor[BatchResult] + Console {
+fn worker(supervisor: Pid[BatchResult], tasks: [(Int, Int)]) : Unit / Actor[BatchResult] + Stdout {
   let r = process(tasks, 0)
   Stdout.print("worker: batch ended as #{r}")
   Actor.send(supervisor, r)
@@ -40,7 +39,7 @@ fn worker(supervisor: Pid[BatchResult], tasks: [(Int, Int)]) : Unit / Actor[Batc
 fn attempt(
   me: Pid[BatchResult],
   batch: [(Int, Int)]
-) : BatchResult / Console + Spawn + Cancel + Actor[BatchResult] {
+) : BatchResult / Stdout + Spawn + Cancel + Actor[BatchResult] {
   let _ = spawn_actor(() => worker(me, batch))
   Actor.receive()
 }
@@ -51,7 +50,7 @@ fn attempt(
 # The inner `with_mailbox` closes `Actor[BatchResult]`, so
 # `supervisor`'s signature no longer carries it — only `attempt`,
 # which runs inside the block, declares the effect.
-fn supervisor() : Unit / Console + Spawn + Cancel {
+fn supervisor() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
     let me = Actor.self()
     let first_batch = [(10, 2), (20, 4), (30, 0)]  # will fail
@@ -69,6 +68,6 @@ fn supervisor() : Unit / Console + Spawn + Cancel {
   }
 }
 
-fn main() : Unit / Console + Spawn + Cancel {
+fn main() : Unit / Stdout + Spawn + Cancel {
   supervisor()
 }

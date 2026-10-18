@@ -23,7 +23,7 @@ fn child_crash(parent: Pid[String]) : Unit / Actor[String] + Link + Cancel {
   # Cancel.raise() unwinds the body -> "Crashed".
 }
 
-fn supervise() : Unit / Actor[String] + Spawn + Console + Link + Cancel {
+fn supervise() : Unit / Actor[String] + Spawn + Stdout + Link + Cancel {
   spawn.set_trap_exit(true)
   let me = Actor.self()
 
@@ -34,7 +34,7 @@ fn supervise() : Unit / Actor[String] + Spawn + Console + Link + Cancel {
   Stdout.print("a child died: " ++ Actor.receive())
 }
 
-fn main() : Int / Spawn + Console + Cancel + Link {
+fn main() : Int / Spawn + Stdout + Cancel + Link {
   with_mailbox { supervise() }
   0
 }

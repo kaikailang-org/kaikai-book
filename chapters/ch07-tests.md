@@ -126,10 +126,10 @@ An effect of **your own** is where you trip. The runner's entry
 has no handler for it, so calling it bare doesn't compile:
 
 ```
-error: effect not handled: Clock
-  --> x.kai:6:21
+error: effect not handled: Ticker
+  --> x.kai:6:20
     |
-  6 |   assert Clock.now() == 1234
+  6 |   assert Ticker.now() == 1234
     |                    ^
   = note: enclosing row: (empty)
 ```
@@ -137,12 +137,12 @@ error: effect not handled: Clock
 That last note is the clue: the row surrounding the test is
 empty, and there's nowhere to declare one. The way out is to
 install the handler inside the body — which is usually what you
-wanted anyway, since now the test decides what the clock returns
-instead of depending on the real one:
+wanted anyway, since now the test decides what `Ticker.now()`
+returns instead of depending on a real clock:
 
 ```kai
 test "a user-declared effect is handled inside the body" {
-  let t = handle { Clock.now() } with Clock {
+  let t = handle { Ticker.now() } with Ticker {
     now(resume) -> resume(1234)
   }
   assert t == 1234
@@ -189,9 +189,12 @@ defining the package.
 
 Three habits you'll pick up within weeks:
 
-- **Tests next to the code, in the same file.** Don't
-  separate them into `tests/` or parallel files. When you
-  touch a function, its tests are right there.
+- **Tests next to the code, in the same file.** When you
+  touch a function, its tests are right there, and only from
+  there can you reach the functions that aren't `pub`. A
+  `*_test.kai` or a file under `tests/` imports the module
+  like any client and sees only its public API: keep those
+  for testing the package from the outside.
 - **One test per aspect, not per line.** If your function
   has a base case, small cases, and an edge case, write
   three `test`s. If "small cases" has three examples, add
@@ -362,12 +365,16 @@ bench "arithmetic: 2 + 3 * 4" {
   2 + 3 * 4
 }
 
-bench "fib(10)" {
+bench "fib(10): recursion without memo" {
   fib(10)
 }
 
-bench "fib(15)" {
+bench "fib(15): cost grows exponentially" {
   fib(15)
+}
+
+bench "list.sum [1..100]" {
+  list.sum([1..100])
 }
 ```
 
@@ -400,9 +407,12 @@ between them; comparing those means is reading noise.
 
 `median 0 / MAD 0` is a warning that you need to measure
 differently: make each iteration do more
-work, or write a program that repeats the operation in a loop,
-consumes the result so the optimizer can't delete it, and time
-that whole program. A solid measurement looks like `fib(15)`:
+work, or write a program that repeats the operation in a loop
+and time that whole program. Outside `bench` the optimizer does
+act: it deletes a pure call whose result nobody uses, and
+computes only once a call that always gets the same input. So
+the loop consumes the result and changes the input on every
+pass. A solid measurement looks like `fib(15)`:
 median and mean in the same order of magnitude, with the MAD
 small next to both.
 
@@ -424,11 +434,11 @@ Three practical tips:
   setup is expensive and you don't want to include it, do it
   outside the block and leave only the operation to measure
   inside.
-- **kaikai doesn't discard "pure" calls without observable
-  effect.** `bench "fib(10)" { fib(10) }` actually computes
-  `fib(10)` each iteration. In other languages with more
-  aggressive optimizations you have to use tricks to avoid
-  dead-code elimination; here you don't.
+- **The runner evaluates the body on every iteration.**
+  `bench "fib(10)" { fib(10) }` computes `fib(10)` on every
+  pass, even though nobody uses the result. Inside a `bench`
+  you need no tricks against the optimizer; in a program of
+  your own that you time, you do.
 - **The absolute number is only a hint.** To compare,
   measure on the same machine, in the same session, with no
   other heavy loads running alongside.

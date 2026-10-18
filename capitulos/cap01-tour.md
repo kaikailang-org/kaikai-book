@@ -3,10 +3,10 @@
 La mejor forma de conocer un lenguaje de programación es leerlo y correrlo. Así
 aprendí todos los que sé, y por eso este libro empieza con
 programas y no con definiciones. Este capítulo recorre kaikai
-en diez programas cortos. Ninguno pasa de unas treinta líneas,
+en once programas cortos. Ninguno pasa de unas cuarenta líneas,
 todos compilan, y juntos cubren las formas que vas a ver una y
 otra vez: declaraciones, tipos algebraicos,
-pattern matching, efectos, fibras, protocolos, unidades de
+pattern matching, pipes, efectos, fibras, protocolos, unidades de
 medida, contratos, pruebas inline y holes tipados.
 
 Todavía no necesitas cada detalle. Terminas el capítulo con el
@@ -260,11 +260,12 @@ agregas un constructor a `Expr` y se te olvida una rama en
 horas.
 
 `let` introduce un binding local. El tipo se infiere del lado
-derecho. No hay `var`, ni `mutable`, tampoco hay reasignación:
-`let e = ...` amarra `e` a un valor y ese valor no cambia. Si
-necesitas mutar algo, kaikai te lo permite, pero te pide
-declararlo (capítulo 13). Esta es la otra mitad del cambio de
-hábito: **inmutabilidad por defecto**.
+derecho. Un `let` no se reasigna: `let e = ...` amarra `e` a
+un valor y ese valor no cambia. Si necesitas mutar algo, kaikai
+te lo permite, pero te pide declararlo: una variable local que
+cambia se escribe con `var` y `:=` (capítulo 2), y un arreglo
+mutable vive bajo el efecto `Mutable` (capítulo 13). Esta es la
+otra mitad del cambio de hábito: **inmutabilidad por defecto**.
 
 ## 1.5 Un efecto propio con su handler
 
@@ -805,8 +806,9 @@ Ese ciclo es el que más me importó dejar rápido cuando diseñé el
 tooling, porque es donde se pasa el tiempo de verdad.
 
 El capítulo 16 cubre el resto del tooling: `fmt`, `lsp`,
-integración con editores, y los comandos de paquetes (`init`,
-`add`, `fetch`, `update`). Por ahora con `run` te basta.
+`watch`, la integración con editores y los comandos de paquetes
+(`init`, `add`, `fetch`, `update`). Por ahora con `run` te
+basta.
 
 ## 1.14 Cómo está organizado el resto del libro
 

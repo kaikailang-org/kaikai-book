@@ -284,9 +284,9 @@ Persona { nombre: Ada, edad: 30 }
 Ese formato canónico, `TipoNombre { campo: valor, ... }`, sirve
 para debugging y logs. Si quieres otro formato (por ejemplo, el
 clásico `(3, 4)` para un punto), escribes el `impl` a mano, como
-en §9.1.
+en §9.2.
 
-`#derive` funciona para los cinco protocolos del stdlib,
+`#[derive(...)]` funciona para los cinco protocolos del stdlib,
 siempre que **cada campo del record también implemente** el
 protocolo que estás derivando. Si tu record tiene un campo
 cuyo tipo no tiene `Show`, `#[derive(Show)]` falla en compilación
@@ -294,7 +294,7 @@ con un mensaje que apunta al campo problemático.
 
 La regla práctica:
 
-- **Empieza con `#derive`**: es la forma más rápida y casi
+- **Empieza con `#[derive(...)]`**: es la forma más rápida y casi
   siempre correcta para records.
 - **Cambia a `impl` manual** cuando la implementación derivada
   no te sirve: formato distinto, igualdad solo por algunos

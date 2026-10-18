@@ -12,8 +12,8 @@ Against those three, kaikai bets on an unusual combination:
 consequences, before the syntax:
 
 - **No shared memory between fibers.** Each fiber has its own
-  heap. What one passes to another is copied or moved, so
-  data races can't arise by construction.
+  heap. What one passes to another is copied, so data races
+  can't arise by construction.
 - **No GC, no borrow checker.** Perceus frees memory when
   the last use of each value ends, without an asynchronous
   collector and without asking you to annotate lifetimes.
@@ -31,23 +31,29 @@ much lighter: hundreds of bytes instead of megabytes. A kaikai
 application can have thousands or hundreds of thousands of
 live fibers without breaking a sweat.
 
-Fibers are **cooperative**. Each one runs until it hits a
-**yield point**: a call that hands control back to the
-scheduler. Yield points are explicit:
+Fibers are **cooperative**. The runtime spreads them across
+several OS threads (§13.8), and on its thread each fiber runs
+until it hits a **yield point**: a call that hands control
+back to the scheduler. Nothing interrupts it halfway. Yield
+points are explicit:
 
 - `spawn.yield()`: "I've run for a while, try another".
 - `spawn.await(f)`: "wait until fiber `f` finishes".
 - IO operations that the scheduler intercepts (network
   reads, sleep, etc.).
 
-Without yields, a fiber runs to completion. That's **local
-determinism**: inside a block without yields, you know
-exactly what's happening. Compared to preemptive threads, you
-lose a whole class of bugs: nobody can interrupt you between
-two yields, so there's no race over the data you touch there.
+Without yields, a fiber runs to completion. Other fibers may
+be running at the same time on other threads, but none of
+them can reach your data, because each fiber has its own
+memory (more on that next). That's **local determinism**:
+inside a fiber, you know exactly what happens to your values.
+Compared to preemptive threads over shared memory, you lose a
+whole class of bugs: there's no race over the data you touch.
 
-The trade-off is that a fiber that never yields blocks every
-other one. Adding yields where they make sense is on you; in
+The trade-off is that a fiber that never yields hogs its
+thread and doesn't notice when it's cancelled. With a single
+thread (`KAI_THREADS=1`, §13.8) it blocks every other fiber.
+Adding yields where they make sense is on you; in
 practice IO calls already include them, and you only think
 about manual yields in a tight CPU-heavy loop.
 
@@ -60,9 +66,11 @@ guarantees this.
 
 Two fibers communicate by passing values. When a fiber sends a
 message to another (via an actor mailbox or the result of an
-`await`), the value is copied to the receiver's heap. For small types that's trivial; for big
-structures, kaikai uses Perceus to move instead of copy when
-the sender no longer uses the value.
+`await`), the value is copied to the receiver's heap. An
+`Int` costs nothing; a big list costs in proportion to its
+size. That cost is what lets Perceus reference counting
+(§13.2) do without atomic instructions, even when sender and
+receiver run on different threads.
 
 The guarantee that matters: **there's no way for two fibers
 to hold a pointer to the same object**. Data races, memory
@@ -216,9 +224,10 @@ could be interrupted by another fiber modifying shared
 data.
 
 In kaikai, **a fiber keeps running until it hits a yield
-point**. Between yields you have local determinism: nobody
-touches your local values until you give up control. This
-drops a lot of cognitive load.
+point**. Between yields you have local determinism: no other
+fiber runs on your thread, and the ones running on other
+threads have no way to reach your values. This drops a lot of
+cognitive load.
 
 In exchange, you have to **remember to yield**. The mental
 rule: if your function has a long pure-CPU loop, add a
@@ -611,7 +620,7 @@ When a fiber creates an `Array[T]` or a `Ref[T]`, the space
 comes from its own heap, and no other fiber can reach it: no
 shared pointers, no reference passing between fibers. To give
 a mutable value to another fiber, you send it through a
-mailbox (chapter 14) and the runtime moves the contents to
+mailbox (chapter 14) and the runtime copies the contents to
 the receiver's heap.
 
 That's why mutation doesn't introduce data races in kaikai.
@@ -624,9 +633,11 @@ from two fibers at the same time. The memory isolation of
 
 ## 13.7 Why fibers can't escape their nursery
 
-A detail of the type system: **`Fiber[T]` is not a movable
-value**. You can't return it from a function, store it in an
-`Option` or a record, or pass it to another fiber.
+A detail of the type system: **`Fiber[T]` is a handle bound
+to its nursery**. No function can return one, bare or
+wrapped: the compiler rejects `Fiber[T]` anywhere in a return
+type, be it `Option[Fiber[Int]]`, `[Fiber[Int]]` or the
+payload of a sum type.
 
 ```kai
 fn doesnt_compile() : Fiber[Int] {       # ERROR
@@ -640,7 +651,10 @@ A fiber only makes sense inside the nursery that created it.
 If you could return it, who would await it? Who would cancel
 it when the nursery ends? The structure breaks.
 
-A list of fibers inside the same nursery is legal:
+Inside the nursery, on the other hand, you can keep a
+`Fiber[T]` in a list, an `Option` or a record, or capture it
+in the closure of a sibling fiber that awaits it. A list of
+fibers is the typical case:
 
 ```kai
 nursery { n ->
@@ -649,7 +663,7 @@ nursery { n ->
 }
 ```
 
-But that list lives inside the nursery and can't escape.
+That list lives inside the nursery and can't escape.
 
 This closes the model: each fiber has a known parent and ends
 before it, and the type system guarantees it syntactically,

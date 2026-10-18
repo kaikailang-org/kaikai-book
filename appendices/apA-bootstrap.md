@@ -125,15 +125,17 @@ It matters for two reasons:
   from the same source, one of them has a bug. The fixed
   point confirms the whole chain converges to the same
   answer.
-- **Resistance to the Thompson attack.** Ken Thompson
-  published in 1984 a famous essay ("Reflections on
+- **A foundation against the Thompson attack.** Ken
+  Thompson published in 1984 a famous essay ("Reflections on
   Trusting Trust") showing that a malicious compiler can
   insert invisible backdoors that survive recompilation.
-  The classical defense is **diverse double-compiling**:
-  compile with two distinct chains and compare. The fixed
-  point is the modern version of that idea: if the whole
-  chain converges to one binary, and that binary is
-  reproducible from auditable sources, trust is justified.
+  The known defense is **diverse double-compiling** (David
+  A. Wheeler, 2005): compile the compiler's source with a
+  second, independent chain and compare the binaries. The
+  fixed point alone doesn't protect you, because a trojaned
+  compiler also reproduces itself bit for bit. What it
+  contributes is the deterministic compilation that
+  comparison depends on.
 
 ## A.6 Reproducible from a `cc`
 

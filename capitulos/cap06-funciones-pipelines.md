@@ -1,6 +1,6 @@
 # Capítulo 6 · Funciones y pipelines
 
-Ya escribiste funciones en el tour, les diste dos formas de
+Ya escribiste funciones en el tour, les diste tres formas de
 cuerpo en el cap. 3 y las hiciste recursivas sobre tipos suma
 en el cap. 5. Aquí aprendes a declararlas con cuidado, a
 escribir lambdas, a pasar funciones como valores y a
@@ -1289,6 +1289,6 @@ camino.
 `["10", "abc", "20", "", "30"]`. Quieres la suma de los que
 **sí son números válidos**, ignorando los demás. Construye
 un pipeline usando `list.flat_map` (o `||`) y la función
-`string_to_int : String -> Option[Int]`. Pista: una función
+`string.to_int : String -> Option[Int]`. Pista: una función
 `Option[a] -> [a]` te ayuda: si es `Some(x)` devuelve `[x]`,
 si es `None` devuelve `[]`. Ese paso es el flat-map natural.
