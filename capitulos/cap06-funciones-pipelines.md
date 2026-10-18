@@ -1,23 +1,18 @@
 # Capítulo 6 · Funciones y pipelines
 
-Hasta aquí fuiste viendo funciones a medida que las
-necesitábamos: las primeras en el tour, las del cap. 3 con
-sus dos formas de cuerpo, las recursivas del cap. 5 que
-descomponen tipos suma. Este capítulo pone todo junto y
-agrega lo que faltaba: cómo declarar funciones con cuidado,
-cómo escribir lambdas, qué son las funciones de orden
-superior, y los cinco operadores pipe que kaikai usa para
-encadenar transformaciones.
+Ya escribiste funciones en el tour, les diste dos formas de
+cuerpo en el cap. 3 y las hiciste recursivas sobre tipos suma
+en el cap. 5. Aquí aprendes a declararlas con cuidado, a
+escribir lambdas, a pasar funciones como valores y a
+encadenarlas con los cinco operadores pipe.
 
-Los cinco pipes son, de todo lo que decidí, lo que más discusión
-me generó conmigo mismo: cinco operadores es mucho para un
-lenguaje que presume de tener pocas formas. Al final los dejé, y
-en §6.4 explico por qué.
+Los cinco pipes son lo que más discutí conmigo mismo: cinco
+operadores es mucho para un lenguaje que presume de tener pocas
+formas. En §6.4 explico por qué los dejé.
 
-Vamos también a ver con detalle algo que kaikai promete y que
-muy pocos lenguajes garantizan en serio: la **eliminación de
-llamadas en posición de cola**. Esa garantía es lo que te
-deja escribir loops sin `for` ni `while` y dormir tranquilo.
+También conocerás la **eliminación de llamadas en posición de
+cola**, una garantía que muy pocos lenguajes dan en serio y que
+te deja escribir ciclos sin `for` ni `while` y dormir tranquilo.
 
 ## 6.1 Declaración
 
@@ -1016,7 +1011,7 @@ Una promesa importante de kaikai: **toda llamada recursiva
 en posición de cola se compila a un loop**. No consume stack.
 No hay riesgo de stack overflow por una recursión larga.
 
-Veamos qué significa "posición de cola". Una llamada está en
+Primero necesitas saber qué es la "posición de cola". Una llamada está en
 **posición de cola** si es lo último que la función va a
 hacer antes de devolver. Compara estas dos versiones de
 `suma`:

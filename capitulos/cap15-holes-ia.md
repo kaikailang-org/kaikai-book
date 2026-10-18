@@ -657,7 +657,7 @@ El humano corre `kai build --holes-json`. El agente recibe:
 
 El agente sabe: tipo esperado `[String]`, una entrada `notas` de
 tipo `[Pair[String, Int]]`, que es la forma con que el compilador
-imprime `[(String, Int)]`, como vimos en §4.6. Y sabe algo más
+imprime `[(String, Int)]`, como viste en §4.6. Y sabe algo más
 útil
 todavía: `candidates` viene **vacío**. La síntesis es bounded y
 aquí no alcanza para nada; los dos que aparecen detrás de un

@@ -129,7 +129,7 @@ La regla más amplia es:
 - **`+`, `-`** entre dos valores de la misma unidad: legal,
   preserva la unidad.
 - **`*`, `/`** entre valores con unidades: legal, **componen
-  las unidades**. Lo veremos en §10.3.
+  las unidades**. Lo pruebas en §10.3.
 - **`+`, `-`** entre unidades distintas: error de tipo.
 - **Comparaciones (`<`, `==`)** entre unidades distintas:
   error de tipo.

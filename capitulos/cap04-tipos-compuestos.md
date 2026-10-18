@@ -426,7 +426,7 @@ Fíjate en el tipo de retorno: **`Option[a]`**, no `a`. Una
 lista enlazada no garantiza que un índice exista: si pides
 el elemento número 99 de una lista de tres, no hay valor que
 devolver. El tipo te obliga a considerarlo. Esto es coherente
-con `Option` y `Result` que vimos en §4.5: kaikai prefiere
+con `Option` y `Result` que conociste en §4.5: kaikai prefiere
 encerrar la posibilidad de fallar en el tipo antes que
 abortar en runtime.
 
@@ -434,7 +434,7 @@ Hay dos cosas más que conviene saber sobre el acceso por
 índice. Una es que es **`O(n)`**: las listas son enlazadas, no
 indexadas; recorrer hasta la posición `i` cuesta `i` pasos.
 Para acceso aleatorio hay otros dos tipos: `Vec[T]`, que viene
-en un momento, y `Array[T]`, que veremos en el capítulo 12.
+en un momento, y `Array[T]`, que conocerás en el capítulo 12.
 
 La otra es que la sintaxis `xs[i]` que algunos lenguajes usan
 para listas, sobre una lista te la rechaza el typer: indexar
@@ -860,7 +860,7 @@ Tres patrones que vas a ver mucho:
   `None` ya no te alcanza.
 
 `Option` y `Result` son tipos suma como cualquier otro. Los
-hemos separado del capítulo 5 porque su rol en el diseño
+saqué del capítulo 5 porque su rol en el diseño
 cotidiano es central: los vas a usar antes de empezar a
 declarar tus propios tipos suma.
 
@@ -1010,7 +1010,7 @@ Int)`.
 
 ## 4.7 Mapas y conjuntos hash
 
-Todo lo que vimos hasta aquí es inmutable: un record nuevo no
+Todo lo que usaste hasta aquí es inmutable: un record nuevo no
 muta al viejo, una lista con un elemento más es una lista
 nueva. Para la mayoría del código eso es lo que quieres. Pero
 a veces necesitas una tabla asociativa de verdad (insertar

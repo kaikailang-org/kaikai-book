@@ -16,8 +16,8 @@ Si vienes de un mundo imperativo, dedícale los veinte minutos
 que pide. Te van a ahorrar incomodidades en las siguientes
 ciento cincuenta páginas.
 
-No vamos a abrir la teoría de cada idea: eso es trabajo de los
-capítulos siguientes. Lo que quiero aquí es nombrar el cambio de
+La teoría de cada idea la encuentras en los capítulos
+siguientes. Lo que quiero aquí es nombrar el cambio de
 hábito, mostrarlo, y darte las palabras para reconocerlo cuando
 aparezca.
 
@@ -141,7 +141,7 @@ en kaikai eso significa una de dos cosas:
   pero pequeño, y kaikai te lo da, pero te pide declararlo. La
   mutación de un arreglo, por ejemplo, vive bajo el efecto
   `Mutable`, que aparece en la firma de cualquier función que la
-  use. Lo veremos con calma en el capítulo 13.
+  use. Lo retomas con calma en el capítulo 13.
 
 ¿Por qué tomar este camino? Porque la mayoría de las veces
 "cambiar una variable" es una limitación heredada del modelo
@@ -192,7 +192,7 @@ Mutaciones más visibles (escribir un arreglo que vive más allá
 del bloque, enviar a la mailbox de otro actor, modificar memoria
 que se observa desde fuera) sí aparecen en la firma, bajo
 efectos como `Mutable`, `Actor` o los que correspondan. Esa
-distinción la veremos en el capítulo 13.
+distinción la retomas en el capítulo 13.
 
 La regla práctica es simple: usa `let` por defecto; si
 necesitas una variable local que cambia, `var` con `:=`;
@@ -460,7 +460,7 @@ cuáles poner juntas.
   pasar mensajes y no en compartir memoria, y el modelo de
   supervisión con `link` y `monitor`. En kaikai esos procesos se
   llaman fibras y actores.
-- **De Elixir** además, el operador pipe `|>` que vimos arriba.
+- **De Elixir** además, el operador pipe `|>` que conociste arriba.
 - **De Koka (Daan Leijen, Microsoft Research)** y **Effekt
   (Andreas Rossberg, Jonathan Brachthäuser)** vienen los efectos
   algebraicos con filas de efectos en el sistema de tipos.

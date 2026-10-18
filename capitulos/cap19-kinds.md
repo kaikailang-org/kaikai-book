@@ -22,7 +22,7 @@ no necesitas nada de esto para escribir kaikai productivo. Pero si
 llegaste hasta aquí, apuesto a que la pregunta ya te apareció
 sola: ¿qué tienen en común las unidades del capítulo 10, los
 efectos del 12 y la memoria del 13? La respuesta es corta y creo
-que elegante. Vamos a verla.
+que elegante.
 
 ## 19.1 Qué es un kind
 
@@ -508,7 +508,7 @@ y, como todo kind, borrado del binario.
 
 ## 19.9 Perm: permisos que el tipo persigue
 
-Los kinds que vimos hasta aquí clasifican *cantidades*: metros,
+Los kinds que conociste hasta aquí clasifican *cantidades*: metros,
 dólares, bytes. `Perm` clasifica otra cosa: **capacidades**. Su
 theory, `Semilattice`, es la más rara del catálogo, y vale
 entenderla porque abre una puerta que los demás kinds no.

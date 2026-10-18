@@ -3,7 +3,7 @@
 Este capítulo describe los tipos básicos de kaikai, la forma de
 los literales, los operadores que los manipulan, y cómo se atan a
 nombres con `let`. También introduce algo que ya viste de pasada y
-vamos a fijar bien: **`if` y los bloques son expresiones**, no
+ahora vas a fijar bien: **`if` y los bloques son expresiones**, no
 sentencias.
 
 Si leíste el capítulo 2, lo que viene es el contenido concreto de
@@ -46,7 +46,7 @@ cualquier contexto donde se espere otro tipo. Te vas a topar con
 `Nothing` rara vez, pero conviene tener el nombre.
 
 Estos siete no son los únicos números del lenguaje. Hay enteros
-de ancho fijo y tipos de precisión arbitraria, que veremos en la
+de ancho fijo y tipos de precisión arbitraria, que aprendes en la
 sección 3.4, pero estos son los que vas a teclear el 95% del
 tiempo.
 
@@ -296,7 +296,7 @@ Los operadores de comparación son los habituales:
 
 Devuelven `Bool`. Funcionan sobre cualquier tipo que implemente
 los protocolos `Eq` (para `==`/`!=`) y `Ord` (para los demás).
-Eso lo veremos en el capítulo 9; por ahora, todos los tipos
+Eso lo aprendes en el capítulo 9; por ahora, todos los tipos
 primitivos los implementan.
 
 Un último hábito, y este es de los `Real`. Un `Real` es un
@@ -516,8 +516,8 @@ fue tocado.
 
 Para los casos donde necesitas una celda mutable de verdad,
 kaikai te da `var`: `nombre := v` declara y escribe, y un
-nombre desnudo lee. Lo viste en §2.2 y volveremos a ello en el
-capítulo 12 cuando hablemos de efectos.
+nombre desnudo lee. Lo viste en §2.2 y lo retomas en el
+capítulo 12, con los efectos.
 
 ## 3.6 `if` como expresión
 
