@@ -127,7 +127,7 @@ examples/ch15/01_basic_hole.kai:6:34: type hole ?formula
     real_log10(r)
     real_sin(r)
 
-  288 more bindings in scope (--holes-scope lists them)
+  563 more bindings in scope (--holes-scope lists them)
 ```
 
 Four pieces of information:
@@ -358,7 +358,7 @@ compiler stops offering help it actually had.
 One detail: `todo!`'s message is a plain string literal, no
 interpolation. `todo!("missing #{n}")` does not compile.
 
-## 15.5 Holes in a match: the pending arm
+## 15.5 Holes in a match: pending arm and pending pattern
 
 A hole can be the body of a `match` arm:
 
@@ -387,6 +387,31 @@ If you delete the arm instead of leaving a hole in it, the
 compiler tells you the `match` is no longer exhaustive and
 names the missing variant. Holes are orthogonal to pattern
 checking; each one does its job.
+
+If what's missing is the pattern, the hole goes left of the
+arrow:
+
+```kai
+fn area(s: Shape) : Real {
+  match s {
+    Circle(r) -> 3.14 * r * r
+    Square(l) -> l * l
+    ?         -> 0.0
+  }
+}
+```
+
+`kai build --holes` reports it as a **pattern hole** and
+lists what the `match` still doesn't cover:
+
+```
+shape.kai:10:5: pattern hole
+
+  expected: a pattern matching Shape
+
+  remaining inhabitants (exhaustiveness):
+    Triangle(_, _)
+```
 
 The `match` with one arm pending: the two resolved cases run,
 and the warnings point at the bindings the hole doesn't use

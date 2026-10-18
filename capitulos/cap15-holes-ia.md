@@ -127,7 +127,7 @@ ejemplos/cap15/01_hole_basico.kai:6:35: type hole ?formula
     real_log10(r)
     real_sin(r)
 
-  288 more bindings in scope (--holes-scope lists them)
+  563 more bindings in scope (--holes-scope lists them)
 ```
 
 Cuatro piezas de información:
@@ -357,7 +357,7 @@ deja de ofrecerte ayuda que sí tenía.
 Un detalle: el mensaje de `todo!` es un literal de string sin
 interpolación. `todo!("falta #{n}")` no compila.
 
-## 15.5 Holes en un match: el brazo pendiente
+## 15.5 Holes en un match: brazo y patrón pendientes
 
 Un hole puede ser el cuerpo de un brazo de `match`:
 
@@ -386,6 +386,31 @@ Si en vez de dejar el brazo con un hole lo borras, el
 compilador te avisa que el `match` ya no es exhaustivo y te
 nombra la variante que falta. Los holes son ortogonales a la
 verificación de patrones; cada uno hace su trabajo.
+
+Si lo que te falta es el patrón, el hole va a la izquierda de
+la flecha:
+
+```kai
+fn area(f: Forma) : Real {
+  match f {
+    Circulo(r)  -> 3.14 * r * r
+    Cuadrado(l) -> l * l
+    ?           -> 0.0
+  }
+}
+```
+
+`kai build --holes` lo reporta como **pattern hole** y te
+lista lo que el `match` todavía no cubre:
+
+```
+forma.kai:10:5: pattern hole
+
+  expected: a pattern matching Forma
+
+  remaining inhabitants (exhaustiveness):
+    Triangulo(_, _)
+```
 
 El `match` con un brazo pendiente: los dos casos resueltos
 corren, y las advertencias señalan los bindings que el hole
