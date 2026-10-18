@@ -735,6 +735,13 @@ deps no resueltas. En la práctica, después de `git clone` de un
 proyecto, basta con `kai run main.kai`: el driver baja lo que
 falta y corre.
 
+El cache no crece sin límite. Una entrada que ningún build usa
+en cinco días se borra sola, y si la vuelves a necesitar, el
+siguiente `kai run` la baja de nuevo. `KAI_CACHE_TRIM=0` apaga
+ese recorte y `KAI_CACHE_TRIM_DAYS` cambia el plazo. Para liberar
+espacio de inmediato, `kai clean --cache` borra los caches
+compartidos, y `kai clean` a secas, el `.kai-cache` del proyecto.
+
 ## 8.9 Caso de estudio: refactor de un proyecto monolítico
 
 Imagina un proyecto que partió como un solo archivo `main.kai`

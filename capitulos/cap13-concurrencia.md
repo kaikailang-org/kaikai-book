@@ -259,9 +259,9 @@ fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
-  let _ = nursery { n ->
-    n.spawn(() => worker("A", 3))
-    n.spawn(() => worker("B", 3))
+  nursery { n ->
+    n.spawn(() => worker("A", 3)) |> ignore
+    n.spawn(() => worker("B", 3)) |> ignore
   }
 }
 ```
@@ -279,19 +279,13 @@ B
 B
 ```
 
-El `let _` envuelve al `nursery` entero: el bloque devuelve el
-valor de su última expresión (aquí un `Fiber[Unit]` que no nos
-sirve), y `let _` lo descarta. No es lo que hace que las fibras
-se esperen, de eso se encarga el nursery solo; solo tira un
-valor que no usamos.
-
 `nursery { n -> ... }` abre un scope. Adentro, `n` es la
 capacidad para crear fibras:
 
 - `n.spawn(f)` crea una fibra hija. Devuelve un `Fiber[T]`
-  donde `T` es el tipo que `f` devuelve. Aquí ni lo atamos: no
-  necesitamos el valor, y el nursery espera a las fibras de
-  todos modos.
+  donde `T` es el tipo que `f` devuelve. Aquí no lo necesitas,
+  porque el nursery espera a las fibras de todos modos, y
+  `|> ignore` dice que lo descartas a propósito.
 - `n.await(f)` espera a esa fibra y devuelve su valor. Solo lo
   necesitas cuando quieres el resultado; para esperar a secas
   no hace falta.
@@ -569,8 +563,8 @@ effect Fail {
 
 fn main() : Unit / Stdout + Spawn + Cancel {
   nursery { n ->
-    n.spawn(() => trabajador_largo("A"))
-    n.spawn(() => trabajador_largo("B"))
+    n.spawn(() => trabajador_largo("A")) |> ignore
+    n.spawn(() => trabajador_largo("B")) |> ignore
     let r = n.spawn(
       () => handle {
         renunciar(0)
@@ -729,10 +723,11 @@ import spawn
 import core.list
 
 fn procesar_lote(id: Int, lote: [String]) : [String] / Spawn =
-  lote | (t) => {
-    spawn.yield()
-    "worker #{id}: #{t}"
-  }
+  lote
+    | (t => {
+      spawn.yield()
+      "worker #{id}: #{t}"
+    })
 ```
 
 `procesar_lote` no sabe que existen otras fibras. Recibe su

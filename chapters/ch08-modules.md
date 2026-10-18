@@ -723,6 +723,13 @@ unresolved deps. In practice, after `git clone`ing a project,
 `kai run main.kai` is enough: the driver downloads what's
 missing and runs.
 
+The cache doesn't grow without bound. An entry no build has
+used in five days removes itself, and if you need it again, the
+next `kai run` fetches it again. `KAI_CACHE_TRIM=0` turns that
+trim off and `KAI_CACHE_TRIM_DAYS` changes the age. To free space
+right away, `kai clean --cache` deletes the shared caches, and
+plain `kai clean` the project's `.kai-cache`.
+
 ## 8.9 Case study: refactoring a monolith
 
 Imagine a project that started as a single `main.kai` of 800

@@ -135,21 +135,21 @@ invariante del ledger de doble entrada: en cada transacción,
 la suma de los débitos debe igualar la suma de los créditos.
 
 ```kai
-pub fn total_debitos(ms: [dominio.Movimiento]) : Real<USD> {
-  match ms {
-    []                               -> 0.0<USD>
-    [dominio.Debito(_, m), ...rest]  -> m + total_debitos(rest)
-    [dominio.Credito(_, _), ...rest] -> total_debitos(rest)
-  }
+fn debito(m: dominio.Movimiento) : [Real<USD>] = match m {
+  dominio.Debito(_, monto) -> [monto]
+  dominio.Credito(_, _)    -> []
 }
 
-pub fn total_creditos(ms: [dominio.Movimiento]) : Real<USD> { ... }
+pub fn total_debitos(ms: [dominio.Movimiento]) : Real<USD> =
+  ms || debito |> list.sum
+
+pub fn total_creditos(ms: [dominio.Movimiento]) : Real<USD> = ...
 
 pub fn cuadra(ms: [dominio.Movimiento]) : Bool =
   total_debitos(ms) == total_creditos(ms)
 ```
 
-Son tres funciones puras que definen una sola invariante
+Son funciones puras que definen una sola invariante
 booleana. Los tests verifican el contrato pieza por pieza:
 
 ```kai

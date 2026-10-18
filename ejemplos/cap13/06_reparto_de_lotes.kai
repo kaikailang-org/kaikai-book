@@ -14,10 +14,11 @@ import spawn
 import core.list
 
 fn procesar_lote(id: Int, lote: [String]) : [String] / Spawn =
-  lote | (t) => {
-    spawn.yield()
-    "worker #{id}: #{t}"
-  }
+  lote
+    | (t => {
+      spawn.yield()
+      "worker #{id}: #{t}"
+    })
 
 fn main() : Unit / Stdout + Spawn + Cancel {
   let resultados = nursery { n ->

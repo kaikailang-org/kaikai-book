@@ -54,15 +54,7 @@ fn buscar_nota(notas: [dominio.Nota], id_buscado: Int) : Option[dominio.Nota] = 
   [h, ...rest] -> if h.id == id_buscado { Some(h) } else { buscar_nota(rest, id_buscado) }
 }
 
-fn serializar_lista(cuerpos: [String]) : String = match cuerpos {
-  [] -> "[]"
-  [h, ...rest] -> "[" ++ h ++ unir_con_coma(rest) ++ "]"
-}
-
-fn unir_con_coma(xs: [String]) : String = match xs {
-  [] -> ""
-  [h, ...rest] -> ", " ++ h ++ unir_con_coma(rest)
-}
+fn serializar_lista(cuerpos: [String]) : String = "[" ++ string.join(cuerpos, ", ") ++ "]"
 
 # Cuerpo del actor. Recibe una `Pregunta`, llama a `procesar`,
 # manda de vuelta la respuesta al solicitante, recursa con el

@@ -53,15 +53,7 @@ fn find_note(notes: [domain.Note], target_id: Int) : Option[domain.Note] = match
   [h, ...rest] -> if h.id == target_id { Some(h) } else { find_note(rest, target_id) }
 }
 
-fn serialize_list(bodies: [String]) : String = match bodies {
-  [] -> "[]"
-  [h, ...rest] -> "[" ++ h ++ join_with_comma(rest) ++ "]"
-}
-
-fn join_with_comma(xs: [String]) : String = match xs {
-  [] -> ""
-  [h, ...rest] -> ", " ++ h ++ join_with_comma(rest)
-}
+fn serialize_list(bodies: [String]) : String = "[" ++ string.join(bodies, ", ") ++ "]"
 
 # Actor body.  Receives an `Ask`, calls `process`, sends the
 # reply back to the requester, recurses with the new state.
