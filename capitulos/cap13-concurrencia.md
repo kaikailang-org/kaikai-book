@@ -7,10 +7,9 @@ vez al mes y se arreglan tres veces antes de irse de verdad;
 corrigen lo anterior pero históricamente vienen con GC y un
 runtime pesado.
 
-Peleé con las tres formas en su momento, y de esa pelea salió la
-apuesta de kaikai, una combinación poco usual: **fibras
-cooperativas + memoria por fibra + Perceus**. Antes de la
-sintaxis, sus tres consecuencias:
+Frente a esas tres formas, kaikai apuesta por una combinación
+poco usual: **fibras cooperativas + memoria por fibra +
+Perceus**. Antes de la sintaxis, sus tres consecuencias:
 
 - **No hay shared memory entre fibras.** Cada fibra tiene su
   propio heap. Lo que una pasa a otra se copia o se mueve.

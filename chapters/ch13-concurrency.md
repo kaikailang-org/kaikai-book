@@ -7,10 +7,9 @@ and get fixed three times before they actually go away;
 previous problems but historically come with a GC and a heavy
 runtime.
 
-I fought with all three in their day, and kaikai's bet came out
-of that fight: an unusual combination of **cooperative fibers
-+ per-fiber memory + Perceus**. Three consequences, before the
-syntax:
+Against those three, kaikai bets on an unusual combination:
+**cooperative fibers + per-fiber memory + Perceus**. Three
+consequences, before the syntax:
 
 - **No shared memory between fibers.** Each fiber has its own
   heap. What one passes to another is copied or moved, so
