@@ -36,10 +36,9 @@ fn cuadrado_mas_uno(x: Int) : Int {
 }
 ```
 
-La tercera son **arms con patrones**, donde la función decide
-qué hacer según la forma de sus argumentos. Cada arm empieza
-con `case`, va seguido de un patrón, una flecha `->` y la
-expresión que ese caso produce:
+La tercera son **arms con patrones**: la función decide qué
+hacer según la forma de sus argumentos. Cada arm es `case`,
+un patrón, una flecha `->` y la expresión que produce:
 
 ```kai
 fn signo(n: Int) : String {
@@ -71,13 +70,12 @@ fn divide(a: Real, b: Real) : Result[Real, Error] {
 }
 ```
 
-Una regla del lenguaje: dentro del bloque `{ ... }` de una
-función, **o todo son `case` arms o todo son sentencias**.
-Mezclar es un error de parseo. Si necesitas setup antes de
-discriminar, envuelve un `match` en la forma corta o extrae
-un helper.
+Dentro del bloque `{ ... }` de una función, **o todo son
+`case` arms o todo son sentencias**. Mezclar es un error de
+parseo. Si necesitas setup antes de discriminar, envuelve un
+`match` en la forma corta o extrae un helper.
 
-La regla práctica para elegir entre las tres:
+Para elegir entre las tres:
 
 - **Cuerpo corto con `=`** cuando la función es una expresión
   directa, sin pasos intermedios.
@@ -88,23 +86,22 @@ La regla práctica para elegir entre las tres:
   natural para muchas funciones recursivas y para
   dispatchers sobre tipos suma.
 
-Las tres son aceptadas por el compilador; la elección es
-para quien lee.
+Al compilador le dan lo mismo; la elección es para quien lee.
 
-Algunas notas que conviene fijar:
+Tres notas más:
 
 - **Anotaciones de parámetros: obligatorias.** kaikai infiere
   tipos en bindings locales (`let x = 5`), pero no en firmas
-  de función. Cada parámetro tiene que decir su tipo.
+  de función. Cada parámetro dice su tipo.
 - **Tipo de retorno: obligatorio en funciones públicas y
   recomendado siempre.** El compilador puede inferirlo en
   funciones locales, pero la firma documenta el contrato y
   hace que los errores de tipo se reporten en el lugar
   correcto. Anota.
 - **Funciones con efecto: el efecto va después del `/`.** Una
-  función que escribe a stdout es `: Unit / Stdout`, y el
-  cap. 12 entra en eso con calma. Por ahora basta con saber
-  que si tu función llama a `println`, su firma lo declara.
+  función que escribe a stdout es `: Unit / Stdout`; el
+  cap. 12 entra en eso con calma. Por ahora basta con que, si
+  tu función llama a `println`, su firma lo declara.
 
 ```kai
 fn anunciar(mensaje: String) : Unit / Stdout =
@@ -149,9 +146,8 @@ f(3)     = 10
 
 ## 6.2 Lambdas
 
-Una **lambda** es una función anónima, una expresión que se
-evalúa a un valor de tipo función. kaikai te da tres formas
-para escribirlas:
+Una **lambda** es una función anónima: una expresión cuyo
+valor es una función. Se escribe de tres formas:
 
 ```kai
 # Forma 1: flecha con un argumento
@@ -164,13 +160,13 @@ let suma = (a, b) => a + b
 xs |> list.filter(. > 0)
 ```
 
-Las dos primeras son intercambiables; la elección es de
-estilo. La tercera es **azúcar** que solo aplica cuando el
-contexto **espera una función**: el segundo argumento de
-`list.filter`, por ejemplo, es de tipo `(Int) -> Bool`, y el
-compilador convierte `. > 0` en `(n) => n > 0`.
+Las dos primeras son intercambiables. La tercera es
+**azúcar** que solo aplica cuando el contexto **espera una
+función**: el segundo argumento de `list.filter` es de tipo
+`(Int) -> Bool`, y el compilador convierte `. > 0` en
+`(n) => n > 0`.
 
-Las reglas del placeholder son tres:
+Reglas del placeholder:
 
 - `.` solo funciona en posición donde se espera una función.
   Fuera de ahí es un error de compilación.
@@ -189,18 +185,16 @@ Las reglas del placeholder son tres:
   argumento aparece en lugares no obvios. `(p) => p.edad +
   bonus * 2` no gana nada con placeholder.
 - **Función con nombre** cuando la lambda se usa más de una
-  vez, o cuando el nombre documenta la intención. Si la misma
-  lambda aparece en tres lugares, dale un nombre.
+  vez, o cuando el nombre documenta la intención.
 
 ### Secciones point-free: proyectar sin nombrar el parámetro
 
-Hay un caso todavía más común que el placeholder: la lambda que
-no hace más que **alcanzar dentro del elemento** para sacarle un
-campo o llamarle un método. `(p) => p.nombre`, `(s) =>
-s.length()`. No hay cómputo, no hay operador, solo una
-proyección. Para eso kaikai tiene una forma aún más corta, la
-**sección point-free**: un `.` inicial seguido del campo, la
-ruta de campos o la llamada al método.
+Más común todavía que el placeholder es la lambda que solo
+**alcanza dentro del elemento** para sacarle un campo o
+llamarle un método: `(p) => p.nombre`, `(s) => s.length()`.
+Sin cómputo ni operador, solo una proyección. Para eso está
+la **sección point-free**: un `.` inicial seguido del campo,
+la ruta de campos o la llamada al método.
 
 ```kai
 type Dir = { ciudad: String }
@@ -212,13 +206,12 @@ let ciudades = personas | .dir.ciudad      # (p) => p.dir.ciudad
 let largos   = nombres   | .length()       # (s) => s.length()
 ```
 
-La sección se lee como la proyección misma, sin tener que
-inventar un nombre para el parámetro. El receptor se entrega de
-forma implícita (es el primer argumento por UFCS), así que
-`.starts_with("a")` lee su argumento escrito *después* del
-receptor. Funciona como la función de `|`, `||`, `|?`, `|!` y
-como
-argumento de un combinador (`.map`, `.and_then`, `.filter`):
+La sección se lee como la proyección misma, sin inventar un
+nombre para el parámetro. El receptor va implícito (es el
+primer argumento por UFCS), así que `.starts_with("a")` lee
+su argumento escrito *después* del receptor. Funciona como la
+función de `|`, `||`, `|?`, `|!` y como argumento de un
+combinador (`.map`, `.and_then`, `.filter`):
 
 ```kai
 let inicia = nombres |? .starts_with("a")  # (s) => s.starts_with("a")
@@ -227,9 +220,8 @@ let n      = Some("hi").map(.length())     # en posición de argumento
 
 Dentro de una etapa de pipe la proyección no tiene que quedarse
 sola. A la derecha de `|`, `||`, `|?` o `|!`, el `.` **es** el
-elemento
-de esa etapa, y todos los `.` de la etapa son el mismo elemento,
-así que puedes seguir operando sobre lo que proyectas:
+elemento de esa etapa, y todos los `.` de la etapa son el mismo
+elemento, así que puedes seguir operando sobre lo que proyectas:
 
 ```kai
 let mayores = personas |? .edad > 18       # (p) => p.edad > 18
@@ -246,14 +238,14 @@ adentro pertenece a la etapa que esté dentro de ella. Dos etapas
 anidadas que ambas usan `.` no compilan, y el error te pide
 nombrar uno de los dos elementos con `(x) => ...`.
 
-La regla práctica: si la etapa se lee de un vistazo, déjala
-point-free; si tiene varios pasos, o el elemento aparece en
-lugares no obvios, dale un nombre con la flecha.
+Si la etapa se lee de un vistazo, déjala point-free; si tiene
+varios pasos, o el elemento aparece en lugares no obvios, dale
+un nombre con la flecha.
 
 Las lambdas son **valores de primera clase**: las atas a
 `let`, las pasas como argumento, las devuelves de funciones,
-las guardas en records. Eso es lo que hace que las funciones
-de orden superior sean naturales.
+las guardas en records. Por eso las funciones de orden
+superior resultan naturales.
 
 Las tres formas, más una lambda atada a un `let` y pasada como
 argumento:
@@ -293,35 +285,33 @@ aplica(cuadrado, 5) = 25
 
 ## 6.3 Funciones de orden superior
 
-Una **función de orden superior** es una que recibe o
-devuelve otra función. Esa es toda la definición, y lo
-interesante no es el nombre sino lo que te deja hacer.
+Una **función de orden superior** recibe o devuelve otra
+función. Esa es toda la definición; lo interesante es lo que
+te deja hacer.
 
-El caso más simple es una función que aplica otra dos veces:
+El caso más simple aplica otra función dos veces:
 
 ```kai
 fn dos_veces[a](f: (a) -> a, x: a) : a = f(f(x))
 ```
 
-`f` es el primer parámetro y su tipo es `(a) -> a`:
-cualquier función que vaya de `a` a `a`. `dos_veces(mas_uno,
-5)` calcula `mas_uno(mas_uno(5))` = `7`. La función es
-**genérica** sobre el tipo `a`: funciona con `Int`, con
-`String`, con cualquier tipo, mientras `f` mantenga el mismo
-tipo de entrada que de salida. Las anotaciones `[a]` después
-del nombre declaran el parámetro de tipo.
+El tipo de `f` es `(a) -> a`: cualquier función de `a` en
+`a`. `dos_veces(mas_uno, 5)` calcula `mas_uno(mas_uno(5))` =
+`7`. La función es **genérica** sobre `a`: funciona con
+`Int`, con `String`, con cualquier tipo, mientras `f`
+conserve el tipo de entrada en la salida. El `[a]` después del
+nombre declara el parámetro de tipo.
 
-Un caso más interesante es una función que **devuelve** otra
-función: un *closure*.
+Más interesante es una función que **devuelve** otra: un
+*closure*.
 
 ```kai
 fn sumar(n: Int) : (Int) -> Int = (x) => x + n
 ```
 
-`sumar(10)` devuelve una nueva función que suma 10 a su
-argumento. El truco es que la lambda **captura** `n` del
-contexto donde se creó. Una vez devuelta, esa función tiene
-una copia de `n` adentro:
+`sumar(10)` devuelve una función nueva que suma 10 a su
+argumento. La lambda **captura** `n` del contexto donde se
+creó, y se lleva una copia adentro:
 
 ```kai
 let mas_diez = sumar(10)
@@ -336,16 +326,14 @@ fn componer[a, b, c](f: (b) -> c, g: (a) -> b) : (a) -> c =
   (x) => f(g(x))
 ```
 
-`componer(f, g)` es la función que primero aplica `g` y
-después `f`. Tres parámetros de tipo (`a`, `b`, `c`) porque
-las funciones encadenadas tocan tres tipos distintos en
-general.
+`componer(f, g)` aplica primero `g` y después `f`. Lleva tres
+parámetros de tipo (`a`, `b`, `c`) porque, en general, las
+dos funciones encadenadas tocan tres tipos distintos.
 
-Las funciones de orden superior son la herramienta principal
-para abstraer **lo que hay que hacer**. En vez de escribir
-`para cada elemento, hacer X` y `para cada elemento, hacer
-Y`, escribes `para cada elemento, hacer F`, donde `F` es un
-parámetro. Así nacen `list.map`, `list.filter`,
+Las funciones de orden superior abstraen **lo que hay que
+hacer**. En vez de `para cada elemento, hacer X` y `para cada
+elemento, hacer Y`, escribes `para cada elemento, hacer F`,
+con `F` como parámetro. Así nacen `list.map`, `list.filter` y
 `list.foldl`, las tres funciones que más vas a usar en
 programación funcional.
 
@@ -386,15 +374,14 @@ mas_diez(7) = 17
 
 ## 6.4 Pipes: `|>`, `|`, `||`, `|?`, `|!`
 
-kaikai trae cinco operadores para encadenar. Los cinco son
-distintos y cada uno comunica una intención específica.
+kaikai trae cinco operadores para encadenar, y cada uno
+comunica una intención distinta.
 
 ### `|>`: apply
 
-`xs |> f` es exactamente `f(xs)`. El operador toma el lado
-izquierdo y lo pone como **primer argumento** del llamado de
-la derecha. Si `f` tiene varios argumentos, los demás van en
-los paréntesis:
+`xs |> f` es exactamente `f(xs)`: el lado izquierdo pasa a
+ser el **primer argumento** del llamado de la derecha. Si `f`
+tiene más argumentos, van en los paréntesis:
 
 ```kai
 xs |> list.sum                   # ≡ list.sum(xs)
@@ -402,11 +389,10 @@ xs |> list.filter(es_par)        # ≡ list.filter(xs, es_par)
 xs |> list.map((n) => n * 2)     # ≡ list.map(xs, (n) => n * 2)
 ```
 
-Pero hay un detalle útil: a veces el valor del pipe **no
-quiere ir como primer argumento**. Por ejemplo, una función
-de división donde lo que estás canalizando es el divisor, no
-el dividendo. kaikai te deja indicar la posición exacta con
-un guión bajo `_`:
+A veces el valor del pipe **no va como primer argumento**:
+en una división, quizás lo que canalizas es el divisor y no
+el dividendo. Indicas la posición exacta con un guión bajo
+`_`:
 
 ```kai
 fn divide(a: Int, b: Int) : Int = a / b
@@ -416,11 +402,10 @@ fn divide(a: Int, b: Int) : Int = a / b
 ```
 
 El `_` es el **hueco** donde aterriza el lado izquierdo. Sin
-guión bajo, el lado izquierdo va al primer argumento: es la
-forma corta de `f(_, a, b)`. Con guión bajo, va donde lo
-pongas. Esto te deja escribir pipelines naturales aun cuando
-las funciones del stdlib no estén diseñadas con el "argumento
-principal" en la primera posición.
+él, el lado izquierdo va al primer argumento: es la forma
+corta de `f(_, a, b)`. Con él, va donde lo pongas. Así
+escribes pipelines naturales aunque la función no tenga el
+"argumento principal" en la primera posición.
 
 ```kai
 fn entre(low: Int, x: Int, high: Int) : Bool =
@@ -429,8 +414,8 @@ fn entre(low: Int, x: Int, high: Int) : Bool =
 50 |> entre(0, _, 100)     # ≡ entre(0, 50, 100) = true
 ```
 
-Es lo que viene de Elixir y F#: un pipe **general** con
-control de posición opcional.
+Viene de Elixir y F#: un pipe **general** con control de
+posición opcional.
 
 Las tres posiciones en un programa, con la forma corta y la
 explícita dando el mismo resultado:
@@ -471,18 +456,17 @@ entre 0 y 100: true
 
 ### `|`: map
 
-`xs | f` es exactamente `list.map(xs, f)`. Es un operador
+`xs | f` es exactamente `list.map(xs, f)`, un operador
 **específico** para mapear listas:
 
 ```kai
 let dobles = xs | (n) => n * 2     # ≡ list.map(xs, (n) => n * 2)
 ```
 
-¿Por qué tener `|` si `|>` ya cubre el caso? Porque
-`xs | f` se lee como "xs procesado con f", que es
-exactamente lo que un map es. La forma más corta hace que
-los pipelines de transformación de listas se lean como
-secuencias declarativas:
+`|>` ya cubre el caso, pero `xs | f` se lee como "xs
+procesado con f", que es justo lo que un map es. Con la forma
+corta, un pipeline de transformaciones se lee como una
+secuencia declarativa:
 
 ```kai
 let total = xs | doble | restar_uno |> list.sum
@@ -494,11 +478,10 @@ vs.
 let total = xs |> list.map(doble) |> list.map(restar_uno) |> list.sum
 ```
 
-Las dos son equivalentes. La primera tiene **menos ruido
-sintáctico** porque las dos transformaciones unitarias usan
-`|`. La regla práctica: `|` para mapear, `|>` cuando el lado
-derecho es un llamado más complejo (con argumentos extra,
-sumas, lookups).
+Son equivalentes, pero la primera tiene **menos ruido
+sintáctico**. La regla práctica: `|` para mapear, `|>` cuando
+el lado derecho es un llamado más complejo (con argumentos
+extra, sumas, lookups).
 
 ### `||`: flat-map
 
@@ -513,9 +496,8 @@ fn vecinos(n: Int) : [Int] = [n - 1, n, n + 1]
 # = [9, 10, 11, 19, 20, 21, 29, 30, 31]
 ```
 
-`||` desazucara directamente a `list.flat_map(xs, f)`, igual
-que `|` desazucara a `list.map(xs, f)`. Las tres formas
-siguientes son equivalentes:
+Igual que `|` con `list.map`, `||` desazucara directamente a
+`list.flat_map(xs, f)`. Estas tres formas son equivalentes:
 
 ```kai
 let extendido = [10, 20, 30] || vecinos                  # azúcar
@@ -524,17 +506,16 @@ let extendido = [10, 20, 30] | vecinos |> list.concat    # map + concat
 ```
 
 Las tres producen `[9, 10, 11, 19, 20, 21, 29, 30, 31]`. La
-primera dice "expande cada elemento". La segunda es la
-llamada con su nombre real. La tercera muestra cómo flat-map
-se define: mapear y aplanar. Usa `||` cuando quieras hacer
-evidente la operación dentro de un pipeline, y la llamada
-directa cuando no estés en pipeline.
+primera dice "expande cada elemento", la segunda es la
+llamada con su nombre real y la tercera muestra la definición
+de flat-map: mapear y aplanar. Dentro de un pipeline, `||`
+hace evidente la operación; fuera de él, usa la llamada
+directa.
 
 ### `|?`: filter
 
-`xs |? p` es exactamente `list.filter(xs, p)`. El operador
-**filtra** la lista quedándose con los elementos para los que
-el predicado es verdadero:
+`xs |? p` es exactamente `list.filter(xs, p)`: se queda con
+los elementos para los que el predicado es verdadero:
 
 ```kai
 fn es_par(n: Int) : Bool = n % 2 == 0
@@ -553,9 +534,8 @@ xs |? { n -> n % 3 == 0 }          # bloque
 ```
 
 Con `|?` se completan las tres transformaciones canónicas de
-secuencias: `|` es map, `||` es flat-map, `|?` es filter. Cada
-una tiene su propio operador. Queda uno, el que no transforma
-nada.
+secuencias: `|` es map, `||` es flat-map, `|?` es filter. Queda
+uno, el que no transforma nada.
 
 ### `|!`: each
 
@@ -567,9 +547,9 @@ la etapa por su **efecto** sobre cada elemento y devuelve
 [1, 2, 3] |! println("n = #{.}")   # ≡ list.each(xs, (n) => println("n = #{n}"))
 ```
 
-Es el pipe que ocupa el lugar del `for` de otros lenguajes.
-Cuando recorres una colección para imprimir, escribir o mandar
-un mensaje, el operador correcto es `|!` y no `|`: `|` arma una
+Ocupa el lugar del `for` de otros lenguajes. Cuando recorres
+una colección para imprimir, escribir o mandar un mensaje, el
+operador correcto es `|!` y no `|`: `|` arma una
 lista de resultados que nadie va a usar, y sobre un `Stream` no
 corre nada hasta que alguien consuma esa lista.
 
@@ -610,11 +590,9 @@ let total =
   |> list.sum
 ```
 
-Cada paso del pipeline hace una sola cosa. La firma del
-resultado se entiende de izquierda a derecha. No hay
-variables temporales, no hay anidamiento de paréntesis. Esto
-es la principal razón de que kaikai tenga cinco operadores
-y no uno.
+Cada paso hace una sola cosa y el resultado se entiende de
+izquierda a derecha, sin variables temporales ni paréntesis
+anidados. Por eso kaikai tiene cinco operadores y no uno.
 
 Y cada operador por separado, con su equivalencia al lado:
 
@@ -685,23 +663,21 @@ $ kai run ejemplos/cap06/04_pipes.kai
 
 ### Los mismos pipes, pero lazy: `Stream`
 
-Hay un detalle de los pipes sobre listas que conviene tener
-presente: cada paso **materializa** una lista nueva. `xs | f`
-construye la lista completa de resultados antes de pasarla al
-paso siguiente. Para una lista de diez elementos da igual;
-para una de diez millones, son diez millones de celdas
+Sobre listas, cada paso de un pipe **materializa** una lista
+nueva: `xs | f` construye la lista completa de resultados
+antes de pasarla al paso siguiente. Con diez elementos da
+igual; con diez millones, son diez millones de celdas
 intermedias por cada `|` del pipeline.
 
 El módulo `stream` te da los mismos cuatro operadores (`|`,
 `|?`, `||`, `|!`) sobre un `Stream`: un pipeline **lazy** que
-corre en memoria constante. Nada se computa cuando escribes el
-`map` o el `filter`; el trabajo ocurre recién cuando un
-*sink* (`foldl`, `to_list`, `count`, `each`) recorre el stream
-y lo fuerza. `|!` es ese `each` escrito como pipe, la forma más
-corta de consumir un stream. Y entre paso y paso no hay lista
-intermedia: cada
-elemento atraviesa todo el pipeline antes de que el siguiente
-empiece.
+corre en memoria constante. Escribir el `map` o el `filter` no
+computa nada; el trabajo ocurre recién cuando un *sink*
+(`foldl`, `to_list`, `count`, `each`) recorre el stream y lo
+fuerza. `|!` es ese `each` escrito como pipe, la forma más
+corta de consumir un stream. Entre paso y paso no hay lista
+intermedia: cada elemento atraviesa todo el pipeline antes de
+que empiece el siguiente.
 
 ```kai
 import stream
@@ -713,16 +689,16 @@ let total = stream.from_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 # total = 220
 ```
 
-Si vienes de Python esto son los generadores e iteradores
-lazy; de Java, los `Stream`; de Rust, los iterators. La idea
-es la misma: describir la transformación sin ejecutarla, y
-dejar que el consumidor decida cuánto material pedir.
+Si vienes de Python, son los generadores e iteradores lazy; de
+Java, los `Stream`; de Rust, los iterators. Describes la
+transformación sin ejecutarla y el consumidor decide cuánto
+material pedir.
 
-Eso es lo que hace brillar a `stream.read_lines(path)`: te
-entrega un stream de las líneas de un archivo leído en memoria
-constante. Puedes filtrar, mapear y plegar un archivo de
-gigabytes sin cargarlo entero: cada línea entra, atraviesa el
-pipeline y se descarta antes de leer la siguiente. Un `Stream`
+Ahí brilla `stream.read_lines(path)`: te entrega las líneas de
+un archivo, leído en memoria constante. Puedes filtrar, mapear
+y plegar un archivo de gigabytes sin cargarlo entero: cada
+línea entra, atraviesa el pipeline y se descarta antes de leer
+la siguiente. Un `Stream`
 no es un cursor que avanza una vez; es una **receta
 re-ejecutable**. El catálogo completo está en `kai doc
 stream`.
@@ -757,9 +733,9 @@ suma de cuadrados pares = 220
 ### Perezoso y además compartido: `Seq`
 
 Un `Stream` es una receta: cada vez que lo recorres, vuelve a
-correr. Eso es lo que quieres para un archivo de gigabytes, y es
-justo lo que no quieres cuando computar un elemento cuesta caro y
-lo vas a leer dos veces.
+correr. Es lo que quieres para un archivo de gigabytes, y lo que
+no quieres cuando computar un elemento cuesta caro y lo vas a
+leer dos veces.
 
 `Seq[t]` es la otra opción: una lista perezosa cuyas celdas se
 computan al leerlas y **a lo más una vez**. La primera lectura
@@ -805,14 +781,14 @@ primos hasta 30: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
 el primo 1000: 7919
 ```
 
-`nat` se menciona dentro de su propia definición y no es un
-problema: cuando `map` pide la celda siguiente, la anterior ya
-está computada y guardada. La criba es la misma idea trabajando.
-Por cada primo que encuentra agrega una etapa de filtro sobre el
+`nat` aparece dentro de su propia definición sin problema:
+cuando `map` pide la celda siguiente, la anterior ya está
+computada y guardada. La criba es la misma idea trabajando. Por
+cada primo que encuentra agrega una etapa de filtro sobre el
 resto, así que la cadena de filtros crece a medida que avanza, y
-nadie decidió de antemano cuántos primos iban a hacer falta. El
-primo 1000 sale de leer celdas que, una vez computadas, quedan
-ahí: pedirlo de nuevo no vuelve a cribar nada. Con una receta
+nadie decidió de antemano cuántos primos iban a hacer falta. Las
+celdas que llevan al primo 1000, una vez computadas, quedan ahí:
+pedirlo de nuevo no vuelve a cribar nada. Con una receta
 re-ejecutable, cada lectura cribaría otra vez desde el dos.
 
 Las tres formas perezosas del lenguaje se reparten por quién
@@ -831,18 +807,17 @@ llevan su fila). Y una `Seq` se queda en la fibra que la creó: si
 otra fibra necesita un trozo, le mandas `to_list` de ese trozo. El
 catálogo completo está en `kai doc seq`.
 
-El `Gen` de la tabla es el del capítulo 12, y ahí hay una
-diferencia con el `yield` de Python que conviene dejar anotada
-ahora: el productor lo escribes tú, con recursión corriente, y lo
-que lo convierte en secuencia perezosa es un handler de efectos.
+El `Gen` de la tabla lo conoces en el capítulo 12, y difiere del
+`yield` de Python: el productor lo escribes tú, con recursión
+corriente, y lo que lo convierte en secuencia perezosa es un
+handler de efectos.
 Un `Stream` consume algo que ya existe; un generador produce. Los
 dos salen del mismo mecanismo.
 
 ## 6.5 Trailing lambdas y otros azúcares
 
-kaikai trae varios azúcares sintácticos que vas a ver en
-código real, sobre todo cuando uses funciones de orden
-superior. Los principales:
+Estos azúcares sintácticos aparecen a cada rato en código
+real, sobre todo junto a funciones de orden superior.
 
 ### Trailing lambdas
 
@@ -855,25 +830,23 @@ list.map(xs) { n -> n * 2 }
 list.filter(xs) { n -> n > 0 }
 ```
 
-Es equivalente a `list.map(xs, (n) => n * 2)`. Las dos formas
-son aceptadas; la trailing es más amigable cuando el cuerpo
-de la lambda es largo.
+Equivale a `list.map(xs, (n) => n * 2)`; la forma trailing se
+agradece cuando el cuerpo de la lambda es largo.
 
-Cuando estás dentro de un pipeline con `|`, el bloque-lambda
-es aún más compacto. `|` ya espera una función como segundo
-argumento, así que puedes escribir el cuerpo directamente:
+Dentro de un pipeline con `|`, el bloque-lambda es aún más
+compacto. `|` ya espera una función como segundo argumento,
+así que escribes el cuerpo directamente:
 
 ```kai
 xs | { n -> n * 2 }              # equivalente a xs | ((n) => n * 2)
 xs | { n -> n * n + 1 }
 ```
 
-Esto se lee casi como prosa: "los xs, cada uno transformado a
-n por dos". La forma vale tanto para `|` como para `||` (que
-también esperan una función), y se mezcla con el resto del
-pipeline sin ruido.
+Se lee casi como prosa: "los xs, cada uno transformado a n
+por dos". Vale para `|` y para `||`, que también esperan una
+función, y se mezcla con el resto del pipeline sin ruido.
 
-Hay un detalle que muerde al anidar. Una lambda-etapa no abre
+Al anidar hay un detalle que muerde. Una lambda-etapa no abre
 un scope para las etapas que vienen después, así que la
 siguiente lambda queda como hermana suya, al mismo nivel del
 pipe.
@@ -907,18 +880,18 @@ fn while(pred: () -> Bool, body: () -> Unit) : Unit / e = ...
 while { i < 10 } { i := i + 1 }
 ```
 
-Esto le da a kaikai control de flujo definible por el
-usuario. `while` es una función ordinaria del stdlib, del
-módulo `loop`; solo parece un keyword. Su hermana `until` corre
-hasta que la condición se vuelve cierta, y con una diferencia
-que importa: chequea **después** del cuerpo, así que `until`
-siempre ejecuta al menos una vez, mientras que un `while` con
-la condición falsa de entrada no ejecuta ninguna.
+Así el control de flujo lo puede definir el usuario. `while`
+es una función ordinaria del módulo `loop` del stdlib; solo
+parece un keyword. Su hermana `until` corre hasta que la
+condición se vuelve cierta, con una diferencia que importa:
+chequea **después** del cuerpo, así que `until` siempre
+ejecuta al menos una vez, mientras que un `while` con la
+condición falsa de entrada no ejecuta ninguna.
 
 ### Block como lambda
 
-`{ x -> body }` es una forma alternativa para una lambda que
-encaja mejor cuando el cuerpo abarca varias líneas:
+`{ x -> body }` encaja mejor que la flecha cuando el cuerpo
+abarca varias líneas:
 
 ```kai
 xs | { n ->
@@ -933,9 +906,9 @@ Es lo mismo que `(n) => { let cuadrado = n * n; cuadrado + 1
 ### Patrones de tupla como parámetro
 
 El parámetro de un bloque-lambda puede ser un **patrón de
-tupla**. Si lo que fluye por el pipe son pares, el resultado de
-`list.zip` o `list.enumerate`, por ejemplo, destructuras en el
-acto, sin un `let` intermedio:
+tupla**. Si por el pipe fluyen pares, como los que dan
+`list.zip` o `list.enumerate`, destructuras en el acto, sin un
+`let` intermedio:
 
 ```kai
 let pares = list.zip(xs, ys)
@@ -954,8 +927,7 @@ destructuración es exclusiva del bloque-lambda. La forma con
 flecha `(a, b) => ...` sigue siendo una lambda de **dos
 parámetros**, no una que recibe un par.
 
-Ninguno de estos azúcares introduce semántica nueva. Son
-formas alternativas de escribir lambdas que el compilador
+Ninguno de estos azúcares agrega semántica: el compilador los
 desazucara antes de la inferencia de tipos. Úsalos cuando la
 lectura mejore, ignóralos cuando no.
 
@@ -1007,14 +979,13 @@ e sum=165
 
 ## 6.6 Recursión y TCO obligatoria
 
-Una promesa importante de kaikai: **toda llamada recursiva
-en posición de cola se compila a un loop**. No consume stack.
-No hay riesgo de stack overflow por una recursión larga.
+kaikai promete que **toda llamada recursiva en posición de
+cola se compila a un loop**. No consume stack, así que una
+recursión larga no lo revienta.
 
-Primero necesitas saber qué es la "posición de cola". Una llamada está en
-**posición de cola** si es lo último que la función va a
-hacer antes de devolver. Compara estas dos versiones de
-`suma`:
+Una llamada está en **posición de cola** si es lo último que
+la función hace antes de devolver. Compara estas dos
+versiones de `suma`:
 
 ```kai
 # NO en posición de cola: la llamada deja pendiente `h + ...`
@@ -1024,9 +995,9 @@ fn suma_naive(xs: [Int]) : Int {
 }
 ```
 
-Aquí, después de que `suma_naive(t)` devuelve, todavía hay que
-sumar `h`. La llamada **no** es lo último; queda una operación
-pendiente. Cada llamada consume un frame del stack.
+Cuando `suma_naive(t)` devuelve, todavía hay que sumar `h`: la
+llamada **no** es lo último. Cada llamada consume un frame del
+stack.
 
 ```kai
 # En posición de cola: la última cosa que hace cada rama es
@@ -1039,12 +1010,11 @@ fn suma_tco_loop(xs: [Int], acc: Int) : Int {
 fn suma(xs: [Int]) : Int = suma_tco_loop(xs, 0)
 ```
 
-Aquí, en cada rama recursiva, `suma_tco_loop(t, acc + h)` es
-**lo último**. La suma `acc + h` se evalúa primero, se pasa
-como argumento, y entonces la llamada ocurre. Cuando la
-llamada devuelve, la función actual también devuelve
-inmediatamente: no queda nada por hacer. El compilador
-detecta este patrón y lo compila a un loop, sin frame nuevo.
+Aquí `suma_tco_loop(t, acc + h)` es **lo último** de cada rama
+recursiva. La suma `acc + h` se evalúa antes y viaja como
+argumento; cuando la llamada devuelve, la función actual
+devuelve también, sin nada pendiente. El compilador detecta
+este patrón y lo compila a un loop, sin frame nuevo.
 
 ```kai
 # Esto funciona sin reventar el stack:
@@ -1052,29 +1022,28 @@ let muchos = [1..100_000]
 suma(muchos)        # 5_000_050_000
 ```
 
-La técnica del **acumulador** que ves en `suma_tco_loop` es la
-forma estándar de convertir una recursión naive en una
-recursiva en cola: agregas un parámetro extra que va llevando
-el resultado parcial, y al terminar lo devuelves.
+El **acumulador** de `suma_tco_loop` es la forma estándar de
+llevar una recursión naive a posición de cola: un parámetro
+extra va cargando el resultado parcial, y al terminar lo
+devuelves.
 
-¿Por qué importa esto en serio?
+Esto importa por varias razones:
 
 - **Sin TCO obligatoria, no podrías reemplazar `for` y
-  `while`.** Con stack limitado, una iteración sobre un
-  millón de elementos te dejaría sin stack. Solo con TCO
-  garantizada puedes dar el paso a programar con recursión.
-- **Es una garantía del lenguaje, no una optimización
-  oportunista.** Algunos lenguajes optimizan TCO cuando se
-  acuerdan; kaikai te lo promete. Una función cuya última
-  expresión se llama a sí misma usa stack constante, y eso es
-  obligatorio, no una heurística.
+  `while`.** Con stack limitado, iterar sobre un millón de
+  elementos te dejaría sin stack. Solo con TCO garantizada
+  puedes programar con recursión.
+- **Es una garantía del lenguaje.** Algunos lenguajes
+  optimizan las llamadas de cola cuando se acuerdan; kaikai
+  te lo promete. Una función cuya última expresión se llama a
+  sí misma usa stack constante, siempre, sin heurísticas.
 - **La recursión mutua también entra en la promesa, con una
   condición.** Si `es_par` termina llamando a `es_impar` y
   viceversa, el ciclo corre en stack constante en los dos
   backends: el compilador funde al grupo en una sola función
-  auto-recursiva, así que el ciclo se vuelve el mismo loop que
-  compila una llamada a sí misma. Vale para ciclos de dos y para
-  ciclos más largos. La condición es que los miembros compartan
+  auto-recursiva, y el ciclo se vuelve el mismo loop. Vale
+  para ciclos de dos y más largos. La condición es que los
+  miembros compartan
   **una sola firma**: mismos tipos de parámetro, mismo tipo de
   retorno, misma fila de efectos, y sin parámetros de tipo. Un
   ciclo donde discrepan gasta un frame por salto, y a suficiente
@@ -1083,14 +1052,12 @@ el resultado parcial, y al terminar lo devuelves.
   frame.** `f` llamando a `g`, donde `g` nunca vuelve a `f`, es
   una llamada ordinaria. La garantía es sobre ciclos, no sobre
   cualquier cosa escrita en posición de cola.
-- **No hay quien te avise antes de tiempo.** El compilador no
-  marca la recursión que creías en cola y no lo está: te
-  enteras cuando el programa revienta el stack. Por eso la
-  forma con acumulador se escribe desde el principio y no
-  cuando duele.
+- **Nadie te avisa antes de tiempo.** El compilador no marca
+  la recursión que creías en cola y no lo está: te enteras
+  cuando el programa revienta el stack. Por eso la forma con
+  acumulador se escribe desde el principio y no cuando duele.
 
-El par clásico, más un ciclo de tres para mostrar que la garantía
-no se limita a pares:
+El par clásico, más un ciclo de tres:
 
 ```kai
 # Ciclo de dos.
@@ -1122,14 +1089,13 @@ a(5000000)     = true
 Cinco millones de saltos en cada ciclo, y ninguno crece el stack.
 Sin la garantía, esto no llegaría al primer `println`.
 
-En la práctica, la mayoría de las funciones recursivas que
-escribas para procesar listas o árboles van a ser de la
-forma `match xs { [] -> base; [h, ...t] -> recursión }`. La
-versión naive (con operación pendiente) es la primera que
-escribes; la versión con acumulador es la que dejas. Para
-operaciones más complejas, las funciones de orden superior
-(`list.foldl`, `reduce`) ya están escritas con TCO y son
-casi siempre lo que querías.
+Casi todas las funciones recursivas que escribas sobre listas
+o árboles tendrán la forma `match xs { [] -> base; [h, ...t]
+-> recursión }`. La versión naive (con operación pendiente) es
+la primera que escribes; la versión con acumulador es la que
+dejas. Para operaciones más complejas, las funciones de orden
+superior (`list.foldl`, `reduce`) ya están escritas con TCO y
+son casi siempre lo que querías.
 
 Las dos versiones en un programa, y la lista de cien mil
 elementos que solo la segunda recorre sin crecer en stack:
@@ -1174,11 +1140,10 @@ suma 1..100_000 (tco) = 5000050000
 
 ## 6.7 Caso de estudio: pipeline de transformación
 
-Cerramos con un caso integrador. Tienes una lista de
-pedidos de una tienda, con un id, un monto y un estado.
-Quieres calcular el total a cobrar **considerando solo los
-pedidos pendientes** y **aplicando un 10% de descuento a los
-montos altos**:
+Cerramos con un caso integrador. Tienes los pedidos de una
+tienda, cada uno con id, monto y estado, y quieres el total a
+cobrar **solo de los pendientes**, **con 10% de descuento en
+los montos altos**:
 
 ```kai
 # ejemplos/cap06/06_pipeline.kai
@@ -1209,10 +1174,10 @@ fn aplicar_descuento(p: Pedido) : Pedido =
 fn monto_de(p: Pedido) : Int = p.monto
 ```
 
-Cada función chica hace **una sola cosa**: una decide si un
-pedido está pendiente, otra le aplica descuento si
-corresponde, otra extrae el monto. Ninguna sabe del
-pipeline; todas son útiles por separado.
+Cada función hace **una sola cosa**: una decide si un pedido
+está pendiente, otra le aplica descuento si corresponde, otra
+extrae el monto. Ninguna sabe del pipeline; todas sirven por
+separado.
 
 Y el pipeline las compone:
 
@@ -1243,11 +1208,10 @@ $ kai run ejemplos/cap06/06_pipeline.kai
 total a cobrar: 3380
 ```
 
-Cinco líneas, cuatro pasos. Filtra los pendientes, aplica
-descuento a cada uno, extrae el monto de cada uno, suma
-todo. Si el cliente pide después "agreguemos un cargo fijo
-de 100 a los pedidos > 5000", agregas una función chica más
-y la metes en el pipeline:
+Cinco líneas, cuatro pasos: filtra los pendientes, aplica el
+descuento, extrae el monto, suma. Si el cliente pide después
+"agreguemos un cargo fijo de 100 a los pedidos > 5000",
+escribes una función chica más y la metes en el pipeline:
 
 ```kai
 fn cargo_si_grande(p: Pedido) : Pedido =
@@ -1268,8 +1232,8 @@ let total =
 
 Una línea más, cero acoplamiento. Ese es el punto del estilo
 funcional: **funciones chicas que se componen en pipelines
-de lectura lineal**. La complejidad vive en cada función
-individual; la composición es trivial.
+de lectura lineal**. La complejidad vive en cada función; la
+composición es trivial.
 
 Compáralo con la versión imperativa típica:
 
@@ -1287,18 +1251,15 @@ for p in pedidos:
 ```
 
 Funciona, pero la lógica del cálculo está enredada con la
-mecánica del bucle. Cambiar el orden de las
-transformaciones, agregar un paso, sacar un paso: todas
-operaciones que en el pipeline son una línea, en la versión
-imperativa son un refactor.
+mecánica del ciclo. Reordenar, agregar o sacar un paso es una
+línea en el pipeline y un refactor en la versión imperativa.
 
-Si vienes de Java, JavaScript, C# o Kotlin, has visto algo
-parecido con sus respectivos stream/iterator APIs. La
-diferencia es que en kaikai el pipeline es una construcción
-sintáctica del lenguaje, no una API encima del lenguaje. No
-necesitas envolver la lista en un objeto especial, no hay
-métodos `.collect()` ni terminadores; los pipes son tan
-ordinarios como `+` o `*`.
+Si vienes de Java, JavaScript, C# o Kotlin, conoces algo
+parecido en sus APIs de stream o iterator. En kaikai el
+pipeline es sintaxis del lenguaje, no una API encima: no
+envuelves la lista en un objeto especial ni llamas
+`.collect()` al final; los pipes son tan ordinarios como `+`
+o `*`.
 
 ## Ejercicios
 

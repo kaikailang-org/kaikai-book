@@ -1,23 +1,19 @@
 # Chapter 8 · Modules, imports, organizing code
 
-Up to this point all your code has lived in a single file. That's
-the right way to start, but as soon as a program grows, a single
-file becomes a problem: readers get lost, changes clash, searches
-conflate logical modules that are physically tangled. The code
-has to be split into named pieces.
+So far all your code has lived in a single file. That's the
+right way to start, but once a program grows, the single file
+gets in the way: readers get lost and changes clash. Time to
+split the code into named pieces.
 
-kaikai handles this with a deliberately simple system, and the
-simplicity here is mine and it is on purpose. **One file is one
-module.** There is no `module Foo` declaration. There are
-no special files that reopen a module from elsewhere. The module
-name is derived from the file path, and that's it. Above modules
-sits a second scale: a **project**, described by a `kai.toml`,
-that groups its modules and external dependencies. And above the
-project, a **package manager** resolves dependencies across
-projects.
-
-This chapter walks through the three scales, from smallest to
-largest.
+kaikai handles this with a simple system, and I chose that
+simplicity on purpose. **One file is one module.** There is no
+`module Foo` declaration and no special file that reopens a
+module from elsewhere; the module name comes from the file
+path. Above modules sits the **project**, described by a
+`kai.toml`, which groups its modules and external
+dependencies. Above the project, a **package manager**
+resolves dependencies across projects. You'll work through the
+three scales from smallest to largest.
 
 ## 8.1 One file, one module
 
@@ -33,10 +29,10 @@ pub fn double_plus_one(x: Int) : Int = helper(double(x))
 
 Three design decisions appear in these three lines:
 
-- **`pub` marks what the module exports.** By default, a
-  declaration is private to the file. Only the things marked
-  `pub` are visible from another module that imports this one.
-  This is the opposite of Java or C++, where public is the
+- **`pub` marks what the module exports.** A declaration is
+  private to the file unless it carries `pub`; only what's
+  marked is visible to a module that imports this one. This is
+  the opposite of Java or C++, where public is the
   default and you have to remember to write `private`.
 - **Module names need no declaration.** The file
   `arithmetic.kai` is the module `arithmetic`. Put it under a
@@ -48,10 +44,9 @@ Three design decisions appear in these three lines:
   functions: a construct is visible outside the module iff it
   is marked `pub`.
 
-Private functions are useful for breaking up a public one
-without polluting the consumer's namespace. In `arithmetic`,
-`helper` exists only inside the file; whoever imports the
-module never sees it.
+Private functions let you break up a public one without
+polluting the importer's namespace: `helper` exists only inside
+`arithmetic`.
 
 The example that runs is that same file with a `main` using
 both public functions:
@@ -91,11 +86,10 @@ accessible under the prefix `arithmetic.`. The function
 `double_plus_one` is called as `arithmetic.double_plus_one`.
 
 The prefix is on purpose, and I know it annoys some people.
-When a project grows to fifteen or
-twenty modules, seeing `arithmetic.double_plus_one` in an
-expression tells you instantly where it comes from. The
-alternative — pulling all names loose into the consumer's
-namespace — saves keystrokes but loses the trail.
+When a project grows to fifteen or twenty modules, seeing
+`arithmetic.double_plus_one` in an expression tells you
+instantly where it comes from. Pulling every name loose into
+your namespace saves keystrokes but loses that trail.
 
 The same prefix is used for types the module exports and for
 constructing them:
@@ -127,10 +121,9 @@ $ kai run examples/ch08/02_two_files/main.kai
 distance = 5
 ```
 
-Three uses of the prefix, all consistent: in the type
-annotation (`: geometry.Point`), in the record construction
-(`geometry.Point { ... }`), and in the function call
-(`geometry.distance(a, b)`). One mental pattern.
+The prefix goes in the type annotation (`: geometry.Point`),
+the record construction (`geometry.Point { ... }`), and the
+call (`geometry.distance(a, b)`). One mental pattern.
 
 If a module lives under a subdirectory, the import uses the
 same dotted name as the module:
@@ -158,14 +151,14 @@ $ kai run examples/ch08/05_project/main.kai
 3^4 = 81
 ```
 
-Two details: the file lives at `util/math.kai`, the module is
-called `util.math`, but when you use it the prefix is only
-`math` (the last segment). That keeps prefixes short without
-losing the structural origin.
+The file lives at `util/math.kai` and the module is called
+`util.math`, but when you use it the prefix is only `math`, the
+last segment. Prefixes stay short without losing the structural
+origin.
 
 ### Three import forms
 
-kaikai admits three forms that cover the space:
+kaikai admits three forms:
 
 ```kai
 import math.vector                      # use qualified: vector.dot(a, b)
@@ -173,22 +166,22 @@ import math.vector as V                 # alias: V.dot(a, b)
 import math.vector.{dot, cross}         # specific names into scope
 ```
 
-The first is the most common and should be your default: the
-prefix `vector.` makes clear where each name comes from. The
-second helps when the module name is long or appears many times
-and a short alias buys you readability without losing the
-trail. The third is **selective import**: an explicit list of
-names brought into the local namespace. It pays off only when
-those names are the protagonists of the file and the prefix
-becomes noise (a `Point` that appears forty times, for
-instance). The cost is that the reader no longer knows where
-`Point` came from without looking up the file.
+The first is the most common and the default: the prefix
+`vector.` makes clear where each name comes from. The second
+helps when the module name is long or shows up often, and a
+short alias buys readability without losing the trail. The
+third is **selective import**: an explicit list of names
+brought into the local namespace. It pays off only when those
+names are the protagonists of the file and the prefix becomes
+noise (a `Point` that appears forty times, say). The cost is
+that the reader no longer knows where `Point` came from without
+scrolling up.
 
-**There is no wildcard import.** That is, no
-`import math.vector.*` or equivalent that pulls "everything the
-module exports" into the local namespace. This is deliberate:
-wildcards look convenient at write-time but make future
-readers unable to trace where a name came from.
+**There is no wildcard import** — no `import math.vector.*` or
+anything else that pulls "everything the module exports" into
+the local namespace. I left it out on purpose: wildcards are
+convenient at write-time and leave future readers unable to
+trace where a name came from.
 
 The three forms as three projects that run. Each carries its
 own `geometry.kai`; what changes is the `import` line and,
@@ -266,17 +259,15 @@ error: bare name 'MAX' is exported by multiple modules: sensors, alarms
   = help: qualify the constant, e.g. `sensors.MAX`
 ```
 
-Choosing for you would be worse than the error. Any tie-break
-rule — import order, say — would make *which* `MAX` you get
-depend on how the lines happen to be sorted, and that is the kind
-of trap that collects the day somebody sorts them alphabetically
-and the program changes meaning without a single expression being
-touched.
+Choosing for you would be worse than the error. With any
+tie-break rule — import order, say — *which* `MAX` you get would
+depend on how the lines happen to be sorted, and the day somebody
+sorts them alphabetically the program changes meaning without a
+single expression being touched.
 
-The error is the same for every class of name. Above it's a
-constant, but a contested type, effect, or protocol produces the
-same report, candidates named, with the help line swapping the
-word: `type candidates`, `effect candidates`.
+A contested type, effect, or protocol produces the same report as
+the constant, candidates named, with the matching word:
+`type candidates`, `effect candidates`.
 
 The way out is the qualifier, and it works everywhere a name
 appears: types, constructors (in expression and in pattern
@@ -313,9 +304,9 @@ declaration: two dependencies may each declare their own
 
 One case never becomes a dispute: a namesake of something that
 was already there. If you import a module that declares its own
-`effect Log`, a bare `Log` in that file is the module's. What you
-imported by hand wins over what was already there, and the
-stdlib's stays one qualifier away, as `effects.Log`.
+`effect Log`, a bare `Log` in that file is the module's: what
+you imported wins over what was already there, and the stdlib's
+stays one qualifier away, as `effects.Log`.
 
 The rule holds for functions too, and that's where it's easier to
 trip, because the core's names are the most obvious ones in the
@@ -336,8 +327,8 @@ error: type mismatch in function call
   = note: found:    ([Int], (Int) -> Int) -> ?t4
 ```
 
-No mystery, no guessing: the error shows you the signature it
-found. And the ways out are the usual two, qualify or pipe:
+No guessing: the error shows you the signature it found. The
+ways out are the usual two, qualify or pipe:
 
 ```kai
 list.map(xs, double) # [2, 4, 6]
@@ -382,14 +373,14 @@ warning: unused import `actor`
 A warning today, an error at the Orongo edition, as in Go. The
 migration is mechanical: delete the line.
 
-There's one exception worth knowing, because otherwise it reads
-like a false negative. A module that only brings `impl`s into
-scope is used **by being loaded**, not by being named; that
-import is never reported even though it appears nowhere else.
+One exception, so you don't mistake it for a false negative: a
+module that only brings `impl`s into scope is used **by being
+loaded**, not by being named, and that import is never reported
+even though it appears nowhere else.
 
 Do look twice before deleting, though. Either the import is
-genuinely dead, or the name you meant to take from it is quietly
-coming from somewhere else. You're better off knowing which.
+dead, or the name you meant to take from it is quietly coming
+from somewhere else. Either way, you want to know.
 
 ## 8.3 Visibility: the module's contract
 
@@ -398,13 +389,12 @@ Everything not marked is private, and marking something `pub`
 declares "I will sustain this name, this signature, this type".
 
 A rule the language doesn't enforce but is worth applying:
-**keep the public surface narrow.** Every `pub` name is a
-commitment you'll have to maintain. If you export a useful
-helper today that's specific to your implementation, tomorrow
-during a refactor you'll have to choose between breaking
-callers and carrying around code you no longer want. Public
-is measured in what you promise; private, in what you can
-change without notice.
+**keep the public surface narrow.** If you export a helper
+that's useful today but specific to your implementation, the
+day you refactor you'll have to choose between breaking callers
+and carrying code you no longer want. Public is measured in
+what you promise; private, in what you can change without
+notice.
 
 In practice:
 
@@ -430,15 +420,11 @@ inverts that: public is what you named explicitly.
 
 ### Private fields inside a public type
 
-There's a useful asymmetry. When you declare
-`pub type T = { ... }`, the record's fields are **public by
-default**: the type is part of the contract, so are its
-fields. That's what you want most of the time.
-
-But sometimes the type itself belongs in the contract while
-a particular field is an implementation detail. The `priv`
-keyword before a field name marks it as invisible to other
-modules:
+When you declare `pub type T = { ... }`, the record's fields
+are **public by default**: if the type is in the contract, so
+are its fields, and that's usually what you want. But sometimes
+a field is an implementation detail. The `priv` keyword before
+a field name hides it from other modules:
 
 ```kai
 pub type Account = {
@@ -450,12 +436,11 @@ pub type Account = {
 Outside the module that declares `Account`, `a.balance`
 doesn't compile and a literal `Account { name: "x", balance:
 100.0 }` doesn't either. Only the declaring module can read
-the field and name it when constructing. §4.1.1 covered the
-pattern in detail; what matters for ch. 8 is that `priv`
-works at **field granularity**, complements the `pub` that
-controls visibility at the declaration level, and together
-they cover a very common case: "export the type, hide its
-interior."
+the field and name it when constructing. You met the pattern
+in §4.1.1; what matters here is that `priv` works at **field
+granularity** and complements `pub`, which works per
+declaration. Together they cover a very common case: "export
+the type, hide its interior."
 
 A two-file project shows it from the other side of the module
 boundary. The client builds and reads the account only through
@@ -500,8 +485,8 @@ savings: 150
 
 There is one special module you **don't need to import**: the
 **core**. Functions like `println`, `assert`, `string_concat`,
-`real_sqrt` live in the global namespace and are available in
-every `.kai` file without ceremony. Other languages call this
+`real_sqrt` live in the global namespace, available in every
+`.kai` file without ceremony. Other languages call this
 the *prelude* (Haskell) or *built-ins* (Python); kaikai calls
 it core, and it lives under `stdlib/core/` in the compiler tree.
 
@@ -524,10 +509,10 @@ gets in.
 
 ## 8.5 Projects: `kai.toml`
 
-So far we've talked about **modules** inside a single file
-tree. When those modules become a unit you want to version,
-distribute, or that depends on other similar units, you move to
-the second scale: the **project**.
+So far you've worked with **modules** inside a single file
+tree. When those modules become a unit you want to version or
+distribute, or one that depends on others, you move to the
+second scale: the **project**.
 
 A kaikai project is described by a `kai.toml` file at its root.
 The minimal form:
@@ -550,8 +535,8 @@ nasties.
 convention). After 1.0, standard semver.
 
 `[dependencies]` is the table where you declare which other
-projects yours needs. Empty if your project has no external
-deps beyond the stdlib.
+projects yours needs. It stays empty if you depend only on the
+stdlib.
 
 ### `edition`
 
@@ -570,16 +555,16 @@ edition = "hanga-roa"
 contract**: syntax, type-system semantics, stdlib signatures,
 the `kai` CLI surface. While an edition is active, kaikai
 guarantees your project keeps compiling as the compiler moves
-forward, even when internals change. When an edition closes
+forward. When an edition closes
 and a new one opens, kaikai keeps accepting the old one — you
 just have to declare which one you use.
 
 If you omit the field, the compiler assumes the installation's
-default edition. That's fine for sketches; for any project
-that will live, pinning the edition is what stops a silent
-upgrade from moving the ground under you. Ch. 16 covers the
-rest: how editions are chosen, how to migrate between them,
-and what `#[unstable]` means for APIs in flux.
+default edition. Fine for a sketch; for a project that will
+live, pinning the edition stops a silent upgrade from moving the
+ground under you. You'll find the rest in ch. 16: how editions
+are chosen, how to migrate between them, and what `#[unstable]`
+means for APIs in flux.
 
 ### Starting a fresh project
 
@@ -594,7 +579,7 @@ kai-pkg: wrote kai.toml for package 'myapp'
 
 ## 8.6 Dependencies: git, path, lock
 
-When you declare a dependency, three forms are accepted:
+A dependency can be declared in three forms:
 
 ```toml
 [dependencies]
@@ -610,13 +595,13 @@ URL. `ref` is whatever git understands as a ref: a tag
 Tags are the convention; branches and SHAs are escape hatches.
 
 The second form (string `"<source>@<ref>"`) is the same thing
-shortened. The `@` splits source from ref.
+shortened, with `@` splitting source from ref.
 
 The third form (`{ path = "..." }`) is the **local
 dependency**. It points at another project on disk, typically
-because you're developing it in parallel. Edit the dependency,
-re-run your app, changes show up instantly without
-republishing.
+because you're developing it in parallel. You edit the
+dependency, re-run your app, and the changes show up instantly,
+no republishing.
 
 ### Adding a dependency
 
@@ -627,8 +612,8 @@ $ kai add github.com/kaikailang-org/manutara@v0.1.0
 `kai add` does two things atomically: clones the dependency
 and writes the entry in `kai.toml`. If the clone fails (bad
 URL, missing ref, network error), neither manifest nor
-lockfile changes. This matters: the working tree never drifts
-into an inconsistent state.
+lockfile changes: the working tree never drifts into an
+inconsistent state.
 
 ### The lockfile
 
@@ -646,11 +631,10 @@ ref = "v0.1.0"
 sha = "abc123def456..."
 ```
 
-The lockfile closes the contract. If two developers run `kai
-install` with the same `kai.toml` and the same `kai.lock`,
-they **download exactly the same SHA**, exactly the same file
-tree, exactly the same binary at the end. Reproducibility is
-the lockfile's core promise.
+If two developers run `kai install` with the same `kai.toml`
+and the same `kai.lock`, they **download exactly the same
+SHA**, the same file tree, and end up with the same binary.
+That reproducibility is the lockfile's core promise.
 
 That's why `kai.lock` is committed alongside the code: it's
 part of the project's contract. `kai.toml` declares what you
@@ -668,18 +652,16 @@ want; `kai.lock` declares what you got.
 
 ## 8.7 Version selection: MVS
 
-When a project depends transitively on the same other project
-through two paths with different declared versions, which
-version wins?
-
-kaikai handles this with **minimum-version selection (MVS)**,
-the algorithm used by Go modules. The rule is blunt but
-clear: from the set of versions declared by the transitive
-chain, the **maximum** wins.
+A project can depend transitively on another through two
+paths, each declaring a different version. kaikai picks the
+winner with **minimum-version selection (MVS)**, the algorithm
+used by Go modules. The rule is blunt but clear: of all the
+versions declared across the transitive chain, the **maximum**
+wins.
 
 If your app declares `manutara@v0.1.0` and one of its
 dependencies declares `manutara@v0.2.0`, the whole project
-uses `v0.2.0`. The underlying assumption is that versions are
+uses `v0.2.0`. MVS assumes that versions are
 backward-compatible within a major: if everyone respects
 semver, bumping to the higher number should not break anyone.
 
@@ -710,18 +692,16 @@ The cache layout:
     789abc012def.../              # another SHA of the same repo
 ```
 
-Each entry is identified by its SHA, not by the user-facing
-ref. So three different projects asking for
-`manutara@v0.1.0` share the same on-disk tree. And if at some
-point `v0.1.0` is updated upstream (tag movement, which
-shouldn't happen but does), the cache pinned to the original
+Each entry is identified by its SHA, not by the ref you see.
+So three projects asking for `manutara@v0.1.0` share the same
+on-disk tree, and if `v0.1.0` moves upstream (a moved tag
+shouldn't happen, but does), the cache pinned to the original
 SHA stays intact.
 
-`kai fetch` can be run explicitly, but **`kai run` and
+You can run `kai fetch` by hand, but **`kai run` and
 `kai build` invoke it automatically** when they detect
-unresolved deps. In practice, after `git clone`ing a project,
-`kai run main.kai` is enough: the driver downloads what's
-missing and runs.
+unresolved deps. After cloning a project, `kai run main.kai` is
+enough: the driver downloads what's missing and runs.
 
 The cache doesn't grow without bound. An entry no build has
 used in five days removes itself, and if you need it again, the
@@ -770,9 +750,9 @@ private.
 
 ### Step 2: review `pub`
 
-Walk through every `pub`. For each one, ask: is this really
-part of the module's contract, or did I leave it exported by
-inertia? Every extra `pub` is a future commitment.
+Walk through every `pub` and ask whether it's really part of
+the module's contract or a helper left exported by inertia.
+Every extra `pub` is a future commitment.
 
 ### Step 3: extract a local dependency
 
@@ -827,13 +807,12 @@ doesn't change: the imports remain the same.
 
 That's the full trajectory: from one file to modules, from
 modules to a project, from a local project to a distributed
-dependency. Every step is reversible and optional; none of them
-forces you to the next.
+dependency. Every step is reversible, and none forces you to
+the next.
 
 ## 8.10 Philosophy: simple and predictable
 
-The decisions in this chapter aren't the most expressive
-available. Other languages have more powerful module systems:
+Other languages have more expressive module systems:
 automatic re-exports, dynamic aliases, modules parameterized
 by values. kaikai picks an austere variant and stops there.
 
@@ -841,9 +820,8 @@ The reason is the same as elsewhere in the language: what
 eliminates head-scratching matters more than what adds power.
 A module system where nothing is imported without appearing
 in a visible list, where a module name is derived from its
-path, and where dependencies are pinned to an exact SHA is a
-system you can understand by reading, without having to
-mentally execute it.
+path, and where dependencies are pinned to an exact SHA can be
+understood by reading, without mentally executing it.
 
 It's the same principle as exhaustive pattern matching: if
 the compiler can take you to the exact place where you need

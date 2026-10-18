@@ -1,23 +1,20 @@
 # Appendix A · Three-stage bootstrap
 
 This appendix tells how the kaikai compiler is built from
-nothing but a plain C compiler. It's not part of the
-language the reader needs to know to program; it's part of
-the project's story, an engineering decision with lasting
+nothing but a plain C compiler. You don't need it to program
+in kaikai; it's an engineering decision with lasting
 consequences.
 
-If you find yourself asking "why does it matter how the
-compiler is compiled?", the short answer: because it
-defines whom you trust and why. A language whose compiler
-is built from a plain `cc` and nothing else is a language
-anyone can audit, reproduce, and maintain. That's technical
-freedom few modern languages offer.
+Why does it matter how the compiler is compiled? Because it
+defines whom you trust and why. A language whose compiler is
+built from a plain `cc` and nothing else is a language anyone
+can audit, reproduce, and maintain.
 
 ## A.1 The bootstrap problem
 
-A compiler is a program. Like any program, it has to be
-compiled to run. New compilers run into an immediate
-paradox: what compiles the compiler the first time?
+A compiler is a program, and like any program it has to be
+compiled to run. Every new compiler hits the same paradox:
+what compiles it the first time?
 
 Three historical answers:
 
@@ -46,7 +43,7 @@ dependency is any C compiler:
 $ cc stage0/*.c -o kaic0
 ```
 
-No frameworks, no generators, no exotic libraries. Plain C.
+No frameworks, generators, or exotic libraries: plain C.
 The file `stage0/runtime.h` is the runtime for compiled
 programs: reference counters, list and string primitives,
 panic. All of that fits in a few thousand lines.
@@ -54,19 +51,17 @@ panic. All of that fits in a few thousand lines.
 What does `kaic0` compile? **kaikai-minimal**, a deliberate
 subset of the language. The grammar and constructs in
 kaikai-minimal are documented in `docs/kaikai-minimal.md`.
-What's **not** in kaikai-minimal: algebraic effects, fibers,
-protocols, contracts, units of measure. The minimum to
-write a compiler.
+Left out: algebraic effects, fibers, protocols, contracts,
+units of measure. It's the minimum to write a compiler.
 
-Stage 0 is built to be auditable. A programmer who wants to
-understand what's going on can read the C source line by
-line: lexer, recursive-descent parser, simple type checker,
+Stage 0 is built to be auditable. If you want to understand
+what's going on, you can read the C source line by line: lexer, recursive-descent parser, simple type checker,
 C emitter. Five files.
 
 ## A.3 Stage 1: the compiler in kaikai-minimal
 
-Once `kaic0` works, we write a new compiler **in
-kaikai-minimal**. This compiler, `stage1`, does something
+With `kaic0` working, the next step is a compiler written
+**in kaikai-minimal**. This compiler, `stage1`, does something
 `kaic0` can't: it compiles the **full** language. Effects,
 fibers, protocols, contracts, all of it.
 
@@ -79,25 +74,24 @@ From here on, the C compiler is out of the picture: `kaic1`
 is enough to process programs that use everything kaikai
 offers.
 
-It's the first "self-validation": the compiler written in
+It's the first self-validation: the compiler written in
 kaikai-minimal proves that kaikai-minimal is expressive
 enough to implement a full compiler. If it weren't, this
 step wouldn't terminate.
 
 ## A.4 Stage 2: full kaikai, self-hosted
 
-`stage2` is the definitive version. Written in **full
-kaikai** (not the minimal subset), using effects, fibers,
-and everything the language offers. End-to-end idiomatic
-kaikai code.
+`stage2` is the definitive version, written in **full
+kaikai** (not the minimal subset) with effects, fibers, and
+everything the language offers: idiomatic kaikai end to end.
 
 ```sh
 $ kaic1 stage2/main.kai -o kaic2
 ```
 
-`kaic1` compiles `stage2`, producing `kaic2`. This is the
-compiler that gets distributed. The user installing kaikai
-gets `kaic2`, not `kaic0` or `kaic1`.
+`kaic1` compiles `stage2` into `kaic2`, the compiler that
+gets distributed. When you install kaikai you get `kaic2`,
+not `kaic0` or `kaic1`.
 
 The three stages, end to end:
 
@@ -112,19 +106,19 @@ self-contained. The bottom row's fixed-point check
 
 ## A.5 The fixed point: bootstrap validation
 
-There's a critical check at the end of the process:
+The process ends with a critical check:
 
 ```sh
 $ kaic2 stage2/main.kai -o kaic2-self
 $ diff kaic2 kaic2-self
 ```
 
-They must be **bit-for-bit identical**. This means `kaic2`
-compiled by `kaic1` produces exactly the same thing as
-`kaic2` compiled by itself. In other words: `kaic2` is a
-fixed point of the compilation process.
+They must be **bit-for-bit identical**: `kaic2` compiled by
+`kaic1` produces exactly the same thing as `kaic2` compiled
+by itself. `kaic2` is a fixed point of the compilation
+process.
 
-Why does this matter? Two reasons:
+It matters for two reasons:
 
 - **Detection of subtle compiler bugs.** If two compiler
   versions (`kaic1` and `kaic2`) produce different binaries
@@ -143,11 +137,10 @@ Why does this matter? Two reasons:
 
 ## A.6 Reproducible from a `cc`
 
-The practical consequence of the three-stage bootstrap is
-this: **with just a C compiler, you can rebuild kaikai
-entirely from source**. No need to have kaikai previously
-installed. No need to trust a binary downloaded from a web
-page. No `curl | bash`.
+The practical consequence: **with just a C compiler, you can
+rebuild kaikai entirely from source**. No kaikai installed
+beforehand, no binary downloaded from a web page to trust, no
+`curl | bash`.
 
 ```sh
 $ git clone https://github.com/kaikailang-org/kaikai
@@ -156,9 +149,9 @@ $ make
 ```
 
 Underneath, `make` runs the three steps: stage 0 with cc,
-stage 1 with stage 0, stage 2 with stage 1. It ends with a
-`kaic2` in the `bin/` directory, and the fixed-point
-verification ensures it's the right one.
+stage 1 with stage 0, stage 2 with stage 1. It leaves a
+`kaic2` in `bin/`, and the fixed-point check ensures it's the
+right one.
 
 This is technical freedom few modern languages give you.
 Rust requires a previous Rust (downloaded as a blob). Go
@@ -167,8 +160,8 @@ kaikai doesn't: your C compiler is the entry point.
 
 ## A.7 Costs and trade-offs
 
-The three-stage bootstrap has costs. Worth listing because
-every engineering decision has them:
+Like every engineering decision, the three-stage bootstrap
+has costs:
 
 - **Stage 0 has to be maintained whenever kaikai-minimal
   changes.** If a new language feature falls within the
@@ -194,8 +187,8 @@ follows.
 ## A.8 Going further
 
 The design decisions live in `docs/design.md` at
-`github.com/kaikailang-org/kaikai`. The physical files are under
-`stage0/`, `stage1/`, `stage2/` of the repository. Ken
-Thompson's essay *Reflections on Trusting Trust* (CACM
-1984) is worth reading if you care about the philosophical
-justification for this approach.
+`github.com/kaikailang-org/kaikai`; the files, under
+`stage0/`, `stage1/`, and `stage2/` in the repository. If you
+care about the philosophical justification for this approach,
+read Ken Thompson's *Reflections on Trusting Trust* (CACM
+1984).

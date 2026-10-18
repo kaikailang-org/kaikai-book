@@ -1,17 +1,16 @@
 # Chapter 5 · Sum types, unions, and `match`
 
-This is the chapter where, if you come from an imperative
-language, you change how you model data. Sum types and the
-`match` that goes with them are not an exotic construction:
-they are the tool that replaces half of the class hierarchies,
+If you come from an imperative language, this is the chapter
+where you change how you model data. Sum types and the `match`
+that goes with them replace half of the class hierarchies,
 flag-based enums, `instanceof` chains and visitor patterns
 you've probably been writing. Once you have them in hand, you
 don't want to give them up.
 
-The chapter goes from less to more. We start with basic sum
-types, pass through type recursion, see `match` with all its
-forms, reach unions of existing types — an idea uncommon in
-mainstream languages — and close with a complete arithmetic
+The chapter goes from less to more. You start with basic sum
+types, move through type recursion, work through every form of
+`match`, reach unions of existing types — an idea uncommon in
+mainstream languages — and finish with an arithmetic
 expression evaluator with typed errors.
 
 ## 5.1 Sum types with `|`
@@ -44,11 +43,11 @@ type Shape
   | Triangle(Real, Real, Real)
 ```
 
-`Circle(2.0)` is a `Shape` value with a real inside.
-`Rectangle(3.0, 4.0)` is another `Shape` with two values.
-`Triangle(3.0, 4.0, 5.0)` is a third. All three fall under
-the same `Shape` type, but the compiler knows which is which
-and forces us to handle them separately when we consume them.
+`Circle(2.0)` is a `Shape` value with a real inside;
+`Rectangle(3.0, 4.0)` carries two, and
+`Triangle(3.0, 4.0, 5.0)` three. All three are `Shape`, but
+the compiler knows which is which and makes you handle them
+separately when you consume them.
 
 ```kai
 fn area(s: Shape) : Real =
@@ -82,11 +81,11 @@ Three details you'll use all the time:
   `type Color = Red | Green | Blue`, kaikai creates four
   symbols: `Color` is the type, and `Red`, `Green`, `Blue`
   are simultaneously types (each with one inhabitant) and
-  values. In chapter 9 we'll see how this lets you extend a
+  values. In chapter 9 you'll see how this lets you extend a
   sum type with protocols defined for individual constructors.
 
-- **The `|` operator always means union of types.** We'll see
-  more in §5.5: `Color = Red | Green | Blue`, `EvalError =
+- **The `|` operator always means union of types.** You'll use
+  it in depth in §5.5: `Color = Red | Green | Blue`, `EvalError =
   ArithError | EnvError`, and `Result = Ok(Int) | Err(String)`
   are the same construction. The difference between
   "declaring new types" and "composing existing types" is
@@ -124,7 +123,7 @@ A constructor with no payload never takes parentheses: write
 
 ## 5.2 Constructors with and without payload
 
-You saw it above; let's pin it down. A constructor can:
+A constructor can:
 
 - **Carry no data** (`Red`, `Green`, `Blue`). It is a unique
   value of the type, with no parameters.
@@ -132,10 +131,10 @@ You saw it above; let's pin it down. A constructor can:
   `Rectangle(Real, Real)`). The constructor is applied like a
   function to the data to produce the value.
 
-There is no hard limit on how many values a constructor can
-carry — the grammar accepts them all — but for ergonomics, if
-you go past three or four positional values it pays to declare
-a record and put it in the payload. The difference between
+The grammar puts no limit on how many values a constructor
+carries, but past three or four positional values it pays to
+declare a record and put it in the payload. The difference
+between
 
 ```kai
 type Event
@@ -231,9 +230,9 @@ fn height(t: Tree) : Int {
 }
 ```
 
-The pattern `Node(_, l, r)` ignores the node's data (we don't
-care about it for height) and binds the two subtrees to `l`
-and `r`. Then we recurse on each and take max plus one.
+The pattern `Node(_, l, r)` ignores the node's data (height
+doesn't need it) and binds the two subtrees to `l` and `r`;
+the function recurses on each and adds one to the max.
 
 The same applies to an arithmetic expression AST:
 
@@ -259,8 +258,9 @@ Lit(3))), Lit(4))` is the literal representation of `-(2 + 3)
 walks it write themselves once you know how to look at it
 this way.
 
-This replaces class hierarchies with visitor patterns in OO
-languages. The key difference: in kaikai, adding a new node
+This replaces the class hierarchies with visitor patterns of
+object-oriented languages. The key difference: in kaikai,
+adding a new node
 to `Expr` is one line, and every `match` over `Expr` in the
 codebase becomes a compile error pointing at the spots that
 need attention. In a visitor pattern, you add a new method
@@ -322,7 +322,7 @@ eval = -20
 
 ## 5.4 `match`: patterns, guards, exhaustiveness
 
-You've seen `match` in action. Now we formalize.
+You've already used `match`. Here's the full picture.
 
 A `match` takes a **scrutinee expression** (what's being
 inspected) and a series of **arms**, each with a **pattern**
@@ -349,8 +349,8 @@ contains a `Point`, unpacking `x` and `y` in one pass.
 
 ### Binding or comparing: the identifier rule
 
-The last two entries in that list deserve a second look,
-because they're the same syntax doing opposite things:
+The last two entries in that list are the same syntax doing
+opposite things:
 
 ```kai
 # examples/ch05/06_constant_patterns.kai
@@ -441,11 +441,10 @@ error: non-exhaustive match on Expr: missing Neg
 
 The wildcard `_` covers everything not covered by the
 preceding arms, so a `match` with a final `_` is trivially
-exhaustive. But using `_` as a final arm instead of
-enumerating the cases is a way of **silencing** the compiler:
-when you add a new constructor to `Expr`, the `match`es with
-a final `_` will absorb it without complaint, and you'll lose
-the warning.
+exhaustive. But using `_` instead of enumerating the cases
+**silences** the compiler: when you add a constructor to
+`Expr`, the `match`es with a final `_` absorb it without
+complaint, and you lose the warning.
 
 Practical rule: use `_` only when you really don't care about
 distinguishing the rest. If there are three cases and all
@@ -504,7 +503,7 @@ quadrant(0,0)   = origin
 
 ## 5.5 Unions of existing types
 
-So far every `|` we've seen had **new names** on the right —
+So far every `|` you've written had **new names** on the right —
 `Red`, `Green`, `Lit`, `Circle` — that kaikai auto-declares
 as constructors. But the operator doesn't require new names.
 If the names on the right are **already declared as types**,
@@ -535,11 +534,11 @@ let id_err: IdentityError = AccountNotFound
 let qe: QueryError        = id_err     # OK, no ceremony
 ```
 
-This is what other languages force you to do with wrapper
-constructors (`QEIdentity(IdentityError)`), `From` impls, or
-manual conversions with `map_err`. In kaikai, none of those
-three things exist: the compiler knows `IdentityError` is a
-component of `QueryError` and rewrites the upcast for you.
+Other languages make you do this with wrapper constructors
+(`QEIdentity(IdentityError)`), `From` impls, or manual
+conversions with `map_err`. In kaikai, none of those three
+things exist: the compiler knows `IdentityError` is a component
+of `QueryError` and rewrites the upcast for you.
 
 ### Pattern matching over unions
 
@@ -598,8 +597,7 @@ correctly.
 
 ### A deliberate limitation: upcast doesn't chain
 
-There's a kaikai rule worth knowing. The implicit upcast
-**works only one step**:
+The implicit upcast **works only one step**:
 
 ```kai
 type IdentityError = AccountNotFound | KycExpired
@@ -630,9 +628,8 @@ handle_app(q)                      # another step: QueryError → AppError
 ```
 
 I left it that way on purpose. Chained subtyping makes type
-inference
-brittle and error messages hard to phrase. The "one step"
-rule keeps kaikai with a predictable type system whose
+inference brittle and error messages hard to phrase. The "one
+step" rule keeps kaikai with a predictable type system whose
 messages point to the right place.
 
 Two error families declared separately, joined in one
@@ -685,10 +682,9 @@ auth: over daily limit
 
 ## 5.6 Errors as unions, no wrappers
 
-Unions are so useful for errors that the pattern is worth
-naming. When a function can fail in several ways and those
-ways break down into clear categories, the natural pattern
-is:
+Errors are where unions pay off most. When a function can
+fail in several ways that break down into clear categories,
+the natural pattern is:
 
 1. Each category is a small sum type.
 2. The composite error is the union of the categories.
@@ -730,7 +726,7 @@ exceptions to expect. In kaikai the signature tells them.
 
 ## 5.7 Case study: evaluator with typed errors
 
-We close the chapter with an integrative case. We'll build an
+We close the chapter with an integrative case. You'll build an
 evaluator of arithmetic expressions with two categories of
 error:
 
@@ -739,7 +735,7 @@ error:
 
 The two form a union, `EvalError`, and the evaluator returns
 `Result[Real, EvalError]`. Full code in
-`examples/ch05/05_evaluator.kai`; here we walk through the
+`examples/ch05/05_evaluator.kai`; here you walk through the
 interesting parts.
 
 ### The AST
@@ -768,12 +764,11 @@ type EnvError   = Undefined(String)
 type EvalError  = ArithError | EnvError
 ```
 
-Three types: two categories and the union. Four constructors
-in total, distributed over categories that make sense on
-their own. `NegativeSqrt(Real)` carries the value that was
-passed to sqrt — useful information for the final error
-message. `Undefined(String)` carries the name of the missing
-variable.
+Three types: two categories and the union. Four constructors in
+total, distributed over categories that make sense on their own.
+`NegativeSqrt(Real)` carries the value that was passed to sqrt,
+useful for the final error message. `Undefined(String)` carries
+the name of the missing variable.
 
 ### The environment
 
@@ -794,7 +789,7 @@ argument separated by comma, with an optional `when` for
 guards. Three cases:
 
 - Empty list: variable wasn't there; return an error.
-- Head with the key we're looking for: success.
+- Head with the key being looked up: success.
 - Any other head: continue with the tail.
 
 Notice the `Err` is of type `EvalError`, not `EnvError` — but
@@ -802,11 +797,10 @@ Notice the `Err` is of type `EvalError`, not `EnvError` — but
 upcast promotes it to `EvalError` at the return site, no
 explicit conversion.
 
-`eval` (next) uses the `match`-with-wrapper form because it
-dispatches on a sum type with many constructors and the form
-`match e { ... }` reads better when the discriminator is a
-single well-marked argument. The two forms coexist in the
-same file without tension.
+`eval`, next, uses the `match e { ... }` form, which reads
+better when you dispatch on a single argument of a sum type
+with many constructors. The two forms coexist in the same
+file without tension.
 
 ### The evaluator
 
@@ -843,8 +837,8 @@ any error that appears; cases that can fail locally
 (division by zero, negative sqrt) construct an `Err` of the
 appropriate type and let the upcast promote it.
 
-The `!` operator appears several times and is worth reading
-carefully. `eval(env, a)!` means: if `eval(env, a)` returns
+The `!` appears several times; read it carefully.
+`eval(env, a)!` means: if `eval(env, a)` returns
 `Ok(v)`, bind `va` to `v`; if it returns `Err(e)`, **exit
 immediately** from the current function returning that `Err`.
 
@@ -909,9 +903,9 @@ fn print_result(r: Result[Real, EvalError]) : Unit =
 ```
 
 `describe` consumes an `EvalError` enumerating its three
-constructors. Here `match` enumerates because we want
-specific messages per constructor; in other cases — when
-the logic differs per category — we'd use narrowing.
+constructors. The `match` enumerates because each constructor
+gets its own message; if the logic differed per category,
+narrowing would fit better.
 
 The main program assembles the environment, evaluates several
 expressions, and prints them:

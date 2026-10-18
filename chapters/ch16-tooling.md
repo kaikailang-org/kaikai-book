@@ -1,15 +1,14 @@
 # Chapter 16 · Tooling: the `kai` binary
 
-Every chapter so far has focused on the language: syntax,
-types, effects, the memory model. But a language without
-tooling doesn't get used, and I think that is where several
-languages better than this one have stalled. This chapter covers
-the other side: the `kai` binary, which is the face every
-programmer interacts with every day.
+So far you've learned the language: syntax, types, effects,
+the memory model. But a language without tooling doesn't get
+used, and I think that is where several languages better than
+this one have stalled. This chapter covers the other side: the
+`kai` binary, the thing you work with every day.
 
-It's a short reference chapter. No exercises. The point is
-for you to know which command to use when, and to have the
-list at hand to come back to.
+It's a reference chapter, with no exercises. You learn which
+command to use when, and you keep the list at hand to come
+back to.
 
 ## 16.1 Compiling and running: `kai run`, `kai build`
 
@@ -20,15 +19,14 @@ $ kai run hello.kai
 hello, kaikai
 ```
 
-`kai run` compiles the file to a native binary, runs it,
-and forwards any extra arguments to the program. It's the
-edit-save-run cycle of the day-to-day. Underneath there's a
-compiler (`kaic2`) that by default lowers to a native object
-with LLVM linked into the compiler itself — no `.ll` text on
-disk, no separate `clang` process — and then runs the
-executable.
+`kai run` compiles the file to a native binary, runs it, and
+forwards any extra arguments to the program. It's your daily
+edit-save-run cycle. Underneath, the compiler (`kaic2`) lowers
+by default to a native object with LLVM linked into itself — no
+`.ll` text on disk, no separate `clang` process — and then runs
+the executable.
 
-If you want the binary without running it, use `kai build`:
+For the binary without running it, use `kai build`:
 
 ```
 $ kai build hello.kai
@@ -40,14 +38,12 @@ $ ./build/hello
 hello, kaikai
 ```
 
-`kai build` doesn't run the program: it leaves the
-executable on disk. With `-o` you specify where. The binary
-is **essentially static**: it doesn't depend on the kaikai
-compiler, only on the system's libc. You can copy it to
-another machine with the same OS and architecture and it
-will run.
+`kai build` just leaves the executable on disk; `-o` says
+where. The binary is **essentially static**: it doesn't depend
+on the kaikai compiler, only on the system's libc. Copy it to
+another machine with the same OS and architecture and it runs.
 
-For the binary you'll ship or debug, there are two profiles:
+For shipping or debugging there are two profiles:
 
 ```
 $ kai build --release app.kai    # -O2, symbols stripped:
@@ -57,15 +53,14 @@ $ kai build --debug app.kai      # -O0 with DWARF tables
 
 With `--debug`, `lldb` or `gdb` set breakpoints on `.kai`
 lines, and a panic prints the stack trace as
-`file.kai:line`. It's the native backend that builds the
-DWARF tables; on `--backend=c` the flag is a no-op. With no
-flag you get the usual middle ground: fast compilation,
-symbols kept.
+`file.kai:line`. The native backend builds the DWARF tables;
+on `--backend=c` the flag is a no-op. With no flag you get the
+middle ground: fast compilation, symbols kept.
 
 ### What your program hands back to the shell
 
-A binary talks to the shell through its **exit status**, not
-through what it prints. In kaikai that costs no system call: if
+A binary talks to the shell through its **exit status**. In
+kaikai that costs no system call: if
 `main` returns an `Int`, that integer *is* the process status.
 With any other return type the program exits 0.
 
@@ -90,52 +85,50 @@ $ echo $?
 1
 ```
 
-It's the same convention as C, Go and Rust, and it gives a
-kaikai CLI its natural exit: the `Result` you already use
-internally settles, in that final `match`, which number the
+It's the C, Go and Rust convention: the `Result` you already
+use internally settles, in that final `match`, which number the
 process leaves with. Without it, a `set -e`, a CI gate or a
 `make` reads as success what your program considers a failure.
 
-Two details you'll be glad to know when they show up:
+Two details:
 
 - **POSIX keeps the low 8 bits.** Returning `256` exits 0 and
-  `-1` exits 255. That isn't kaikai truncating — it's the
-  operating system, the same as in any other language.
+  `-1` exits 255. The operating system truncates, not kaikai,
+  same as in any other language.
 - **Buffered output still flushes.** Returning from `main` takes
-  libc's full exit path, so what you printed does make it out.
-  That sets it apart from `os.process.exit`, which cuts through
-  `_exit(2)` and can cost you the last few lines.
+  libc's full exit path, so what you printed makes it out.
+  `os.process.exit`, by contrast, cuts through `_exit(2)` and
+  can cost you the last few lines.
 
 ### Fast compilation
 
-`kai run` and `kai build` are designed to feel immediate. A
-program of a few hundred lines compiles in less than a
-second on a reasonable machine. That speed isn't an
-accident: the compiler is self-hosted (kaikai compiled in
-kaikai), avoids costly passes like global type inference
-where it doesn't need to, and lowers to LLVM in the same
-process — no intermediate files written, no external linker
-launched on the common path. For larger programs there's a
-cache (chapter 8 §8.8 covers the package cache; the per-file
-compilation cache is another story).
+`kai run` and `kai build` are designed to feel immediate: a
+program of a few hundred lines compiles in under a second on a
+reasonable machine. That's no accident. The compiler is
+self-hosted (kaikai compiled in kaikai), avoids costly passes
+like global type inference where it doesn't need them, and
+lowers to LLVM in the same process — no intermediate files
+written, no external linker launched on the common path. For
+larger programs there's a cache (chapter 8 §8.8 covers the
+package cache; the per-file compilation cache is another
+story).
 
-That "less than a second" is the steady state, which is the one
-you live in: the chapter-17 case study — 420 lines across five
-modules — builds in about 0.6 seconds. The first time, with a
-cold cache, costs several times that; on my machine, 4.1
-seconds for that same project. Worth knowing before you time a
-cold build and draw the wrong conclusion.
+That "under a second" is the steady state, the one you live
+in: the chapter-17 case study — 420 lines across five modules —
+builds in about 0.6 seconds. With a cold cache it costs several
+times that; on my machine, 4.1 seconds for the same project.
+Keep that in mind before you time a cold build and draw the
+wrong conclusion.
 
-To put it in perspective: a Rust program of comparable
-size can take 30 seconds to compile, where a kaikai program
-of the same size takes less than a second — an order of
-magnitude you feel on every save.
+For perspective, a Rust program of comparable size can take 30
+seconds to compile — an order of magnitude you feel on every
+save.
 
 ### Just check: `kai typecheck`
 
-Sometimes you want neither the binary nor to run anything: you
-just want to know whether the program is well-typed. That's what
-`kai typecheck` is for — the fastest "does this compile?" answer:
+When all you want to know is whether the program is
+well-typed — no binary, no run — `kai typecheck` is the
+fastest "does this compile?" answer:
 
 ```
 $ kai typecheck app.kai
@@ -165,35 +158,32 @@ expected there.
 The point is what `typecheck` does **not** do. It runs the
 compiler's full front-end — lexer, parser, name resolution, HM
 and effect-row inference, the kind and unit machinery, protocol-
-dispatch validation — then monomorphises, and stops there. No
-codegen, no link, no binary. All the work a `build` spends
-*after* it knows the program is correct is skipped, which is why
-it finishes in a fraction of a full compile.
+dispatch validation — then monomorphises and stops. No
+codegen, no link, no binary. It skips everything a `build`
+spends *after* it knows the program is correct, which is why it
+finishes in a fraction of the time.
 
-The diagnostics are the same: the same checking runs in both,
-`typecheck` just gets off the train earlier. If `typecheck` is
-silent, the front-end is clean.
+The checking is the same in both; `typecheck` just gets off the
+train earlier. If it's silent, the front-end is clean.
 
-The exit code is the same too, which matters if you're scripting
-it. Both exit 0 on a healthy program and 1 on any front-end
-error, whether it's a type error, a parse error or an unknown
-name. `typecheck` invents no codes of its own to tell error
-classes apart: what it prints and the number it exits with are
-what `kai build` would have given you.
+The exit code matches too, which matters if you're scripting
+it: 0 on a healthy program, 1 on any front-end error, whether
+it's a type error, a parse error or an unknown name.
+`typecheck` invents no codes of its own: what it prints and the
+number it exits with are what `kai build` would have given you.
 
 One honest limit, because the name promises a touch more:
-`typecheck` covers the front-end, not the whole pipeline. What
-stays out are backend coverage gaps — a form the front-end
-accepts and the code generator cannot emit — and those
-`typecheck` does not see. A file that passes `typecheck` almost always
-builds, but "almost always" is not "always". For total
-certainty, the judge is still `kai build`.
+`typecheck` covers the front-end, not the whole pipeline. It
+doesn't see backend coverage gaps — a form the front-end
+accepts and the code generator cannot emit. A file that passes
+`typecheck` almost always builds, but "almost always" is not
+"always". For total certainty, the judge is still `kai build`.
 
-The structured-report flags mount on `typecheck` the same way
-they do on `build` (`--diags-json`, `--holes-json`): the same
-report, without paying for codegen. That makes it the natural
-tool for chapter 15's hole loop, where each iteration costs the
-front-end and nothing more.
+The structured-report flags (`--diags-json`, `--holes-json`)
+work on `typecheck` just as on `build`: the same report,
+without paying for codegen. That makes it the natural tool for
+chapter 15's hole loop, where each iteration costs only the
+front-end.
 
 ## 16.2 Tests, properties and benchmarks
 
@@ -232,10 +222,10 @@ $ kai bench calculator.kai
 ```
 
 `kai bench` takes `--iters N` to set the iteration count
-(default 1000). For costly benchmarks, lower it; for more
-stable measurements, raise it.
+(default 1000): lower for costly benchmarks, higher for stable
+measurements.
 
-The three commands share two important properties:
+The three commands share two properties:
 
 - **They only run the relevant blocks.** `kai test` ignores
   `check` and `bench`; `kai check` ignores `test` and `bench`.
@@ -259,8 +249,8 @@ There are six operators: `arm` drops a `match` arm, `compare`
 shifts a comparison boundary (`>=` to `>`), `connect` swaps `and`
 for `or`, `negate` inverts a condition, `literal` perturbs a
 literal, and `call` elides a call. Every mutant costs one run of
-the oracle, so start with `--module` and `--limit`. §7.6 runs it
-over the evaluator and finds two holes.
+the oracle, so start with `--module` and `--limit`. In §7.6 you
+ran it over the evaluator and found two holes.
 
 ## 16.3 Formatting: `kai fmt`
 
@@ -274,10 +264,10 @@ over the evaluator and finds two holes.
 
 The width drives the layout. A construct that fits on its
 line stays there; one that doesn't breaks at its own points —
-after the `=`, one argument per line, one pipe stage per line
-— and a break you already wrote at one of those points is
-kept, so a hand-wrapped pipe chain survives the formatter.
-The default is 100 columns; `--width N` changes it for one
+after the `=`, one argument per line, one pipe stage per line.
+A break you already wrote at one of those points is kept, so
+your hand-wrapped pipe chain survives the formatter. The
+default is 100 columns; `--width N` changes it for one
 run, and the `width` key of the `[fmt]` table in `kai.toml`
 fixes it for the package:
 
@@ -295,13 +285,11 @@ $ kai fmt --check file.kai        # exit 0 if formatted, 1 if not
 $ cat file.kai | kai fmt --stdin  # read stdin, write stdout
 ```
 
-The `--check` form is for CI: if the code isn't formatted,
-the job fails and forces you to run `kai fmt` before
-merging.
+`--check` is for CI: if the code isn't formatted, the job
+fails and forces you to run `kai fmt` before merging.
 
-The `--stdin` form is for editors: your editor pipes the
-buffer to the formatter before saving, gets the canonical
-result back, and writes it.
+`--stdin` is for editors: your editor pipes the buffer to the
+formatter before saving and writes back the canonical result.
 
 ## 16.4 The linter: `kai lint`
 
@@ -326,8 +314,8 @@ Two properties define its character:
   compiler already produced, so it can tell apart what a
   text scanner can't.
 
-The clearest example of that awareness is the
-`non_tail_list_recursion` rule. A function that calls itself on
+The clearest example is the `non_tail_list_recursion` rule. A
+function that calls itself on
 the tail of a list, outside tail position, spends one stack
 frame per element, and a fiber's stack is small:
 
@@ -381,10 +369,9 @@ current state.
 
 ## 16.5 Package management: `init`, `add`, `fetch`, `update`
 
-Chapter 8 §8.5-8.8 covered the package model (`kai.toml`
-manifest, `kai.lock` lockfile, shared cache,
-minimum-version selection). Here we list the subcommands
-that orchestrate the model:
+You met the package model (`kai.toml` manifest, `kai.lock`
+lockfile, shared cache, minimum-version selection) in chapter
+8 §8.5-8.8. These are the subcommands that drive it:
 
 ```
 $ kai init myapp
@@ -397,13 +384,12 @@ $ kai update manutara       # refresh only manutara
 $ kai show                  # print parsed kai.toml
 ```
 
-`kai run` and `kai build` invoke `kai fetch` automatically
-if they detect dependencies declared in `kai.toml` but not
-resolved in `kai.lock`. In practice, after cloning a kaikai
-project, `kai run` is enough to download whatever's
-missing.
+`kai run` and `kai build` invoke `kai fetch` on their own when
+dependencies are declared in `kai.toml` but not resolved in
+`kai.lock`. After cloning a kaikai project, `kai run` is
+enough to download whatever's missing.
 
-The two names split the work the way a Rust or Go user expects:
+The names split the work the way a Rust or Go user expects:
 `fetch` resolves dependencies, and `install` does what it means
 in those ecosystems — **put a binary on your PATH** — rather than
 what it means in npm:
@@ -431,10 +417,9 @@ When `hanga-roa` closes, that form goes away.
 
 ### Shipping completions with the binary
 
-A CLI is not usable from its binary alone — half of what makes
-one pleasant is the shell completing subcommands and flags. A
-package declares the scripts it ships and `kai install` puts
-each where its shell already looks:
+Half of what makes a CLI pleasant is the shell completing
+subcommands and flags. A package declares the scripts it ships
+and `kai install` puts each where its shell already looks:
 
 ```toml
 [completions]
@@ -467,32 +452,30 @@ Don't confuse `kai update` with `kai upgrade`: `update`
 refreshes your package's **dependencies**; `upgrade` updates
 the **compiler itself** to the latest release (downloads,
 verifies the SHA-256, and swaps the binary in place, as you
-saw in chapter 1). On a Homebrew install, `upgrade` doesn't
+did in chapter 1). On a Homebrew install, `upgrade` doesn't
 touch the Cellar: it points you to `brew upgrade kaikai` and
 exits.
 
 ## 16.6 Development mode: `kai watch`
 
-`kai watch` is useful when you're iterating intensely on a
-program:
+`kai watch` is for when you're iterating hard on a program:
 
 ```
 $ kai watch main.kai
 [watching main.kai...]
 ```
 
-Every time you save the file, the watcher detects the
-change, recompiles, and runs. It lets you keep the result
-visible without going back to the terminal to type `kai
-run`. It's the fastest way to explore a change in a demo or
-a script.
+Every time you save the file, the watcher recompiles and runs.
+You keep the result in view without going back to the terminal
+to type `kai run` — the fastest way to explore a change in a
+demo or a script.
 
 ## 16.7 Editor integration: `kai lsp`
 
-`kai lsp` is the Language Server that kaikai exposes for
-editors. It implements the standard Language Server Protocol,
-so any editor with LSP support (VS Code, Neovim, Emacs,
-IntelliJ with plugin) can connect and get:
+`kai lsp` is kaikai's Language Server. It implements the
+standard Language Server Protocol, so any editor with LSP
+support (VS Code, Neovim, Emacs, IntelliJ with plugin) connects
+and gets:
 
 - Type-on-hover: hover over an expression and see its type.
 - Goto-definition: jump to where a name was declared.
@@ -508,22 +491,20 @@ IntelliJ with plugin) can connect and get:
   as warnings — the editor reminds you of what's still pending
   without breaking your flow.
 
-The exact editor configuration varies. For VS Code, there's
-an official extension that starts `kai lsp` automatically.
-For Neovim, configure `nvim-lspconfig` with `kai lsp` as the
-command.
+Setup varies by editor. VS Code has an official extension that
+starts `kai lsp` on its own. In Neovim, you configure
+`nvim-lspconfig` with `kai lsp` as the command.
 
-The LSP is the piece that makes development in kaikai
-comparable, in everyday ergonomics, to Rust or TypeScript:
-feedback is instantaneous, no need to go to the terminal to
-discover an error.
+The LSP makes everyday development in kaikai comparable to Rust
+or TypeScript: feedback is instant, with no trip to the
+terminal to discover an error.
 
 ## 16.8 Interactive documentation: `kai info`
 
 Alongside `kai lsp`, which serves the editor, sits `kai info`:
-language reference pages, organized by topic, accessible from
-the command line without opening a browser. The style is Unix
-`man` or `info`, but the content is kaikai itself.
+language reference pages, organized by topic, on the command
+line with no browser. The style is Unix `man` or `info`, but
+the content is kaikai itself.
 
 With no arguments it lists the topics it knows about:
 
@@ -577,16 +558,15 @@ Three useful flags:
 - `kai info <topic> --json` — the structured page as JSON.
 
 I added that last form on purpose: kaikai treats its own
-documentation as **data**, not as static prose. An AI agent
-can consume `kai info effects --json` and have the full
-documentation of the effect system at hand without having to
-scrape markdown or keep a clone of the language's repo. It is
-the other end of the bridge that ch. 15 opens from the holes
-side: the language gives whoever is writing code — human or
-agent — the information they need, in the format that best
-suits them.
+documentation as **data**. An AI agent consumes
+`kai info effects --json` and has the full effect-system docs
+at hand without scraping markdown or cloning the language's
+repo. It is the other end of the bridge that ch. 15 opens from
+the holes side: the language gives whoever is writing code —
+human or agent — the information they need, in the format that
+suits them best.
 
-The same idea extends to `kai build`. Three flags emit
+The idea extends to `kai build`. Three flags emit
 structured information instead of diagnostic prose:
 
 - `kai build --diags-json` — the compiler's diagnostics as
@@ -611,9 +591,9 @@ structured information instead of diagnostic prose:
   completion, signature. It is what `kai lsp` uses underneath
   for hover and go-to-definition.
 
-The three share a purpose: making the information the
-compiler already has live outside the binary, in a format
-any consumer can process without reimplementing the typer.
+All three get out of the compiler what it already knows, in a
+format any consumer can process without reimplementing the
+typer.
 
 ## 16.9 The stdlib reference: `kai doc`
 
@@ -676,22 +656,20 @@ $ kai doc date.parse
   string naming an invalid date (`2026-02-30`, `2026-13-01`).
 ```
 
-`kai doc` resolves names against the current package, not just
-the stdlib: if your project has a module carrying `#[doc("...")]`
-attributes, it reads those too: you document your code with the
-same attribute the stdlib uses, and the same tool surfaces it.
+`kai doc` also resolves names against the current package. You
+document your code with the same `#[doc("...")]` the stdlib
+uses, and the same tool surfaces it.
 
 ## 16.10 Two backends: native and C
 
 `kai build` and `kai run` have two codegen backends. The default
 is **`native`**: it lowers to LLVM linked into the compiler, in
-the same process, and emits a native object. It writes no `.ll`
-text and spawns no `clang`. Because libLLVM is linked into
-`kaic2`, the binary you produce runs the native backend with no
-system LLVM.
+the same process, and emits a native object, with no `.ll`
+text and no `clang`. Because libLLVM is linked into `kaic2`,
+the native backend needs no system LLVM.
 
-The other is **`--backend=c`**: the portable C-text backend,
-which emits C and links it with `cc`. It's the compiler's own
+The other is **`--backend=c`**: it emits C and links it with
+`cc`. It's the compiler's own
 bootstrap path and the more portable fallback. If you hit a
 construct the native backend doesn't cover yet, `--backend=c`
 usually compiles it.
@@ -701,8 +679,8 @@ $ kai build app.kai                  # native backend (default)
 $ kai build --backend=c app.kai      # portable C backend
 ```
 
-A handful of environment variables control the `kai` binary's
-behavior for special cases:
+A handful of environment variables tune `kai` for special
+cases:
 
 - **`KAI_THREADS`** (integer): how many OS threads the M:N
   scheduler of the program you run will use. With the variable
@@ -727,14 +705,13 @@ behavior for special cases:
   full libc, experiments.
 - **`KAI_STDLIB`**: override the stdlib root. By default, `kai`
   auto-detects where it lives (installed vs development
-  checkout). If you want to use an alternate version, you point
-  it here.
+  checkout). To use an alternate version, point it here.
 - **`KAI_INCLUDE`**: override the runtime headers (`runtime.h`)
   root. Same principle as `KAI_STDLIB`.
 
-For normal use you don't need to touch any of this. The binary
-comes preconfigured to find its own things, and if you want to
-see **what** it found, `kai env` prints it already resolved:
+For normal use you touch none of this: the binary finds its own
+things, and `kai env` shows you **what** it found, already
+resolved:
 
 <!-- transcripto: paths and toolchain id are per machine -->
 ```
@@ -745,11 +722,10 @@ KAI_TOOLCHAIN_ID=1791118538-57238280
 KAI_KAIC2=/Users/you/.kaikai/libexec/kaikai/kaic2
 ```
 
-It is the first question worth asking when something compiles
-on one machine and not on another: it is rarely the code,
-almost always `KAI_STDLIB` pointing somewhere else. Given a
-name as an argument it prints just that value, which is the
-convenient form for a script.
+It's the first thing to check when something compiles on one
+machine and not another: it's rarely the code, almost always
+`KAI_STDLIB` pointing somewhere else. Given a name as an
+argument it prints just that value, handy for a script.
 
 ## 16.11 Typical project structure
 
@@ -775,28 +751,27 @@ Conventions:
 
 - **`main.kai`** at the root if the project produces an
   executable. The signature must be `fn main() : ... = ...`.
-- **`lib/`** for the importable code of a library project.
-  When someone installs your package with `kai add`, what
-  they see via import is what lives under `lib/`.
+- **`lib/`** for the importable code of a library. Whoever
+  adds your package with `kai add` sees, via import, what lives
+  under `lib/`.
 - **`tests/`** for tests you prefer to keep separate (for
   example, because they're slow or use IO). Inline tests in
   the source file remain the primary pattern.
 - **`examples/<name>/`** for demos. Each demo has its own
-  `kai.toml` declaring a local dependency on the main
-  package. That lets you exercise the library as an external
-  consumer would.
+  `kai.toml` with a local dependency on the main package, so
+  you exercise the library as an external consumer would.
 
-None of this is required. `kai run file.kai` runs any
-`.kai` file regardless of where it lives. But when the
-project grows, this structure pays off.
+None of this is required: `kai run file.kai` runs any `.kai`
+file wherever it lives. But when the project grows, this
+structure pays off.
 
 ## 16.12 Talking to C: `extern "C"` and the `Ffi` effect
 
 Sooner or later you need a library that already exists in
 C: a database driver, a graphics framework, a numeric
-package. kaikai's foreign function interface (**FFI**) is
-how you call into it from kaikai code without giving up the
-type system or the effect row.
+package. With kaikai's foreign function interface (**FFI**)
+you call into it without giving up the type system or the
+effect row.
 
 ### Declaring an external function
 
@@ -816,7 +791,7 @@ $ kai run examples/ch16/ffi/01_libc_abs.kai
 |-7| = 7
 ```
 
-Reading line by line:
+Line by line:
 
 - **`extern "C" fn name(args) : T / Ffi`** declares an
   external symbol. The compiler emits a forward declaration
@@ -827,8 +802,8 @@ Reading line by line:
   `Ffi` in its row. Same discipline as `Stdout` or `File`:
   a function that talks to C says so in its signature.
 
-The compiler maps kaikai's primitive types to their C
-equivalents at the boundary:
+At the boundary, the compiler maps kaikai's primitives to
+their C equivalents:
 
 | kaikai | C |
 |---|---|
@@ -851,32 +826,30 @@ extern "C"("SetVolume") fn set_volume(level: U8) : Unit / Ffi
 ```
 
 Lists and sum types don't cross directly; records do, as structs
-by value, which we get to in a moment.
+by value, which you'll meet further down.
 
 ### Renaming the C symbol
 
-Sometimes the C symbol name clashes with a kaikai
-identifier or just reads badly inline. Use the optional
-parenthesised override:
+When the C symbol name clashes with a kaikai identifier or
+reads badly inline, use the optional parenthesised override:
 
 ```kai
 extern "C"("abs") fn c_abs(n: I32) : I32 / Ffi
 ```
 
-The kaikai-side name is `c_abs`; the linker resolves
-against `abs`. Useful when the C name is a kaikai
-keyword, when you want a kaikai-flavored name on top of a
-generic C one, or when you need two kaikai bindings that
-target the same C symbol with different signatures.
+The kaikai-side name is `c_abs`; the linker resolves against
+`abs`. Useful when the C name is a kaikai keyword, when you
+want a kaikai-flavored name, or when you need two bindings
+that target the same C symbol with different signatures.
 
 Note the `I32`. The declaration the compiler emits **is**
 the binding contract, and for a symbol the system headers
 already declare (all of libc) it must match the exact C
 type: `abs` is `int abs(int)`, so the binding says `I32`,
 not `Int` — otherwise `cc` rejects the conflicting
-redeclaration. And a symbol whose C type has no kaikai
-mapping (`size_t`, a libc struct) isn't bound directly: you
-wrap it in a small `.c`, as we'll see next.
+redeclaration. A symbol whose C type has no kaikai mapping
+(`size_t`, a libc struct) isn't bound directly: you wrap it in
+a small `.c`, as in the next section.
 
 The complete binding, with its call site:
 
@@ -896,12 +869,11 @@ $ kai run examples/ch16/ffi/02_rename.kai
 
 ### Linking against your own C code
 
-For libraries that aren't already in libc, the typical
-shape is: write a small C file with the functions you need,
-let `kai build` invoke its C compiler with that file
-included. There are two ways to wire it up, and which one is
-yours depends on whether this is a one-off program or
-something other people will use.
+For libraries that aren't in libc, you write a small C file
+with the functions you need and let `kai build` compile it with
+its C compiler. There are two ways to wire it up, depending on
+whether this is a one-off program or something other people
+will use.
 
 A minimal example. The C side:
 
@@ -942,8 +914,8 @@ $ ./app
 double(21) = 42
 ```
 
-The `CFLAGS` value lets you splice anything the host C
-compiler accepts: `-include` to expose declarations,
+`CFLAGS` lets you splice in anything the host C compiler
+accepts: `-include` to expose declarations,
 extra `.c` sources to compile in, `-l<lib>` to link
 against installed libraries, `pkg-config --cflags --libs
 <package>` to pull in the flags of a system library. It is
@@ -968,8 +940,8 @@ Every verb honors the table — `build`, `run`, `test`,
 if A and B both depend on the same shim-binding package, the
 shim compiles and links exactly once.
 
-It is declarative and nothing more: `sources`, `include`,
-`libs`, no build scripts and no free-form flags. A build
+It is purely declarative: `sources`, `include`, `libs`, no
+build scripts and no free-form flags. A build
 script is somebody else's code running on the installer's
 machine — attack surface and a reproducibility hole — and
 free-form flags would turn the manifest into a build system.
@@ -1060,31 +1032,30 @@ Out of scope, rejected at compile time:
 
 The honest rule: **only when you genuinely need the C
 library**. Each `extern "C"` is a hole in the kaikai-side
-guarantees. The compiler can't check what the C function
-does with its arguments, can't prove its effects, can't
-reason about its memory model. The `Ffi` effect at least
-makes the hole visible in the signature, but the audit
-weight of that signature is "trust the C library author"
-plus "trust the C compiler".
+guarantees. The compiler can't check what the C function does
+with its arguments, prove its effects, or reason about its
+memory model. The `Ffi` effect at least makes the hole visible
+in the signature, but auditing that signature means "trust the
+C library author" plus "trust the C compiler".
 
-For pure computation, prefer a kaikai implementation. For
-IO and OS facilities, prefer the stdlib's effects
-(`Stdout`, `File`, `NetTcp`, etc.) — those are already
-wired to C internally but in a way the language designers
-control. FFI is the right tool for binding existing C
-ecosystems you don't want to rewrite: drivers, native UI
-toolkits, hardware-specific libraries.
+For pure computation, prefer a kaikai implementation. For IO
+and OS facilities, prefer the stdlib's effects (`Stdout`,
+`File`, `NetTcp`, etc.) — they're already wired to C
+internally, in a way the language designers control. FFI is
+the tool for binding existing C ecosystems you don't want to
+rewrite: drivers, native UI toolkits, hardware-specific
+libraries.
 
-A small heuristic: if you find yourself writing a lot of
-`extern "C"` declarations to wrap something, and the library
-has a stable C API, that's a candidate to package as a
-reusable kaikai binding the rest of the ecosystem can import,
-instead of repeating the declarations in every project.
+A heuristic: if you find yourself writing a lot of
+`extern "C"` declarations to wrap a library with a stable C
+API, package them as a reusable kaikai binding the rest of the
+ecosystem can import, instead of repeating the declarations in
+every project.
 
 ## 16.13 Editions: stability without stagnation
 
-There's one decision the rest of the book takes for granted
-without quite explaining it: kaikai uses **editions** to
+The rest of the book takes one decision for granted without
+quite explaining it: kaikai uses **editions** to
 separate *what we promise won't change* from *what we
 reserve the right to move*. The idea isn't new — Rust
 formalized it in 2014 — but kaikai takes it seriously from
@@ -1109,28 +1080,26 @@ internal variant layout, fiber stack format, on-disk cache
 format, exact diagnostic wording, typer passes, Perceus
 internals, performance characteristics.
 
-Now the part to be clear about today: **the contract is
-sealed when the edition closes, not before.** `hanga-roa` is
-the edition where that surface is still being decided. An
-incompatible change to the list above isn't a broken
-promise — it's the work of building one. A `pub` signature is
-put to the test, and if it does not earn its place, it leaves.
+What you need to be clear about today: **the contract is
+sealed when the edition closes, not before.** In `hanga-roa`
+that surface is still being decided. An incompatible change to
+the list above is part of the work of building the promise; it
+doesn't break it. A `pub` signature is put to the test, and if
+it does not earn its place, it leaves.
 
 Those changes don't get buried in git history. They're
 recorded as they happen in the language repository's
 `docs/editions.md`, under *Breaking changes accumulated for
-the Orongo cut*, each with its migration written beside it.
-That list is what will feed the release notes and the
-`kai migrate` rules when `orongo` closes the edition. Until
-then it's your changelog: the thing you read before you
-upgrade.
+the Orongo cut*, each with its migration beside it. That list
+will feed the release notes and the `kai migrate` rules when
+`orongo` closes the edition. Until then it's your changelog:
+what you read before you upgrade.
 
-So the commitment comes in two tenses. Today, under
-`hanga-roa`: breaking changes are few, recorded, and ship
-with migration guidance. Later, under `orongo`: the surface
-is pinned and upgrading the compiler stops requiring any
-reading first. An edition isn't the promise that nothing
-moves; it's the mechanism that decides when it stops moving.
+The commitment comes in two tenses. Today, under `hanga-roa`,
+breaking changes are few, recorded, and ship with migration
+guidance. Under `orongo`, the surface is pinned and upgrading
+the compiler stops requiring any reading first. The edition is
+the mechanism that decides when the surface stops moving.
 
 ### How you declare it
 
@@ -1154,26 +1123,25 @@ native p2:      active
 home:           https://kaikai-lang.org
 ```
 
-The first line is the one you want here: version and edition.
-The other three are build diagnostics — how many demos the
-baseline covers, which native backend came up active — and
-you'll want them when you report a problem.
+The first line gives you version and edition. The other three
+are build diagnostics — how many demos the baseline covers,
+which native backend came up active — and you'll want them
+when you report a problem.
 
 If `kai.toml` omits the field, the compiler assumes the
-installation's default edition. Recommendation: as soon as a
-package is going to live past a weekend, pin it explicitly.
-It's the difference between "compiles today" and "will
-keep compiling."
+installation's default edition. As soon as a package is going
+to live past a weekend, pin it explicitly: it's the difference
+between "compiles today" and "will keep compiling."
 
 ### Multi-edition: old code, new compiler
 
-The kaikai compiler accepts **any edition it knows about**.
-If your package declares `edition = "tongariki"` and the
-installation is on `hanga-roa`, the compiler applies the
-tongariki rules to that package — even when another package
-on the same machine builds against hanga-roa. That's the
-mechanic behind "stability without stagnation": you don't
-have to migrate your whole world at once.
+The compiler accepts **any edition it knows about**. If your
+package declares `edition = "tongariki"` and the installation
+is on `hanga-roa`, the compiler applies the tongariki rules to
+that package — even when another package on the same machine
+builds against hanga-roa. That's the mechanic behind
+"stability without stagnation": you don't have to migrate your
+whole world at once.
 
 When an edition is sunset (after the ecosystem has migrated),
 later kaikai releases may drop support for it. Until then,
@@ -1203,7 +1171,7 @@ own** `kai.toml`:
 ahu = true
 ```
 
-The idea: nobody uses an API in flux without knowing. The
+That way nobody uses an API in flux without knowing, and the
 edition contract still covers everything else.
 
 ### Existing editions
@@ -1231,21 +1199,19 @@ keeps compiling.
 
 ## 16.14 Philosophy: three principles of the tooling
 
-If you want to keep the overall feel of the tooling, three
-ideas:
+The tooling comes down to three ideas:
 
 1. **Speed first.** Compiling and running must feel
-   immediate. If the edit-save-run cycle is slow, the
-   programmer writes less code, tests less, and builds less
-   confidence. All of kaikai's tooling is designed against
-   that clock.
+   immediate. If the edit-save-run cycle is slow, you write
+   less code, test less, and trust what you have less. All of
+   kaikai's tooling is designed against that clock.
 
 2. **One right way for each thing.** A canonical formatter
    with no options. A package manager with MVS and no
    complex resolution. A test system integrated into the
-   language. The philosophy is the same as Go's: minimize
-   the decisions the programmer has to make about how to
-   use the tools, to free time for deciding what to build.
+   language. The philosophy is Go's: minimize the decisions
+   about how to use the tools, so your time goes to deciding
+   what to build.
 
 3. **What matters is what comes out of the compiler.**
    Precise diagnostics, exact counterexamples, structured
@@ -1254,9 +1220,9 @@ ideas:
    is what makes kaikai usable, before any sophisticated
    IDE.
 
-These aren't empty words. Every time the language grows a
-feature, the question "how is this going to feel in the
-tooling?" gets asked before "is it theoretically elegant?".
+Every time the language grows a feature, the question "how is
+this going to feel in the tooling?" gets asked before "is it
+theoretically elegant?".
 Sometimes elegance wins (algebraic effects do pay some
 tooling complexity); sometimes tooling wins (exhaustiveness
 rules and local inference get tuned to make the messages

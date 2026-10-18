@@ -6,9 +6,9 @@ nombres con `let`. También introduce algo que ya viste de pasada y
 ahora vas a fijar bien: **`if` y los bloques son expresiones**, no
 sentencias.
 
-Si leíste el capítulo 2, lo que viene es el contenido concreto de
-las advertencias vistas allí. Si no lo leíste y vienes de un
-mundo imperativo, revísalo. Te ahorra fricción.
+Si leíste el capítulo 2, aquí encuentras el contenido concreto
+de sus advertencias. Si no lo leíste y vienes de un mundo
+imperativo, revísalo: te ahorra fricción.
 
 ## 3.1 Los siete tipos primitivos
 
@@ -35,8 +35,8 @@ una variable. Un `println(...)` devuelve `Unit`. Un bloque que
 termina sin un valor explícito devuelve `Unit`.
 
 `Nothing` es el opuesto: cero habitantes. Ninguna expresión
-produce un `Nothing` que el programa pueda usar. ¿Para qué
-sirve, entonces? Para describir el tipo de retorno de cosas que
+produce un `Nothing` que el programa pueda usar. Sirve para
+describir el tipo de retorno de cosas que
 **nunca terminan normalmente**: un `panic(...)` que aborta el
 proceso, un loop infinito, una función `forever` cuyo cuerpo no
 puede salir. Una función `fn loop_eterno() : Nothing` le dice al
@@ -45,10 +45,10 @@ inalcanzable, y por eso una expresión de tipo `Nothing` calza en
 cualquier contexto donde se espere otro tipo. Te vas a topar con
 `Nothing` rara vez, pero conviene tener el nombre.
 
-Estos siete no son los únicos números del lenguaje. Hay enteros
-de ancho fijo y tipos de precisión arbitraria, que aprendes en la
-sección 3.4, pero estos son los que vas a teclear el 95% del
-tiempo.
+`Int` y `Real` no son los únicos números del lenguaje: la
+sección 3.4 presenta enteros de ancho fijo y tipos de precisión
+arbitraria. Pero estos siete son los que vas a teclear el 95%
+del tiempo.
 
 ## 3.2 Literales e interpolación de strings
 
@@ -165,9 +165,9 @@ mismas reglas para strings, `Char`, triple comilla e
 interpolación.
 
 Los `Char` se escriben con comilla simple: `'a'`, `'\n'`,
-`'\u{2603}'`. Un `Char` no es un `String` de longitud uno, son
-tipos distintos. Eso evita una familia de errores propios de
-los lenguajes que confunden ambos.
+`'\u{2603}'`. Un `Char` y un `String` de longitud uno son tipos
+distintos, lo que evita una familia de errores propios de los
+lenguajes que confunden ambos.
 
 Los tres mecanismos juntos, en un programa que corre:
 
@@ -245,10 +245,9 @@ println("x / y = #{x / y}")      # 3.5: sobre Real, hay parte
                                  #       fraccionaria
 ```
 
-Si vienes de Python 3, hay un cambio de hábito. Allá `/`
-siempre devuelve flotante; en kaikai el tipo manda: `Int /
-Int` es `Int`, y si quieres parte fraccionaria conviertes
-explícitamente o trabajas con `Real` desde el principio.
+Si vienes de Python 3, hay un cambio de hábito: allá `/`
+siempre devuelve flotante; en kaikai el tipo manda, y
+`Int / Int` es `Int`.
 
 Y con negativos hay un segundo cambio de hábito, más
 traicionero porque no da error: **`/` trunca hacia cero, y el
@@ -400,7 +399,7 @@ n32 + 1 = 11
 de vuelta = 11
 ```
 
-¿Cuándo los usas? Sobre todo en la frontera con C: en una firma
+Se usan sobre todo en la frontera con C: en una firma
 `extern "C"`, un `Int32` cruza como `int32_t`, un `UInt64` como
 `uint64_t`: el ancho que declaras es el ancho que viaja
 (capítulo 16). `Int128` además sirve solo: alcanza ~38 dígitos
@@ -439,9 +438,9 @@ lógica. La forma corta es el **constructor posicional**: un tipo
 marcado con el atributo `#[constructor]` deja que `Tipo(args)`
 llame a la función que lo construye de verdad. `Rational(1, 2)`
 es `rational.make(1, 2)`, con la reducción incluida; `Complex(1.5,
-2.0)` es `complex.mk(...)`. Es azúcar, no magia: la aridad tiene
-que calzar con la función marcada: `Rational(5)`, con un solo
-argumento, no existe (para eso está `rational.from_int(5)`).
+2.0)` es `complex.mk(...)`. Es azúcar: la aridad tiene que
+calzar con la función marcada, así que `Rational(5)`, con un
+solo argumento, no existe (para eso está `rational.from_int(5)`).
 
 El ejemplo `ejemplos/cap03/06_numeros_grandes.kai` muestra los
 tres en acción:
@@ -480,8 +479,7 @@ let x: Int  = 42
 let y: Real = 3.14
 ```
 
-La anotación no es solo decoración. Sirve para dos cosas:
-documentar la intención cuando el tipo no es obvio, y guiar al
+La anotación sirve para dos cosas: documentar la intención cuando el tipo no es obvio, y guiar al
 inferidor en los pocos casos en que la inferencia local no
 alcanza. La regla práctica es **anotar los argumentos y el
 retorno de las funciones públicas, dejar los `let` locales sin
@@ -655,7 +653,7 @@ valores.
 ## 3.8 Tres formas de cuerpo de función
 
 El cuerpo de una función puede tomar **tres formas**. Lo viste
-en el capítulo 1 y lo fijamos aquí; el cap. 6 vuelve sobre ellas
+en el capítulo 1, aquí lo fijas, y el cap. 6 vuelve sobre ellas
 con más profundidad.
 
 Forma corta, con `=` y una sola expresión:

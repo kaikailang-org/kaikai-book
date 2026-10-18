@@ -12,8 +12,8 @@ components sharing the same numeric type but not the same
 interpretation. Passing seconds where milliseconds are
 expected. Adding balances in different currencies. Mixing a
 `UserId` with an `OrderId` because both are integers. In
-every case, the language's type system sees two numbers or
-two strings and has no way to distinguish them.
+every case the type system sees two numbers or two strings
+and has no way to tell them apart.
 
 kaikai solves this whole family with a single construct:
 **units of measure**. The idea, inherited from F#, is that
@@ -23,19 +23,19 @@ mixes incompatible units. The unit **lives in the type**,
 **is erased at runtime**, and is documented in every
 signature it touches.
 
-And if §2.6 left you with the idea that in kaikai the type is
-not the only label, this chapter is where that idea becomes
-tangible: units are your first full-body encounter with a
-**kind** — a family of labels with its own algebra, distinct
-from types. You have already used another one without looking
-at it head-on (the effect row); this is the first one you will
-declare and manipulate yourself.
+If §2.6 left you with the idea that in kaikai the type is
+not the only label, here that idea becomes tangible: units are
+your first full-body encounter with a **kind** — a family of
+labels with its own algebra, distinct from types. You've
+already used another one without looking at it head-on (the
+effect row); this is the first one you declare and manipulate
+yourself.
 
-This chapter covers classical units (physics, finance, time)
-and their less obvious but more frequent use in day-to-day
-code: **branded types**, where the unit is just a label
-distinguishing types that the language, without it, would
-treat as the same.
+You'll learn the classical units (physics, finance, time) and
+their less obvious but more frequent use in day-to-day code:
+**branded types**, where the unit is just a label
+distinguishing types that the language would otherwise treat
+as the same.
 
 ## 10.1 `unit` and annotated literals
 
@@ -50,9 +50,9 @@ unit kg
 ```
 
 That's the whole declaration: `unit USD` introduces a symbol
-`USD` the type system can use as an annotation. There's no implementation,
-no runtime value — `unit` only declares the existence of the
-symbol.
+`USD` the type system can use as an annotation. No
+implementation, no runtime value — `unit` only declares that
+the symbol exists.
 
 To annotate a number with a unit, use angle brackets in the
 literal:
@@ -75,8 +75,8 @@ Three things to pin down:
   convention, SI units go in lowercase (`m`, `s`, `kg`),
   person-named in titlecase (`Newton`, `Pascal`), and
   currencies in uppercase per ISO 4217 (`USD`, `EUR`,
-  `CLP`). The compiler enforces none of these conventions —
-  it's community style.
+  `CLP`). These are community conventions; the compiler
+  enforces none of them.
 
 ## 10.2 Arithmetic with units
 
@@ -117,16 +117,16 @@ try:
 let mix = price + 1.20<EUR>     # type error
 ```
 
-the compiler rejects with an error saying "expected `USD`,
-got `EUR`". The program never runs with mixed values; the bug
-is caught at compile time, before it can do anything.
+the compiler rejects it with an error saying "expected
+`USD`, got `EUR`". The program never runs with mixed values;
+the bug is caught before it can do anything.
 
 The broader rule:
 
 - **`+`, `-`** between two values of the same unit: legal,
   preserves the unit.
 - **`*`, `/`** between values with units: legal, **composes
-  the units**. See §10.3.
+  the units**. You'll try it in §10.3.
 - **`+`, `-`** between distinct units: type error.
 - **Comparisons (`<`, `==`)** between distinct units: type
   error.
@@ -134,8 +134,8 @@ The broader rule:
 Arithmetic with a value without a unit and one with a unit
 is asymmetric. Multiplying by a scalar (`2.0 * price`) is
 legal — the scalar is treated as dimensionless. Adding a
-scalar (`price + 1.0`) is an error: we don't know what unit
-the `1.0` is in.
+scalar (`price + 1.0`) is an error: there's no telling what
+unit the `1.0` is in.
 
 ## 10.3 Unit algebra: product, quotient, power
 
@@ -165,9 +165,8 @@ to `m^2`, `sec / sec` cancels to no-unit, `(m / sec) *
 symbols — and any expression legal in elementary math over
 units is legal in kaikai.
 
-Put in a program, what you see is the unit riding along with
-the value all the way to the print, `sec^2` included — a unit
-nobody declared:
+In a program, the unit rides along with the value all the
+way to the print, `sec^2` included — a unit nobody declared:
 
 ```kai
 # examples/ch10/02_unit_algebra.kai
@@ -258,11 +257,11 @@ same unit: 686.7 kg m/sec^2
 Dividing two measurements rarely lands on a round number. A
 hundred meters in 9.58 seconds is 10.438413361169102 m/sec, and
 that is what a `Real` prints: as many digits as it takes to read
-back as the same number. For a report you want two decimals, and
-the natural question follows: does rounding hand me back a bare
-number?
+back as the same number. For a report you want two decimals,
+and the natural worry is that rounding hands you back a bare
+number.
 
-It does not. The rounding family in `math.real` — `trunc`,
+It doesn't. The rounding family in `math.real` — `trunc`,
 `floor`, `ceil`, `round`, `round_half_even`, `round_to` — is
 generic over `Measure`, the same way the `average` you write in
 §10.4 is. A `Real<u>` goes in and a `Real<u>` comes out.
@@ -301,10 +300,10 @@ is where the compiler checks it.
 
 ## 10.4 Generic units
 
-So far, each function operates on a concrete unit. But many
+So far each function operates on a concrete unit, but many
 operations are **unit-agnostic** — averaging, summing,
-sorting, finding the maximum. Those functions are written
-**generic over the unit**, just as a function can be generic
+sorting, finding the maximum. Those are written **generic
+over the unit**, just as a function can be generic
 over the element type of a list.
 
 ```kai
@@ -317,7 +316,8 @@ fn average[u: Measure](a: Real<u>, b: Real<u>) : Real<u> =
 unit. And `Measure` is not a one-off: it is one entry in the
 language's kind catalog (`stdlib/core/kinds.kai`), the same
 mechanism that classifies types, effects, currencies and
-memory regions — chapter 19 walks through all of it. The
+memory regions — you'll walk through all of it in chapter
+19. The
 function `average` takes two `Real<u>` and returns
 a `Real<u>` — the "for any u" lets you use it with `USD`,
 `kg`, `m/sec`, anything, **as long as the two arguments
@@ -368,15 +368,15 @@ the program doesn't compile.
 Generic units are what makes the system **scalable**. Stdlib
 functions (`list.sum`, `list.max`, `list.min`) are
 polymorphic over the unit: pass a `[Real<USD>]`, you get
-`Real<USD>`. Pass `[Real<kg>]`, you get `Real<kg>`. The unit
+`Real<USD>`; pass `[Real<kg>]`, you get `Real<kg>`. The unit
 is preserved without you naming it.
 
 ## 10.5 Explicit conversions
 
-What if you **do** want to mix two distinct units? For
-example, adding a USD balance with an EUR one. The compiler
-doesn't allow it accidentally, but it does allow it with an
-**explicit conversion**.
+Sometimes you **do** want to mix two distinct units — adding
+a USD balance to an EUR one, say. The compiler won't let you
+do it by accident, but it will with an **explicit
+conversion**.
 
 The technique is a conversion factor carrying the quotient
 unit `dest/source`. Multiplying by it cancels the source
@@ -396,23 +396,20 @@ correct — if you put the rate the wrong way around
 `let`.
 
 Mental rule: **conversion is multiplication by a factor
-whose units cancel at the output**. It's exactly what
-physicists do by hand when they write "10 km × 1000 m/km =
-10000 m". kaikai forces writing that multiplication
-explicitly.
+whose units cancel at the output**. It's what you do by hand
+in physics when you write "10 km × 1000 m/km = 10000 m";
+kaikai makes you write that multiplication.
 
-I did it on purpose, and I think it also frees you. On purpose
-because forcing a visible conversion makes the programmer
-think about what rate they're using, when it was applied, and
-where it came from. Freeing because once the conversion is
-written, the compiler guarantees you didn't forget it
-anywhere.
+I did it on purpose, and I think it also frees you. A visible
+conversion makes you think about what rate you're using, when
+it applies, and where it came from; and once it's written,
+the compiler guarantees you didn't forget it anywhere.
 
 ## 10.6 Branded types
 
 Units are useful when the value "has a physical dimension":
 meters, kilograms, dollars. But the same machinery applies
-to a more everyday and more frequent case:
+to a more everyday case:
 **distinguishing values that have the same underlying type
 but mean different things**.
 
@@ -446,9 +443,7 @@ let order_id: Int<OrderId> = 99<OrderId>
 cancel_order(user_id)   # type ERROR: UserId ≠ OrderId
 ```
 
-Here the compiler catches the mix-up at compile time, where a
-plain `Int` signature would have waved it through. The technique
-of using a unit as a **label** over a numeric type is called
+Using a unit as a **label** over a numeric type is called a
 **branded type**, and it's one of the uses that pays off most
 in everyday code. Typical cases:
 
@@ -517,10 +512,10 @@ timeout = 30
 
 ### Zero cost at runtime
 
-Units are erased after type checking. The binary that `kai
-build` produces operates with plain `Int`, plain `Real`,
-plain `String`. The unit **doesn't exist** at runtime: no
-tag, no dynamic verification, no overhead. The promise is
+Units are erased after type checking. The binary that
+`kai build` produces operates with plain `Int`, `Real`, and
+`String`. The unit **doesn't exist** at runtime: no tag, no
+dynamic verification, no overhead. The promise is
 the same as algebraic effects and contracts: information in
 the type, zero cost at runtime.
 
@@ -595,12 +590,12 @@ compile. If the rate were inverted (`<EUR / USD>` instead of
 `<USD / EUR>`), neither would. The full wallet is **a
 mini-type-system over money** that the compiler upholds.
 
-What happens the day a colleague arrives and adds a new
-currency? They declare a `unit JPY`, add its rate, and the
-rest of the code keeps compiling or not as appropriate. No
+The day a colleague adds a new currency, they declare a
+`unit JPY`, add its rate, and the rest of the code keeps
+compiling or not as appropriate. No
 old calculation breaks — types are orthogonal — and
 calculations that need to consider JPY have to say so
-explicitly. It's the same principle chapter 5 showed with
+explicitly. It's the principle you met in chapter 5 with
 union errors: adding a new component is safe because the
 compiler walks you to the exact place needing change.
 
@@ -615,10 +610,9 @@ let total = add(usd_balance, eur_balance)   # compiles, sums values
 ```
 
 It works, returns a number, and produces a total that
-**means nothing**. In kaikai with units, the same program
-doesn't compile. The bug that in other languages is
-discovered in production — or never, depending on luck —
-doesn't exist here.
+**means nothing**. With units, the same program doesn't
+compile: the bug that other languages discover in production
+— or never, depending on luck — doesn't exist here.
 
 A note for production code: the stdlib ships a `money`
 module with the ISO currencies already declared and a
@@ -626,7 +620,7 @@ module with the ISO currencies already declared and a
 arithmetic, not floating point). It uses its own kind,
 `Currency`, stricter than `Measure`: adding and scaling are
 allowed, but `USD^2` or `USD*EUR` cannot even be written.
-Chapter 19 explains that difference; for learning the
+You'll find that difference in chapter 19; for learning the
 mechanics of units, this chapter's `Real<USD>` is the way.
 
 ## Exercises

@@ -1,24 +1,20 @@
 # Apéndice A · Bootstrap de tres etapas
 
 Este apéndice cuenta cómo se construye el compilador de kaikai
-desde cero, partiendo de un compilador de C corriente. No es
-parte del lenguaje que el lector necesita conocer para
-programar; es parte del relato del proyecto, una decisión de
+desde cero, partiendo de un compilador de C corriente. No lo
+necesitas para programar en kaikai; es una decisión de
 ingeniería con consecuencias durables.
 
-Si te preguntas "¿por qué importa cómo se compila el compilador?",
-la respuesta corta: porque define a quién le crees y por qué.
-Un lenguaje cuyo compilador se construye desde una `cc` y nada
-más es un lenguaje que cualquiera puede auditar, reproducir, y
-mantener. Eso es libertad técnica de la que pocos lenguajes
-modernos gozan.
+¿Por qué importa cómo se compila el compilador? Porque define a
+quién le crees y por qué. Un lenguaje cuyo compilador se
+construye desde una `cc` y nada más es un lenguaje que
+cualquiera puede auditar, reproducir y mantener.
 
 ## A.1 El problema del bootstrap
 
-Un compilador es un programa. Como cualquier programa,
-necesita ser compilado para correr. Los compiladores nuevos
-tropiezan con una paradoja inmediata: ¿qué compila al
-compilador la primera vez?
+Un compilador es un programa, y como cualquier programa hay
+que compilarlo para correrlo. Todo compilador nuevo tropieza
+con la misma paradoja: ¿qué lo compila la primera vez?
 
 Tres respuestas históricas:
 
@@ -47,8 +43,8 @@ dependencia es un compilador de C cualquiera:
 $ cc stage0/*.c -o kaic0
 ```
 
-Sin frameworks, sin generadores, sin bibliotecas exóticas. C
-plano. El archivo `stage0/runtime.h` es el runtime de los
+Sin frameworks, generadores ni bibliotecas exóticas: C plano.
+El archivo `stage0/runtime.h` es el runtime de los
 programas compilados: contadores de referencia, primitivas de
 listas y strings, panic. Todo eso entra en unos pocos miles de
 líneas.
@@ -56,21 +52,19 @@ líneas.
 ¿Qué compila `kaic0`? **kaikai-minimal**, un subconjunto
 deliberado del lenguaje. La gramática y las construcciones que
 caben en kaikai-minimal están documentadas en
-`docs/kaikai-minimal.md`. Lo que **no** está en
-kaikai-minimal: efectos algebraicos, fibras, protocolos,
-contratos, unidades de medida. Lo mínimo para escribir un
-compilador.
+`docs/kaikai-minimal.md`. Quedan fuera los efectos
+algebraicos, las fibras, los protocolos, los contratos y las
+unidades de medida: es lo mínimo para escribir un compilador.
 
-Stage 0 está hecho para ser auditable. Un programador que
-quiera entender qué es lo que está pasando puede leer el
-código C línea por línea: lexer, parser recursive-descent,
+Stage 0 está hecho para ser auditable. Si quieres entender qué
+pasa, puedes leer el código C línea por línea: lexer, parser recursive-descent,
 chequeo de tipos simple, emisor de C. Cinco archivos.
 
 ## A.3 Stage 1: el compilador en kaikai-minimal
 
-Una vez que `kaic0` funciona, escribimos un compilador nuevo
-**en kaikai-minimal**. Este compilador, `stage1`, hace algo
-que `kaic0` no puede: compila el lenguaje **completo**.
+Con `kaic0` funcionando, el siguiente paso es un compilador
+escrito **en kaikai-minimal**. Este compilador, `stage1`, hace
+algo que `kaic0` no puede: compila el lenguaje **completo**.
 Efectos, fibras, protocolos, contratos, todo.
 
 ```sh
@@ -81,25 +75,25 @@ $ kaic0 stage1/main.kai -o kaic1
 partir de ahí, el compilador de C ya no participa: `kaic1` es
 suficiente para procesar programas que usan todo kaikai.
 
-Es la primera "auto-validación": el compilador escrito en
+Es la primera auto-validación: el compilador escrito en
 kaikai-minimal demuestra que kaikai-minimal es lo bastante
 expresivo como para implementar un compilador completo. Si no
 lo fuera, este paso no terminaría.
 
 ## A.4 Stage 2: kaikai completo, self-hosted
 
-`stage2` es la versión definitiva. Está escrito en **kaikai
-completo** (no en el subconjunto minimal), usando efectos, fibras,
-y todo lo que el lenguaje ofrece. Es código kaikai idiomático
-de extremo a extremo.
+`stage2` es la versión definitiva, escrita en **kaikai
+completo** (no en el subconjunto minimal) con efectos, fibras y
+todo lo que el lenguaje ofrece: código kaikai idiomático de
+extremo a extremo.
 
 ```sh
 $ kaic1 stage2/main.kai -o kaic2
 ```
 
-`kaic1` compila `stage2`, produciendo `kaic2`. Este es el
-compilador que se distribuye. El usuario que instala kaikai
-recibe `kaic2`, no `kaic0` ni `kaic1`.
+`kaic1` compila `stage2` y produce `kaic2`, el compilador que
+se distribuye. Al instalar kaikai recibes `kaic2`, no `kaic0`
+ni `kaic1`.
 
 Las tres etapas, de punta a punta:
 
@@ -115,19 +109,19 @@ mismo) es lo que cubre §A.5.*
 
 ## A.5 El punto fijo: validación del bootstrap
 
-Hay una verificación crítica que hace al final del proceso:
+Al final del proceso hay una verificación crítica:
 
 ```sh
 $ kaic2 stage2/main.kai -o kaic2-self
 $ diff kaic2 kaic2-self
 ```
 
-Tienen que ser **bit-por-bit idénticos**. Esto significa que
-`kaic2` compilado por `kaic1` produce exactamente lo mismo que
-`kaic2` compilado por sí mismo. En otras palabras: `kaic2` es
-un punto fijo del proceso de compilación.
+Tienen que ser **bit por bit idénticos**: `kaic2` compilado
+por `kaic1` produce exactamente lo mismo que `kaic2` compilado
+por sí mismo. `kaic2` es un punto fijo del proceso de
+compilación.
 
-¿Por qué importa esto? Por dos razones:
+Importa por dos razones:
 
 - **Detección de errores sutiles en el compilador.** Si dos
   versiones del compilador (`kaic1` y `kaic2`) producen
@@ -146,11 +140,10 @@ un punto fijo del proceso de compilación.
 
 ## A.6 Reproducible desde una `cc`
 
-La consecuencia práctica del bootstrap de tres etapas es esta:
-**con solo un compilador de C, puedes reconstruir kaikai
-entero desde el código fuente**. No hace falta tener kaikai
-previamente instalado. No hace falta confiar en un binario
-descargado de una página web. No hace falta `curl | bash`.
+La consecuencia práctica: **con solo un compilador de C puedes
+reconstruir kaikai entero desde el código fuente**. No
+necesitas kaikai instalado, ni confiar en un binario
+descargado de una página web, ni `curl | bash`.
 
 ```sh
 $ git clone https://github.com/kaikailang-org/kaikai
@@ -159,9 +152,9 @@ $ make
 ```
 
 Por dentro, `make` ejecuta los tres pasos: stage 0 con cc,
-stage 1 con stage 0, stage 2 con stage 1. Termina con un
-`kaic2` en el directorio `bin/`, y la verificación de punto
-fijo asegura que es el correcto.
+stage 1 con stage 0, stage 2 con stage 1. Deja un `kaic2` en
+`bin/`, y la verificación de punto fijo asegura que es el
+correcto.
 
 Esto es libertad técnica que pocos lenguajes modernos te dan.
 Rust requiere un Rust previo (descargado como blob). Go
@@ -170,8 +163,8 @@ no: tu compilador de C es el punto de entrada.
 
 ## A.7 Costos y trade-offs
 
-El bootstrap de tres etapas tiene costos. Vale enumerarlos
-porque toda decisión de ingeniería los tiene:
+Como toda decisión de ingeniería, el bootstrap de tres etapas
+tiene costos:
 
 - **Hay que mantener stage 0 cada vez que cambia
   kaikai-minimal.** Si una característica nueva del lenguaje
@@ -185,8 +178,8 @@ porque toda decisión de ingeniería los tiene:
   autosuficiente.
 - **Compilar todo desde cero toma tiempo.** No mucho (los
   tres pasos juntos toman menos de un minuto en una máquina
-  razonable), pero más que un solo `cargo build`. Para CI
-  contínuo, importa.
+  razonable), pero más que un solo `cargo build`. En CI
+  continua, importa.
 
 ¿Vale la pena? La respuesta del proyecto es sí, y la razón es
 filosófica: el compilador es la pieza de software más confiada
@@ -197,8 +190,7 @@ sigue.
 ## A.8 Para profundizar
 
 Las decisiones de diseño viven en `docs/design.md` de
-`github.com/kaikailang-org/kaikai`. Los archivos físicos están bajo
-`stage0/`, `stage1/`, `stage2/` del repositorio. Hay un
-ensayo de Ken Thompson, *Reflections on Trusting Trust* (CACM
-1984), que vale la pena leer si te interesa la justificación
-filosófica de este enfoque.
+`github.com/kaikailang-org/kaikai`; los archivos, bajo
+`stage0/`, `stage1/` y `stage2/` del repositorio. Si te
+interesa la justificación filosófica de este enfoque, lee
+*Reflections on Trusting Trust* de Ken Thompson (CACM 1984).

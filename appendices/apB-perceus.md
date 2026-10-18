@@ -6,16 +6,14 @@ used, and inserts a `drop` there that decrements the
 reference counter and frees the memory if it reaches zero.
 No GC, no borrow checker, no lifetime annotations.
 
-This appendix goes deeper. What it's for: if you come from
-Rust and wonder why kaikai doesn't need a borrow checker;
-if you come from Java and wonder why kaikai doesn't need
-GC pauses; or if you simply want to understand how an idea
-published in 2021 changed the balance between RC, GC, and
-ownership.
+This appendix goes deeper. It's for you if you come from Rust
+and wonder why kaikai doesn't need a borrow checker, if you
+come from Java and wonder why it doesn't need GC pauses, or
+if you want to understand how an idea published in 2021
+changed the balance between RC, GC, and ownership.
 
-You don't need to read this appendix to program in kaikai.
-§13.2's model is enough. This text is for whoever wants to
-see the gears.
+To program in kaikai, §13.2's model is enough. This is for
+seeing the gears.
 
 ## B.1 The paper, in one sentence
 
@@ -30,7 +28,7 @@ Leijen — PLDI 2021). The central sentence:
 Three words carry weight:
 
 - **After type checking.** The analysis runs over the
-  already-typed program, not the raw AST. That gives enough
+  already-typed program, not the raw AST, which gives it enough
   information to reason about shape and uniqueness.
 - **Precise last-use.** For each variable, the compiler
   identifies the exact place where it's used for the last
@@ -39,8 +37,6 @@ Three words carry weight:
   competitive with GC: when a value is about to be freed
   and a value of the same shape is about to be created, the
   compiler reuses the same memory.
-
-Let's take it apart.
 
 ## B.2 Step by step: where the drops go
 
@@ -82,22 +78,22 @@ second use, `list.sum(xs)`, no longer needs `dup`: it's
 the last use, and the reference the function already holds
 is transferred.
 
-`list.sum` and `list.length` internally do the same:
+Internally, `list.sum` and `list.length` do the same:
 whenever they walk the list's tail, they decide whether
-they're at the last use. If so, they don't duplicate. If
+they're at the last use. If so, they don't duplicate; if
 not, they do.
 
-The final program has **the minimum number of operations
-possible** on the counters. That minimisation is the
+The final program has **the minimum possible number of
+operations** on the counters. That minimization is the
 paper's core.
 
 ## B.3 Reuse in place
 
 The most interesting part of Perceus is **reuse in place**.
 When a function is about to free a value of some shape and
-create another one of the same shape right after, the
-compiler reuses the same memory block. No free, no
-allocation: overwrite.
+create another of the same shape right after, the compiler
+reuses the memory block: instead of free and allocate, it
+overwrites.
 
 The canonical example is `map` over lists:
 
@@ -119,12 +115,12 @@ With reuse:
 
 1. Overwrite the existing cons with the new head.
 
-Same cons, same memory position, same cost as a mutation.
-But **the program's result is identical**: the function is
-still pure from the programmer's view.
+Same cons, same memory position, same cost as a mutation —
+and **the program's result is identical**: to you, the
+function is still pure.
 
-The conditions for reuse in place are three, all verifiable
-at compile time:
+Reuse in place has three conditions, all verifiable at
+compile time:
 
 1. **The receiver has a unique reference** (RC == 1).
 2. **The new value has the same shape**: same tag, same
@@ -133,21 +129,20 @@ at compile time:
    pointer to the original cons.
 
 When all three hold, the compiler emits code
-indistinguishable from a destructive mutation. But
-conceptually it's still immutable: if the program changes
-and two references to the cons appear, reuse silently turns
-off and falls back to "free + allocate". The programmer
-doesn't notice.
+indistinguishable from a destructive mutation, yet the value
+is still immutable: if the program changes and two references
+to the cons appear, reuse silently turns off and falls back
+to "free + allocate". You don't notice.
 
-This optimization is what makes algorithms like `map`,
-`filter`, AVL trees, list parsing, **as fast as the mutable
-versions in imperative languages**. It's why Koka and Lean
-4 (which also use Perceus) can compile competitively with C.
+This optimization makes `map`, `filter`, AVL trees, and list
+parsing **as fast as the mutable versions in imperative
+languages**. It's why Koka and Lean 4, which also use
+Perceus, compile to code competitive with C.
 
 ## B.4 Compared to Rust's `Rc<RefCell<T>>`
 
 If you come from Rust, this rings a bell: Rust also has RC
-(`Rc<T>`, `Arc<T>`). How is Perceus different?
+(`Rc<T>`, `Arc<T>`). How Perceus differs:
 
 | Aspect | Rust `Rc<T>` | Perceus in kaikai |
 |---|---|---|
@@ -164,11 +159,11 @@ value has a single use. In kaikai, **if the value has a
 single use, no RC is emitted**. The compiler inserts the
 `dup`s only where they're needed, after last-use analysis.
 
-That means a pure functional kaikai program, where nothing
-is genuinely shared between several variables, has zero RC
-overhead. Lists, records, closures all get freed at their
-last use without going through a counter. RC only appears
-when the program actually needs to share.
+A pure functional kaikai program, where nothing is genuinely
+shared between variables, has zero RC overhead: lists,
+records, and closures get freed at their last use without
+touching a counter. RC appears only when the program actually
+shares.
 
 ## B.5 What about cycles?
 
@@ -176,11 +171,10 @@ The classical critique of RC is that **it doesn't handle
 cycles**: if two values reference each other and nobody
 else references them, neither one ever reaches 0, and they
 leak. That's why Python has a "cycle collector" on top of
-its RC, and Rust forces you to use `Weak` manually.
+its RC, and Rust makes you use `Weak` by hand.
 
-Why doesn't Perceus need either?
-
-**Because values in kaikai are immutable.**
+Perceus needs neither **because values in kaikai are
+immutable**.
 
 To create a cycle, you need mutation: A points to B, then
 you modify B to point to A. Without mutation, you can't
@@ -195,25 +189,24 @@ of them have specific disciplines that prevent cycles
 (mailboxes, for example, live in a specific actor and the
 runtime's GC manages them).
 
-In practice: a typical kaikai program doesn't build cycles.
-Data structures are trees (lists, AVL, JSON, ASTs). When a
-programmer wants something with cycles (a graph, an LRU
-cache), they reach for explicit structures encoding
+In practice, a typical kaikai program doesn't build cycles:
+its data structures are trees (lists, AVL, JSON, ASTs). When
+you need something with cycles (a graph, an LRU cache), you
+reach for explicit structures encoding
 adjacency without direct pointers: indices in an array,
 identifiers in a map. It's more work, but the intellectual
 cost stays visible where it belongs.
 
 ## B.6 Why per-fiber separation simplifies RC
 
-Chapter 13 mentions that each fiber has its own heap. This
-isn't just error isolation: **it's what makes Perceus
-lock-free**.
+Chapter 13 mentions that each fiber has its own heap. Besides
+isolating errors, **that makes Perceus lock-free**.
 
 If two fibers shared pointers to the same value, the
 counter's increments and decrements would have to be
-**atomic**. Atomic means the CPU emits a memory barrier,
-synchronizes with other cores, pays overhead. In programs
-with many fibers, that overhead is enormous.
+**atomic**: the CPU emits a memory barrier and synchronizes
+with other cores. In programs with many fibers, that overhead
+is enormous.
 
 When each fiber has its own heap, counters are local.
 **No synchronization**. A `dup` is a `++` on an integer,
@@ -232,9 +225,9 @@ the program, and therefore predictable.
 
 ## B.7 What it costs and what you get
 
-Perceus has costs. Worth listing:
+Perceus has costs:
 
-- **Static analysis is compiler work.** Slower than raw
+- **Static analysis is compiler work**, slower than raw
   types. In kaikai, the analysis is integrated with
   inference and runs in milliseconds for typical programs.
 - **When a value is genuinely duplicated, it pays the RC.**
@@ -247,7 +240,7 @@ Perceus has costs. Worth listing:
 What you get:
 
 - **Determinism.** You know exactly when each value gets
-  freed. No pauses, no "the GC ran now",  no nondeterminism
+  freed. No pauses, no "the GC ran now", no nondeterminism
   between runs.
 - **Memory predictability.** Peak memory can be estimated
   by looking at the program. There's no "the GC waited too
@@ -260,7 +253,7 @@ What you get:
 
 ## B.8 Going further
 
-If this appendix leaves you wanting more, the sources:
+The sources, if you want more:
 
 - **Reinking, Xie, de Moura, Leijen, *"Perceus: Garbage
   Free Reference Counting with Reuse"*** (PLDI 2021). The
@@ -278,4 +271,4 @@ If this appendix leaves you wanting more, the sources:
 
 In the kaikai source, the analysis lives in
 `stage2/perceus.kai`. If you want to see how it's
-implemented, that's the starting point.
+implemented, start there.

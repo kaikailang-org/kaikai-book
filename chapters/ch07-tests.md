@@ -1,31 +1,30 @@
 # Chapter 7 · Tests, properties, and benchmarks
 
-So far you've been writing functions and looking at the
-output. That's a reasonable cycle while your program fits in
-your head, but it doesn't scale. As soon as your code grows
-past a few dozen lines — as soon as there are more than three
-functions calling each other — you stop being able to verify
-by eye that each change preserves behavior.
+So far you've written functions and looked at the output.
+That loop works while the program fits in your head, but it
+doesn't scale: once you're past a few dozen lines, or three
+functions calling each other, you can no longer check by eye
+that each change preserves behavior.
 
-That's what tests are for. kaikai brings **three top-level
-constructs** dedicated to verification: `test`, `check`, and
-`bench`. All three run via the `kai` driver, and all three
-are stripped out when you build a binary for production.
+That's what tests are for. kaikai has **three top-level
+constructs** for verification: `test`, `check`, and `bench`.
+All three run through the `kai` driver and are stripped out
+when you build a production binary.
 
-The usual thing is to write them in the same file as the code
-they exercise, but the language doesn't force it: an
-`arithmetic_test.kai` that imports `arithmetic` and declares its
-`test` blocks compiles and runs fine. The driver finds it on its
-own, too: `kai test ./...` walks the package's `*_test.kai`
+You usually write them in the same file as the code they
+exercise, but you don't have to: an `arithmetic_test.kai` that
+imports `arithmetic` and declares its `test` blocks compiles
+and runs fine, and the driver finds it on its own:
+`kai test ./...` walks the package's `*_test.kai`
 files even when nothing imports them, runs each as its own unit,
 and exits non-zero if any of them fails. That holds for a
 **library** as well — a package that by definition declares no
 entry point.
 
-This chapter walks through the three, explains when to use
-which, and closes with a case study: a mini-evaluator with
-contractual tests, verified properties, and benchmarks
-measuring per-operation cost.
+Here you learn all three and when to use which, and you
+finish with a mini-evaluator that has contractual tests,
+verified properties, and benchmarks measuring per-operation
+cost.
 
 ## 7.1 `test "..." { ... }` and `assert`
 
@@ -51,15 +50,15 @@ test "significant case" {
 ```
 
 `test` is a **top-level block** — it lives alongside `fn` in
-the same file, not nested in another function. Its name is a
+the same file and doesn't nest in another function. Its name is a
 string literal the runner prints verbatim. Inside, you write
 assertions with `assert`: a `Bool` expression that must be
 `true`. If all the block's assertions pass, the test passes.
 If **one** fails, the test fails and the runner moves on to
 the next.
 
-The test name should say **what is being tested**, not how.
-"base case" is good; "test 1" isn't.
+The test name says **what is being tested**. "base case"
+works; "test 1" doesn't.
 
 `assert` also accepts an optional message with a comma:
 
@@ -70,9 +69,8 @@ test "valid ranges" {
 }
 ```
 
-The message appears when the assertion fails. Useful when
-the expression you tested doesn't, by itself, tell you what
-was unexpected.
+The message appears when the assertion fails, and helps when
+the expression alone doesn't say what was unexpected.
 
 ### What the runner prints
 
@@ -85,7 +83,7 @@ $ kai test examples/ch07/01_basic_test.kai
 3/3 tests passed
 ```
 
-If a test fails, the output changes to show it:
+If a test fails, the output shows it:
 
 ```
 $ kai test examples/ch07/02_assert_fails.kai
@@ -96,10 +94,9 @@ $ kai test examples/ch07/02_assert_fails.kai
 2/3 tests passed
 ```
 
-Three details worth recalling:
+Three details:
 
-- **Tests run in declaration order.** Your file lists them
-  top-to-bottom and the runner runs them in that order. No
+- **Tests run in declaration order**, top to bottom. No
   parallelism within a single file.
 - **A failing test doesn't stop the rest.** The runner moves
   on and reports the final count.
@@ -110,9 +107,8 @@ Three details worth recalling:
 ### What effects a test may carry
 
 A `test` body — like a `bench` or a `check` body — carries no
-effect row and cannot declare one. So the question is what it's
-allowed to do inside, and the answer is: whatever a program entry
-may. It absorbs the builtin effects that come with a default
+effect row and cannot declare one. Inside, it may do whatever a
+program entry may: it absorbs the builtin effects that come with a default
 handler (`Stdout`, `File`, `Clock`, …) plus the `Ffi` capability
 the compiler synthesises. That's why a test can call an
 `extern "C"` fn with nothing wrapped around it:
@@ -126,9 +122,8 @@ test "a test can call an extern C fn directly" {
 }
 ```
 
-An effect of **your own** is another story, and this is where
-people trip. There's no handler for it at the runner's entry, so
-calling it bare doesn't compile:
+An effect of **your own** is where you trip. The runner's entry
+has no handler for it, so calling it bare doesn't compile:
 
 ```
 error: effect not handled: Clock
@@ -154,39 +149,36 @@ test "a user-declared effect is handled inside the body" {
 }
 ```
 
-Seen that way the restriction works in your favor: a test that
+The restriction works in your favor: a test that
 needs an effect of yours forces you to say what you're replacing
 it with, right where it's read.
 
 ## 7.2 `kai test` and the short feedback loop
 
-The command is straightforward:
-
 ```
 $ kai test my_file.kai
 ```
 
-Compiles the file in `--test` mode (which activates `test`
+This compiles the file in `--test` mode (which activates `test`
 blocks), produces a binary, runs it, and reports. The
 edit→run cycle takes a second or two on small files.
 
-If you are inside a project (a directory with `kai.toml`),
-`kai test .` runs the main package's tests and also
-auto-discovers any `.kai` under the `tests/` directory. Each
+Inside a project (a directory with `kai.toml`), `kai test .`
+runs the main package's tests and auto-discovers any `.kai`
+under `tests/`. Each
 file under `tests/` is its own test program, outside the
 package, and runs separately. They do build together, as one
 binary: `kai test` checks each file alone and then builds them
 as a set, so two files that pass on their own but cannot build
 together fail the run. What they share goes into a module both
-import. If you need to exercise a `pub` function of the package
-from `tests/`, import it like any other dependency:
-`import my_package`.
+import. To exercise a `pub` function of the package from `tests/`,
+import it like any other dependency: `import my_package`.
 
 Builds run in parallel, up to one per CPU by default; `-j <n>` sets
 the cap. Tests still run one file at a time, in order.
 
-If you call `kai test my_file.kai` against a loose file, the
-runner runs that file's own `test` blocks and nothing else.
+Run `kai test my_file.kai` against a loose file and the runner
+runs that file's own `test` blocks and nothing else.
 Every file that declares blocks is the root of its own run, so a
 module's blocks run exactly once — when the module is the file
 you named — however many files import it. The `test` blocks of
@@ -195,8 +187,7 @@ see is your own code's. There is no `pytest`-style discovery on
 loose files; the model only discovers when there is a `kai.toml`
 defining the package.
 
-Three practical recommendations you'll internalize within
-weeks:
+Three habits you'll pick up within weeks:
 
 - **Tests next to the code, in the same file.** Don't
   separate them into `tests/` or parallel files. When you
@@ -213,8 +204,7 @@ weeks:
 
 The colored, ticked output is for you. When the reader is
 another program — a CI runner annotating the commit, a
-dashboard, a script diffing two runs — there is a second
-shape:
+dashboard, a script diffing two runs — you use `--json`:
 
 ```
 $ kai test --json my_file.kai
@@ -222,10 +212,9 @@ $ kai test --json my_file.kai
 {"type":"summary","passed":1,"failed":0,"duration_ms":0}
 ```
 
-It is NDJSON: one JSON object per line, one per `test` block,
+It's NDJSON: one JSON object per line, one per `test` block,
 and a `summary` at the end. Without the flag the human output
-is unchanged, so adding it to a pipeline does not alter what
-you see in the terminal.
+is unchanged.
 
 Three details for whoever consumes it. A failing block also
 carries a `message` with the assert's text, and the exit code
@@ -247,31 +236,29 @@ $ kai test --only "my_file.kai:one" my_file.kai
 1/1 tests passed
 ```
 
-The flag repeats to name several. It is what you want when one
-test fails in the middle of a slow suite: instead of waiting
-for the other hundred, you run the one you care about.
+The flag repeats to name several. When one test fails in the
+middle of a slow suite, you run the one you care about instead
+of waiting for the other hundred.
 
-One detail with consequences: an `id` that matches no block is
-an **error** — exit code 1 — not a "zero tests, all good". The
-difference matters the moment you automate anything. A script
-passing generated ids and reading a zero as success would
-believe the test passed when in fact none ran. That kind of
-false green is worse than a red.
+An `id` that matches no block is an **error** — exit code 1 —
+not a "zero tests, all good". That matters the moment you
+automate anything: a script passing generated ids and reading a
+zero as success would believe the test passed when none ran.
+That false green is worse than a red.
 
 ## 7.3 `check "..."` — properties
 
-The tests you've seen so far check **fixed cases**: "for this
-input, I expect this output". This is what other languages
-call "example-based testing". It's the most common, but it
-has an obvious limit: it only tests what you write.
+The tests you've written so far check **fixed cases**: "for
+this input, I expect this output". Other languages call it
+"example-based testing". It's the most common kind, but it has
+an obvious limit: it only tests what you write.
 
-**Properties** flip the thing around. Instead of "for
+**Properties** flip it around. Instead of "for
 `square(7)` I expect `49`", you write "for every integer `n`,
 `square(n)` must be `>= 0`". The runner generates random
 values of `n` and verifies the property over each. If it
-finds a counterexample, it shows you; if it passes a hundred
-iterations without failure, it considers the property
-proved.
+finds a counterexample, it shows you; after a hundred
+iterations without failure, it takes the property as proved.
 
 ```kai
 fn double(n: Int) : Int = n * 2
@@ -330,7 +317,7 @@ $ kai check false_property.kai
 ```
 
 The runner gives you the **exact counterexample** (`n =
--32`) at the first failing iteration. That tells you three
+-32`) from the first failing iteration. Now you know three
 things:
 
 - The property is false for some value of `n`.
@@ -338,15 +325,14 @@ things:
 - Which iteration failed (useful for reproducing with the
   same seed if you want to debug).
 
-Unlike a `test` with a fixed case, where the test name is
-what diagnoses the failure, a `check` gives you the test case
-**along with** the report. You don't have to write it: you
-have it.
+With a fixed-case `test`, the test name diagnoses the
+failure. A `check` hands you the test case **along with** the
+report, without you having to write it.
 
 ### When to write a `check`
 
-Properties are useful when you can **state a universal
-truth** about your code. Some common examples:
+Properties pay off when you can **state a universal truth**
+about your code. Some common ones:
 
 - **Inverses**: `parse(format(x)) == x`,
   `decompress(compress(x)) == x`. The byte round-trip that
@@ -360,15 +346,13 @@ truth** about your code. Some common examples:
   of the input, the sum is preserved, etc.
 - **Monotonicity**: if `a < b`, then `f(a) < f(b)`.
 
-If what you want to verify is "for input 7, output is 14",
-that's a `test`. If it's "for any input, what comes out is
-twice the value", that's a `check`.
+"For input 7, output is 14" is a `test`. "For any input, what
+comes out is twice the value" is a `check`.
 
 ## 7.4 `bench "..." { ... }` — measure, don't guess
 
-The third construct is for **performance**. `bench` takes a
-block and measures how long it takes to execute, repeated
-many times for the average:
+The third construct measures **performance**. `bench` takes a
+block and times it, repeating it many times:
 
 ```kai
 fn fib(n: Int) : Int =
@@ -402,41 +386,39 @@ Each bench runs 1000 iterations (configurable with `--iters N`)
 and reports four numbers: the median, the MAD (median absolute
 deviation), the mean, and the range.
 
-Look at the first two lines, because they teach you how to read
-the report: the median and the MAD are both 0. That doesn't mean
-the operation is free. It means **you didn't measure it**: each
+The first two lines teach you how to read the report: the
+median and the MAD are both 0. That doesn't mean the operation
+is free; it means **you didn't measure it**: each
 iteration costs less than the clock's resolution, so the clock
 returned zero every time.
 
-And when that happens, the mean is no use either. The only thing
+Then the mean is no use either. The only thing
 keeping it off zero is scheduler noise — which is where ranges
 like `[0, 1000]` come from. Two rows reading `median 0 / MAD 0`
 can show wildly different means with no difference in work
 between them; comparing those means is reading noise.
 
-So `median 0 / MAD 0` is not a measurement, it's a warning that
-you need to measure differently: make each iteration do more
+`median 0 / MAD 0` is a warning that you need to measure
+differently: make each iteration do more
 work, or write a program that repeats the operation in a loop,
 consumes the result so the optimizer can't delete it, and time
 that whole program. A solid measurement looks like `fib(15)`:
 median and mean in the same order of magnitude, with the MAD
 small next to both.
 
-What matters about benchmarks isn't the absolute number — it
-depends on the machine and on what else is running — but the
-**comparison**. When you refactor a critical function, you
-run the bench before and after. When your pipeline starts to
-feel slow, you compare candidate function versions. The
-rule:
+What counts in a benchmark is the **comparison**; the
+absolute number depends on the machine and on what else is
+running. When you refactor a critical function, you run the
+bench before and after. When your pipeline feels slow, you
+compare the candidate versions. The rule:
 
 > **Optimizing without measuring is guessing.**
 
 There's no point benchmarking code that doesn't bother you; but
 when something drags, measuring before you touch it keeps you
-from optimizing what wasn't the problem. That's what `bench` is
-for.
+from optimizing what wasn't the problem.
 
-Three practical pieces of advice:
+Three practical tips:
 
 - **The body of the `bench` is what's measured.** If your
   setup is expensive and you don't want to include it, do it
@@ -447,15 +429,13 @@ Three practical pieces of advice:
   `fib(10)` each iteration. In other languages with more
   aggressive optimizations you have to use tricks to avoid
   dead-code elimination; here you don't.
-- **The absolute number is suggestive, not authoritative.**
-  To compare, always measure on the same machine, in the
-  same session, without other heavy loads running in
-  parallel.
+- **The absolute number is only a hint.** To compare,
+  measure on the same machine, in the same session, with no
+  other heavy loads running alongside.
 
 ## 7.5 When to use which
 
-You have the three tools. The decision boils down to a
-simple question:
+Choosing among the three comes down to one question:
 
 | Question | Tool |
 |---|---|
@@ -463,29 +443,27 @@ simple question:
 | For **every** input, does this invariant hold? | `check` |
 | How much does this operation cost? | `bench` |
 
-One question this chapter does not answer: what about the concurrent
-part? Actors and fibers are tested with these same three constructs,
-and the trick is that the mailbox is a handler you can replace with a
-script — including the moment a deadline expires, without waiting.
-That is §14.9.
+The concurrent part waits for §14.9: actors and fibers are
+tested with these same three constructs, because the mailbox is
+a handler you can replace with a script — including the moment a
+deadline expires, without waiting.
 
-The three complement each other. A serious project will have
-all three in the same file: tests for the contractual cases
+The three complement each other. A serious project has all
+three in the same file: tests for the contractual cases
 (the customer's, the edges, the ones that historically
 failed), checks for the algebraic invariants the code
 preserves, and benchmarks for the few critical functions
 where performance matters.
 
-A note on writing order. The natural sequence is:
+The natural writing order is:
 
 1. **Start with a `test`** — the concrete case for the
    feature you're working on. It's the easiest to write and
-   the easiest to look at when something fails.
+   to read when something fails.
 2. **Add `test`s** for edge cases as they show up.
 3. **Move to `check`s** when you see a pattern in the tests:
-   "all these cases are checking the same invariant, just
-   with different data". That's a sign that a property
-   should capture the general rule.
+   they all check the same invariant with different data.
+   That general rule is a property.
 4. **Add a `bench`** when you start to notice slowness, or
    before an optimization refactor to have a baseline.
 
@@ -497,11 +475,10 @@ optimization, so start with tests.
 
 ## 7.6 Case study: tests for a mini-evaluator
 
-Closing with an integrative example: a small arithmetic
-expression evaluator with error handling, tested with the
-three tools. The complete code is in
-`examples/ch07/05_evaluator_tests.kai`; here we walk
-through the parts.
+We close with a small arithmetic expression evaluator with
+error handling, tested with all three tools. The complete code
+is in `examples/ch07/05_evaluator_tests.kai`; here you walk
+through it in parts.
 
 ### The AST and the evaluator
 
@@ -526,9 +503,9 @@ fn eval(e: Expr) : Result[Int, EvalError] = match e {
 }
 ```
 
-It's a smaller cousin of the chapter 5 evaluator: four
-constructors, one error category (division by zero). Enough
-to show the flow.
+It's a small cousin of the chapter 5 evaluator: four
+constructors and one error category (division by zero).
+Enough to show the flow.
 
 ### Tests for contractual cases
 
@@ -546,7 +523,7 @@ test "division by zero is an error" {
 }
 ```
 
-Three tests documenting three behaviors. `must_yield` and
+Three tests, three behaviors. `must_yield` and
 `must_fail` are helpers wrapping the `match` over `Result`
 and returning `Bool`, so the `assert` stays readable.
 
@@ -566,21 +543,20 @@ check "Add(a, b) == Add(b, a)" with a: Int, b: Int {
 }
 ```
 
-Two properties. The first says a literal evaluates to itself
-— a trivial invariant but important: if it failed, something
-is very wrong in the evaluator. The second checks that
-addition is commutative **through the evaluator**, not just
-at the integer-arithmetic level.
+The first property says a literal evaluates to itself —
+trivial but important: if it failed, something is very wrong
+in the evaluator. The second checks that addition is
+commutative **through the evaluator**, not just in integer
+arithmetic.
 
 ```
 2/2 checks passed
 ```
 
-A hundred iterations per property with randomly generated
-values. None failed. If in the future someone breaks
-commutativity — say, by adding a side effect to evaluating
-`Add` that depends on order — the `check`s detect the
-counterexample immediately.
+A hundred iterations each, with random values, and none
+failed. If someone breaks commutativity — say, with a side
+effect in evaluating `Add` that depends on order — the
+`check`s catch the counterexample immediately.
 
 ### Benchmarks for performance decisions
 
@@ -602,27 +578,26 @@ case (three nesting levels). On my machine:
   deep expression (3 levels): 1000 iter / median 1000 ns / MAD 0 ns / mean 574 ns / range [0, 2000]
 ```
 
-Read those two rows with the rule above in hand. The literal one
+Read those two rows with the rule above. The literal one
 reads `median 0 / MAD 0`: evaluating `Lit(42)` is cheaper than
 the clock, so that row measured nothing and its mean is noise.
 The deep-expression row did measure: median and mean in the same
 order of magnitude.
 
-So this pair does **not** entitle you to say "the second costs N
-times the first": that would require comparing two measurable
-things, and one of them isn't. It tells you something else, just
-as useful: the cheap case is below what the bench can resolve,
-and the expensive one is what's worth watching if the evaluator
-starts to weigh. If you really need the ratio between them, take
+This pair does **not** entitle you to say "the second costs N
+times the first": that takes two measurable things, and one
+isn't. It tells you something else, just as useful: the cheap
+case is below what the bench can resolve, and the expensive one
+is what's worth watching if the evaluator starts to weigh. If you really need the ratio between them, take
 `bench` out of the picture and time a program that repeats the
 operation and consumes the result.
 
 ### Who tests the tests?
 
-So far everything is green: four tests, two checks, zero
-failures. But a green run proves one thing only — that the tests
-passed. It doesn't prove they would have failed had the code been
-wrong, and that is what you actually want from a suite.
+Everything is green: four tests, two checks, zero failures. But
+a green run proves only that the tests passed, not that they
+would have failed had the code been wrong — and that is what you
+actually want from a suite.
 
 `kai mutate` measures it head-on. It breaks the code on purpose,
 one construct at a time — a `match` arm that disappears, a `>=`
@@ -669,24 +644,23 @@ examples/ch07/05_evaluator_tests.kai	47	14	literal
 ```
 
 Twenty-four mutants, and only five of them reached the tests.
-The other nineteen never compiled — which is not a failing of the
-tool but the type system doing its work ahead of the suite. Five
+The other nineteen never compiled: the type system did its work
+ahead of the suite. Five
 come from dropping a `match` arm, which leaves the match
 non-exhaustive, and fourteen from eliding a call, which leaves a
 `!` sitting on something that isn't a `Result`. Both are compile
 errors in kaikai, so those mutants die before any test gets a
-say. `kai mutate` counts them in a bucket of their own for
-exactly that reason: a mutant that doesn't compile tells you
-nothing about what your tests are watching. In a language with
-exhaustive matching and strong types that bucket fills up fast,
-and it's worth knowing before you read the result — mutation
-ends up measuring a smaller target than you might expect.
+say. `kai mutate` counts them in a bucket of their own because
+a mutant that doesn't compile tells you nothing about what your
+tests are watching. With exhaustive matching and strong types
+that bucket fills up fast, so mutation measures a smaller target
+than you might expect.
 
 The five that did compile are the ones that talk. Three died and
-two survived, and both survivors sit in the same awkward place:
-not in the evaluator but in the tests' own helpers. Line 41 is
-the `Err` branch of `must_yield`. No test
-hands `must_yield` an expression that fails, so nobody finds out
+two survived, both in the same awkward place: the tests' own
+helpers, not the evaluator. Line 41 is the `Err` branch of
+`must_yield`. No test hands `must_yield` an expression that
+fails, so nobody finds out
 if that branch says `true` — and a `must_yield` that accepts
 errors lets through any regression in `eval` that starts
 returning `Err` where it shouldn't. Line 47 is the same hole
@@ -712,25 +686,24 @@ With them — the same evaluator, in
 24 mutants in 18s: 5 killed, 19 did not compile, 0 survived
 ```
 
-The same five mutants that compile, all five now caught. Zero
-survivors is as much as you can ask for.
+The five mutants that compile, all caught now. You can't ask
+for more.
 
 Notice what it doesn't report: a percentage. `kai mutate` hands
 you survivors, each with file, line and diff, because a survivor
 is something you can fix this afternoon and a "92% mutation
 score" is a number nobody fixes. Nor is it something to run on
-every commit: each mutant costs a run of your tests. It's a
-review tool, for when you wonder whether that very green suite is
-looking at anything.
+every commit: each mutant costs a run of your tests. You reach
+for it when you wonder whether that very green suite is looking
+at anything.
 
 A green test says your code passed. A surviving mutant says what
 your tests stopped looking at.
 
 ### What the file doesn't show
 
-The mechanism is direct. The file declares functions, declares
-tests, declares checks, declares benches, all in the same
-place. Three commands process it:
+The file declares functions, tests, checks, and benches, all
+in the same place. Three commands process it:
 
 ```
 $ kai test  examples/ch07/05_evaluator_tests.kai
@@ -738,13 +711,12 @@ $ kai check examples/ch07/05_evaluator_tests.kai
 $ kai bench examples/ch07/05_evaluator_tests.kai
 ```
 
-And `kai run` and `kai build` ignore the three constructs.
-The deployed binary loads neither tests nor checks nor
-benches — only production code.
+`kai run` and `kai build` ignore all three constructs: the
+binary you deploy carries only production code.
 
-That unification is what makes the model comfortable. There
-is no separate test project, no frameworks to import, no
-decisions about where to put each thing. The question
+That unification makes the model comfortable. There's no
+separate test project, no framework to import, no deciding
+where each thing goes. The question
 "where are the tests for this function?" has only one
 possible answer: next to the function.
 

@@ -1,32 +1,27 @@
 # Chapter 18 · Case study: accounting ledger
 
-Chapter 17 showed an HTTP server: many clients, one fiber
-per connection, actors for state encapsulation. That's the
-family of problems where concurrency dominates.
+In chapter 17 you built an HTTP server: many clients, one
+fiber per connection, actors encapsulating state. There,
+concurrency dominates.
 
-This chapter closes the book with a very different case:
-**a double-entry accounting ledger**, where precision matters
-more than concurrency. A debit that doesn't match its credit is
-a bug your auditor finds before you do, and here "it works and
-the tests pass" isn't enough — you have to show **why** it
-works. I picked it because it's where a type error stops being
-an annoyance and starts being money. The type system has a lot
-to say about that.
+This chapter closes the book with **a double-entry accounting
+ledger**, where precision is what counts. A debit that doesn't
+match its credit is a bug your auditor finds before you do,
+and "it works and the tests pass" isn't enough — you have to
+show **why** it works. I picked it because it's where a type
+error stops being an annoyance and starts being money.
 
-Why fintech deserves its own chapter: it's one of the
-domains where getting it wrong is most expensive and where
-having guarantees in the type pays off most. Mixing USD with
+Fintech is one of the domains where mistakes cost the most
+and guarantees in the type pay off the most. Mixing USD with
 EUR, adding debits to credits, allowing a withdrawal without
-checking the balance — each of these costs real money. The
-language's tools (units of measure,
-contracts, branding) are designed so that these mistakes
-don't compile, not so that you discover them in production.
+checking the balance — each of these costs real money. Units
+of measure, contracts, and branding exist so these mistakes
+don't compile, rather than surfacing in production.
 
-The program: a double-entry ledger that holds accounts with
-balances, records transactions (each with debits and
-credits), validates that transactions balance, and persists
-an immutable audit log. Size: about 280 lines across five
-modules.
+The program is a double-entry ledger: it holds accounts with
+balances, records transactions made of debits and credits,
+checks that they balance, and persists an immutable audit
+log. About 280 lines across five modules.
 
 ## 18.1 The shape of the program
 
@@ -42,16 +37,15 @@ ledger/
 └── persistence.kai      # actor that writes the audit log
 ```
 
-The structure deliberately mirrors chapter 17. What changes
-is the emphasis:
+The structure deliberately mirrors chapter 17; the emphasis
+shifts:
 
 - **`domain.kai`** is richer than chapter 17's. Units of
   measure appear (`Real<USD>`), branded types
   (`Int<AccountId>`, `Int<TransactionId>`), and a
   `Movement` sum type that distinguishes debits from
   credits.
-- **`balance.kai`** is new. A module dedicated to one
-  invariant: the sum of debits in a transaction must equal
+- **`balance.kai`** is new, dedicated to one invariant: the sum of debits in a transaction must equal
   the sum of credits. It appears both as a pure testable
   function AND as a **contract** (`requires`) on the
   registration operation.
@@ -59,9 +53,8 @@ is the emphasis:
   validates balance before accepting a transaction and
   keeps per-account balances. Transactions are
   **immutable**: only ever added, never modified.
-- **`persistence.kai`** is the audit log. A strong
-  conceptual idea: in accounting, what's written stays. The
-  file is legal evidence.
+- **`persistence.kai`** is the audit log. In accounting,
+  what's written stays: the file is legal evidence.
 
 ## 18.2 The domain: units, branding, algebraic types
 
@@ -93,11 +86,10 @@ pub type Transaction = {
 }
 ```
 
-Three type-system decisions worth listing:
+Three type-system decisions:
 
-- **`Real<USD>` instead of `Real`.** Chapter 10 covered
-  units of measure. They matter especially in this domain:
-  an accounting program that mixes USD and EUR without
+- **`Real<USD>` instead of `Real`.** The units of measure
+  from chapter 10 matter especially here: an accounting program that mixes USD and EUR without
   converting produces numbers that look right but mean
   nothing. With UoM, that mix doesn't compile. To extend
   the program to multiple currencies, you declare
@@ -106,33 +98,33 @@ Three type-system decisions worth listing:
   you discover the bug when a customer complains. (The
   stdlib also ships `money`, with `Money[c: Currency]` on
   `Decimal` and the ISO currencies declared; chapter 19
-  covers it. Here we stay with `Real<USD>` because the
-  point is the UoM technique.)
-- **`Int<AccountId>` vs `Int<TransactionId>`.** Chapter 10
-  also covered branded types. Having raw `Int` as ids
-  means passing a transaction id where an account id is
+  covers it. This chapter stays with `Real<USD>` because
+  the point is the UoM technique.)
+- **`Int<AccountId>` vs `Int<TransactionId>`.** Branded
+  types, also from chapter 10. With raw `Int` ids,
+  passing a transaction id where an account id is
   expected compiles fine and blows up at runtime (or
   worse, silently produces a wrong result). With branding,
   the type system tells you first.
 - **`Movement` as a sum type.** A debit and a credit have
   the same physical fields (account + amount) but mean
-  different things. Modeling them as two constructors of
-  the same sum type has two effects: the exhaustive pattern
-  match ensures every operation handles them explicitly,
-  and the type system won't let us add "debit amount" with
-  "credit amount" without going through a clear conversion.
+  different things. As two constructors of the same sum
+  type, the exhaustive match forces every operation to
+  handle them explicitly, and the type system won't let you
+  add "debit amount" to "credit amount" without a clear
+  conversion.
 
 Compare with the version without rich types: a record
 `{ account: Int, amount: Real, kind: String }` where `kind`
 is `"debit"` or `"credit"`. It works, but `kind: String`
-allows `"DEBIT"`, `"CR"`, `""`, all invalid. Every function
-that touches movements has to validate. With the sum type,
+allows `"DEBIT"`, `"CR"`, `""`, all invalid, and every
+function that touches movements has to validate. With the sum type,
 the invalid **can't be constructed**.
 
 ## 18.3 The central invariant: balance
 
-The `balance.kai` module is small but important. It defines
-the double-entry invariant: in every transaction, the sum
+The small `balance.kai` module defines the double-entry
+invariant: in every transaction, the sum
 of debits must equal the sum of credits.
 
 ```kai
@@ -166,12 +158,12 @@ test "doesn't balance when amounts differ" { ... }
 test "balances with multiple lines" { ... }
 ```
 
-Again, no actors or IO involved: just the logic, tested
-directly. If six months from now we change how movements are
-represented, these tests ensure the invariant still holds.
+No actors, no IO: just the logic, tested directly. If six
+months from now you change how movements are represented,
+these tests ensure the invariant still holds.
 
-And where chapter 11 pays off: we also declare a **version
-with a contract**:
+Here chapter 11 pays off: the module also declares a
+**version with a contract**:
 
 ```kai
 pub fn apply_if_balanced(ms: [domain.Movement]) : [domain.Movement]
@@ -185,14 +177,12 @@ function with a movement set that doesn't balance is an
 error**. If the compiler can prove it statically, it
 rejects the call at compile time; if not, it inserts a
 runtime assert. `ensures balances(result)` declares that
-**the function's result also balances** (trivial here:
-returns the same list). The two contracts together form the
-function's legal signature: the preconditions it demands
-and the postcondition it guarantees.
+**the result also balances** (trivial here: it returns the
+same list). Together they form the function's legal
+signature: what it demands and what it guarantees.
 
-In a real accounting system, this pattern multiplies: each
-operation that touches movements carries the domain's
-contracts in its signature.
+In a real accounting system, every operation that touches
+movements carries the domain's contracts in its signature.
 
 ## 18.4 The store: actor with invariants
 
@@ -208,9 +198,8 @@ type State = {
 }
 ```
 
-The `process` function takes a command and the state,
-returns a response and the new state. The important part:
-**every transaction goes through balance validation before
+The `process` function takes a command and the state and
+returns a response and the new state. **Every transaction goes through balance validation before
 being registered**.
 
 ```kai
@@ -237,13 +226,13 @@ Two validations before accepting:
 2. **Known accounts**: every account mentioned in the
    movements is registered.
 
-If either fails, we return an error without modifying
-state. That's an **atomic transaction**: either it applies
-in full, or it doesn't apply at all. There's no "half-
-registered transaction with broken balance".
+If either fails, `process` returns an error and leaves the
+state alone. That's an **atomic transaction**: it applies in
+full or not at all. There's no "half-registered transaction
+with broken balance".
 
-Transactions **accumulate, are never modified**. The list
-grows. This is deliberate: a ledger is by design an
+Transactions **accumulate, are never modified**. This is
+deliberate: a ledger is by design an
 immutable history. Erasing a past transaction doesn't
 exist; correcting errors means writing a **new** inverse
 transaction, which also stays in the history.
@@ -251,23 +240,22 @@ transaction, which also stays in the history.
 That immutability is free in kaikai. Lists are immutable by
 construction; adding an element creates a new list.
 "Destructive modification" isn't available to the actor's
-loop unless we asked for it, with `var` or `Array[T]`. And
+loop unless you ask for it with `var` or `Array[T]`. And
 since the actor recurses with the new state, every
 "version" of the ledger survives intact until the next
 step.
 
 ## 18.5 The audit log
 
-The `persistence.kai` module is practically identical to
-chapter 17's: an actor that receives log lines and appends
-them to the file. The conceptual difference: for an
-accounting system, **the file is the truth**.
+The `persistence.kai` module is nearly identical to chapter
+17's: an actor that receives log lines and appends them to
+the file. What differs is the domain: for an accounting
+system, **the file is the truth**.
 
-In real accounting, transaction records are **append-only**:
-once an entry is written, it stays. Corrections are done by
-adding new inverse entries, not by modifying the originals.
-This is regulatory (auditors require it) but also
-architectural: an event-sourced system that persists every
+In real accounting, records are **append-only**: a written
+entry stays, and corrections are new inverse entries.
+Auditors require it, and there's an architectural reason
+too: an event-sourced system that persists every
 event lets you reconstruct any intermediate state.
 
 ```kai
@@ -283,23 +271,21 @@ pub fn persistence_loop(path: String) : Unit / Actor[Event] + File {
 }
 ```
 
-Each event the store produces (account created, transaction
-registered) is sent to the log via `Actor.send`. The log
-writes them in strict FIFO order. If the disk write falls
-behind, events accumulate in the mailbox; the store keeps
-responding.
+Each store event (account created, transaction registered)
+goes to the log via `Actor.send`, which writes them in
+strict FIFO order. If the disk falls behind, events pile up
+in the mailbox and the store keeps responding.
 
-A production improvement left as exercise: instead of
-strings, persist a structured format (JSON, CBOR, TLV)
-that can be replayed at startup to reconstruct the in-
-memory state. This is **event sourcing** and kaikai allows
-it naturally.
+A production improvement, left as an exercise: persist a
+structured format (JSON, CBOR, TLV) instead of strings, so
+it can be replayed at startup to rebuild the in-memory
+state. That's **event sourcing**, and kaikai allows it
+naturally.
 
 ## 18.6 The main: run a scenario
 
-`main.kai` doesn't open a socket this time: it just
-executes a sequence of operations to show the system in
-action.
+`main.kai` doesn't open a socket this time: it runs a
+sequence of operations to show the system in action.
 
 ```kai
 fn main() : Int / Stdout + File + Spawn + Cancel {
@@ -351,23 +337,22 @@ fn main() : Int / Stdout + File + Spawn + Cancel {
 ```
 
 `step` is a helper that calls the store, prints the
-response, and records the event in the audit log. After
-running `main`, the ledger has three accounts, two
-registered transactions (sale and coffee), one rejected
-(the unbalanced attempt), and the final balances reflect
-the entries. The file `ledger.audit.log` contains one line
-per account and transaction.
+response, and records the event in the audit log. When
+`main` finishes, the ledger has three accounts, two
+registered transactions (sale and coffee), and one rejected
+(the unbalanced attempt); the final balances reflect the
+entries. `ledger.audit.log` holds one line per account and
+transaction.
 
 ## 18.7 What makes this case different from chapter 17
 
-Same overall pattern, different emphasis. What appears
-here that didn't in the previous chapter:
+Same overall pattern, different emphasis. What's new here:
 
 - **Units of measure.** `Real<USD>` in every amount. The
   type system rejects mixing currencies without explicit
   conversion (chapter 10).
 - **Branded types.** `Int<AccountId>` vs
-  `Int<TransactionId>`. The compiler won't let us mix them
+  `Int<TransactionId>`. The compiler won't let you mix them
   up (chapter 10).
 - **Contracts.** `requires balances(ms)` in
   `apply_if_balanced`. The domain invariant lives in the
@@ -377,7 +362,7 @@ here that didn't in the previous chapter:
   modified, only added. The ledger structure guarantees
   event sourcing.
 
-What appears identically:
+What repeats:
 
 - **Sum types and exhaustive match.** `Command`,
   `Response`, `Movement`. The compiler ensures every
@@ -390,10 +375,9 @@ What appears identically:
   encapsulates costly IO" repeats.
 
 That **symmetry between the two cases** is the lesson. The
-domain changes (HTTP vs accounting), the language tools
-that matter most change, but the program's structure stays
-the same: pure domain, actors with state, separate
-persistence, modules by responsibility.
+domain and the tools that matter most change; the structure
+stays: pure domain, actors with state, separate persistence,
+modules by responsibility.
 
 ## 18.8 How to extend it
 
@@ -425,43 +409,39 @@ difficulty:
   type system rejects any movement that would push it
   negative.
 - **Serve over HTTP.** Combine this program with
-  chapter 17's: the accept loop stays the same, the
-  handler that used to call the notes store now calls the
-  ledger store. The program's structure changes very
-  little.
+  chapter 17's: the accept loop stays the same, and the
+  handler that called the notes store now calls the ledger
+  store. The structure barely changes.
 
-Each one moves the system closer to a production system.
-None forces you to rewrite the earlier pieces.
-Orthogonality pays off.
+Each one moves the system closer to production, and none
+forces you to rewrite the earlier pieces. Orthogonality
+pays off.
 
 ## 18.9 Why fintech is a good testbed
 
 Fintech is one of the few domains where the industry
 welcomes tooling that weighs in on the development process.
 If a function disburses the wrong amount, the company would
-rather the compiler catch it than discover it in production.
+rather the compiler catch it than production.
 If the system guarantees that debits match credits, the
 regulator sleeps better. If types distinguish currencies,
 next quarter's exchange-rate change won't introduce a subtle
 bug.
 
-Languages that offer those guarantees — Haskell, OCaml, F#
-— have had a good reception in fintech historically. kaikai
-aims for the same level of guarantees with less ceremony:
-units without external packages, contracts in the signature,
-branding without macros. The promise is that you can write
-code as directly as in Python or Go, with the guarantees a
-strong type system gives you.
+Haskell, OCaml, and F#, which offer those guarantees, have
+been well received in fintech. kaikai aims for the same
+guarantees with less ceremony: units without external
+packages, contracts in the signature, branding without
+macros. The promise is code as direct as Python or Go, with
+the guarantees of a strong type system.
 
-Does the promise hold? That's for the person writing the
-code to decide. This chapter tried to show a slice of a
-domain where the bet pays off.
+Whether the promise holds is up to whoever writes the code.
+This chapter showed you a domain where the bet pays off.
 
 ## 18.10 Philosophy: the book's closing
 
-There's a pattern this book has been proposing, chapter
-after chapter, without naming it explicitly until now.
-Worth naming at the end.
+The book has proposed a pattern chapter after chapter
+without naming it. Time to name it.
 
 **A real program is made of small, orthogonal pieces.**
 Pure types describing the domain. Pure functions
@@ -497,7 +477,7 @@ done its job.
 
 Thanks for reading this far. The compiler, the stdlib,
 the design documents, and the examples live at
-`github.com/kaikailang-org/kaikai`. There's an emerging community,
-issues to close, language pieces still taking shape. If you
-find this experiment interesting, there's room for you to
-help make it better.
+`github.com/kaikailang-org/kaikai`. There are issues to
+close and language pieces still taking shape. If this
+experiment interests you, there's room for you to help make
+it better.

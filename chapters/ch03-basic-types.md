@@ -5,9 +5,9 @@ the operators that handle them, and how values bind to names with
 `let`. It also pins down something you've already seen in
 passing: **`if` and blocks are expressions**, not statements.
 
-If you read chapter 2, what follows is the concrete content of
-those warnings. If you skipped it and you come from an imperative
-background, go back. It will save you friction.
+If you read chapter 2, here you get the concrete content behind
+its warnings. If you skipped it and come from an imperative
+background, go back: it will save you friction.
 
 ## 3.1 The seven primitive types
 
@@ -34,8 +34,8 @@ variable. `println(...)` returns `Unit`. A block that ends
 without an explicit value returns `Unit`.
 
 `Nothing` is the opposite. **Zero inhabitants.** No expression
-produces a `Nothing` the program can use. So what is it for?
-For describing the return type of things that **never finish
+produces a `Nothing` the program can use. It exists to
+describe the return type of things that **never finish
 normally**: a `panic(...)` that aborts the process, an infinite
 loop, a `forever` whose body cannot exit. A function
 `fn endless_loop() : Nothing` tells the type system that any
@@ -44,10 +44,9 @@ of type `Nothing` fits any context where another type is
 expected. You'll bump into `Nothing` rarely, but it helps to
 know the name.
 
-These seven aren't the language's only numbers — there are
-fixed-width integers and arbitrary-precision types, covered in
-section 3.4 — but they are what you'll be typing 95% of the
-time.
+`Int` and `Real` aren't the language's only numbers — section
+3.4 covers fixed-width integers and arbitrary-precision types —
+but these seven are what you'll be typing 95% of the time.
 
 ## 3.2 Literals and string interpolation
 
@@ -160,9 +159,9 @@ lives in one place in the compiler, with the same rules for
 strings, `Char`, triple-quoted bodies, and interpolation.
 
 `Char` values use single quotes: `'a'`, `'\n'`, `'\u{2603}'`. A
-`Char` is not a `String` of length one — they are distinct
-types. That avoids a class of bugs typical of languages that
-conflate the two.
+`Char` and a one-character `String` are distinct types, which
+avoids a class of bugs typical of languages that conflate the
+two.
 
 All three mechanisms together, in a program that runs:
 
@@ -240,10 +239,9 @@ println("x / y = #{x / y}")     # 3.5 — on Real, fractional
                                 #       part is preserved
 ```
 
-If you come from Python 3 there's a habit change. Over there,
-`/` always returns float; in kaikai the type rules: `Int / Int`
-is `Int`, and if you want the fractional part you convert
-explicitly or work with `Real` from the start.
+If you come from Python 3 there's a habit change: over there,
+`/` always returns a float; in kaikai the type rules, and
+`Int / Int` is `Int`.
 
 Negatives bring a second habit change, a sneakier one because
 nothing errors out: **`/` truncates toward zero, and the
@@ -289,8 +287,8 @@ Comparison operators are the usual ones:
 ```
 
 They return `Bool`. They work over any type that implements the
-`Eq` protocol (for `==`/`!=`) and `Ord` (for the rest). We'll
-see those in chapter 9; for now, every primitive type
+`Eq` protocol (for `==`/`!=`) and `Ord` (for the rest). You'll
+learn them in chapter 9; for now, every primitive type
 implements them.
 
 One last habit, and this one belongs to `Real`. A `Real` is an
@@ -393,7 +391,7 @@ n32 + 1 = 11
 back = 11
 ```
 
-When do you use them? Mostly at the C boundary: in an
+They earn their keep mostly at the C boundary: in an
 `extern "C"` signature, an `Int32` crosses as `int32_t`, a
 `UInt64` as `uint64_t` — the width you declare is the width that
 travels (chapter 16). `Int128` also stands on its own: it
@@ -433,9 +431,9 @@ short form is the **positional constructor**: a type marked with
 the `#[constructor]` attribute lets `Type(args)` call the
 function that actually builds it. `Rational(1, 2)` is
 `rational.make(1, 2)`, reduction included; `Complex(1.5, 2.0)` is
-`complex.mk(...)`. It's sugar, not magic: the arity must match
-the marked function — `Rational(5)`, with a single argument,
-doesn't exist (that's what `rational.from_int(5)` is for).
+`complex.mk(...)`. It's sugar: the arity must match the marked
+function, so `Rational(5)`, with a single argument, doesn't
+exist (that's what `rational.from_int(5)` is for).
 
 The example `examples/ch03/06_big_numbers.kai` shows all three
 in action:
@@ -473,8 +471,7 @@ let x: Int  = 42
 let y: Real = 3.14
 ```
 
-The annotation is more than decoration. It's there for two
-reasons: to document intent when the type isn't obvious, and
+The annotation serves two purposes: to document intent when the type isn't obvious, and
 to guide the type inferrer in the few cases where local
 inference isn't enough. The practical rule is **annotate the
 arguments and return type of public functions, and leave local
@@ -509,8 +506,8 @@ touched.
 
 For the cases where you need a real mutable cell, kaikai gives
 you `var`: `name := v` declares and writes, and a bare name
-reads. You saw this in §2.2 and we'll come back to it in
-chapter 12 when we talk about effects.
+reads. You saw this in §2.2 and you take it up again in
+chapter 12, with effects.
 
 ## 3.6 `if` as an expression
 
@@ -649,7 +646,7 @@ values.
 ## 3.8 The difference between `=` and `{ ... }` in a function body
 
 A function body can take two shapes. You saw this in chapter
-1; we pin it down here.
+1; here you pin it down.
 
 Short form, with `=` and a single expression:
 
@@ -679,9 +676,7 @@ The compiler accepts both. The difference is for the reader:
   steps that benefit from visual separation.
 
 There's no "preferred" form: pick whichever communicates intent
-better for that particular function. The usual rule of thumb is
-that one-line functions go with `=`, and the ones that need to
-breathe go with `{ ... }`.
+better for that particular function.
 
 ## Exercises
 

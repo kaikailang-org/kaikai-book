@@ -1,35 +1,33 @@
 # Chapter 17 · Case study: HTTP server
 
-We've reached the first of two case studies that close the
-book. The point is to see, in one place, how the pieces
-from the previous chapters fit into something resembling
-real software. I distrust language books that never leave the
-toy example, so I wanted to close this one with two programs
-that could plausibly ship.
+This is the first of two case studies that close the book.
+In it you see how the pieces from the previous chapters fit
+into something resembling real software. I distrust language
+books that never leave the toy example, so I wanted to close
+this one with two programs that could plausibly ship.
 
-This chapter covers **an HTTP server**: the family of
-problems where what matters is concurrency, modularity, and
-the separation between domain logic and IO. Chapter 18
-will cover the other end of the industry spectrum: **a
-ledger**, where what matters is precise types (currencies
-with units), business invariants (`requires`/`ensures`
-contracts), and strict immutability. Two cases of the same
-language, with very different things to worry about in each.
+This chapter covers **an HTTP server**, the family of problems
+where concurrency, modularity, and the separation between
+domain logic and IO carry the weight. Chapter 18 covers the
+other end of the industry: **a ledger**, where precise types
+(currencies with units), business invariants
+(`requires`/`ensures` contracts), and strict immutability carry
+it.
 
-The program: a notes server with a simple HTTP interface
+The program is a notes server. It has a simple HTTP interface
 (`GET /notes`, `POST /notes`, `GET /notes/<id>`, `DELETE
-/notes/<id>`), keeps notes in memory, and writes each
-change to a log file. The "real" part isn't the logic
-(it's simple), it's how it's wired: effects in the
-signatures, actors to encapsulate state, fibers for
-concurrent connections, modules to separate domain, HTTP
-parser, storage, persistence.
+/notes/<id>`), keeps notes in memory, and writes each change
+to a log file. The logic is simple; the interesting part is
+how it's wired: effects in the signatures, actors to
+encapsulate state, fibers for concurrent connections, modules
+to separate domain, HTTP parser, storage, persistence.
 
-Program size: about 250 lines, across five files.
+It runs to about 250 lines, across five files.
 
 ## 17.1 The shape of the program
 
-Before the code, the pieces and their responsibilities:
+Before reading the code, place the pieces and their
+responsibilities:
 
 ```
 notes/
@@ -41,20 +39,20 @@ notes/
 └── web.kai              # minimal HTTP parser and serializer
 ```
 
-The five files split the work into five concerns:
+Each file carries one concern:
 
 - **`domain.kai`** is the center. Pure types, no effects, no
-  IO. What the domain "is": what a note is, what commands
-  can be issued, what responses can be produced.
-- **`store.kai`** is an actor. Receives commands, holds the
-  list of notes as internal state, replies to whoever
-  asked. The manipulation logic inside is pure (function
-  `process`), wrapped in an `Actor.receive()` loop that
-  connects it to the world.
-- **`persistence.kai`** is another actor. Receives events
-  (creation, deletion), writes them to a log file.
-  Isolating the disk in an actor lets the store keep
-  responding even if the write is slow.
+  IO: what a note is, what commands can be issued, what
+  responses can be produced.
+- **`store.kai`** is an actor. It receives commands, holds the
+  list of notes as internal state, and replies to whoever
+  asked. The logic inside is pure (function `process`),
+  wrapped in an `Actor.receive()` loop that connects it to the
+  world.
+- **`persistence.kai`** is another actor. It receives events
+  (creation, deletion) and writes them to a log file. With the
+  disk isolated in an actor, the store keeps responding even
+  if the write is slow.
 - **`web.kai`** is pure functions: parsing HTTP bytes into
   a `HttpReq` structure, translating requests into domain
   commands, serializing responses to bytes. No actors, no
@@ -63,11 +61,10 @@ The five files split the work into five concerns:
   TCP socket, opens a nursery, and spawns a fiber for each
   new connection.
 
-This separation is the natural shape in kaikai. Each module
-is orthogonal: the pure domain logic can be tested without
-starting fibers, the HTTP parser without opening sockets,
-the store without touching disk. `main` just connects the
-pieces.
+This separation is the natural shape in kaikai. You test the
+domain logic without starting fibers, the HTTP parser without
+opening sockets, the store without touching disk. `main` just
+connects the pieces.
 
 ![Figure 17.1](../figuras/fig17-1-notes-server.png)
 
@@ -100,20 +97,19 @@ pub type Reply
   | ServerError(String)
 ```
 
-Three declarations. A note has an id and a body. Four
-commands can be issued against the domain (list, get one,
-create, delete). Five possible responses, which map
-conceptually to HTTP 200, 201, 404, 400, and 500.
+Three declarations. A note has an id and a body. There are
+four commands against the domain (list, get one, create,
+delete) and five possible responses, which map conceptually
+to HTTP 200, 201, 404, 400, and 500.
 
-What's **not** here: no HTTP, no fibers, no files. If one
-day you decide to expose the API over gRPC instead of
-HTTP, this file doesn't change. If you decide to switch
-storage from memory to SQLite, this file doesn't change.
-It's the program's invariant.
+What's **not** here: HTTP, fibers, files. If one day you
+expose the API over gRPC instead of HTTP, or switch storage
+from memory to SQLite, this file doesn't change. It's the
+program's invariant.
 
-The `#[derive(Show)]` on `Note` is what lets us interpolate
-`#{note}` in a string (chapter 9). Without it, we'd have
-to write `impl Show for Note` by hand.
+The `#[derive(Show)]` on `Note` lets you interpolate `#{note}`
+in a string (chapter 9). Without it, you'd write
+`impl Show for Note` by hand.
 
 ## 17.3 The store: actor with state
 
@@ -129,10 +125,9 @@ pub type StoreResp = Replied(domain.Reply)
 ```
 
 `StoreMsg` is what the store receives; `StoreResp` is what
-it returns. The client, before sending, opens its own
-mailbox with `with_mailbox`, puts the `Pid` in the message,
-and then waits for the reply. It's the request/reply
-pattern from §14.5.
+it returns. The client opens its own mailbox with
+`with_mailbox`, puts the `Pid` in the message, and waits for
+the reply: the request/reply pattern from §14.5.
 
 The heart of the module is the **pure logic** of
 processing:
@@ -169,13 +164,13 @@ pub fn process(c: domain.Command, notes: [domain.Note], next_id: Int)
 A single function, no effects in its signature. Takes the
 command, the current notes, and the next id; returns the
 response, the new note list, and the new next id.
-Exhaustive pattern match over the four variants of
-`Command`. Lists built with `[h, ...tail]`. `list.map` and
-`list.filter`. None of this is new in chapter 17: it's the
-chapter-5 constructs (sum types and match) and chapter-6
-(functions and pipelines) put to work.
+Exhaustive pattern match over the four variants of `Command`,
+lists built with `[h, ...tail]`, `list.map` and
+`list.filter`: nothing new, just the constructs from chapters
+5 (sum types and match) and 6 (functions and pipelines) put to
+work.
 
-Because `process` is pure, it's **directly testable**:
+Because `process` is pure, you test it **directly**:
 
 ```kai
 test "create and get" {
@@ -196,10 +191,10 @@ test "create and get" {
 }
 ```
 
-There are no fibers, no IO, no sockets in sight: it's just
-logic. If tomorrow we want to parallelize note creation, add
-indexes, or change the search algorithm, all those changes go
-through this pure function and get tested here.
+No fibers, no IO, no sockets: just logic. If tomorrow you
+want to parallelize note creation, add indexes, or change the
+search algorithm, the change goes through this pure function
+and gets tested here.
 
 On top of `process` sits the **actor loop** that connects it
 to `Actor.receive()`:
@@ -223,13 +218,13 @@ Three lines of work:
 3. Replies and recurses with the new state.
 
 Tail recursion compiles to a loop (chapter 6), so the actor
-can run indefinitely. And the signature declares the two
-effects the actor produces: `Actor[StoreMsg]` to receive,
+can run indefinitely. The signature declares the actor's two
+effects: `Actor[StoreMsg]` to receive,
 `Actor[StoreResp]` to reply.
 
-The module ships no helper to start the actor: `main` does
-that with `spawn_actor`, and §17.6 shows how. What it does
-export is a synchronous wrapper for clients:
+The module ships no helper to start the actor; `main` does
+that with `spawn_actor` (§17.6). What it does export is a
+synchronous wrapper for clients:
 
 ```kai
 pub fn ask(store: Pid[StoreMsg], c: domain.Command)
@@ -241,14 +236,14 @@ pub fn ask(store: Pid[StoreMsg], c: domain.Command)
 }
 ```
 
-`ask` is what the HTTP handlers in `main` call: "send this
-question to the store and give me the answer". Underneath
-it's a send followed by a receive. We expose it as a simple
-function, not an open protocol.
+The HTTP handlers in `main` call `ask`: "send this question
+to the store and give me the answer". Underneath it's a send
+followed by a receive, exposed as a simple function rather
+than an open protocol.
 
 ## 17.4 Persistence: writing actor
 
-`persistence.kai` is simpler. An actor that receives log
+`persistence.kai` is simpler: an actor that receives log
 lines and appends them to a file:
 
 ```kai
@@ -272,18 +267,16 @@ pub fn reset_log(path: String) : Unit / File {
 
 Isolating the file write in its own actor has two benefits:
 
-- **The store doesn't wait on disk.** When the store
-  processes a `Create`, it sends a message to the
-  persistence actor and goes back to its work. The write
-  happens in another fiber.
+- **The store doesn't wait on disk.** Processing a `Create`,
+  it sends a message to the persistence actor and goes back
+  to its work. The write happens in another fiber.
 - **Write order is guaranteed.** All events go through the
   same mailbox, which is processed in FIFO order. No races
-  even if several handlers write to the log at the same
-  time.
+  even if several handlers write to the log at once.
 
 In a real system, this actor would have a `Bounded(N,
-DropOldest)` mailbox to protect against flooding. Here we
-use the default (Unbounded) for simplicity. The decision is
+DropOldest)` mailbox to protect against flooding. Here I use
+the default (Unbounded) to keep the demo simple. The decision is
 explicit and lives in one line, easy to change.
 
 ## 17.5 HTTP parser
@@ -316,14 +309,14 @@ pub fn route(req: HttpReq) : Result[domain.Command, domain.Reply] {
 
 The return type uses `Result` in a slightly unorthodox way:
 `Ok` carries a command to execute; `Err` carries an
-immediate response (404, 400). The convention keeps the
-signature compact: either the request translates to a valid
-command, or we have the response directly.
+immediate response (404, 400). The signature stays compact:
+either the request translates to a valid command, or you
+already have the response.
 
-There's also a parser for the first HTTP line (`GET /path
-HTTP/1.1`) and a serializer that produces the response
-bytes. Pure functions with no effects, testable with input
-strings and output comparison.
+The module also has a parser for the first HTTP line (`GET
+/path HTTP/1.1`) and a serializer that produces the response
+bytes. Both are pure functions you test with input strings
+and output comparison.
 
 ## 17.6 main: assemble the pieces
 
@@ -386,11 +379,10 @@ Read from the outside in:
 
 `main`'s effect row lists what the program still has live on
 the way out: `Stdout` to print, `NetTcp` for sockets, `File`
-to write, `Spawn + Cancel` for fibers. If `main` did more
-things, its row would grow accordingly.
+to write, `Spawn + Cancel` for fibers. If `main` did more,
+its row would grow.
 
-The accept loop opens a nursery and spawns a fiber per
-connection. Note: `n` is not a `Nursery` value that can
+The accept loop spawns a fiber per connection. Note: `n` is not a `Nursery` value that can
 travel to another function — the compiler rewrites every
 `n.spawn(...)` to `Spawn.spawn(...)` tagged with *this*
 nursery's brand, so the `spawn` has to appear lexically
@@ -415,10 +407,10 @@ child fibers end too. No zombie connection handlers.
 
 ### Graceful shutdown: trapping the signal
 
-That "or the program receives SIGINT" is worth opening up,
-because it is what separates a toy server from one you can
-leave running. By default a Ctrl-C kills the process wherever
-it stands: mid-write on a file, mid-response on a connection.
+That "or the program receives SIGINT" is what separates a toy
+server from one you can leave running. By default a Ctrl-C
+kills the process wherever it stands: mid-write on a file,
+mid-response on a connection.
 
 The `Signal` effect turns that interruption into something
 your program decides when to handle:
@@ -435,16 +427,16 @@ fn main() : Unit / Stdout + Signal = {
 }
 ```
 
-To see it, run it and send a Ctrl-C: it waits until the signal
-arrives, so there is no output to show before that.
+Run it and send a Ctrl-C: it waits until the signal arrives,
+so there is no output to show before that.
 
 `Signal.on(SigInt)` subscribes; `Signal.await()` suspends the
-fiber until one arrives. Because it suspends, it is a yield
-point like any other: the rest of the program keeps running
-while this fiber waits.
+fiber until one arrives. That makes it a yield point like any
+other: the rest of the program keeps running while this fiber
+waits.
 
-The pattern for a server is a dedicated fiber waiting on the
-signal, which cancels the listener when it fires. The
+In a server, a dedicated fiber waits on the signal and cancels
+the listener when it fires. The
 cancellation descends through the nursery, each connection
 fiber runs its `Cancel` handler, and the store's `finally`
 gets to write to disk. It is chapter 13's mechanism, with the
@@ -464,13 +456,13 @@ fn serve_connection(conn: Conn, store_pid: Pid[store.StoreMsg], log_pid: Pid[per
 Four lines, because the work lives in `handle_request`: parse
 HTTP, route to a command, log it, ask the store, serialize the
 response. What stays here are the two ends that touch the
-socket — read and write — plus the close. Each step is either a pure function or a message to an
-actor, so there's no shared memory and nothing to lock.
+socket — read and write — plus the close. Each step is either
+a pure function or a message to an actor, so there's no shared
+memory and nothing to lock.
 
 ## 17.7 How this maps to the book
 
-It's worth pointing out which pieces of the book are in play,
-one by one:
+These are the pieces of the book you put to use, one by one:
 
 - **Ch. 2** (thinking in kaikai): functions are
   expressions; `process` returns a tuple in one expression.
@@ -501,13 +493,13 @@ one by one:
 - **Ch. 16** (tooling): `kai run main.kai` starts it;
   `kai test` runs the tests in the `store` module.
 
-Nothing here is new in terms of syntax. What's new is the
-combination: small, orthogonal pieces fitting into a
-program with real responsibilities.
+No new syntax here. What's new is the combination: small,
+orthogonal pieces fitting into a program with real
+responsibilities.
 
 ## 17.8 How to extend it
 
-Several directions to take this program further:
+You can take this program further in several directions:
 
 - **Persistence with recovery.** Today the log is
   write-only. If the server restarts, notes are lost. A
@@ -535,13 +527,13 @@ Several directions to take this program further:
   response, verifies it's what's expected. Puts the server
   in a nursery, runs the client, closes.
 
-Each is an afternoon's work. None requires changing the
-basic structure: a pure domain, actors with state, fibers
+Each is an afternoon's work, and none changes the basic
+structure: a pure domain, actors with state, fibers
 for concurrency, modules for separation.
 
 ## 17.9 What this case shows
 
-There's a clear pattern in what we've just put together:
+What you just put together follows a clear pattern:
 
 - **The domain is pure.** `Command`, `Reply`, `process`:
   types and functions with no effects. They're tested with
@@ -557,7 +549,6 @@ There's a clear pattern in what we've just put together:
   owning one topic, so each can be swapped without touching the
   other three.
 
-Chapter 18 will apply exactly the same pattern to a very
-different domain (financial accounting) and you'll see how
-the structure holds even when the problem changes. The
-book's closing comes there.
+In chapter 18 you apply the same pattern to a very different
+domain, financial accounting, and the structure holds even
+though the problem changes. The book's closing comes there.

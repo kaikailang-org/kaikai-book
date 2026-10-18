@@ -1,13 +1,12 @@
 # Capítulo 14 · Actores
 
-El capítulo 13 mostró cómo arrancar fibras y coordinarlas vía
-un nursery. Eso resuelve la concurrencia interna: muchas
+En el capítulo 13 aprendiste a arrancar fibras y coordinarlas
+con un nursery. Eso resuelve la concurrencia interna: muchas
 unidades de trabajo dentro de un mismo programa, repartidas
 sobre los núcleos de la máquina.
 
-Para muchos casos esa estructura alcanza. Pero hay un patrón
-que las fibras puras dejan incómodo, y vale la pena nombrarlo
-antes de la sintaxis.
+Para muchos casos esa estructura alcanza, pero hay un patrón
+que las fibras puras dejan incómodo.
 
 ## Una fibra es un cómputo; un actor es un proceso vivo
 
@@ -21,14 +20,13 @@ Imagina dos tareas distintas:
   viva, responde mensajes mientras el programa exista, en
   algún momento termina cuando alguien le pide que se detenga.
 
-Las dos son concurrentes en el sentido de que el programa
-principal puede seguir trabajando mientras pasan. Pero su
-forma es muy distinta.
+Las dos son concurrentes: el programa principal sigue
+trabajando mientras ocurren. Pero su forma es muy distinta.
 
 La tarea A es un **cómputo**: tiene una entrada, produce un
-valor de salida, termina. Eso es una **fibra**. La creas con
-`spawn`, esperas su resultado con `await`, recibes el valor.
-Una vez devuelto el resultado, la fibra deja de existir.
+valor de salida y termina. Eso es una **fibra**: la creas con
+`spawn`, esperas su resultado con `await`, y una vez devuelto
+el resultado deja de existir.
 
 ```kai
 let f = spawn.spawn(() => parsear_archivo("entrada.txt"))
@@ -77,9 +75,9 @@ Ambos modelos son **concurrentes y paralelos**: el runtime
 reparte fibras y actores sobre tantos hilos del sistema como
 núcleos tenga la máquina (cap. 13 §13.8 *Concurrencia y
 paralelismo*). Que un actor corra en otro hilo no cambia nada
-de lo que vas a leer en este capítulo: su mailbox se sigue
-procesando en serie, un mensaje a la vez, y los mensajes que
-cruzan de un hilo a otro se copian. Ningún actor observa
+de este capítulo: su mailbox se sigue procesando en serie, un
+mensaje a la vez, y los mensajes que cruzan de un hilo a otro
+se copian. Ningún actor observa
 memoria compartida, corras con uno o con treinta y dos hilos.
 
 Casos donde el actor es lo natural: un servidor de cache, un
@@ -96,9 +94,8 @@ Erlang hace décadas, y lo tomé casi sin cambios.
 
 ## Los actores no son primitivos del lenguaje
 
-Otra cosa que vale fijar antes de la sintaxis: en kaikai, los
-actores no son una construcción del core. Son una **capa
-construida con efectos algebraicos**: el efecto `Actor[Msg]`
+En kaikai, los actores no son una construcción del core. Son
+una **capa construida con efectos algebraicos**: el efecto `Actor[Msg]`
 declara las operaciones (`self`, `send`, `receive`); el
 stdlib provee funciones como `with_mailbox` y `spawn_actor`
 que instalan el handler de `Actor[Msg]` sobre una fibra
@@ -107,15 +104,15 @@ ordinaria.
 Es el mismo principio que con `nursery` del cap. 13: el
 lenguaje core tiene solo efectos; los patrones de uso
 (fibras, actores, supervisión) aparecen en bibliotecas que
-cualquier lector puede leer. Si después de este capítulo te
+puedes leer. Si después de este capítulo te
 preguntas cómo funciona `spawn_actor` por dentro, la respuesta
 es un `spawn.spawn` más un `handle ... with Actor[Msg]`.
 
 ## 14.1 `Actor[Msg]`: el efecto
 
 Un actor es una fibra dentro de un `handle ... with
-Actor[Msg]` que le da acceso a cuatro operaciones. El efecto
-viene declarado en el stdlib:
+Actor[Msg]` que le da acceso a cuatro operaciones, declaradas
+en el stdlib:
 
 ```kai
 # Declarado en stdlib/effects/concurrent.kai, accesible vía
@@ -144,7 +141,7 @@ pub effect Actor[Msg] {
   scheduler le entrega la cancelación a una fibra cancelada.
 - **`receive_timeout(nanos)`** es `receive()` con plazo.
   Devuelve `None` si el plazo vence sin que llegue nada. Lo
-  verás con su envoltorio tipado en §14.3.
+  usas con su envoltorio tipado en §14.3.
 
 `Msg` es el tipo concreto de los mensajes que ese actor
 **recibe**. Un actor recibe un solo tipo de mensaje; mandar es
@@ -213,9 +210,9 @@ flecha ni binder. Adentro, `Actor` es la capacidad disponible:
 `Actor.send(pid, msg)` encola, `Actor.receive()` saca el
 siguiente.
 
-En este ejemplo el actor se manda a sí mismo. Es la versión
-"hola mundo" del modelo; el ejercicio real es comunicar dos
-actores distintos.
+Aquí el actor se manda mensajes a sí mismo: es el "hola
+mundo" del modelo. Lo interesante es comunicar dos actores
+distintos.
 
 ## 14.3 `spawn_actor`: crear un actor nuevo
 
@@ -261,27 +258,25 @@ y devuelve el `Pid` para que el padre pueda mandarle mensajes.
 La firma del trabajador declara `Actor[String]`: necesita el
 efecto para llamar a `Actor.receive()`.
 
-Fíjate que `main` también tiene `Actor[String]` en su fila.
-¿Por qué? Porque `Actor.send(pid, "tarea-1")` es una
-invocación a una operación del efecto `Actor[String]`, y como
-toda invocación a un efecto, requiere que el efecto esté
-disponible en el contexto. El `with_mailbox` de `main` provee
-esa capacidad. El `pid` ya identifica al mailbox destino;
-el handler solo dispatcha la operación.
+`main` también tiene `Actor[String]` en su fila, porque
+`Actor.send(pid, "tarea-1")` invoca una operación del efecto
+`Actor[String]`, y toda invocación a un efecto requiere que el
+efecto esté disponible en el contexto. El `with_mailbox` de
+`main` provee esa capacidad; el `pid` ya identifica al mailbox
+destino, y el handler solo despacha la operación.
 
-Los `spawn.yield()` al final son para darle al scheduler la
-chance de correr al trabajador. Sin ellos, `main` saldría antes
-de que el trabajador procesara nada.
+Los `spawn.yield()` del final le dan al scheduler la chance de
+correr al trabajador. Sin ellos, `main` saldría antes de que el
+trabajador procesara nada.
 
 ### `receive_timeout`: recibir con plazo
 
 `Actor.receive()` bloquea: si el mailbox está vacío, la fibra se
 suspende hasta que llegue un mensaje, sin importar cuánto tarde.
-Eso es lo que quieres casi siempre, pero a veces esperar para
-siempre es exactamente lo que no quieres. Un supervisor que hace
+Casi siempre eso es lo que quieres. Pero un supervisor que hace
 un health check no debería colgarse si el worker dejó de
-responder; un cliente que pide algo por la red quiere reintentar
-si nadie contesta en 50 ms.
+responder, y un cliente que pide algo por la red quiere
+reintentar si nadie contesta en 50 ms.
 
 Para eso está `receive_timeout(d)`, que recibe del mailbox
 rindiéndose tras una `Duration` y devuelve un `Option`:
@@ -322,7 +317,7 @@ construye `receive_timeout`), corre `kai doc actor`.
 
 ## 14.4 Policies de mailbox: qué pasa cuando se llena
 
-Por defecto, `with_mailbox` y `spawn_actor` crean un mailbox
+Por omisión, `with_mailbox` y `spawn_actor` crean un mailbox
 **unbounded**: nunca se llena, los mensajes se acumulan
 mientras no se lean. Es razonable para empezar, pero
 peligroso: si un productor manda más rápido de lo que un
@@ -374,8 +369,8 @@ b
 c
 ```
 
-El mailbox tiene capacidad 2. Mandamos `a`, `b`, `c` sin leer
-nada. Cuando llega `c`, no hay espacio, y `DropOldest`
+El mailbox tiene capacidad 2 y el programa manda `a`, `b`, `c`
+sin leer nada. Cuando llega `c` no hay espacio, y `DropOldest`
 saca `a`. Las dos lecturas recuperan `b` y `c`.
 
 `DropOldest` y `DropNewest` **no notifican al emisor** que su
@@ -464,12 +459,12 @@ Lo importante de la estructura:
   6), así que el actor puede correr indefinidamente sin
   reventar el stack.
 
-Esto reemplaza, en términos prácticos, las llamadas
-sincrónicas a una API: pides algo, esperas respuesta, sigues.
-La diferencia es que aquí el "servidor" puede estar
-atendiendo a varios clientes a la vez, su estado interno está
-encapsulado, y el modelo de tipos te garantiza que ningún
-cliente se queda esperando una respuesta del tipo equivocado.
+En la práctica, esto reemplaza las llamadas sincrónicas a una
+API: pides algo, esperas respuesta, sigues. Solo que aquí el
+"servidor" puede atender a varios clientes a la vez con su
+estado interno encapsulado, y el modelo de tipos te garantiza
+que ningún cliente se queda esperando una respuesta del tipo
+equivocado.
 
 ## 14.6 Supervisión: links y monitores
 
@@ -504,8 +499,8 @@ reciben mensajes, solo registran observación sobre su vida.
 ligados: si cualquiera de los dos termina con un fallo, el
 otro recibe `Cancel.raise()`. Es el patrón para dos actores
 que dependen simétricamente uno del otro (un worker y su
-cola, los dos lados de un handshake). No es lo que quieres
-para "supervisor observa worker": ese es el caso de monitores.
+cola, los dos lados de un handshake). Para "supervisor observa
+worker" están los monitores.
 
 ### `set_trap_exit`: recibir la caída en vez de sufrirla
 
@@ -560,11 +555,9 @@ terminó*. No te dice cómo.
 
 ### Saber cómo murió: `Link` + trap exit
 
-Para la causa hay que ir por el otro lado. `Spawn` expone
-`set_trap_exit(true)`, que le dice a la fibra que la muerte de
-un peer enlazado le llegue como aviso en vez de tumbarla (el
-`process_flag(trap_exit, true)` de Erlang), y ese aviso sí
-distingue: llega `"Normal"` o `"Crashed"` al mailbox.
+Para la causa vuelves a `set_trap_exit(true)`, el
+`process_flag(trap_exit, true)` de Erlang. Su aviso sí
+distingue: al mailbox llega `"Normal"` o `"Crashed"`.
 
 ```kai
 # ejemplos/cap14/07_trap_exit.kai (extracto)
@@ -590,8 +583,8 @@ El hijo se liga con `Link.link(padre)` y después termina bien o
 llama a `Cancel.raise()`. Sin `set_trap_exit`, la primera caída
 cancelaría al supervisor y la segunda no se vería nunca.
 
-Conviene saber que ese `String` es una simplificación de v1. El
-diseño del lenguaje (`docs/actors.md`) especifica algo más
+Ese `String` es una simplificación de v1. El diseño del
+lenguaje (`docs/actors.md`) especifica algo más
 rico: un `MonitorDown(ref, cause)` con
 `cause = Normal | Crashed(String) | Cancelled`, viajando por el
 mailbox tipado del actor como una variante más de tu propio
@@ -622,9 +615,9 @@ el trap exit te dice *cómo*.
 - **`Link`**, cuando dos actores forman una unidad y no tiene
   sentido que uno sobreviva sin el otro.
 
-El patrón de §14.7 que sigue usa notificación explícita, y no
-solo por ser el más simple: es el único donde el supervisor
-recibe la razón del fallo *en sus propios términos*. Un
+El patrón de §14.7 usa notificación explícita. Es el más
+simple, y además el único donde el supervisor recibe la razón
+del fallo *en sus propios términos*. Un
 `"Crashed"` te dice que la fibra se desenrolló; un
 `Failed("división por cero en (30, 0)")` te dice qué pasó. Para
 casi todo lo que vas a escribir, que el actor cuente cómo le
@@ -699,24 +692,22 @@ trabajador: lote terminó como Done(16)
 supervisor: éxito al segundo intento, total=16
 ```
 
-Tres piezas vale comentar:
+Tres piezas para comentar:
 
 - **`procesar` no toca el sistema de actores.** Es lógica pura
-  sobre listas: pattern match, recursión, devuelve un valor.
-  Eso significa que `procesar` es completamente testeable sin
-  arrancar fibras. La capa de actores queda solo en
-  `trabajador`, `intento` y `supervisor`.
-- **`intento` separa una preocupación.** Antes de extraerlo,
-  el código del segundo intento estaba inline dentro del
-  primer `match`. Llevar esa lógica a una función separada
-  hace explícito el patrón "spawn + receive".
+  sobre listas, así que la pruebas completa sin arrancar
+  fibras. La capa de actores queda solo en `trabajador`,
+  `intento` y `supervisor`.
+- **`intento` separa una preocupación.** Sin él, el segundo
+  intento quedaría inline dentro del primer `match`; como
+  función aparte, hace explícito el patrón "spawn + receive".
 - **El supervisor decide la política.** El trabajador es ciego
   a la decisión: solo reporta. Cambiar la política de "dos
   intentos con datos distintos" a "tres intentos con backoff
   exponencial" toca una sola función. Esa separación es la
   ventaja real del modelo.
 
-¿Qué le falta a este programa para ser de producción? Algunas
+Para llegar a producción, a este programa le faltan algunas
 cosas:
 
 - **Tiempo máximo por intento.** Hoy si el trabajador se
@@ -725,9 +716,9 @@ cosas:
   ese `receive` por `receive_timeout` (§14.3) le da al supervisor
   un `None` con el que reaccionar en vez de quedarse esperando.
 - **Cancelación del trabajador si el supervisor decide
-  rendirse.** Si decimos "me rindo" mientras el trabajador
-  sigue procesando, queremos que el trabajador termine
-  también. Con `Link.link(worker)` después del spawn, la
+  rendirse.** Si el supervisor se rinde mientras el trabajador
+  sigue procesando, el trabajador también debería terminar.
+  Con `Link.link(worker)` después del spawn, la
   decisión del supervisor de retornar cancela el worker
   automáticamente. La alternativa explícita es agregar un
   `Stop` al protocolo del trabajador y mandárselo antes de
@@ -742,29 +733,27 @@ garantiza que los mailboxes se respetan.
 
 ## 14.8 Filosofía: actores son una biblioteca
 
-Si quieres recordar dos cosas del capítulo, que sean estas:
+Del capítulo, quédate con dos cosas:
 
 1. **Los actores no son primitivos del lenguaje.** Son una
    biblioteca construida sobre el efecto `Actor[Msg]`, que a
    su vez es una declaración ordinaria de efecto. El stdlib
-   provee `with_mailbox`, `spawn_actor`, las policies. El
-   código de esa biblioteca está disponible para leer. Si
-   alguna vez te preguntas "qué hace `spawn_actor` por
-   dentro", la respuesta es un `handle` con un `spawn.spawn`.
+   provee `with_mailbox`, `spawn_actor` y las policies, y
+   puedes leer su código: por dentro, `spawn_actor` es un
+   `handle` con un `spawn.spawn`.
 
 2. **Cada actor tiene un tipo de mensaje fijo.** El compilador
    te garantiza que no mandas el mensaje equivocado al
    mailbox equivocado. Los `Pid[Msg]` son tipados, no
-   strings. Y por eso un sistema de actores en kaikai es más
+   strings. Por eso un sistema de actores en kaikai es más
    verificable estáticamente que su equivalente en Erlang.
 
 La consecuencia más importante de la primera idea: cuando
 quieras un patrón de supervisión que el stdlib no provee,
 puedes escribirlo. La sintaxis no oculta nada: `handle`,
-`receive`, `send`. Es difícil que un patrón de actores que
-hayas visto en Erlang, Akka, o cualquier framework de actores
-no sea expresable como una función ordinaria en kaikai con
-estas piezas.
+`receive`, `send`. Difícilmente encontrarás un patrón de
+actores de Erlang, Akka o cualquier otro framework que no
+puedas expresar con estas piezas como una función ordinaria.
 
 ## 14.9 Probar un actor: reemplaza el mailbox
 
@@ -774,8 +763,8 @@ Si los actores fueran primitivos del lenguaje la respuesta sería
 incómoda: levantar actores de verdad, mandarles mensajes de verdad,
 y esperar. Tests lentos, y frágiles cuando el scheduler no coopera.
 
-Pero ya sabes que `with_mailbox` no es magia: es un handler
-ordinario del stdlib. Y un handler se reemplaza.
+Pero ya sabes que `with_mailbox` es un handler ordinario del
+stdlib, y un handler se reemplaza.
 
 En un test instalas el tuyo, que contesta cada `receive` desde un
 guion que tú escribes. El estado del handler *es* el guion, y
@@ -848,7 +837,7 @@ handler. Con el `panic` el guion declara hasta dónde llega: si el
 código empieza a pedir algo que el test no previó, la corrida aborta
 con ese mensaje.
 
-Un detalle que conviene mirar: `Clock` sigue en la firma de `main`.
+`Clock` sigue en la firma de `main`.
 El handler falso intercepta `Actor`, no el reloj, y la fila es lo
 que el cuerpo declara, no lo que termina ocurriendo. La capacidad
 se queda aunque el reloj nunca se consulte. Es coherente: el tipo
@@ -856,8 +845,8 @@ describe lo que el código *puede* hacer.
 
 ### Dos límites, antes de que los descubras a golpes
 
-**Un handler no cruza un `spawn`.** Es lo primero que uno intenta:
-instalar el falso en el padre y spawnear los hijos debajo. El
+**Un handler no cruza un `spawn`.** Lo primero que intentas es
+instalar el falso en el padre y spawnear los hijos debajo, y el
 compilador no te deja:
 
 ```

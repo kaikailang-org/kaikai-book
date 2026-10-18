@@ -1,7 +1,7 @@
 # Capítulo 15 · Holes y kaikai con agentes IA
 
-Este capítulo trata sobre una herramienta pequeña con una idea
-grande detrás. La herramienta se llama **hole**: un agujero que
+Este capítulo trata de una herramienta pequeña con una idea
+grande detrás. La herramienta es el **hole**: un agujero que
 dejas en el código en lugar de una expresión, con un `?` o un
 `?nombre`. La idea grande es que el compilador puede **hablarte**
 mientras escribes: decirte qué tipo se espera ahí, qué nombres
@@ -9,12 +9,10 @@ están en alcance, qué expresiones podrían encajar. El programa
 sigue compilando con holes adentro; solo aborta si la ejecución
 llega a uno.
 
-Quiero ser claro con algo antes de seguir, porque el título del
-capítulo puede confundir: los holes son útiles aunque nunca uses
-un LLM. Te permiten
-diseñar de arriba hacia abajo (escribir la firma primero,
-completar el cuerpo después) y avanzar en partes sin que el
-archivo entero deje de compilar. Eso sirve al lector humano.
+El título del capítulo puede confundir: los holes te sirven
+aunque nunca uses un LLM. Te permiten diseñar de arriba hacia
+abajo (escribir la firma primero, completar el cuerpo después)
+y avanzar en partes sin que el archivo entero deje de compilar.
 
 Pero los holes son también la pieza con la que kaikai se
 diseña para **agentes IA**. El compilador puede emitir su
@@ -24,7 +22,7 @@ le está pidiendo. Esta es la apuesta estratégica del lenguaje
 de entrenamiento grande, puede ser autoreable por un agente
 si las herramientas están bien diseñadas.
 
-Vamos por partes. Primero los humanos.
+Primero, los humanos.
 
 ## 15.1 Holes tipados: `?` y `?nombre`
 
@@ -36,32 +34,30 @@ fn area_circulo(r: Real) : Real = ?formula
 ```
 
 Esto compila. La función `area_circulo` existe, tiene la firma
-correcta, y se puede llamar desde otras partes del programa.
-Lo que pasa cuando la ejecución llega al `?formula` es que el
-programa aborta con un mensaje claro:
+correcta y puedes llamarla desde otras partes del programa.
+Cuando la ejecución llega al `?formula`, el programa aborta
+con un mensaje claro:
 
 ```
 $ kai run ejemplos/cap15/01_hole_basico.kai
 panic: unfilled hole: ?formula at line 6 col 35
 ```
 
-No es un error de compilación, sino una **promesa diferida**:
-te dejaste un agujero que vas a llenar después, y el sistema te
-acompaña hasta entonces. El panic te da lo justo para ubicarlo:
+Un hole es una **promesa diferida**: te dejaste un agujero que
+vas a llenar después, y el sistema te acompaña hasta entonces. El panic te da lo justo para ubicarlo:
 el nombre del hole y su posición exacta.
 
 El tipo que el compilador infirió no viaja en el panic, y es lo
 primero que vas a querer. Vive en el reporte estructurado, que
-el §15.7 usa en serio: `kai build --holes-json` sobre este mismo
+usas en serio en el §15.7: `kai build --holes-json` sobre este mismo
 archivo devuelve `"expected_type": "Real"` junto con lo que hay
 en scope y una lista de candidatos. El panic es para cuando el
 programa te sorprende corriendo; el reporte, para cuando te
 sientas a llenar el agujero.
 
-La diferencia entre `?` y `?nombre` es que el nombre te sirve
-para identificar el hole en mensajes y, sobre todo, para hacer
-que **dos holes con el mismo nombre dentro de la misma función
-compartan tipo**:
+El nombre de `?nombre` identifica el hole en los mensajes y,
+sobre todo, hace que **dos holes con el mismo nombre dentro de
+la misma función compartan tipo**:
 
 ```kai
 fn clasificar(n: Int) : String {
@@ -78,7 +74,7 @@ el otro también lo es. Eso reduce la tentación de escribir
 implementaciones inconsistentes entre brazos de un `if` o de un
 `match`.
 
-Anónimos (`?` sin nombre) cada uno es independiente.
+Los anónimos (`?` sin nombre) son independientes entre sí.
 
 El mismo `?palabra` en las dos ramas, y lo que pasa cuando el
 programa llega a él:
@@ -108,8 +104,8 @@ panic: unfilled hole: ?palabra at line 9 col 5
 
 ## 15.2 La conversación con el compilador
 
-La gracia de los holes no está en abortar bonito, sino en lo
-que el compilador te dice de ellos. Para cada hole, emite un
+La gracia de los holes está en lo que el compilador te dice de
+ellos, más que en abortar bonito. Para cada hole, emite un
 **reporte**:
 
 ```
@@ -145,8 +141,8 @@ Cuatro piezas de información:
   tiene que ser `Real`.
 - **`in scope (local)`**: los nombres locales alcanzables desde
   el punto del hole, con su tipo. Aquí solo `r : Real`, el
-  parámetro. El `(local)` no es decoración: el reporte te muestra
-  lo tuyo y cuenta el resto en la última línea, porque listar las
+  parámetro. El `(local)` importa: el reporte te muestra lo
+  tuyo y cuenta el resto en la última línea, porque listar las
   casi trescientas cosas que trae el prelude no le sirve a
   nadie. Cuando las quieras, `--holes-scope`.
 - **`candidates that fit`**: expresiones que el compilador puede
@@ -154,25 +150,21 @@ Cuatro piezas de información:
   **bounded**: una sola aplicación de función, con los argumentos
   tomados de lo que hay en alcance, y un tope de ocho propuestas.
 
-Vale mirar esos ocho candidatos con atención, porque enseñan algo
-que es fácil malentender: **ninguno es la respuesta**. El área de
-un círculo es `3.14 * r * r`, y eso son dos multiplicaciones, o
-sea dos aplicaciones, así que la búsqueda no llega. Los candidatos no son
-un intento de escribir tu función. Son una lista de lo que calza
-en el hueco, que es otra cosa y sirve para otra cosa: te dice qué
-tienes a mano y con qué forma.
+Esos ocho candidatos enseñan algo fácil de malentender:
+**ninguno es la respuesta**. El área de un círculo es
+`3.14 * r * r`, y eso son dos multiplicaciones, o sea dos
+aplicaciones, así que la búsqueda no llega. Los candidatos son
+una lista de lo que calza en el hueco: te dicen qué tienes a
+mano y con qué forma, sin intentar escribir tu función.
 
-Esta es la conversación. Mientras la firma es lo único que sabes,
-el compilador te ayuda a ver qué se puede poner adentro.
-
-Como cualquier reporte del compilador, el costo de invocarlo
-es bajo: corres `kai build --holes` y lees. No tienes que
-adivinar.
+Esa es la conversación: mientras la firma es lo único que
+sabes, el compilador te ayuda a ver qué se puede poner adentro.
+Y cuesta poco: corres `kai build --holes` y lees, sin adivinar.
 
 ### La fila de efectos también filtra
 
-Hay una pieza que un ejemplo puro no deja ver. Los candidatos se
-buscan contra la fila de efectos **de la posición del hole**, no
+Un ejemplo puro esconde una pieza: los candidatos se buscan
+contra la fila de efectos **de la posición del hole**, no
 contra el programa entero. Dos holes que esperan lo mismo y ven lo
 mismo en alcance reciben listas distintas si sus filas difieren:
 
@@ -213,10 +205,11 @@ que calzan sin más:
     ...
 ```
 
-Ese "fits if you add" es la parte que más me gusta del reporte. No
-te dice solo qué puedes escribir ahí: te dice qué podrías escribir
-si estuvieras dispuesto a agregar un efecto más a la firma. La
-decisión sigue siendo tuya, pero ahora la tomas viendo el costo.
+Ese "fits if you add" es la parte que más me gusta del reporte:
+además de lo que puedes escribir ahí, te dice qué podrías
+escribir si estuvieras dispuesto a agregar un efecto más a la
+firma. La decisión sigue siendo tuya, pero ahora la tomas
+viendo el costo.
 
 ## 15.3 Diseño top-down: empieza por la firma
 
@@ -259,10 +252,10 @@ $ kai run ejemplos/cap15/05_diseno_top_down.kai
 3 + 4*5 = 23
 ```
 
-El programa corre. La evaluación funciona. Ahora vas a llenar
-los dos holes uno a uno: implementas `parsear` (toma `[Token]`,
-da `Expr`), después `tokenizar` (toma `String`, da `[Token]`).
-Y cuando llegues a llenar el último, el `main` puede llamar a
+El programa corre y la evaluación funciona. Ahora llenas los
+dos holes uno a uno: implementas `parsear` (toma `[Token]`, da
+`Expr`), después `tokenizar` (toma `String`, da `[Token]`).
+Cuando llenes el último, el `main` puede llamar a
 `calcular("3 + 4*5")` directamente.
 
 Esto contrasta con dos formas de trabajo más comunes:
@@ -274,15 +267,14 @@ Esto contrasta con dos formas de trabajo más comunes:
   final. Funciona si tienes el problema clarísimo. Si no, es
   doloroso.
 
-Top-down con holes es un punto intermedio: la estructura va
-existiendo desde el principio, la corrección de cada pieza se
-verifica conforme la rellenas.
+Top-down con holes es un punto intermedio: la estructura existe
+desde el principio y verificas cada pieza conforme la rellenas.
 
 ## 15.4 Programas parciales: avanzar con el resto compilando
 
-Una consecuencia del diseño con holes es que **siempre puedes
-correr lo que ya tienes**. Si una función está completa, puedes
-testearla sin esperar a que el archivo entero esté listo:
+Con holes, **siempre puedes correr lo que ya tienes**. Si una
+función está completa, la pruebas sin esperar a que el archivo
+entero esté listo:
 
 ```kai
 fn duplicar(x: Int) : Int = x * 2
@@ -296,8 +288,8 @@ fn main() : Unit / Stdout {
 ```
 
 `duplicar` funciona y `kai run` la imprime. `promedio` espera
-ser implementada; mientras no llamemos a `promedio`, el
-programa no se topa con el hole y corre limpio.
+ser implementada; mientras no la llames, el programa no se
+topa con el hole y corre limpio.
 
 Esto reduce mucho la fricción de mantener un programa "casi
 compilando" mientras lo desarrollas. Donde otros lenguajes te
@@ -305,8 +297,7 @@ dan un stub cualquiera (`unimplemented()`, `return null`), en
 kaikai el `?` es una primitiva del idioma y el compilador sabe
 qué tipo tiene.
 
-Una función escrita y otra pendiente en el mismo archivo. Lo
-que está listo corre; el hole espera:
+El archivo completo: lo que está listo corre; el hole espera:
 
 ```kai
 # ejemplos/cap15/02_programa_parcial.kai
@@ -330,7 +321,7 @@ duplicar(5) = 10
 
 ### `todo!`: el otro stub, y cuándo usarlo
 
-Hay una segunda forma, y conviene no confundirlas:
+Hay una segunda forma que conviene no confundir con el `?`:
 
 ```kai
 fn parsear(s: String) : Config = todo!("falta el parser")
@@ -385,11 +376,11 @@ fn area(f: Forma) : Real {
 }
 ```
 
-Aquí el `match` ya cubre los tres constructores, lo único que
-falta es la expresión del último brazo. El compilador
-verifica exhaustividad (cap. 5 §5.4), te dice que el `match`
-está completo, y reporta el hole con `Real` como tipo
-esperado y `b`, `h` en alcance.
+Aquí el `match` ya cubre los tres constructores; solo falta la
+expresión del último brazo. El compilador verifica
+exhaustividad (cap. 5 §5.4), da el `match` por completo y
+reporta el hole con `Real` como tipo esperado y `b`, `h` en
+alcance.
 
 Si todavía no decidiste si quieres `Triangulo` en el tipo, lo
 borras y el compilador te avisa que ahora `match` no es
@@ -441,8 +432,8 @@ cuadrado 4 -> 16
 
 ## 15.6 La apuesta LLM: lenguaje diseñado para agentes
 
-Hasta aquí los holes son una herramienta para humanos. La parte
-más estratégica del cap. 15 es que **los holes son también la
+Hasta aquí usaste los holes como herramienta para humanos. Lo
+más estratégico del capítulo es que **los holes son también la
 puerta de entrada para que un agente IA escriba kaikai**.
 
 El razonamiento es simple. Un LLM aprende un lenguaje del
@@ -452,11 +443,11 @@ modelos; lenguajes nuevos, con poco código público, son
 difíciles. Si kaikai esperara a tener un corpus grande, perdería
 el experimento.
 
-Pero hay una alternativa: diseñar el lenguaje para que el
-compilador sea quien le enseñe al agente, no el corpus. Si
-cuando el LLM produce código incorrecto, el compilador puede
-decir con precisión qué falta y dónde, el LLM puede iterar
-hasta llegar al programa correcto en pocos pasos.
+La alternativa es diseñar el lenguaje para que quien le enseñe
+al agente sea el compilador y no el corpus. Si el compilador
+dice con precisión qué falta y dónde cada vez que el LLM
+produce código incorrecto, el LLM puede iterar hasta el
+programa correcto en pocos pasos.
 
 La pieza clave es la **salida estructurada**: el compilador
 emite JSON que el agente lee directamente, sin parseo
@@ -468,7 +459,7 @@ heurístico. Tres canales son relevantes:
 3. **Diagnósticos del compilador en JSON**: errores de tipo,
    matches no exhaustivos, efectos no manejados.
 
-El cap. 5 §5.4 mostró cómo se ve un mensaje de match no
+En el cap. 5 §5.4 viste cómo se ve un mensaje de match no
 exhaustivo en formato humano. La versión JSON contiene los
 mismos campos como datos: tipo del escrutinio, lista de
 variantes faltantes, lista de variantes cubiertas, sugerencia.
@@ -519,8 +510,8 @@ trae los candidatos del "fits if you add" con la fila que les
 falta; y `doc` el docstring de la función que contiene el hole.
 
 Para un humano esto es ruidoso; para un agente es exactamente
-lo que necesita. Y esa exactitud cambia el resultado práctico:
-que el agente acierte al primer intento en vez de al tercero es
+lo que necesita. Esa exactitud tiene un efecto práctico: que
+el agente acierte al primer intento en vez de al tercero es
 lo que separa una herramienta usable de una que solo estorba.
 
 ## 15.8 Más allá de holes: información rica como interfaz
@@ -547,8 +538,8 @@ información llega ya estructurada.
 
 ## 15.9 Un loop de trabajo con un agente
 
-Cuando un programador trabaja con un agente IA sobre kaikai,
-el flujo razonable es este:
+Cuando trabajas con un agente IA sobre kaikai, el flujo
+razonable es este:
 
 1. **El humano escribe la firma y los tests.** Define qué se
    espera del programa. Pone holes en los cuerpos.
@@ -565,7 +556,7 @@ el flujo razonable es este:
 4. **El agente itera.** Lee el contraejemplo, ajusta, propone
    otra implementación.
 
-Tres cosas vale fijar de este flujo:
+De este flujo, tres cosas:
 
 - **El humano decide el qué.** La firma, los tests, las
   propiedades son las que dicen qué debe hacer el programa.
@@ -584,9 +575,9 @@ agente, y el compilador es quien concilia a los dos.
 ## 15.10 Lo que el lenguaje no automatiza
 
 Los holes son una herramienta de comunicación con el
-compilador. No son una herramienta de comunicación con el
-juicio del programador. Hay cosas que el compilador no puede
-decir, y que ningún `--holes-json` va a entregarte:
+compilador, y el juicio del programador queda fuera de su
+alcance. Hay cosas que el compilador no puede decir, y que
+ningún `--holes-json` va a entregarte:
 
 - **Qué función necesita tu programa.** Si decides que
   `area_circulo` debe existir, eso es decisión tuya. El
@@ -658,8 +649,7 @@ El humano corre `kai build --holes-json`. El agente recibe:
 El agente sabe: tipo esperado `[String]`, una entrada `notas` de
 tipo `[Pair[String, Int]]`, que es la forma con que el compilador
 imprime `[(String, Int)]`, como viste en §4.6. Y sabe algo más
-útil
-todavía: `candidates` viene **vacío**. La síntesis es bounded y
+útil todavía: `candidates` viene **vacío**. La síntesis es bounded y
 aquí no alcanza para nada; los dos que aparecen detrás de un
 efecto son `Env.args()`, que no tiene nada que ver con el
 problema. El compilador fue honesto: de esta no te salvo. El
@@ -675,13 +665,12 @@ fn aprobados(notas: [(String, Int)]) : [String] =
 
 El agente corre `kai check`. El primer test pasa. El segundo
 falla: el orden es `["Berta", "Carmen"]` y devuelve eso, pero
-también necesita probar que filtra. Veámoslo a la inversa: el
+también necesita probar que filtra. Visto a la inversa: el
 test asume orden lexicográfico ascendente; `list.sort` sobre
 `[String]` debería hacer eso. Si pasa, el agente termina.
 
 El humano nunca tocó el cuerpo. El compilador validó tipos y
-tests. El agente iteró si hizo falta. Cada uno hizo lo que
-mejor sabe hacer.
+tests. El agente iteró si hizo falta.
 
 ¿Es siempre así de limpio? No. Hay funciones donde el agente
 falla tres veces antes de acertar. Hay funciones donde el
@@ -692,9 +681,9 @@ test reporta exactamente qué está mal).
 
 ## 15.12 Filosofía: tres ideas que vale recordar
 
-1. **Holes son una primitiva de diálogo.** No son `null` ni
-   `unimplemented()`: son una forma legal de expresión que
-   compila, que el compilador entiende, y para la que emite
+1. **Holes son una primitiva de diálogo.** A diferencia de
+   `null` o `unimplemented()`, son una forma legal de expresión
+   que compila, que el compilador entiende y para la que emite
    información estructurada. El humano la usa para diseñar
    top-down; el agente la usa como punto de entrada.
 

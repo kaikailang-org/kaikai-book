@@ -1,13 +1,12 @@
 # Chapter 14 · Actors
 
-Chapter 13 showed how to start fibers and coordinate them
+In chapter 13 you learned to start fibers and coordinate them
 with a nursery. That solves internal concurrency: many units
 of work inside the same program, spread across the machine's
 cores.
 
-For many cases that structure is enough. But there's a
-pattern that pure fibers leave awkward, and it's worth
-naming before the syntax.
+For many cases that structure is enough, but there's a
+pattern that pure fibers leave awkward.
 
 ## An actor is a process; a fiber is a computation
 
@@ -20,15 +19,13 @@ Imagine two different tasks:
   alive, answers messages for as long as the program lives,
   ends when someone asks it to stop.
 
-Both are concurrent in the sense that the main program can
-keep working while they happen. But their shape is very
-different.
+Both are concurrent: the main program keeps working while
+they happen. But their shape is very different.
 
 Task A is a **computation**: it has an input, produces an
-output, ends. That's a **fiber**. You create it with
-`spawn`, you wait for its result with `await`, you receive
-the value. Once the result is returned, the fiber ceases to
-exist.
+output, and ends. That's a **fiber**: you create it with
+`spawn`, wait for its result with `await`, and once the
+result is returned the fiber ceases to exist.
 
 ```kai
 let f = spawn.spawn(() => parse_file("input.txt"))
@@ -95,8 +92,7 @@ process decades ago, and I took it almost unchanged.
 
 ## Actors are not language primitives
 
-One more thing to pin down before the syntax: in kaikai,
-actors aren't a core construct. They're a **layer built with
+In kaikai, actors aren't a core construct. They're a **layer built with
 algebraic effects**: the `Actor[Msg]` effect declares the
 operations (`self`, `send`, `receive`); the stdlib provides
 functions like `with_mailbox` and `spawn_actor` that install
@@ -104,16 +100,16 @@ the `Actor[Msg]` handler on top of an ordinary fiber.
 
 It's the same principle as `nursery` from chapter 13: the
 language core has only effects; the use patterns (fibers,
-actors, supervision) appear in libraries any reader can
-read. If after this chapter you wonder how `spawn_actor`
+actors, supervision) appear in libraries you can read. If
+after this chapter you wonder how `spawn_actor`
 works inside, the answer is a `spawn.spawn` plus a
 `handle ... with Actor[Msg]`.
 
 ## 14.1 `Actor[Msg]`: the effect
 
 An actor is a fiber inside a `handle ... with Actor[Msg]`
-that grants it access to four operations. The effect is
-declared in the stdlib:
+that grants it access to four operations, declared in the
+stdlib:
 
 ```kai
 # Declared in stdlib/effects/concurrent.kai, accessible via
@@ -141,7 +137,7 @@ pub effect Actor[Msg] {
   scheduler delivers cancellation to a cancelled fiber.
 - **`receive_timeout(nanos)`** is `receive()` with a deadline.
   It returns `None` if the deadline passes with nothing in the
-  mailbox. You'll meet it with its typed wrapper in §14.3.
+  mailbox. You use it through its typed wrapper in §14.3.
 
 `Msg` is the concrete type of the messages that actor
 **receives**. An actor receives a single message type; sending
@@ -211,9 +207,9 @@ needs no arrow or binder. Inside, `Actor` is the capability:
 `Actor.send(pid, msg)` enqueues, `Actor.receive()` takes the
 next one.
 
-In this example the actor talks to itself. It's the "hello
-world" of the model; the real exercise is communicating two
-distinct actors.
+Here the actor talks to itself: the "hello world" of the
+model. The interesting part is getting two distinct actors to
+talk.
 
 ## 14.3 `spawn_actor`: start a new actor
 
@@ -259,13 +255,13 @@ and returns the `Pid` so the parent can send it messages.
 The worker's signature declares `Actor[String]`: it needs
 the effect to call `Actor.receive()`.
 
-Notice that `main` also has `Actor[String]` in its row.
-Why? Because `Actor.send(pid, "task-1")` is an invocation of
-an operation of the `Actor[String]` effect, and like every
-effect operation it requires the effect to be available in
-context. The `with_mailbox` in `main` provides that
-capability. The `pid` already identifies the destination
-mailbox; the handler only dispatches the operation.
+`main` also has `Actor[String]` in its row, because
+`Actor.send(pid, "task-1")` invokes an operation of the
+`Actor[String]` effect, and every effect operation requires
+the effect to be available in context. The `with_mailbox` in
+`main` provides that capability; the `pid` already identifies
+the destination mailbox, and the handler only dispatches the
+operation.
 
 The `spawn.yield()`s at the end give the scheduler a chance
 to run the worker. Without them, `main` would exit before
@@ -275,11 +271,10 @@ the worker processed anything.
 
 `Actor.receive()` blocks: if the mailbox is empty, the fiber
 suspends until a message arrives, however long that takes.
-That's what you want almost always, but sometimes waiting
-forever is precisely what you don't want. A supervisor running
-a health check shouldn't hang if the worker stopped responding;
-a client asking for something over the network wants to retry
-if nobody answers within 50 ms.
+That's almost always what you want. But a supervisor running
+a health check shouldn't hang if the worker stopped
+responding, and a client asking for something over the
+network wants to retry if nobody answers within 50 ms.
 
 That's what `receive_timeout(d)` is for: it receives from the
 mailbox, gives up after a `Duration`, and returns an `Option`:
@@ -372,9 +367,10 @@ b
 c
 ```
 
-The mailbox has capacity 2. We send `a`, `b`, `c` without
-reading anything. When `c` arrives, there's no room, and
-`DropOldest` evicts `a`. The two reads recover `b` and `c`.
+The mailbox has capacity 2, and the program sends `a`, `b`,
+`c` without reading anything. When `c` arrives there's no
+room, and `DropOldest` evicts `a`. The two reads recover `b`
+and `c`.
 
 `DropOldest` and `DropNewest` **don't notify the sender**
 that their message was dropped. If you need to know, use
@@ -444,7 +440,7 @@ mailbox; arrow (2) returns the `Answer` to the client's
 mailbox. Two typed mailboxes, two messages, one round
 trip.*
 
-A few things worth noting about the structure:
+What matters in the structure:
 
 - **Two distinct types, `Request` and `Reply`.** The mailbox
   fixes what each actor receives, and there the two sides are
@@ -463,12 +459,11 @@ A few things worth noting about the structure:
   (chapter 6), so the actor can run indefinitely without
   blowing the stack.
 
-This replaces, in practical terms, synchronous API calls:
-you ask, wait, continue. The difference is that the
-"server" can be serving multiple clients at once, its
-internal state is encapsulated, and the type system
-guarantees that no client is waiting for an answer of the
-wrong type.
+In practice, this replaces synchronous API calls: you ask,
+wait, continue. Except that here the "server" can serve
+multiple clients at once with its internal state
+encapsulated, and the type system guarantees that no client
+is waiting for an answer of the wrong type.
 
 ## 14.6 Supervision: links and monitors
 
@@ -505,8 +500,8 @@ register observation on the actor's life.
 are bound: if either fails, the other receives
 `Cancel.raise()`. It's the pattern for two actors that
 depend on each other symmetrically (a worker and its queue,
-two sides of a handshake). It is not what you want for
-"supervisor watches worker": that's the monitor case.
+two sides of a handshake). For "supervisor watches worker",
+use a monitor.
 
 ### `set_trap_exit` — receiving the crash instead of suffering it
 
@@ -562,11 +557,9 @@ terminated*. It doesn't say how.
 
 ### Learning how it died: `Link` + trap exit
 
-For the cause you go the other way. `Spawn` exposes
-`set_trap_exit(true)`, which tells a fiber that a linked peer's
-death should arrive as a notice rather than take it down —
-Erlang's `process_flag(trap_exit, true)` — and that notice does
-distinguish: `"Normal"` or `"Crashed"` lands in the mailbox.
+For the cause you go back to `set_trap_exit(true)`, Erlang's
+`process_flag(trap_exit, true)`. Its notice does distinguish:
+`"Normal"` or `"Crashed"` lands in the mailbox.
 
 ```kai
 # examples/ch14/07_trap_exit.kai (excerpt)
@@ -593,8 +586,7 @@ returns cleanly or calls `Cancel.raise()`. Without
 `set_trap_exit`, the first death would cancel the supervisor
 and the second would never be seen.
 
-Worth knowing: that `String` is a v1 simplification. The
-language design (`docs/actors.md`) specifies something richer —
+That `String` is a v1 simplification. The language design (`docs/actors.md`) specifies something richer —
 a `MonitorDown(ref, cause)` with
 `cause = Normal | Crashed(String) | Cancelled`, travelling
 through the actor's typed mailbox as one more variant of your
@@ -627,9 +619,9 @@ what you have: the monitor tells you *who*, trap exit tells you
 - **`Link`**, when two actors form a unit and it doesn't
   make sense for one to survive without the other.
 
-The §14.7 pattern that follows uses explicit notification —
-not only because it's the simplest, but because it's the only
-one where the supervisor gets the reason *in its own terms*. A
+The §14.7 pattern uses explicit notification. It's the
+simplest, and also the only one where the supervisor gets the
+reason *in its own terms*. A
 `"Crashed"` tells you the fiber unwound; a
 `Failed("division by zero at (30, 0)")` tells you what
 happened. For nearly everything you'll write, having the actor
@@ -705,24 +697,23 @@ worker: batch ended as Done(16)
 supervisor: success on second try, total=16
 ```
 
-Three pieces worth commenting on:
+Three pieces to comment on:
 
 - **`process` doesn't touch the actor system.** It's pure
-  list logic: pattern match, recursion, returns a value.
-  That means `process` is completely testable without
-  starting fibers. The actor layer lives only in `worker`,
-  `attempt`, and `supervisor`.
-- **`attempt` separates a concern.** Before extracting it,
-  the second-attempt code was inline inside the first
-  `match`. Pulling that logic into its own function makes
-  the "spawn + receive" pattern explicit.
+  list logic, so you can test it fully without starting
+  fibers. The actor layer lives only in `worker`, `attempt`,
+  and `supervisor`.
+- **`attempt` separates a concern.** Without it, the second
+  attempt would sit inline inside the first `match`; as its
+  own function, it makes the "spawn + receive" pattern
+  explicit.
 - **The supervisor decides policy.** The worker is blind to
   the decision: it only reports. Changing the policy from
   "two tries with different data" to "three tries with
   exponential backoff" touches one function. That separation
   is the real benefit of the model.
 
-What's missing for this to be production-ready? A few
+To be production-ready, this program still needs a few
 things:
 
 - **Per-attempt timeout.** Today if the worker hangs, the
@@ -730,9 +721,9 @@ things:
   `Actor.receive()` that blocks with no deadline. Swapping that
   `receive` for `receive_timeout` (§14.3) hands the supervisor a
   `None` to react to instead of waiting indefinitely.
-- **Cancel the worker if the supervisor gives up.** If we
-  say "I give up" while the worker is still processing, we
-  want the worker to end too. With `Link.link(worker)` after
+- **Cancel the worker if the supervisor gives up.** If the
+  supervisor gives up while the worker is still processing,
+  the worker should end too. With `Link.link(worker)` after
   spawn, the supervisor's decision to return cancels the
   worker automatically. The explicit alternative is to add a
   `Stop` message to the worker's protocol and send it
@@ -747,22 +738,20 @@ guarantees mailboxes are respected.
 
 ## 14.8 Philosophy: actors are a library
 
-If you want to keep two things from this chapter, let it be
-these:
+Keep two things from this chapter:
 
 1. **Actors are not language primitives.** They're a library
    built on the `Actor[Msg]` effect, which is in turn an
    ordinary effect declaration. The stdlib provides
-   `with_mailbox`, `spawn_actor`, the policies. The library's
-   code is there for you to read. If you ever wonder "what
-   does `spawn_actor` do underneath", the answer is a
-   `handle` and a `spawn.spawn`.
+   `with_mailbox`, `spawn_actor`, and the policies, and you
+   can read the code: underneath, `spawn_actor` is a `handle`
+   and a `spawn.spawn`.
 
 2. **Every actor has a fixed message type.** The compiler
    guarantees you don't send the wrong message to the wrong
-   mailbox. `Pid[Msg]` is typed, not a string. And so an
-   actor system in kaikai is more statically verifiable than
-   its equivalent in Erlang.
+   mailbox. `Pid[Msg]` is typed, not a string. So an actor
+   system in kaikai is more statically verifiable than its
+   equivalent in Erlang.
 
 The most important consequence of the first idea: when you
 want a supervision pattern the stdlib doesn't provide, you
@@ -779,8 +768,8 @@ If actors were language primitives the answer would be awkward:
 stand up real actors, send them real messages, and wait. Slow
 tests, and flaky ones whenever the scheduler declines to cooperate.
 
-But you already know `with_mailbox` is no magic: it is an ordinary
-stdlib handler. And a handler can be replaced.
+But you already know `with_mailbox` is an ordinary stdlib handler,
+and a handler can be replaced.
 
 In a test you install your own, answering every `receive` from a
 script you write. The handler's state *is* the script, and
@@ -853,17 +842,16 @@ With the `panic` the script states how far it goes: if the code
 starts asking for something the test did not plan for, the run
 aborts with that message.
 
-One detail worth looking at: `Clock` is still in `main`'s
-signature. The fake handler intercepts `Actor`, not the clock, and
+`Clock` is still in `main`'s signature. The fake handler intercepts `Actor`, not the clock, and
 the row is what the body declares — not what ends up happening. The
 capability stays even though the clock is never consulted. That is
 consistent: the type describes what the code *may* do.
 
 ### Two boundaries, before you find them the hard way
 
-**A handler does not cross a `spawn`.** It is the first thing you
-try: install the fake in the parent and spawn the children beneath
-it. The compiler declines:
+**A handler does not cross a `spawn`.** The first thing you try is
+installing the fake in the parent and spawning the children beneath
+it, and the compiler declines:
 
 ```
 error: effect not handled in spawned fiber: Ticker

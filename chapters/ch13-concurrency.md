@@ -4,41 +4,37 @@ Concurrency is where most languages accumulate debt. Threads
 with shared memory lead to races that show up once a month
 and get fixed three times before they actually go away;
 `async`/`await` introduces function colors; actors fix the
-previous problems but
-historically come with a GC and a heavy runtime.
+previous problems but historically come with a GC and a heavy
+runtime.
 
 I fought with all three in their day, and kaikai's bet came out
-of that fight. It is an unusual combination: **cooperative fibers
-+ per-fiber memory + Perceus**. The structure has three
-consequences worth naming before the syntax:
+of that fight: an unusual combination of **cooperative fibers
++ per-fiber memory + Perceus**. Three consequences, before the
+syntax:
 
 - **No shared memory between fibers.** Each fiber has its own
   heap. What one passes to another is copied or moved, so
   data races can't arise by construction.
 - **No GC, no borrow checker.** Perceus frees memory when
   the last use of each value ends, without an asynchronous
-  collector and without asking the programmer to annotate
-  lifetimes. The compiler figures out where to put the
-  `free`s by analyzing the program.
+  collector and without asking you to annotate lifetimes.
+  The compiler figures out where to put the `free`s.
 - **Concurrency is an effect.** `spawn` is an operation of a
   `Spawn` effect, not a keyword. Creating and awaiting
   fibers composes with the rest of the system (`State`,
   `Cancel`, a `Fail` you declare yourself) using the
   chapter-12 machinery.
 
-Let's take it piece by piece.
-
 ## 13.1 The model: isolated fibers
 
 A **fiber** is a unit of execution similar to a thread, but
-much lighter: on the order of hundreds of bytes instead of
-megabytes. A kaikai application can have thousands or
-hundreds of thousands of live fibers without breaking a
-sweat.
+much lighter: hundreds of bytes instead of megabytes. A kaikai
+application can have thousands or hundreds of thousands of
+live fibers without breaking a sweat.
 
 Fibers are **cooperative**. Each one runs until it hits a
-**yield point**: a call that voluntarily hands control back
-to the scheduler. Yield points are explicit:
+**yield point**: a call that hands control back to the
+scheduler. Yield points are explicit:
 
 - `spawn.yield()`: "I've run for a while, try another".
 - `spawn.await(f)`: "wait until fiber `f` finishes".
@@ -47,28 +43,25 @@ to the scheduler. Yield points are explicit:
 
 Without yields, a fiber runs to completion. That's **local
 determinism**: inside a block without yields, you know
-exactly what's happening. Compared to preemptive threads, it
-takes away a whole class of bugs: there's no race over data
-you touch between two yields because nobody can interrupt
-you.
+exactly what's happening. Compared to preemptive threads, you
+lose a whole class of bugs: nobody can interrupt you between
+two yields, so there's no race over the data you touch there.
 
 The trade-off is that a fiber that never yields blocks every
-other one. It's the programmer's responsibility to add yields
-where they make sense. In practice, IO calls already include
-them, and the only case where you have to think about manual
-yields is a tight CPU-heavy loop.
+other one. Adding yields where they make sense is on you; in
+practice IO calls already include them, and you only think
+about manual yields in a tight CPU-heavy loop.
 
 ### Per-fiber memory
 
 Each fiber has its **own heap**. When a fiber creates a
-record, a list, a closure, the space comes from that heap.
-Another fiber can't touch it: can't read it, can't write it.
-The type system guarantees this.
+record, a list, or a closure, the space comes from that heap,
+and no other fiber can read or write it. The type system
+guarantees this.
 
-How do two fibers communicate, then? By passing values. When
-a fiber sends a message to another (via an actor mailbox or
-the result of an `await`), the value is copied to the
-receiver's heap. For small types that's trivial; for big
+Two fibers communicate by passing values. When a fiber sends a
+message to another (via an actor mailbox or the result of an
+`await`), the value is copied to the receiver's heap. For small types that's trivial; for big
 structures, kaikai uses Perceus to move instead of copy when
 the sender no longer uses the value.
 
@@ -76,21 +69,19 @@ The guarantee that matters: **there's no way for two fibers
 to hold a pointer to the same object**. Data races, memory
 visibility problems, cache coherence bugs — everything that
 in traditional threads needs `Atomic` reads/writes or locks
-simply doesn't exist here. Concurrency is by message, not
-by shared memory.
+simply doesn't exist here.
 
 ## 13.2 Perceus in one page
 
-How is memory freed? Without GC and without a borrow
-checker, there's a third approach: **strict reference
-counting driven by Perceus** (Lorenz, Leijen, Reinking,
-2021).
+With no GC and no borrow checker, memory is freed by a third
+approach: **strict reference counting driven by Perceus**
+(Lorenz, Leijen, Reinking, 2021).
 
-The idea is that the compiler analyzes each function to find
-the exact point where each value is last used. At that
-point, it inserts an instruction that decrements the value's
-reference count: if it hits zero, the value is freed; if
-not, it stays for another use.
+The compiler analyzes each function to find the exact point
+where each value is last used, and there it inserts an
+instruction that decrements the value's reference count: if
+it hits zero, the value is freed; if not, it stays for
+another use.
 
 ```kai
 fn example(xs: [Int]) : Int {
@@ -116,7 +107,7 @@ Compared to a borrow checker:
   references to the same value, the compiler inserts the
   necessary increments and decrements.
 
-The cost? When a value is used many times, counters move.
+The cost: when a value is used many times, counters move.
 For heavily shared values that adds overhead, and Perceus
 includes aggressive optimizations to minimize it (reuse in
 place: if a value is about to be freed and a value of the
@@ -129,11 +120,11 @@ of throwaway structure only to fold it down to a scalar —
 there is an opt-in escape: the `region` block, which
 allocates in an arena and frees it wholesale, no counters
 involved. It belongs to the same kind catalog as chapter
-10's units, and we cover it in chapter 19.
+10's units, and you meet it in chapter 19.
 
 Why this matters for concurrency: Perceus works per fiber.
-Each fiber has its own counters, its own frees. There's no
-synchronization between fibers for any counter: no two
+Each fiber has its own counters and its own frees, and no
+counter needs synchronization between fibers, because no two
 fibers ever share pointers to a value with a shared count.
 That's why the "isolated fibers" model fits so cleanly with
 Perceus: the same invariant that rules out data races also
@@ -175,15 +166,14 @@ A
 B
 ```
 
-**"One possible output" is literal, and worth stopping on.**
-This program promises no such order. `A` and `B` are
-independent fibers: nothing in the code says the first `A`
-comes before the first `B`. The runtime spreads fibers across
-as many OS threads as your machine has cores, so in practice
-you'll see different orders run to run — `A A A B B B` is as
-valid as the interleaving above.
+**"One possible output" is literal.** This program promises no
+such order. `A` and `B` are independent fibers: nothing in the
+code says the first `A` comes before the first `B`. The
+runtime spreads fibers across as many OS threads as your
+machine has cores, so you'll see different orders run to run —
+`A A A B B B` is as valid as the interleaving above.
 
-If you want the perfectly alternating output, there's a way:
+For perfectly alternating output:
 
 ```
 $ KAI_THREADS=1 kai run examples/ch13/01_two_fibers.kai
@@ -197,11 +187,11 @@ B
 
 `KAI_THREADS=1` pins the scheduler to a single thread, and
 there `spawn.yield()` is the only thing deciding whose turn it
-is. That's the mode you'll want for reading this chapter's
-examples whenever the point is to *see* the alternation. More
-on this in §13.8; for now, hold on to the idea that the
-alternation is a property of the single-threaded scheduler,
-not a guarantee of the language.
+is. Use that mode to read this chapter's examples whenever
+the point is to *see* the alternation. You come back to this
+in §13.8; for now, hold on to the idea that the alternation
+is a property of the single-threaded scheduler, not a
+guarantee of the language.
 
 Reading literally:
 
@@ -222,14 +212,14 @@ propagates upward like any other effect from chapter 12.
 
 In languages with preemptive threads (Java, Go, Rust with
 `std::thread`), the scheduler can interrupt a thread at any
-instruction. That forces you to program as if any line
+instruction, which forces you to program as if any line
 could be interrupted by another fiber modifying shared
 data.
 
 In kaikai, **a fiber keeps running until it hits a yield
-point**. Between yields, you have local determinism: if you
-modify a local value, nobody else will touch it until you
-give up control. This drops a lot of cognitive load.
+point**. Between yields you have local determinism: nobody
+touches your local values until you give up control. This
+drops a lot of cognitive load.
 
 In exchange, you have to **remember to yield**. The mental
 rule: if your function has a long pure-CPU loop, add a
@@ -238,10 +228,9 @@ already yield internally.
 
 ## 13.4 Nurseries: structured concurrency
 
-`spawn.spawn` + `spawn.await` works, but it has a problem:
-if you forget the `await`, the fiber outlives the scope that
-created it. And if that fiber fails, you find out late or
-not at all.
+`spawn.spawn` + `spawn.await` works, but if you forget the
+`await`, the fiber outlives the scope that created it. And if
+that fiber fails, you find out late or not at all.
 
 **Nurseries** tie fibers to a lexical scope. A fiber can
 only live inside a nursery, and the nursery waits for all
@@ -288,8 +277,7 @@ capability to create fibers:
   the nursery waits for the fibers anyway, and `|> ignore` says
   you are dropping it on purpose.
 - `n.await(f)` waits for that fiber and returns its value. You
-  only need it when you want the result; to just wait, you
-  don't.
+  only need it when you want the result.
 - `n.select([a, b, ...])` waits for any one to finish and
   cancels the others.
 - `n.cancel(f)` cancels a specific fiber.
@@ -322,13 +310,13 @@ This is called **structured concurrency**. The idea is
 Nathaniel Smith's, in his essay *"Notes on structured
 concurrency, or: Go statement considered harmful"* (2018),
 and appears also in Trio, Kotlin coroutines, Swift, and
-OCaml 5 Eio. kaikai's version integrates the pattern into
-the effect system: the `Spawn` capability is only available
-inside a nursery, and that's what the type system enforces.
+OCaml 5 Eio. kaikai integrates the pattern into the effect
+system: the `Spawn` capability is only available inside a
+nursery, and the type system enforces it.
 
-`n.select` at work, the racing primitive: the nursery returns
-the value of whichever child finishes first and cancels the
-other without being asked.
+`n.select` is the racing primitive: the nursery returns the
+value of whichever child finishes first and cancels the other
+without being asked.
 
 ```kai
 # examples/ch13/04_race.kai
@@ -373,9 +361,9 @@ winner: 1
 
 ### Why `Cancel` appears in `main`'s signature
 
-Notice that `main` declares `/ Stdout + Spawn + Cancel`.
-Why `Cancel`? Because each `spawn`, `await`, and `select` is
-a yield point, and every yield point can receive a
+`main` declares `/ Stdout + Spawn + Cancel` because each
+`spawn`, `await`, and `select` is a yield point, and every
+yield point can receive a
 `Cancel.raise()` from the scheduler (if someone cancels the
 nursery from outside, or if a sibling fiber fails). Every
 function using `Spawn` implicitly carries `Cancel`.
@@ -403,17 +391,16 @@ as n { ... }`, with an internal handler that manages the
 child tree, waits for pending children on exit, and
 propagates failures.
 
-That means the language core **has no concurrency
-primitives**: it has effects. Fibers, nurseries, and
-cancellation are a library built on two stdlib effects
-(`Spawn` and `Cancel`). Chapter 14 will do the same for
-actors (effect `Actor[Msg]`), and the pattern repeats:
-what's distinctive about kaikai isn't the list of
-constructs but that all of them are the same construct —
-algebraic effects — under different names.
+So the language core **has no concurrency primitives**: it
+has effects. Fibers, nurseries, and cancellation are a
+library built on two stdlib effects (`Spawn` and `Cancel`).
+In chapter 14 actors repeat the pattern (effect
+`Actor[Msg]`): what's distinctive about kaikai is that all
+its constructs are the same one — algebraic effects — under
+different names.
 
-Three children and one `await` each, which is how you keep the
-results instead of merely waiting for them:
+To keep the results instead of merely waiting for them, one
+`await` per child:
 
 ```kai
 # examples/ch13/05_worker_pool.kai
@@ -488,16 +475,16 @@ fn count(tag: String, n: Int) : Unit / Stdout + Spawn + Cancel {
 
 `long_worker` counts indefinitely. If the nursery cancels
 it, the `Cancel` handler prints its message and the fiber
-exits. It doesn't hang, it doesn't kill the process.
+exits, without hanging or killing the process.
 
 The conceptual key: `Cancel.raise()` is the **operation**,
 and `handle ... with Cancel { ... }` is the handler. Same
 pattern as chapter 12: cancellation is another effect, with a
-handler written by the user or installed by the runtime.
+handler you write or the runtime installs.
 
 ### `Spawn.cancel(f)` and user-installed `Cancel` handlers
 
-Two related names worth pinning apart:
+Two related names to keep apart:
 
 - **The `Cancel` effect** is what a fiber **receives** when
   cancellation reaches it. Its single op `raise()` is injected
@@ -508,15 +495,15 @@ Two related names worth pinning apart:
 When you `n.spawn(...)` with a nursery cap `n` and get back a
 child fiber, `Spawn.cancel(child)` does not kill it: it
 schedules the delivery. The child, on its next yield, receives
-`Cancel.raise()` and its own `Cancel` handler runs — exactly
-the one the child installed with `with Cancel { ... }`. If it
-installed none, the fiber unwinds cleanly and any handlers
-further up the stack (typically the nursery's) take over.
+`Cancel.raise()` and runs its own `Cancel` handler, the one it
+installed with `with Cancel { ... }`. If it installed none, it
+unwinds cleanly and any handlers further up the stack
+(typically the nursery's) take over.
 
 The one exception is **trap-exit** in the actor model
-(ch. 14): a fiber can mark itself so that peer crashes turn
-into mailbox messages instead of triggering cancellation, but
-that's an explicit local opt-in — the default remains the
+(ch. 14): a fiber can mark itself so that peer crashes reach
+its mailbox as messages instead of triggering cancellation.
+That's an explicit local opt-in; the default remains the
 cooperative cancellation described here.
 
 A child that gives up on its own, the siblings that get the
@@ -614,24 +601,23 @@ kai: nursery child cancelled; no survivors
 
 ## 13.6 Per-fiber mutable memory
 
-Chapter 12 §12.7 covered `var` (local cells, sugar over
+In chapter 12 §12.7 you met `var` (local cells, sugar over
 `State[T]`) and the `Mutable` effect (which rules `Ref[T]`
-and `Array[T]` when the mutation is observable). All that
-machinery works the same in sequential code, with one
-addition that comes from the fiber model: **mutable memory
-lives in the heap of the fiber that created it**.
+and `Array[T]` when the mutation is observable). All of it
+works the same as in sequential code, with one addition from
+the fiber model: **mutable memory lives in the heap of the
+fiber that created it**.
 
 When a fiber creates an `Array[T]` or a `Ref[T]`, the space
-comes from its own heap. Another fiber has no way to reach
-that memory: no shared pointers, no reference passing
-between fibers. If a fiber wants to give a mutable value to
-another, it sends it through a mailbox (chapter 14) and the
-runtime moves the contents to the receiver's heap.
+comes from its own heap, and no other fiber can reach it: no
+shared pointers, no reference passing between fibers. To give
+a mutable value to another fiber, you send it through a
+mailbox (chapter 14) and the runtime moves the contents to
+the receiver's heap.
 
-This is the piece that ensures mutation doesn't introduce
-data races in kaikai. In a language with threads and shared
-memory, a mutable `Array[T]` needs locks or atomics to be
-touched from several threads. In kaikai, the type system
+That's why mutation doesn't introduce data races in kaikai.
+With threads and shared memory, a mutable `Array[T]` needs
+locks or atomics to be touched from several threads. In kaikai, the type system
 guarantees that no `Array[T]` is being modified by two
 fibers at the same time, because no `Array[T]` is reachable
 from two fibers at the same time. The memory isolation of
@@ -640,9 +626,8 @@ from two fibers at the same time. The memory isolation of
 ## 13.7 Why fibers can't escape their nursery
 
 A detail of the type system: **`Fiber[T]` is not a movable
-value**. You can't return it from a function, can't store
-it in an `Option` or a record, can't pass it to another
-fiber.
+value**. You can't return it from a function, store it in an
+`Option` or a record, or pass it to another fiber.
 
 ```kai
 fn doesnt_compile() : Fiber[Int] {       # ERROR
@@ -652,10 +637,9 @@ fn doesnt_compile() : Fiber[Int] {       # ERROR
 }
 ```
 
-Why? Because a fiber only makes sense inside the nursery
-that created it. If you could return it, who would await
-it? Who would cancel it if the nursery ends? The structure
-breaks.
+A fiber only makes sense inside the nursery that created it.
+If you could return it, who would await it? Who would cancel
+it when the nursery ends? The structure breaks.
 
 A list of fibers inside the same nursery is legal:
 
@@ -666,11 +650,11 @@ nursery { n ->
 }
 ```
 
-But that list lives inside the nursery. It can't escape.
+But that list lives inside the nursery and can't escape.
 
-This closes the model: each fiber has a known parent, each
-fiber ends before its parent ends, and the type system
-guarantees it syntactically, not by convention. **There's no
+This closes the model: each fiber has a known parent and ends
+before it, and the type system guarantees it syntactically,
+not by convention. **There's no
 way for a fiber to be orphaned.**
 
 ## 13.8 Case study: splitting work across fibers
@@ -679,9 +663,8 @@ We close with a pattern you'll write many times: split a list
 of tasks across several worker fibers and collect the results
 at the end.
 
-Before the code, a constraint worth having straight, because
-it decides the shape of the solution: **effect handlers are
-fiber-local**. Install a `State` handler in `main`, have a
+Before the code, a constraint that decides the shape of the
+solution: **effect handlers are fiber-local**. Install a `State` handler in `main`, have a
 child fiber run `State.get()`, and the program doesn't even
 compile:
 
@@ -695,10 +678,9 @@ error: effect not handled in spawned fiber: State
   = help: handle the effect inside the spawned body: `handle { ... } with State { ... }`
 ```
 
-This isn't a compiler oversight, it's the same isolation
-invariant that holds up the whole chapter. A capability is
-part of a fiber's context, and a fiber does not inherit the
-context of whoever created it. What you hand across a `spawn`
+It's the same isolation invariant that holds up the whole
+chapter: a capability is part of a fiber's context, and a
+fiber does not inherit the context of whoever created it. What you hand across a `spawn`
 is the values you capture in the lambda on the way in, and the
 return value `await` collects on the way out. The capabilities
 that do resolve inside a child come in two kinds, and neither
@@ -706,9 +688,9 @@ is yours: the ones the runtime supplies per fiber (`Stdout`,
 `Clock`), and the ones that belong to the fiber by construction
 (`Cancel`, `Spawn`, `Actor`).
 
-The compiler stops it on the `spawn` line, which is where the
-mistake is, rather than letting it blow up at runtime when the
-fiber reaches the operation.
+The compiler stops it on the `spawn` line, where the mistake
+is, rather than letting it blow up at runtime when the fiber
+reaches the operation.
 
 So the "shared queue" you'd write in Go with a channel, or in
 Java with a `BlockingQueue`, isn't written that way here. You
@@ -726,7 +708,7 @@ fn process_batch(id: Int, batch: [String]) : [String] / Spawn =
     })
 ```
 
-`process_batch` doesn't know other fibers exist. It takes its
+`process_batch` doesn't know other fibers exist: it takes its
 batch, walks it, and builds the output list. The
 `spawn.yield()` is there so the workers take turns; it doesn't
 change the result, it just makes the thing genuinely
@@ -760,14 +742,12 @@ worker 3: foxtrot
 (6 tasks processed)
 ```
 
-And this time the output **is** guaranteed, unlike the earlier
-examples in the chapter. Not because the fibers run in order —
-they run however they like, on whatever cores are around — but
-because nobody prints from a fiber. The workers only return
-lists; `main` concatenates them in the order it chose when it
-wrote `n.await(a) ++ n.await(b) ++ n.await(c)`, and only then
-prints. The output order is a consequence of the code, not of
-the scheduler.
+This time the output **is** guaranteed. The fibers run however
+they like, on whatever cores are around, but none of them
+prints: they only return lists, and `main` concatenates them
+in the order it chose when it wrote `n.await(a) ++ n.await(b)
+++ n.await(c)`, and only then prints. The output order is a
+consequence of the code, not of the scheduler.
 
 That's a design rule worth more than the example itself: **if
 you care about order, impose it at the join point — don't
@@ -781,8 +761,7 @@ actor, and that's chapter 14.
 
 ### Concurrency and parallelism
 
-Two words worth keeping apart, because they get conflated
-constantly.
+Two words that get conflated constantly:
 
 **Concurrency** is a property of your program: having several
 lines of work alive at once, progressing independently.
@@ -790,13 +769,13 @@ lines of work alive at once, progressing independently.
 lines executing instructions at the same instant, on different
 cores.
 
-kaikai gives you both. Fibers are the concurrency mechanism:
-lightweight, cooperative, tied to a nursery. And the runtime
+kaikai gives you both. Fibers, cooperative and tied to a
+nursery, are the concurrency mechanism, and the runtime
 spreads them by default across as many OS threads as the
 machine has cores, with an M:N scheduler that steals work
-between threads. Nothing to request, nothing to
-configure: the program you wrote back in §13.3 already uses
-your sixteen cores if you have them.
+between threads. You request and configure nothing: the
+program you wrote in §13.3 already uses your sixteen cores if
+you have them.
 
 What does **not** change with the thread count is the
 semantics:
@@ -812,12 +791,12 @@ semantics:
 
 What does change is what you already saw: **the order in which
 independent fibers interleave stops being predictable.** On one
-thread, `spawn.yield()` decided the turns and the output was
-reproducible. On several, it isn't. That's why `KAI_THREADS=1`
-still exists: it forces the single-threaded cooperative
-scheduler, byte-identical to the old one. It's the tool for
-debugging a race, for a test that compares literal output, or
-for reading a teaching example like the ones in this chapter.
+thread, `spawn.yield()` decides the turns and the output is
+reproducible; on several, it isn't. That's what
+`KAI_THREADS=1` is for: it forces the single-threaded
+cooperative scheduler. It's the tool for debugging a race, for
+a test that compares literal output, or for reading a teaching
+example like the ones in this chapter.
 
 ```sh
 $ ./program                  # as many threads as cores
@@ -825,19 +804,17 @@ $ KAI_THREADS=4 ./program    # four, no more, no less
 $ KAI_THREADS=1 ./program    # cooperative, reproducible
 ```
 
-Now the useful question: **will it help you?** If your program
+The useful question is whether it helps you. If your program
 is IO-bound — waiting on the network, reading files, receiving
-messages — fibers already paid off before, because while one
-waits for bytes the others run. If it's CPU-bound, fibers used
-to give you structure but no speed; today they give you speed
-too, as long as the work splits into pieces that don't depend
-on each other. The example in this section is exactly that
-shape.
+messages — fibers pay off even on one thread, because while
+one waits for bytes the others run. If it's CPU-bound, they
+give you speed as well as structure, as long as the work
+splits into pieces that don't depend on each other. The
+example in this section is exactly that shape.
 
 ## 13.9 Philosophy: two invariants worth remembering
 
-If you want to keep two things from this chapter, let it be
-these:
+Keep two things from this chapter:
 
 1. **Each fiber has its own heap.** No shared memory between
    fibers. Communication is by message (actor mailbox,
@@ -856,8 +833,7 @@ Lexical structure is what lets memory be freed predictably
 at scope exit. Any model that breaks one of the two breaks
 the other.
 
-In return, you get whole classes of bugs you no longer
-have to think about:
+In return, you stop thinking about whole classes of bugs:
 
 - No `volatile`, no `Atomic`, no memory ordering.
 - No `lock`, no `mutex`, no `RwLock`.
@@ -867,9 +843,8 @@ have to think about:
 - No GC pause-the-world.
 
 It's a trade-off: you give up the freedom to have arbitrary
-pointers between fibers. But the gain — in safety, in
-predictability, in mental simplicity — is what justifies the
-model.
+pointers between fibers. What you gain in safety and mental
+simplicity justifies the model.
 
 ## Exercises
 

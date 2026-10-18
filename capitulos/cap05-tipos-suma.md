@@ -1,19 +1,17 @@
 # Capítulo 5 · Sum types, uniones y `match`
 
-Este es el capítulo donde, si vienes de un lenguaje
-imperativo, cambias la forma de modelar datos. Los tipos suma
-y el `match` que los acompaña no son una construcción exótica:
-son la herramienta que reemplaza a la mitad de las jerarquías
-de clases, los `enum` con flags, los `instanceof` y los
-visitor patterns que probablemente has venido escribiendo. Una
-vez que los manejas, no quieres soltarlos.
+Si vienes de un lenguaje imperativo, en este capítulo cambias
+la forma de modelar datos. Los tipos suma y el `match` que los
+acompaña reemplazan a la mitad de las jerarquías de clases, los
+`enum` con flags, los `instanceof` y los visitor patterns que
+probablemente has venido escribiendo. Una vez que los manejas,
+no quieres soltarlos.
 
-El capítulo va de menos a más. Empezamos por los sum types
-básicos, pasamos por la recursión en tipos, vemos `match` con
-todas sus formas, llegamos a las uniones de tipos existentes
-(una idea poco común en lenguajes mainstream) y cerramos
-con un evaluador completo de expresiones aritméticas con
-errores tipados.
+El capítulo va de menos a más. Empiezas por los sum types
+básicos, pasas por la recursión en tipos, recorres `match` en
+todas sus formas, llegas a las uniones de tipos existentes (una
+idea poco común en lenguajes mainstream) y cierras con un
+evaluador de expresiones aritméticas con errores tipados.
 
 ## 5.1 Tipos suma con `|`
 
@@ -35,9 +33,8 @@ con dos diferencias: los constructores **pueden cargar datos**,
 y el compilador **verifica que los uses todos** cuando
 decides según el constructor.
 
-Empecemos por la primera. Un constructor puede recibir
-parámetros posicionales, igual que un record con campos
-numerados:
+Primero, los datos. Un constructor puede recibir parámetros
+posicionales, igual que un record con campos numerados:
 
 ```kai
 type Forma
@@ -47,11 +44,10 @@ type Forma
 ```
 
 `Circulo(2.0)` es un valor de tipo `Forma` con un dato real
-adentro. `Rectangulo(3.0, 4.0)` es otro valor de `Forma` con
-dos datos. `Triangulo(3.0, 4.0, 5.0)` es un tercero. Los tres
-caen bajo el mismo tipo `Forma`, pero el compilador sabe cuál
-es cuál y nos obliga a manejarlos por separado cuando los
-consumimos.
+adentro; `Rectangulo(3.0, 4.0)` lleva dos y
+`Triangulo(3.0, 4.0, 5.0)`, tres. Los tres son `Forma`, pero
+el compilador sabe cuál es cuál y te obliga a manejarlos por
+separado cuando los consumes.
 
 ```kai
 fn area(f: Forma) : Real =
@@ -68,8 +64,8 @@ fn area(f: Forma) : Real =
 `match` es una expresión que decide según el constructor. Cada
 rama es un patrón seguido de `->` y la expresión que esa rama
 produce. Los patrones desempacan los datos al mismo tiempo: en
-`Circulo(r)`, la `r` es la variable que ata el `Real` que
-venía adentro del constructor. No hay un `cast` aparte ni un
+`Circulo(r)`, la `r` queda amarrada al `Real` que venía
+adentro del constructor. No hay un `cast` aparte ni un
 acceso por índice; el patrón hace el trabajo.
 
 Tres detalles que vas a usar siempre:
@@ -130,7 +126,7 @@ Un constructor sin payload nunca lleva paréntesis: se escribe
 
 ## 5.2 Constructores con y sin payload
 
-Lo viste arriba pero conviene fijarlo. Un constructor puede:
+Un constructor puede:
 
 - **No cargar datos** (`Rojo`, `Verde`, `Azul`). Es un valor
   único del tipo, sin parámetros.
@@ -138,10 +134,9 @@ Lo viste arriba pero conviene fijarlo. Un constructor puede:
   `Rectangulo(Real, Real)`). El constructor se aplica como una
   función a los datos para producir el valor.
 
-No hay límite en cuántos datos puede cargar un constructor: la
-gramática los acepta todos, pero por ergonomía, si pasas de
-tres o cuatro datos posicionales conviene declarar un record y
-ponerlo en el payload. La diferencia entre
+La gramática no limita cuántos datos carga un constructor,
+pero si pasas de tres o cuatro posicionales conviene declarar
+un record y ponerlo en el payload. La diferencia entre
 
 ```kai
 type Evento
@@ -240,10 +235,9 @@ fn altura(t: Arbol) : Int =
   }
 ```
 
-El patrón `Nodo(_, izq, der)` ignora el dato del nodo (no nos
-interesa para calcular altura) y ata los dos subárboles a las
-variables `izq` y `der`. Después se recurre sobre cada uno y se
-toma el máximo más uno.
+El patrón `Nodo(_, izq, der)` ignora el dato del nodo (la
+altura no lo necesita) y amarra los dos subárboles a `izq` y
+`der`; la función recurre sobre cada uno y suma uno al máximo.
 
 Lo mismo aplica a un AST de expresiones aritméticas:
 
@@ -270,7 +264,8 @@ se escriben prácticamente solos, una vez que sabes mirarlo
 así.
 
 Esto reemplaza a las jerarquías de clases con visitor patterns
-en lenguajes OO. La diferencia clave: en kaikai, agregar un
+de los lenguajes orientados al objeto. La diferencia clave: en
+kaikai, agregar un
 nodo nuevo a `Expr` se hace en una línea, y todos los `match`
 sobre `Expr` en el código se vuelven errores de compilación que
 apuntan a los lugares que necesitan atención. En un visitor
@@ -332,7 +327,7 @@ eval = -20
 
 ## 5.4 `match`: patrones, guardas, exhaustividad
 
-Ya viste `match` en acción. Aquí lo formalizamos.
+Ya usaste `match`. Aquí va completo.
 
 Un `match` toma una **expresión escrutinio** (lo que se está
 inspeccionando) y una serie de **arms**, cada uno con un
@@ -361,8 +356,8 @@ sola pasada.
 
 ### Atar o comparar: la regla del identificador
 
-Las dos últimas entradas de esa lista merecen una segunda
-mirada, porque son la misma sintaxis haciendo cosas opuestas:
+Las dos últimas entradas de esa lista son la misma sintaxis
+haciendo cosas opuestas:
 
 ```kai
 # ejemplos/cap05/06_patrones_constante.kai
@@ -383,8 +378,8 @@ es: **un identificador en un patrón ata, salvo que nombre una
 constante en scope; ahí compara.** No es cosa de mayúsculas: una
 constante en minúscula compara igual.
 
-Lo que significa que introducir una constante puede cambiar lo
-que un patrón ya escrito quiere decir. Si pusiste un brazo
+Entonces, introducir una constante puede cambiar el sentido de
+un patrón ya escrito. Si pusiste un brazo
 `limite -> ...` con la intención de atar, y después alguien
 declara `const limite`, ese brazo se convierte en una
 comparación sin que nadie lo toque.
@@ -454,11 +449,10 @@ error: non-exhaustive match on Expr: missing Neg
 
 El wildcard `_` cubre todo lo que las ramas anteriores no
 hayan cubierto, así que un `match` con un `_` final es
-trivialmente exhaustivo. Pero usar `_` como rama final en
-lugar de enumerar los casos es una forma de **silenciar** la
-ayuda del compilador: cuando agregues un constructor nuevo a
-`Expr`, los `match` con `_` final lo absorberán sin
-quejarse, y vas a perder el aviso.
+trivialmente exhaustivo. Pero usar `_` en lugar de enumerar
+los casos **silencia** la ayuda del compilador: cuando agregues
+un constructor a `Expr`, los `match` con `_` final lo absorben
+sin quejarse y pierdes el aviso.
 
 La regla práctica: usa `_` solo cuando de verdad no te
 interesa distinguir el resto. Si los casos son tres y los tres
@@ -525,8 +519,7 @@ lado derecho **ya están declarados como tipos**, kaikai
 construye una **unión** que puede llevar cualquier valor de
 esos tipos.
 
-Esto es la herramienta clave para componer errores entre
-capas:
+Es la herramienta clave para componer errores entre capas:
 
 ```kai
 type ErrorIdentidad = CuentaNoExiste | KycVencido | Congelada
@@ -550,12 +543,12 @@ let id_err: ErrorIdentidad = CuentaNoExiste
 let qb_err: ErrorConsulta  = id_err     # OK, sin ceremonia
 ```
 
-Esto es lo que en otros lenguajes te obliga a escribir
-constructores wrapper (`QBIdentity(IdentityError)`),
-implementaciones de `From` o conversiones manuales con
-`map_err`. En kaikai no hay ninguna de esas tres cosas: el
-compilador sabe que `ErrorIdentidad` es un componente de
-`ErrorConsulta` y reescribe el upcast por ti.
+En otros lenguajes esto te obliga a escribir constructores
+wrapper (`QBIdentity(IdentityError)`), implementaciones de
+`From` o conversiones manuales con `map_err`. En kaikai no hay
+ninguna de esas tres cosas: el compilador sabe que
+`ErrorIdentidad` es un componente de `ErrorConsulta` y reescribe
+el upcast por ti.
 
 ### Pattern matching sobre uniones
 
@@ -614,8 +607,7 @@ exhaustividad cierra correctamente.
 
 ### Una limitación deliberada: el upcast no encadena
 
-Hay una regla de kaikai que es importante conocer. El upcast
-implícito **vale solo un paso**. Imagina tres tipos
+El upcast implícito **vale solo un paso**. Imagina tres tipos
 encadenados, cada uno conteniendo al anterior:
 
 ```kai
@@ -701,10 +693,9 @@ auth: límite diario
 
 ## 5.6 Errores como uniones, sin wrappers
 
-Las uniones son tan útiles para errores que vale la pena
-detenerse en el patrón. Cuando una función puede fallar de
-varias maneras y esas maneras se descomponen en categorías
-claras, el patrón natural es:
+Donde más rinden las uniones es en los errores. Cuando una
+función puede fallar de varias maneras que se descomponen en
+categorías claras, el patrón natural es:
 
 1. Cada categoría es un sum type pequeño.
 2. El error compuesto es la unión de las categorías.
@@ -732,15 +723,14 @@ cubiertos cuando alguien la consume.
 
 ### Lo que `!` hace por dentro
 
-Vale la pena mirar el operador con un poco más de cuidado,
-porque la primera vez parece mágico. **`!` es un `return`
-temprano disfrazado de operador.** La línea
+La primera vez `!` parece mágico. **Es un `return` temprano
+disfrazado de operador.** La línea
 
 ```kai
 let cuenta = check_identidad(req)!
 ```
 
-es exactamente equivalente a:
+equivale exactamente a:
 
 ```kai
 let cuenta = match check_identidad(req) {
@@ -752,7 +742,7 @@ let cuenta = match check_identidad(req) {
 Sobre `Option[A]` el desugar es análogo: `Some(x)` desempaca,
 `None` provoca `return None`.
 
-Tres cosas que conviene fijar:
+Tres cosas que fijar:
 
 - **No es un `panic` ni una excepción.** El programa no aborta;
   la función actual termina normalmente devolviendo el `Err` o
@@ -801,8 +791,8 @@ error:
 
 Los dos forman una unión, `ErrorEval`, y el evaluador devuelve
 `Result[Real, ErrorEval]`. El código completo está en
-`ejemplos/cap05/05_evaluador.kai`; aquí vamos paso a paso por
-las partes interesantes.
+`ejemplos/cap05/05_evaluador.kai`; aquí recorres las partes
+interesantes.
 
 ### El AST
 
@@ -830,12 +820,11 @@ type ErrorAmbiente   = NoDefinida(String)
 type ErrorEval       = ErrorAritmetico | ErrorAmbiente
 ```
 
-Tres tipos: dos categorías y la unión. Cuatro constructores
-en total, pero distribuidos en categorías que tienen sentido
-por sí mismas. `RaizNegativa(Real)` carga el valor que se
-intentó pasar a la raíz: es información útil para el
-mensaje de error final. `NoDefinida(String)` carga el nombre
-de la variable que faltaba.
+Tres tipos: dos categorías y la unión. Cuatro constructores en
+total, pero distribuidos en categorías que tienen sentido por sí
+mismas. `RaizNegativa(Real)` carga el valor que se intentó pasar
+a la raíz, útil para el mensaje de error final.
+`NoDefinida(String)` carga el nombre de la variable que faltaba.
 
 ### El ambiente
 
@@ -855,20 +844,19 @@ en la **forma multi-clause** del cap. 6: cada `case` lista un
 patrón por argumento separado por coma (aquí `env` y `nombre`),
 con un `when` opcional para guardas. Tres casos:
 
-- Lista vacía: la variable no estaba; devolvemos un error.
-- Cabeza con la clave que buscamos: éxito.
-- Cualquier otra cabeza: seguimos en la cola.
+- Lista vacía: la variable no estaba; devuelve un error.
+- Cabeza con la clave buscada: éxito.
+- Cualquier otra cabeza: sigue en la cola.
 
-Fíjate que el `Err` es del tipo `ErrorEval`, no
+Fíjate en que el `Err` es del tipo `ErrorEval`, no
 `ErrorAmbiente`, pero `NoDefinida(nombre)` se construye como
 `ErrorAmbiente` y el upcast implícito lo promueve a
 `ErrorEval` en el sitio del retorno, sin conversión explícita.
 
-`eval` (a continuación) usa la forma con `match` envoltorio
-porque dispatcha sobre un tipo suma con muchos constructores
-y la forma `match e { ... }` se lee mejor cuando el discrimen
-es sobre un solo argumento de tipo bien marcado. Las dos
-formas conviven en el mismo archivo sin tensión.
+`eval`, a continuación, usa la forma `match e { ... }`, que se
+lee mejor cuando decides sobre un solo argumento de un tipo
+suma con muchos constructores. Las dos formas conviven en el
+mismo archivo sin tensión.
 
 ### El evaluador
 
@@ -906,15 +894,14 @@ fallar localmente (división por cero, raíz negativa)
 construyen un `Err` del tipo apropiado y dejan que el upcast
 los promueva.
 
-El operador `!` aparece varias veces y vale la pena leerlo con
-calma. `eval(env, a)!` significa: si `eval(env, a)` devuelve
-`Ok(v)`, ata `va` a `v`; si devuelve `Err(e)`, **sale
+El `!` aparece varias veces; léelo con calma.
+`eval(env, a)!` significa: si `eval(env, a)` devuelve `Ok(v)`,
+amarra `va` a `v`; si devuelve `Err(e)`, **sale
 inmediatamente** de la función actual devolviendo ese `Err`.
-En este caso particular, el `Err` que se propaga es
-`Result[_, ErrorEval]`, y como `eval` devuelve exactamente
-ese tipo, el upcast es trivial. Pero la misma forma funciona
-cuando los tipos de error de las llamadas internas son
-componentes distintos de la unión.
+Aquí el `Err` que se propaga ya es `Result[_, ErrorEval]`, el
+tipo que `eval` devuelve, así que el upcast es trivial. La
+misma forma funciona cuando los tipos de error de las llamadas
+internas son componentes distintos de la unión.
 
 ### Imprimiendo el resultado
 
@@ -934,10 +921,9 @@ fn imprimir(r: Result[Real, ErrorEval]) : Unit =
 ```
 
 `describir` consume un `ErrorEval` enumerando sus tres
-constructores. Aquí el `match` enumera porque queremos
-mensajes específicos por constructor; en otros casos,
-cuando la lógica para cada categoría difiere, usaríamos
-narrowing.
+constructores. El `match` enumera porque cada constructor pide
+su propio mensaje; si la lógica difiriera por categoría,
+convendría narrowing.
 
 El programa principal arma el ambiente, evalúa varias
 expresiones y las imprime:
@@ -990,7 +976,7 @@ que recorra el árbol siguiendo las respuestas a cada
 pregunta, y devuelva `Some` con la decisión final si llega a
 una hoja, o `None` si en alguna pregunta no hay respuesta.
 
-**5.4.** Tomas el ejemplo de uniones con `ErrorIdentidad` y
+**5.4.** Toma el ejemplo de uniones con `ErrorIdentidad` y
 `ErrorAuth`. Agrega un tercer componente `ErrorRedAdministrativa`
 con dos constructores. Reescribe el `match` con narrowing
 para que el código quede igual de corto. Luego agrega un

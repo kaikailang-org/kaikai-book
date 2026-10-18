@@ -1,21 +1,20 @@
 # Apéndice D · Catálogo de efectos del stdlib
 
-Este apéndice resume los efectos que el stdlib expone. Es
-material de referencia: ante una firma `: Unit / X` en la
-documentación de una función, vienes aquí a confirmar qué
-provee `X`.
+Los efectos que expone el stdlib, como referencia: ante una
+firma `: Unit / X` en la documentación de una función, vienes
+aquí a confirmar qué provee `X`.
 
 La especificación completa vive en
 `github.com/kaikailang-org/kaikai/docs/effects-stdlib.md`. Aquí
-mostramos la declaración del efecto y para qué sirve.
+tienes la declaración de cada efecto y para qué sirve.
 
 ## D.1 IO básico
 
 ### `Stdout`, `Stderr` y `Stdin`
 
 Los tres flujos estándar son efectos separados, uno por
-descriptor. Esa granularidad es lo que le permite a un arnés de
-tests capturar stdout sin tocar lo que se escribe a stderr.
+descriptor. Esa granularidad le permite a un arnés de tests
+capturar stdout sin tocar lo que se escribe a stderr.
 
 ```kai
 effect Stdout {
@@ -83,16 +82,16 @@ effect File {
 ```
 
 Dos niveles. `read_file` / `write_file` mueven el archivo
-entero de una vez, que es lo que quieres la mayoría de las
-veces. El resto es la ruta por chunks para archivos que no
-caben o que no quieres cargar completos.
+entero de una vez, que es lo que quieres casi siempre. El
+resto es la ruta por chunks para archivos que no caben o que
+no quieres cargar completos.
 
 Fíjate en el `<...>` de los handles: `FileHandle<read>` y
 `FileHandle<read + write>` llevan la capacidad **en el tipo**.
 Un handle abierto para lectura no tipa donde se espera
 `FileHandle<write>`, y eso lo decide el compilador, no un
-chequeo en runtime. Es el kind `Perm` del cap. 19 §19.9
-haciendo su trabajo. Lo que el tipo declara es lo que el código
+chequeo en runtime: es el kind `Perm` del cap. 19 §19.9. Lo
+que el tipo declara es lo que el código
 pidió al abrir, no el permiso que el sistema operativo tenga
 sobre el archivo: esa falla sigue viajando por el `Result` de
 cada operación.
@@ -114,11 +113,11 @@ Logging con niveles. El handler por defecto escribe cada
 mensaje a stderr con el formato `[ISO8601Z] NIVEL mensaje`;
 instalar un handler propio te deja capturarlo o filtrarlo.
 
-Una nota para quien venga del capítulo 12: ahí declaramos un
-`effect Log { log(msg: String) : Unit }` propio, más chico,
-para enseñar el mecanismo. No hay conflicto: una declaración
-local hace *shadowing* del nombre del stdlib dentro de su
-archivo. Si quieres el de cuatro niveles, no lo declares.
+En el capítulo 12 declaraste un `effect Log { log(msg:
+String) : Unit }` propio, más chico, para aprender el
+mecanismo. No hay conflicto: una declaración local hace
+*shadowing* del nombre del stdlib dentro de su archivo. Si
+quieres el de cuatro niveles, no lo declares.
 
 ### `Trace`
 
@@ -134,9 +133,9 @@ Trazas ad-hoc, más chico que `Log` y con otro propósito:
 nombre. Se importa desde `trace`.
 
 A diferencia del resto de esta sección, **`Trace` no trae
-handler por defecto**. Sin uno instalado el programa ni
-siquiera compila, porque el nombre no está en alcance. El
-módulo trae dos:
+handler por defecto**: sin uno instalado el programa no
+compila, porque el nombre no está en alcance. El módulo trae
+dos:
 
 - `trace.with_trace_default(body)` escribe cada operación a
   stdout como `[trace] mensaje`, y los checkpoints como
@@ -174,9 +173,9 @@ effect Random {
 
 Una sola operación, uniforme en `[lo, hi]` con ambos extremos
 incluidos. El handler por defecto siembra un PCG64 desde el
-reloj y el pid del proceso. Los helpers de más alto nivel viven
-en el módulo `Random`, construidos sobre esta op. No sirve para
-criptografía.
+reloj y el pid del proceso. Los helpers de más alto nivel,
+construidos sobre esta op, viven en el módulo `Random`. No
+sirve para criptografía.
 
 ### `SecureRandom`
 
@@ -259,9 +258,9 @@ effect NetDns {
 ```
 
 Mismo estilo que `NetTcp`. El stdlib **no** trae un alias que
-agrupe a los efectos de red: los únicos que declara son `Console`
-e `Io` (§D.9). Una función que use varios los suma en su fila,
-`/ NetTcp + NetUdp + NetDns`, o defines el alias tú, que es una
+agrupe a los efectos de red: solo declara `Console` e `Io`
+(§D.9). Si una función usa varios, los sumas en su fila,
+`/ NetTcp + NetUdp + NetDns`, o defines el alias tú, en una
 línea una vez importados los módulos:
 
 ```kai
@@ -316,10 +315,9 @@ camino de salida completo de la libc.
 `start_piped` es la forma `popen`: conecta pipes al stdin, al
 stdout y/o al stderr del hijo, con un flag para cada uno, y desde
 ahí `write_stdin`, `close_stdin`, `read_stdout` y `read_stderr`
-manejan la conversación. Que stderr sea un pipe aparte es lo que
-permite distinguir un diagnóstico de la salida; fusionar los dos
-flujos no se ofrece, porque una vez fusionados ya no se pueden
-separar.
+manejan la conversación. Con stderr en un pipe aparte puedes
+distinguir un diagnóstico de la salida; fusionar los dos flujos
+no se ofrece, porque una vez fusionados ya no se separan.
 
 `kill` alcanza solo al hijo, no a los procesos que ese hijo lanzó.
 Para eso está `start_group`: es `start_piped` con el hijo como
@@ -345,11 +343,11 @@ effect Signal {
 ```
 
 Esperar a una señal POSIX sin bloquear las demás fibras.
-`on(sig)` subscribe el proceso a `sig`; el runtime bloquea
+`on(sig)` suscribe el proceso a `sig`; el runtime bloquea
 la señal a nivel del proceso y el kernel encola la entrega
 en vez de aplicar la disposición por defecto. `await()`
 parkea la fibra que llama hasta que llegue cualquiera de
-las señales subscritas y devuelve la variante `Sig`
+las señales suscritas y devuelve la variante `Sig`
 correspondiente. `off(sig)` desuscribe.
 
 El handler default vive alrededor de `main` cuando `Signal`
@@ -412,9 +410,9 @@ mutación es visible para quien llama. Un array creado local y
 devuelto no requiere `Mutable`.
 
 `array_set` y `array_grow` devuelven el `Array[T]` en vez de
-`Unit`. No es que copien: devuelven el mismo arreglo para que
-Perceus (apéndice B) pueda razonar sobre el último uso y decidir
-si mutar en el lugar. Encadenar la operación es idiomático.
+`Unit`, sin copiar: devuelven el mismo arreglo para que Perceus
+(apéndice B) pueda razonar sobre el último uso y decidir si
+mutar en el lugar. Encadenar la operación es idiomático.
 
 ## D.6 Errores y control
 
@@ -462,7 +460,7 @@ kaikai no trae un efecto `Fail`. Toda API que puede fallar
 devuelve `Result` y propaga con `!` postfijo: no hay una sola
 fila `/ Fail` en el stdlib.
 
-Qué usar, según qué necesitas:
+Qué usar, según lo que necesites:
 
 | Necesitas | Usa |
 |---|---|
@@ -475,8 +473,8 @@ Qué usar, según qué necesitas:
 devuelve `Nothing`, y por eso el capítulo 12 lo declara **local**
 en varios ejemplos. Un `effect Fail` declarado por ti no trae
 default, así que un `fail` sin manejar es un error de
-compilación (`effect not handled: Fail`) y no un aborto en
-tiempo de ejecución. Esa es toda la diferencia práctica.
+compilación (`effect not handled: Fail`), no un aborto en
+tiempo de ejecución.
 
 ## D.7 Concurrencia
 
@@ -518,8 +516,8 @@ effect Actor[Msg] {
 El efecto que da forma al modelo de actores del cap. 14.
 `with_mailbox { ... }` y `spawn_actor(...)` son los wrappers
 del stdlib que instalan este handler. `receive_timeout`
-devuelve `None` si no llegó nada en el plazo, que es lo que
-evita que un actor quede colgado esperando un mensaje que no
+devuelve `None` si no llegó nada en el plazo, y así evita que
+un actor quede colgado esperando un mensaje que no
 va a llegar.
 
 ### `Link` y `Monitor`
@@ -565,9 +563,9 @@ type Io      = Console + Env + File
 
 Dos niveles de agrupación. `Console` junta los tres flujos
 estándar; `Io` le suma el entorno y los archivos. Una función
-que dice `/ Io` está declarando que puede tocar consola, leer
-variables de entorno y manipular archivos: el equivalente a
-"esta función no es pura, hace cosas con el sistema".
+que dice `/ Io` declara que puede tocar consola, leer variables
+de entorno y manipular archivos: el equivalente a "esta función
+no es pura, hace cosas con el sistema".
 
 Fíjate en quiénes **no** están en `Io`: `Clock`, `Random`,
 `SecureRandom`, los efectos de red y `Process` quedan fuera a
@@ -591,7 +589,6 @@ runtime instala automáticamente un handler por defecto:
 - `Spawn`, `Cancel` → el scheduler de fibras del runtime.
 
 Estos handlers se pueden interceptar: cualquier `handle ...
-with X { ... }` que el usuario instale gana sobre el handler
-del runtime para todo el bloque del `body`. Eso es lo que
-permite mocking en tests, capturar la salida, simular el
-reloj, etc.
+with X { ... }` que instales gana sobre el handler del runtime
+en todo el bloque del `body`. Así haces mocking en tests,
+capturas la salida o simulas el reloj.
