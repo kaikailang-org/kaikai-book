@@ -18,8 +18,8 @@ fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
-  let _ = nursery { n ->
-    n.spawn(() => worker("A", 3))
-    n.spawn(() => worker("B", 3))
+  nursery { n ->
+    n.spawn(() => worker("A", 3)) |> ignore
+    n.spawn(() => worker("B", 3)) |> ignore
   }
 }

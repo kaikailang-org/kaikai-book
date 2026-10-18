@@ -9,19 +9,22 @@
 
 import dominio
 
-# Suma los débitos de una lista de movimientos.
-pub fn total_debitos(ms: [dominio.Movimiento]) : Real<USD> = match ms {
-  [] -> 0.0<USD>
-  [dominio.Debito(_, m), ...rest] -> m + total_debitos(rest)
-  [dominio.Credito(_, _), ...rest] -> total_debitos(rest)
+# El monto de un movimiento, si es del lado que se pide.
+fn debito(m: dominio.Movimiento) : [Real<USD>] = match m {
+  dominio.Debito(_, monto) -> [monto]
+  dominio.Credito(_, _) -> []
 }
 
-# Suma los créditos.
-pub fn total_creditos(ms: [dominio.Movimiento]) : Real<USD> = match ms {
-  [] -> 0.0<USD>
-  [dominio.Credito(_, m), ...rest] -> m + total_creditos(rest)
-  [dominio.Debito(_, _), ...rest] -> total_creditos(rest)
+fn credito(m: dominio.Movimiento) : [Real<USD>] = match m {
+  dominio.Credito(_, monto) -> [monto]
+  dominio.Debito(_, _) -> []
 }
+
+# Suma los débitos de una lista de movimientos.
+pub fn total_debitos(ms: [dominio.Movimiento]) : Real<USD> = ms || debito |> list.sum
+
+# Suma los créditos.
+pub fn total_creditos(ms: [dominio.Movimiento]) : Real<USD> = ms || credito |> list.sum
 
 # La invariante: ambas sumas son iguales. La pureza se deriva
 # de la fila de efectos vacía, así que `requires`/`ensures` la

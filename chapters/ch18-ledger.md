@@ -136,21 +136,21 @@ the double-entry invariant: in every transaction, the sum
 of debits must equal the sum of credits.
 
 ```kai
-pub fn total_debits(ms: [domain.Movement]) : Real<USD> {
-  match ms {
-    []                              -> 0.0<USD>
-    [domain.Debit(_, m), ...rest]   -> m + total_debits(rest)
-    [domain.Credit(_, _), ...rest]  -> total_debits(rest)
-  }
+fn debit(m: domain.Movement) : [Real<USD>] = match m {
+  domain.Debit(_, amount) -> [amount]
+  domain.Credit(_, _)     -> []
 }
 
-pub fn total_credits(ms: [domain.Movement]) : Real<USD> { ... }
+pub fn total_debits(ms: [domain.Movement]) : Real<USD> =
+  ms || debit |> list.sum
+
+pub fn total_credits(ms: [domain.Movement]) : Real<USD> = ...
 
 pub fn balances(ms: [domain.Movement]) : Bool =
   total_debits(ms) == total_credits(ms)
 ```
 
-Three pure functions, a boolean invariant. Tests verify
+Pure functions, one boolean invariant. Tests verify
 the contract piece by piece:
 
 ```kai

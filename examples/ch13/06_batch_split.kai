@@ -14,10 +14,11 @@ import spawn
 import core.list
 
 fn process_batch(id: Int, batch: [String]) : [String] / Spawn =
-  batch | (t) => {
-    spawn.yield()
-    "worker #{id}: #{t}"
-  }
+  batch
+    | (t => {
+      spawn.yield()
+      "worker #{id}: #{t}"
+    })
 
 fn main() : Unit / Stdout + Spawn + Cancel {
   let results = nursery { n ->

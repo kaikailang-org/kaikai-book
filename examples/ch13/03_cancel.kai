@@ -46,8 +46,8 @@ effect Fail {
 
 fn main() : Unit / Stdout + Spawn + Cancel {
   nursery { n ->
-    n.spawn(() => long_worker("A"))
-    n.spawn(() => long_worker("B"))
+    n.spawn(() => long_worker("A")) |> ignore
+    n.spawn(() => long_worker("B")) |> ignore
     let r = n.spawn(
       () => handle {
         quit(0)

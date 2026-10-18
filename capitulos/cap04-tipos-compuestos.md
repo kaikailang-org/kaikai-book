@@ -1043,6 +1043,9 @@ let actual = match m[p] {
 hashmap.put(m, p, actual + 1)
 ```
 
+El `match` sobre el `Option` tiene atajo: `m[p].unwrap_or(0)`
+hace lo mismo en una expresión, y es lo que usa el ejemplo.
+
 Un ejemplo completo: contar la frecuencia de cada palabra de
 una lista, primero con un `HashMap`, y de paso usar un
 `HashSet` para contar cuántas palabras distintas hay.
@@ -1053,17 +1056,8 @@ import collections.hashset as hashset
 
 fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] / Mutable {
   let m = hashmap.empty()
-  contar(m, palabras)
+  palabras |! hashmap.put(m, ., m[.].unwrap_or(0) + 1)
   m
-}
-
-fn contar(m: hashmap.HashMap[String, Int], palabras: [String]) : Unit / Mutable = match palabras {
-  []           -> ()
-  [p, ...rest] -> {
-    let actual = match m[p] { Some(n) -> n  None -> 0 }
-    hashmap.put(m, p, actual + 1)
-    contar(m, rest)
-  }
 }
 
 fn main() : Unit / Stdout + Mutable {
@@ -1077,13 +1071,8 @@ fn main() : Unit / Stdout + Mutable {
 
   # Un HashSet descarta duplicados al insertar.
   let vistas = hashset.empty()
-  marcar(vistas, texto)
+  texto |! hashset.add(vistas, .)
   Stdout.print("únicas vía set: #{hashset.size(vistas)}")
-}
-
-fn marcar(s: hashset.HashSet[String], palabras: [String]) : Unit / Mutable = match palabras {
-  []           -> ()
-  [p, ...rest] -> { hashset.add(s, p); marcar(s, rest) }
 }
 ```
 

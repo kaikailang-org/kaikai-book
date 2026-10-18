@@ -1030,6 +1030,9 @@ let current = match m[w] {
 hashmap.put(m, w, current + 1)
 ```
 
+The `match` on the `Option` has a shortcut: `m[w].unwrap_or(0)`
+does the same in one expression, and it is what the example uses.
+
 A full example: count how often each word in a list appears,
 first with a `HashMap`, and along the way use a `HashSet` to
 count how many distinct words there are.
@@ -1040,17 +1043,8 @@ import collections.hashset as hashset
 
 fn word_frequencies(words: [String]) : hashmap.HashMap[String, Int] / Mutable {
   let m = hashmap.empty()
-  count(m, words)
+  words |! hashmap.put(m, ., m[.].unwrap_or(0) + 1)
   m
-}
-
-fn count(m: hashmap.HashMap[String, Int], words: [String]) : Unit / Mutable = match words {
-  []           -> ()
-  [w, ...rest] -> {
-    let current = match m[w] { Some(n) -> n  None -> 0 }
-    hashmap.put(m, w, current + 1)
-    count(m, rest)
-  }
 }
 
 fn main() : Unit / Stdout + Mutable {
@@ -1064,13 +1058,8 @@ fn main() : Unit / Stdout + Mutable {
 
   # A HashSet drops duplicates on insertion.
   let seen = hashset.empty()
-  mark(seen, text)
+  text |! hashset.add(seen, .)
   Stdout.print("unique via set: #{hashset.size(seen)}")
-}
-
-fn mark(s: hashset.HashSet[String], words: [String]) : Unit / Mutable = match words {
-  []           -> ()
-  [w, ...rest] -> { hashset.add(s, w); mark(s, rest) }
 }
 ```
 

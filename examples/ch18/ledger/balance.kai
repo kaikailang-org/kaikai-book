@@ -9,19 +9,22 @@
 
 import domain
 
-# Sum the debits of a movement list.
-pub fn total_debits(ms: [domain.Movement]) : Real<USD> = match ms {
-  [] -> 0.0<USD>
-  [domain.Debit(_, m), ...rest] -> m + total_debits(rest)
-  [domain.Credit(_, _), ...rest] -> total_debits(rest)
+# The amount of a movement, if it is on the requested side.
+fn debit(m: domain.Movement) : [Real<USD>] = match m {
+  domain.Debit(_, amount) -> [amount]
+  domain.Credit(_, _) -> []
 }
 
-# Sum the credits.
-pub fn total_credits(ms: [domain.Movement]) : Real<USD> = match ms {
-  [] -> 0.0<USD>
-  [domain.Credit(_, m), ...rest] -> m + total_credits(rest)
-  [domain.Debit(_, _), ...rest] -> total_credits(rest)
+fn credit(m: domain.Movement) : [Real<USD>] = match m {
+  domain.Credit(_, amount) -> [amount]
+  domain.Debit(_, _) -> []
 }
+
+# Sum the debits of a movement list.
+pub fn total_debits(ms: [domain.Movement]) : Real<USD> = ms || debit |> list.sum
+
+# Sum the credits.
+pub fn total_credits(ms: [domain.Movement]) : Real<USD> = ms || credit |> list.sum
 
 # The invariant: both sums are equal. Purity is derived from
 # the empty effect row, so `requires`/`ensures` can invoke it

@@ -260,9 +260,9 @@ fn worker(tag: String, n: Int) : Unit / Stdout + Spawn {
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
-  let _ = nursery { n ->
-    n.spawn(() => worker("A", 3))
-    n.spawn(() => worker("B", 3))
+  nursery { n ->
+    n.spawn(() => worker("A", 3)) |> ignore
+    n.spawn(() => worker("B", 3)) |> ignore
   }
 }
 ```
@@ -280,19 +280,13 @@ B
 B
 ```
 
-The `let _` wraps the whole `nursery`: the block returns the
-value of its last expression (here a `Fiber[Unit]` we don't
-want), and `let _` discards it. It is not what makes the fibers
-get waited on; the nursery does that on its own. It just throws
-away a value we don't use.
-
 `nursery { n -> ... }` opens a scope. Inside, `n` is the
 capability to create fibers:
 
 - `n.spawn(f)` creates a child fiber. Returns a `Fiber[T]`
-  where `T` is what `f` returns. Here we don't even bind it:
-  we don't need the value, and the nursery waits for the fibers
-  anyway.
+  where `T` is what `f` returns. You don't need it here, since
+  the nursery waits for the fibers anyway, and `|> ignore` says
+  you are dropping it on purpose.
 - `n.await(f)` waits for that fiber and returns its value. You
   only need it when you want the result; to just wait, you
   don't.
@@ -568,8 +562,8 @@ effect Fail {
 
 fn main() : Unit / Stdout + Spawn + Cancel {
   nursery { n ->
-    n.spawn(() => long_worker("A"))
-    n.spawn(() => long_worker("B"))
+    n.spawn(() => long_worker("A")) |> ignore
+    n.spawn(() => long_worker("B")) |> ignore
     let r = n.spawn(
       () => handle {
         quit(0)
@@ -725,10 +719,11 @@ import spawn
 import core.list
 
 fn process_batch(id: Int, batch: [String]) : [String] / Spawn =
-  batch | (t) => {
-    spawn.yield()
-    "worker #{id}: #{t}"
-  }
+  batch
+    | (t => {
+      spawn.yield()
+      "worker #{id}: #{t}"
+    })
 ```
 
 `process_batch` doesn't know other fibers exist. It takes its
