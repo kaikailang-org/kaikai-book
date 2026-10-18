@@ -255,7 +255,7 @@ runtime" que arrancan los efectos y que continúan UoM.
 - 11.3 `result` y los nombres en alcance dentro del `ensures`
 - 11.4 Refinement types
 - 11.5 Cuándo se prueba estáticamente, cuándo en runtime
-- 11.6 Tres formas de garantía
+- 11.6 Cuatro formas de garantía
 - 11.7 La familia Design by Contract
 - 11.8 Lo que kaikai no hace, y por qué
 - 11.9 Caso de estudio: cuenta bancaria
@@ -422,7 +422,7 @@ fintech.
 - 18.7 Lo que hace este caso distinto del cap. 17
 - 18.8 Cómo extenderlo
 - 18.9 Por qué fintech es un buen banco de pruebas
-- 18.10 Filosofía: el cierre del libro
+- 18.10 Filosofía: el patrón detrás del libro
 
 #### Capítulo 19 · Kinds: un catálogo de álgebras
 

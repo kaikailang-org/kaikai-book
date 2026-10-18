@@ -1,34 +1,14 @@
 import core.string
 import core.list
 
-# Un String no es una lista de Char, y "largo" significa dos cosas
-# distintas: bytes contra codepoints Unicode.
-
 fn main() {
   let s = "café"
-
-  # length / byte_length cuentan bytes (O(1)).
-  # char_count cuenta codepoints Unicode.
   println("bytes:      #{string.length(s)}")  # 5
   println("codepoints: #{string.char_count(s)}")  # 4
-
-  # chars decodifica la vista UTF-8 a codepoints ([Char]);
-  # bytes entrega los octetos crudos, uno por byte ([Byte]).
   println("chars:      #{list.length(string.chars(s))}")  # 4
   println("bytes list: #{list.length(string.bytes(s))}")  # 5
-
-  # from_bytes es el inverso de bytes. Los tipos no se cruzan:
-  # pasarle estos octetos a from_chars no compilaría.
   println("de vuelta:  #{string.from_bytes(string.bytes(s))}")
-
-  # slice(s, desde, largo) corta por CODEPOINTS: los índices son
-  # caracteres, así que nunca parte uno por la mitad.
   println("slice(2,2):      #{string.slice(s, 2, 2)}")
-
-  # byte_slice corta por bytes, y devuelve None cuando un extremo
-  # cae dentro de un codepoint. La `é` ocupa los bytes 3 y 4.
-  let entero = string.byte_slice(s, 2, 3)
-  let partido = string.byte_slice(s, 2, 2)
-  println("byte_slice(2,3): #{entero}")
-  println("byte_slice(2,2): #{partido}")
+  println("byte_slice(2,3): #{string.byte_slice(s, 2, 3)}")
+  println("byte_slice(2,2): #{string.byte_slice(s, 2, 2)}")
 }

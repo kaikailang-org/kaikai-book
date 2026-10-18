@@ -55,8 +55,8 @@ fn area(f: Forma) : Real =
     Circulo(r)         -> 3.14159 * r * r
     Rectangulo(w, h)   -> w * h
     Triangulo(a, b, c) -> {
-      let s = (a + b + c) / 2.0
-      s
+      let s = (a + b + c) / 2.0          # Herón
+      real_sqrt(s * (s - a) * (s - b) * (s - c))
     }
   }
 ```
@@ -66,7 +66,9 @@ rama es un patrón seguido de `->` y la expresión que esa rama
 produce. Los patrones desempacan los datos al mismo tiempo: en
 `Circulo(r)`, la `r` queda amarrada al `Real` que venía
 adentro del constructor. No hay un `cast` aparte ni un
-acceso por índice; el patrón hace el trabajo.
+acceso por índice; el patrón hace el trabajo. La rama del
+triángulo aplica la fórmula de Herón con `real_sqrt`, la raíz
+cuadrada que viene incluida sin `import`.
 
 Tres detalles que vas a usar siempre:
 
@@ -159,7 +161,7 @@ Real)`), quedan posicionales. Si los datos requieren que el
 lector recuerde el orden, conviene un record.
 
 Los dos sabores de constructor en un programa: tres casos sin
-payload y dos que llevan datos.
+payload y tres que llevan datos.
 
 ```kai
 # ejemplos/cap05/01_sumas_basicas.kai
@@ -175,9 +177,9 @@ fn area(f: Forma) : Real =
     Circulo(r) -> 3.14159 * r * r
     Rectangulo(w, h) -> w * h
     Triangulo(a, b, c) -> {
+      # Fórmula de Herón, con s como semiperímetro.
       let s = (a + b + c) / 2.0
-      # Heron: los Reales se manipulan sin coerción a Int.
-      s
+      real_sqrt(s * (s - a) * (s - b) * (s - c))
     }
   }
 
@@ -192,8 +194,10 @@ fn main() {
   println("color: #{nombre(Rojo)}, #{nombre(Verde)}, #{nombre(Azul)}")
   let c = Circulo(2.0)
   let r = Rectangulo(3.0, 4.0)
+  let t = Triangulo(3.0, 4.0, 5.0)
   println("círculo: área = #{area(c)}")
   println("rectángulo: área = #{area(r)}")
+  println("triángulo: área = #{area(t)}")
 }
 ```
 
@@ -202,6 +206,7 @@ $ kai run ejemplos/cap05/01_sumas_basicas.kai
 color: rojo, verde, azul
 círculo: área = 12.56636
 rectángulo: área = 12
+triángulo: área = 6
 ```
 
 ## 5.3 Recursión en tipos
@@ -782,7 +787,7 @@ saber qué excepciones esperar. En kaikai, la firma se lo dice.
 ## 5.7 Caso de estudio: evaluador con errores tipados
 
 Cerramos el capítulo con un caso integrador. Vas a construir
-un evaluador de expresiones aritméticas con tres categorías de
+un evaluador de expresiones aritméticas con dos categorías de
 error:
 
 - **Aritméticos**: división por cero, raíz de un número
@@ -806,7 +811,7 @@ type Expr
   | Raiz(Expr)
 ```
 
-Cinco constructores, dos de ellos recursivos. `Var(String)`
+Seis constructores, cuatro de ellos recursivos. `Var(String)`
 introduce una novedad respecto al evaluador del cap. 1: ahora
 las expresiones pueden referenciar variables, así que el
 evaluador necesita un **ambiente** que asocie nombres a
@@ -820,7 +825,7 @@ type ErrorAmbiente   = NoDefinida(String)
 type ErrorEval       = ErrorAritmetico | ErrorAmbiente
 ```
 
-Tres tipos: dos categorías y la unión. Cuatro constructores en
+Tres tipos: dos categorías y la unión. Tres constructores en
 total, pero distribuidos en categorías que tienen sentido por sí
 mismas. `RaizNegativa(Real)` carga el valor que se intentó pasar
 a la raíz, útil para el mensaje de error final.
@@ -882,7 +887,7 @@ fn eval(env: Env, e: Expr) : Result[Real, ErrorEval] =
     }
     Raiz(x)     -> {
       let v = eval(env, x)!
-      if v < 0.0 { Err(RaizNegativa(v)) } else { Ok(raiz(v)) }
+      if v < 0.0 { Err(RaizNegativa(v)) } else { Ok(real_sqrt(v)) }
     }
   }
 ```
@@ -932,11 +937,11 @@ expresiones y las imprime:
 fn main() {
   let env: Env = [("x", 9.0), ("y", 4.0)]
 
-  imprimir(eval(env, Suma(Var("x"), Var("y"))))    # ok: 13
-  imprimir(eval(env, Raiz(Var("x"))))              # ok: 3
-  imprimir(eval(env, Div(Lit(10.0), Lit(0.0))))    # error: división por cero
-  imprimir(eval(env, Raiz(Lit(-1.0))))        # error: raíz de negativo
-  imprimir(eval(env, Var("z")))                     # error: variable no definida: z
+  imprimir(eval(env, Suma(Var("x"), Var("y"))))  # ok: 13
+  imprimir(eval(env, Raiz(Var("x"))))            # ok: 3
+  imprimir(eval(env, Div(Lit(10.0), Lit(0.0))))  # error: división por cero
+  imprimir(eval(env, Raiz(Lit(-1.0))))           # error: raíz de número negativo (-1)
+  imprimir(eval(env, Var("z")))                  # error: variable no definida: z
 }
 ```
 

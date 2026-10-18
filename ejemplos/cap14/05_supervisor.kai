@@ -2,10 +2,9 @@
 # lo deja procesar tareas, y reintenta el lote si una tarea
 # falla.
 #
-# El patrón es el que la doc del lenguaje recomienda para v1:
-# en vez de Link/Monitor (que están experimental), el
-# trabajador notifica explícitamente a su supervisor con un
-# mensaje Done o Failed. El supervisor decide si reintentar.
+# Sin Link ni Monitor: el trabajador notifica explícitamente a
+# su supervisor con un mensaje Done o Failed, y el supervisor
+# decide si reintentar.
 #
 # Cada tarea es una división: el trabajador divide el primer
 # número por el segundo. Si el divisor es cero, la tarea
@@ -33,7 +32,7 @@ fn procesar(tareas: [(Int, Int)], acc: Int) : ResultadoLote {
 fn trabajador(
   supervisor: Pid[ResultadoLote],
   tareas: [(Int, Int)]
-) : Unit / Actor[ResultadoLote] + Console {
+) : Unit / Actor[ResultadoLote] + Stdout {
   let r = procesar(tareas, 0)
   Stdout.print("trabajador: lote terminó como #{r}")
   Actor.send(supervisor, r)
@@ -43,7 +42,7 @@ fn trabajador(
 fn intento(
   me: Pid[ResultadoLote],
   lote: [(Int, Int)]
-) : ResultadoLote / Console + Spawn + Cancel + Actor[ResultadoLote] {
+) : ResultadoLote / Stdout + Spawn + Cancel + Actor[ResultadoLote] {
   let _ = spawn_actor(() => trabajador(me, lote))
   Actor.receive()
 }
@@ -52,9 +51,9 @@ fn intento(
 # reintenta con un lote alternativo. Hasta dos intentos.
 #
 # El `with_mailbox` interno cierra el efecto `Actor[ResultadoLote]`,
-# así que la firma de `supervisor` ya no lo lleva — solo `intento`
+# así que la firma de `supervisor` ya no lo lleva; solo `intento`
 # (que corre adentro del bloque) lo declara.
-fn supervisor() : Unit / Console + Spawn + Cancel {
+fn supervisor() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
     let me = Actor.self()
     let primer_lote = [(10, 2), (20, 4), (30, 0)]  # va a fallar
@@ -73,6 +72,6 @@ fn supervisor() : Unit / Console + Spawn + Cancel {
   }
 }
 
-fn main() : Unit / Console + Spawn + Cancel {
+fn main() : Unit / Stdout + Spawn + Cancel {
   supervisor()
 }

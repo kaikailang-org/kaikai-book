@@ -128,15 +128,17 @@ Importa por dos razones:
   binarios distintos a partir del mismo código fuente, una de
   las dos tiene un bug. El punto fijo confirma que la cadena
   entera converge a la misma respuesta.
-- **Resistencia al ataque de Thompson.** Ken Thompson publicó
-  en 1984 un ensayo famoso ("Reflections on Trusting Trust")
-  donde mostraba que un compilador malicioso puede insertar
-  backdoors invisibles que sobreviven a recompilaciones. La
-  defensa clásica es **diverse double-compiling**: compilar
-  con dos cadenas distintas y comparar. El punto fijo es la
-  versión moderna de esa idea: si la cadena entera converge a
-  un mismo binario, y ese binario es reproducible desde
-  fuentes auditables, la confianza está justificada.
+- **Una base contra el ataque de Thompson.** Ken Thompson
+  publicó en 1984 un ensayo famoso ("Reflections on Trusting
+  Trust") donde mostraba que un compilador malicioso puede
+  insertar backdoors invisibles que sobreviven a
+  recompilaciones. La defensa conocida es **diverse
+  double-compiling** (David A. Wheeler, 2005): compilar el
+  fuente del compilador con una segunda cadena independiente
+  y comparar los binarios. El punto fijo por sí solo no
+  protege, porque un compilador troyanizado también se
+  reproduce a sí mismo bit por bit. Lo que aporta es la
+  compilación determinista que esa comparación necesita.
 
 ## A.6 Reproducible desde una `cc`
 

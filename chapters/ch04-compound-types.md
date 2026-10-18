@@ -154,7 +154,7 @@ fn main() {
   println("#{safe.balance_of(a)}")  # OK, going through the getter
 
   # The next two lines don't compile:
-  # println("#{a.balance}")          # ← field `balance` is private to module `safe`
+  # println("#{a.balance}")          # ← field `balance` of `Account` is private to module `safe`
   # let d = safe.Account {            # ← cannot construct `Account` from outside …
   #   name: "x",
   #   balance: 1000.0,
@@ -173,8 +173,10 @@ interior under the author's control. You'll use it that way in
 ch. 17 to hide the store actor's state, and in ch. 18 so ledger
 balances can't be constructed from outside the domain module.
 
-The type with a private field, its constructor, and the line
-the compiler won't let through:
+The type with a private field and its operations, in a single
+file. Inside the module that declares it, `priv` restricts
+nothing: the rejected lines above fail only from another
+module, and ch. 8 shows them with two files.
 
 ```kai
 # examples/ch04/06_priv.kai
@@ -328,8 +330,9 @@ let xs = [1, 2, 3]
 let ys = [0, ...xs, 99]      # [0, 1, 2, 3, 99]
 ```
 
-It takes any number of spreads, anywhere in the literal:
-`[...a, ...b]` works, and so does `[...xs, 3, 4]`.
+Unlike record spread, list spread takes any number of
+spreads, anywhere in the literal: `[...a, ...b]` works, and so
+does `[...a, 9, ...b, 10]`.
 
 Reach for it when you're putting an element on the front. The
 exact same list comes out of `[h] ++ t`:
@@ -584,16 +587,20 @@ accident — handing `from_chars` the result of
 and the compiler knows it.
 
 ```kai
+# examples/ch04/07_strings.kai
 import core.string
 import core.list
 
 fn main() {
   let s = "café"
-  println("bytes:      #{string.length(s)}")              # 5
-  println("codepoints: #{string.char_count(s)}")          # 4
+  println("bytes:      #{string.length(s)}")  # 5
+  println("codepoints: #{string.char_count(s)}")  # 4
   println("chars:      #{list.length(string.chars(s))}")  # 4
   println("bytes list: #{list.length(string.bytes(s))}")  # 5
   println("round trip: #{string.from_bytes(string.bytes(s))}")
+  println("slice(2,2):      #{string.slice(s, 2, 2)}")
+  println("byte_slice(2,3): #{string.byte_slice(s, 2, 3)}")
+  println("byte_slice(2,2): #{string.byte_slice(s, 2, 2)}")
 }
 ```
 
@@ -618,10 +625,11 @@ byte_slice(s: String, from: Int, len: Int) : Option[String]
 ```
 
 `slice` counts **codepoints**. Taking `"fé"` out of `"café"` is
-asking for two characters starting at the second: `slice(s, 2, 2)`.
-Overrun the length and it clamps rather than failing —
-`slice(s, 1, 9)` gives `"afé"` — and it can never hand you a broken
-string, because it does not know how to cut a character in half.
+asking for two characters from index 2, counting from zero:
+`slice(s, 2, 2)`. Overrun the length and it clamps rather than
+failing — `slice(s, 1, 9)` gives `"afé"` — and it can never hand
+you a broken string, because it does not know how to cut a
+character in half.
 
 `byte_slice` counts **bytes**, which is what you need when the
 offsets come from somewhere else: an `index_of`, a parser, a
@@ -777,7 +785,7 @@ type Result[a, e] = Ok(a) | Err(e)
 
 Now you put them to work. They are generic sum types from the
 stdlib that you will use **constantly**. `Option` says "there
-might be no value"; `Result`, "there might be a value or an
+might be no value"; `Result`, "there is either a value or an
 error".
 
 A function that finds the first even element of a list:
@@ -806,7 +814,7 @@ distinct ways — and that's exactly what `Result` is for:
 type AgeError = NotNumeric | OutOfRange
 
 fn parse_age(s: String) : Result[Int, AgeError] =
-  match string_to_int(s) {
+  match string.to_int(s) {
     None -> Err(NotNumeric)
     Some(n) ->
       if n < 0 or n > 130 { Err(OutOfRange) }
@@ -851,7 +859,7 @@ fn first_even(xs: [Int]) : Option[Int] =
   }
 
 fn parse_age(s: String) : Result[Int, AgeError] =
-  match string_to_int(s) {
+  match string.to_int(s) {
     None -> Err(NotNumeric)
     Some(n) ->
       if n < 0 or n > 130 {
@@ -991,14 +999,19 @@ on every insertion won't cut it. For that the stdlib ships two
 **mutable** structures: `HashMap[k, v]`, which maps keys to
 values, and `HashSet[a]`, a set with no duplicates.
 
-That they're mutable shows up in the effect row: their
-operations yield `Mutable`. If you come from Python or Java, a
-dictionary that changes in place feels obvious; what's new here
-is that the language says so in the type. A function that
-touches a `HashMap` carries `/ Mutable` in its signature, and
-the compiler makes you declare it, with the same honesty kaikai
-applies to every other effect. Immutability is still the
-default; mutation is there, marked.
+That they're mutable shows up in the effect row: the
+operations that write (`put`, `add`, `remove`) yield
+`Mutable`. If you come from Python or Java, a dictionary that
+changes in place feels obvious; what's new here is that the
+language says so in the type whenever someone outside can
+notice. The rule is the one from the `StringBuilder` in §4.4:
+if the function creates the table and fills it itself, nobody
+else sees the mutation, and kaikai masks the effect at the
+function's edge, even when the function returns the filled
+table. A function that modifies a table it received as a
+parameter does carry `/ Mutable` in its signature, and the
+compiler makes you declare it. Immutability is still the
+default; visible mutation is marked where it happens.
 
 Key access uses indexing, `m[key]`, which returns an `Option`
 — `Some(v)` if the key is present, `None` if it isn't — so a
@@ -1007,12 +1020,17 @@ missing key never blows up in your face:
 ```kai
 import collections.hashmap as hashmap
 
-let current = match m[w] {
-  Some(n) -> n
-  None    -> 0
+fn count(m: hashmap.HashMap[String, Int], w: String) : Unit / Mutable {
+  let current = match m[w] {
+    Some(n) -> n
+    None    -> 0
+  }
+  hashmap.put(m, w, current + 1)
 }
-hashmap.put(m, w, current + 1)
 ```
+
+`count` writes to a table it doesn't own, so it declares
+`Mutable`.
 
 The `match` on the `Option` has a shortcut: `m[w].unwrap_or(0)`
 does the same in one expression, and it is what the example uses.
@@ -1025,13 +1043,13 @@ count how many distinct words there are.
 import collections.hashmap as hashmap
 import collections.hashset as hashset
 
-fn word_frequencies(words: [String]) : hashmap.HashMap[String, Int] / Mutable {
+fn word_frequencies(words: [String]) : hashmap.HashMap[String, Int] {
   let m = hashmap.empty()
   words |! hashmap.put(m, ., m[.].unwrap_or(0) + 1)
   m
 }
 
-fn main() : Unit / Stdout + Mutable {
+fn main() : Unit / Stdout {
   let text = ["sun", "sea", "sun", "wind", "sea", "sun"]
   let m = word_frequencies(text)
   match m["sun"] {
@@ -1053,6 +1071,10 @@ sun appears 3 times
 distinct words: 3
 unique via set: 3
 ```
+
+Neither `word_frequencies` nor `main` declares `Mutable`: each
+structure is born inside the function that fills it, and the
+caller only gets the result.
 
 `hashmap.put` inserts or replaces in place; `hashmap.get` is
 the named form of `m[key]`; `size`, `keys`, `values`, `remove`

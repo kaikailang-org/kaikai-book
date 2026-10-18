@@ -345,7 +345,7 @@ When to use which:
   list preserves length" is about the function's behavior.
 
 When both apply, you choose for readability. The bank account
-in §11.7 uses contracts because "the balance can't be left
+in §11.9 uses contracts because "the balance can't be left
 negative" is a property of **the operations' behavior**.
 
 ## 11.5 When proved statically, when at runtime
@@ -420,9 +420,9 @@ declared at line 9, col 14
 argument b was: 0
 ```
 
-## 11.6 Three forms of guarantee
+## 11.6 Four forms of guarantee
 
-You now have three mechanisms for "guaranteeing the code does
+You now have four mechanisms for "guaranteeing the code does
 the right thing", spread across three chapters:
 
 | Mechanism | Ch. | What it guarantees | When verified |
@@ -445,11 +445,11 @@ uses all of them:
   twice is identity", "sorting preserves length").
 
 Each catches a distinct class of bugs, and together they catch
-far more than any one alone. All four have zero
-runtime cost when they don't fail: a passing `test` doesn't
-run in production; a contract that proves statically
-generates no assert; a legal refinement generates no dynamic
-check.
+far more than any one alone. In production they cost
+little: `test` and `check` don't run, an exhaustive `match` is
+verified at compile time, and a contract or refinement the
+compiler proves generates no assert. What it can't prove
+stays as a comparison evaluated at runtime.
 
 ## 11.7 The Design by Contract family
 
@@ -581,7 +581,7 @@ fn withdraw(c: Account, amount: Int) : Account
   Account { ...c, balance: c.balance - amount }
 ```
 
-Three operations, five preconditions, three postconditions.
+Three operations, four preconditions, three postconditions.
 In plain words:
 
 - **`open`** opens an account with non-negative initial
@@ -615,7 +615,7 @@ and aborts too. The postcondition is your insurance
 against internal bugs, just as `requires` is your insurance
 against caller misuse.
 
-With four lines of contracts, this account documents its
+With seven lines of contracts, this account documents its
 rules, verifies them when running, and leaves a clear
 diagnostic when they break. Compare the contractless version:
 

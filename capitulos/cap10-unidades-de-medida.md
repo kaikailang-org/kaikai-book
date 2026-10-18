@@ -3,10 +3,10 @@
 En 1999, la NASA perdió la sonda Mars Climate Orbiter (327
 millones de dólares de proyecto) porque dos módulos de
 software se intercambiaban valores numéricos sin acuerdo
-sobre las unidades. Uno producía empuje en libras-fuerza por
-segundo, otro lo leía como newtons por segundo. Nadie había
-escrito las unidades en la interfaz. La sonda se desintegró
-contra Marte.
+sobre las unidades. Uno producía el impulso en
+libras-fuerza·segundo, otro lo leía en newtons·segundo. Nadie
+había escrito las unidades en la interfaz. La sonda entró
+demasiado bajo y se perdió en la atmósfera de Marte.
 
 Es un ejemplo extremo, pero la familia es enorme: dos
 componentes que comparten el mismo tipo numérico pero no la
@@ -453,18 +453,15 @@ código del día a día. Casos típicos:
 - `Int<Seconds>` vs `Int<Milliseconds>`: los timeouts mal
   expresados son responsables de un porcentaje no menor de
   bugs intermitentes.
-- `String<Email>` vs `String<Username>`: strings que pasaron
-  por validaciones distintas.
-- `String<RawHtml>` vs `String<Sanitized>`: input sin escapar
-  vs ya escapado para inyección segura.
 
-Los dos primeros casos sobre `Int` funcionan en cualquier
-versión actual de kaikai. Los últimos dos sobre `String` están
-implementados parcialmente; el manejo completo de branded
-types sobre `String` y records arbitrarios es una extensión
-que la doc del lenguaje lista como próximo hito.
+Las unidades etiquetan tipos numéricos: `Int`, `Real` y
+`Decimal`. Una cadena no tiene cómo recibir una:
+`"ada@x.cl"<Email>` no es un literal válido. Para separar un email validado de un
+nombre de usuario, usas un record con un campo privado (§4.1):
+el módulo expone la función que valida y construye, y nadie
+más fabrica el valor.
 
-Los dos casos sobre `Int` en un programa que corre. Las líneas
+Dos de esos casos en un programa que corre. Las líneas
 comentadas son justamente las que el compilador rechaza:
 
 ```kai
@@ -513,7 +510,7 @@ timeout = 30
 
 Las unidades se borran después de la verificación de tipos. El
 binario que produce `kai build` opera con `Int`, `Real` y
-`String` planos. La unidad **no existe** en runtime: ni tag, ni
+`Decimal` planos. La unidad **no existe** en runtime: ni tag, ni
 verificación dinámica, ni overhead. La promesa es la misma de
 los efectos algebraicos y de los contratos: información en el
 tipo, costo cero en runtime.

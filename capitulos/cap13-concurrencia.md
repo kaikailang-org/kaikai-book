@@ -12,8 +12,8 @@ poco usual: **fibras cooperativas + memoria por fibra +
 Perceus**. Antes de la sintaxis, sus tres consecuencias:
 
 - **No hay shared memory entre fibras.** Cada fibra tiene su
-  propio heap. Lo que una pasa a otra se copia o se mueve.
-  Las data races desaparecen por construcción.
+  propio heap. Lo que una pasa a otra se copia. Las data
+  races desaparecen por construcción.
 - **No hay GC ni borrow checker.** Perceus libera la memoria
   cuando termina el último uso de cada valor, sin un colector
   asincrónico y sin que anotes lifetimes. El compilador
@@ -30,23 +30,29 @@ pero mucho más liviana: cientos de bytes en vez de megabytes.
 Una aplicación kaikai puede tener miles o cientos de miles de
 fibras vivas sin reventar.
 
-Las fibras son **cooperativas**. Cada una corre hasta llegar a
-un **punto de yield**: una llamada que le pasa el control al
-scheduler. Los puntos de yield son explícitos:
+Las fibras son **cooperativas**. El runtime las reparte entre
+varios hilos del sistema (§13.8), y en su hilo cada fibra corre
+hasta llegar a un **punto de yield**: una llamada que le pasa
+el control al scheduler. Nadie la interrumpe a la mitad. Los
+puntos de yield son explícitos:
 
 - `spawn.yield()`: "ya pude correr un rato, prueba otra".
 - `spawn.await(f)`: "espera a que termine la fibra `f`".
 - Las operaciones de IO que el scheduler intercepta (lecturas de
   red, sleep, etc.).
 
-Sin yield, una fibra corre hasta terminar. Eso es **determinismo
-local**: dentro de un bloque sin yields, sabes exactamente qué
-pasa. Frente a threads preemptivas te ahorras una clase entera
-de bugs: nadie te interrumpe entre dos yields, así que no hay
-carrera sobre los datos que tocas ahí.
+Sin yield, una fibra corre hasta terminar. Otras fibras pueden
+estar corriendo al mismo tiempo en otros hilos, pero ninguna
+alcanza tus datos, porque cada fibra tiene su propia memoria
+(lo ves enseguida). Eso es **determinismo local**: dentro de
+una fibra, sabes exactamente qué pasa con tus valores. Frente a
+threads preemptivas con memoria compartida te ahorras una
+clase entera de bugs: no hay carrera sobre los datos que tocas.
 
-A cambio, una fibra que nunca cede el control bloquea a todas las
-demás. Poner yields donde tenga sentido te toca a ti; en la
+A cambio, una fibra que nunca cede el control acapara su hilo y
+no se entera si la cancelan. Con un solo hilo
+(`KAI_THREADS=1`, §13.8) bloquea a todas las demás. Poner
+yields donde tenga sentido te toca a ti; en la
 práctica las llamadas a IO ya los traen, y solo piensas en
 yields manuales en bucles puros de CPU intenso.
 
@@ -59,10 +65,12 @@ lo garantiza.
 
 Dos fibras se comunican pasándose valores. Cuando una envía un
 mensaje a otra (vía mailbox de actor o vía el resultado de un
-`await`), el valor se copia al heap de la receptora. Para tipos
-pequeños esto es trivial; para estructuras grandes, kaikai usa
-Perceus para mover en vez de copiar cuando el emisor ya no va a
-usar el valor.
+`await`), el valor se copia al heap de la receptora. Un `Int`
+no cuesta nada; una lista grande cuesta en proporción a su
+tamaño. Ese costo es lo que permite que el conteo de
+referencias de Perceus (§13.2) no necesite instrucciones
+atómicas, aunque emisora y receptora corran en hilos
+distintos.
 
 Lo importante es la garantía: **no hay manera de que dos fibras
 tengan un puntero al mismo objeto**. Las data races, los
@@ -216,9 +224,10 @@ cualquier línea pudiera ser interrumpida por otra fibra que
 modifica datos compartidos.
 
 En kaikai, **una fibra sigue corriendo hasta que llega a un
-punto de yield**. Entre yields tienes determinismo local: nadie
-toca un valor local tuyo hasta que cedas el control. Esto
-reduce mucho la carga cognitiva.
+punto de yield**. Entre yields tienes determinismo local:
+ninguna otra fibra corre en tu hilo, y las que corren en otros
+hilos no tienen cómo alcanzar tus valores. Esto reduce mucho
+la carga cognitiva.
 
 A cambio, tienes que **acordarte de poner los yields**. La regla
 mental: si tu función tiene un bucle largo de puro cómputo,
@@ -614,7 +623,7 @@ Cuando una fibra crea un `Array[T]` o un `Ref[T]`, el espacio
 sale de su propio heap y ninguna otra fibra tiene cómo
 acceder a él: no hay punteros compartidos ni paso por
 referencia entre fibras. Para darle un valor mutable a otra
-fibra, lo mandas por mailbox (cap. 14) y el runtime mueve el
+fibra, lo mandas por mailbox (cap. 14) y el runtime copia el
 contenido al heap del receptor.
 
 Por eso la mutación no introduce data races en kaikai. Con
@@ -628,9 +637,11 @@ mutables.
 
 ## 13.7 Por qué las fibras no pueden escapar de su nursery
 
-Un detalle del sistema de tipos: **`Fiber[T]` no es un valor
-movible**. No puedes devolverlo de una función, guardarlo en un
-`Option` o un record, ni pasarlo a otra fibra.
+Un detalle del sistema de tipos: **`Fiber[T]` es un handle
+atado a su nursery**. Ninguna función puede devolverlo, ni solo
+ni envuelto: el compilador rechaza `Fiber[T]` en cualquier
+parte del tipo de retorno, sea `Option[Fiber[Int]]`,
+`[Fiber[Int]]` o el payload de un tipo suma.
 
 ```kai
 fn no_compila() : Fiber[Int] {       # ERROR
@@ -644,7 +655,10 @@ Una fibra solo tiene sentido dentro del nursery que la creó.
 Si pudieras devolverla, ¿quién la esperaría? ¿Quién la
 cancelaría al terminar el nursery? La estructura se rompe.
 
-Una lista de fibras dentro del mismo nursery es legal:
+Dentro del nursery, en cambio, puedes guardar un `Fiber[T]` en
+una lista, un `Option` o un record, o capturarlo en la clausura
+de una fibra hermana que lo espere. Una lista de fibras es el
+caso típico:
 
 ```kai
 nursery { n ->
@@ -653,7 +667,7 @@ nursery { n ->
 }
 ```
 
-Pero esa lista vive dentro del nursery y no puede salir.
+Esa lista vive dentro del nursery y no puede salir.
 
 Esto cierra el modelo: cada fibra tiene un padre conocido y
 termina antes que él, y el sistema de tipos lo garantiza a

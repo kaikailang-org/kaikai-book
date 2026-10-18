@@ -1,6 +1,6 @@
 # Chapter 6 · Functions and pipelines
 
-You've already written functions in the tour, given them two
+You've already written functions in the tour, given them three
 body forms in chapter 3, and made them recursive over sum
 types in chapter 5. Here you learn to declare them carefully,
 write lambdas, pass functions around as values, and chain them
@@ -1229,7 +1229,7 @@ with `apply_op` flipped is a good path.
 **6.5.** You have a list of strings with numbers: `["10",
 "abc", "20", "", "30"]`. You want the sum of the **valid
 numbers**, ignoring the rest. Build a pipeline using
-`list.flat_map` (or `||`) and `string_to_int : String ->
+`list.flat_map` (or `||`) and `string.to_int : String ->
 Option[Int]`. Hint: a function `Option[a] -> [a]` helps —
 if it's `Some(x)` return `[x]`, if `None` return `[]`. That
 step is the natural flat-map.

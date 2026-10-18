@@ -148,7 +148,7 @@ theories, and every chapter you have read builds on them.
 
 ## 19.4 Quantifying over any kind
 
-What makes this a *system* rather than five stacked features is
+What makes this a *system* rather than nine stacked features is
 that quantification works the same over any kind. Compare these
 three signatures:
 
@@ -202,7 +202,7 @@ world's physics, but the algebra holds no opinions about physics
 ## 19.5 Your own kinds
 
 `Measure` is not special. You can use the `kind` declaration
-too, with the three non-builtin theories as options. It pays off,
+too, with the four non-builtin theories as options. It pays off,
 for instance, in separating unit systems that must never mix, not
 even through an accidental conversion.
 
@@ -752,6 +752,22 @@ receives it for free. Which entries earn a slot is a design
 conversation. The mechanism, as you just confirmed, fits on one
 screen.
 
+If you keep one idea from reading this book, let it be
+this: **the language isn't what matters; what matters is
+what it lets you build, and what it helps you avoid
+building wrong**. kaikai bets that with effects, fibers,
+contracts, units, and holes in place, the programmer
+writes less wrong code and more code that deserves to be
+in production. If the bet works for you, this book has
+done its job.
+
+Thanks for reading this far. The compiler, the stdlib,
+the design documents, and the examples live at
+`github.com/kaikailang-org/kaikai`. There are issues to
+close and language pieces still taking shape. If this
+experiment interests you, there's room for you to help make
+it better.
+
 ## Exercises
 
 **19.1.** Declare `kind Miles : Module with miles` and a habitant
@@ -780,7 +796,7 @@ Justify with §19.6's fine print.
 **19.5.** Chapter 12 showed that effect rows ignore order:
 `Stdout + Fail` unifies with `Fail + Stdout`. Write that rule as
 algebraic properties in the catalog's style
-(`{ assoc, commut, ... }`). Which property must the row theory
-*not* have so that `Fail + Fail` collapses to `Fail`? Why do you
-think `EffectRow` is `builtin` rather than declared by
-properties?
+(`{ assoc, commut, ... }`). Which property does that list still
+need so that `Fail + Fail` collapses to `Fail`, and which theory
+in the catalog already declares it? Why do you think `EffectRow`
+is `builtin` rather than declared by properties?

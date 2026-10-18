@@ -147,7 +147,7 @@ theories, y todo lo que llevas leído se construye sobre ellos.
 
 ## 19.4 Cuantificar sobre cualquier kind
 
-Esto es un *sistema*, y no cinco features apiladas, porque la
+Esto es un *sistema*, y no nueve features apiladas, porque la
 cuantificación funciona igual sobre cualquier kind. Compara
 estas tres firmas:
 
@@ -202,7 +202,7 @@ física: opina de consistencia.
 ## 19.5 Kinds propios
 
 `Measure` no es especial. Tú también puedes usar la
-declaración `kind`, con las tres theories no-builtin como
+declaración `kind`, con las cuatro theories no-builtin como
 opciones. Rinde, por ejemplo, para separar sistemas de unidades
 que jamás deben mezclarse, ni siquiera con una conversión
 accidental.
@@ -758,6 +758,22 @@ el borrado en runtime) la recibe gratis. Qué entradas se ganan
 el lugar es una conversación de diseño. El mecanismo, como
 acabas de comprobar, cabe en una pantalla.
 
+Si después de leer el libro te quedas con una sola idea, que
+sea esta: **el lenguaje no es lo que importa; lo que importa
+es qué te permite construir, y qué te ayuda a evitar
+construir mal**. kaikai apuesta a que con efectos, fibras,
+contratos, unidades y holes en su lugar, el programador
+escribe menos código equivocado y más código que merece
+estar en producción. Si la apuesta funciona para ti, este
+libro cumplió su propósito.
+
+Gracias por leer hasta aquí. El compilador, el stdlib, los
+documentos de diseño y los ejemplos viven en
+`github.com/kaikailang-org/kaikai`. Hay issues que cerrar y
+piezas del lenguaje que todavía toman forma. Si este
+experimento te interesa, hay lugar para que ayudes a
+mejorarlo.
+
 ## Ejercicios
 
 **19.1.** Declara `kind Millas : Module with millas` y un
@@ -786,7 +802,7 @@ arena? Justifica con la letra chica del §19.6.
 **19.5.** El capítulo 12 mostró que las filas de efectos ignoran
 el orden: `Stdout + Fail` unifica con `Fail + Stdout`. Escribe
 esa regla como propiedades algebraicas al estilo del catálogo
-(`{ assoc, commut, ... }`). ¿Qué propiedad *no* debe tener la
-theory de filas para que `Fail + Fail` colapse a `Fail`? ¿Por qué
-crees que `EffectRow` es `builtin` en vez de declararse por
-propiedades?
+(`{ assoc, commut, ... }`). ¿Qué propiedad le falta a esa lista
+para que `Fail + Fail` colapse a `Fail`, y qué theory del
+catálogo ya la declara? ¿Por qué crees que `EffectRow` es
+`builtin` en vez de declararse por propiedades?

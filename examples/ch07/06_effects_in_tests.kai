@@ -9,7 +9,7 @@
 # fits without a fight.)
 extern "C" fn llabs(x: Int) : Int / Ffi
 
-effect Clock {
+effect Ticker {
   now() : Int
 }
 
@@ -18,11 +18,11 @@ test "a test can call an extern C fn directly" {
 }
 
 test "a user-declared effect is handled inside the body" {
-  # `Clock` has no handler at the runner's entry: call it bare and
+  # `Ticker` has no handler at the runner's entry: call it bare and
   # the test does not compile. It gets installed right here.
   let t = handle {
-    Clock.now()
-  } with Clock {
+    Ticker.now()
+  } with Ticker {
     now(resume) -> resume(1234)
   }
   assert t == 1234

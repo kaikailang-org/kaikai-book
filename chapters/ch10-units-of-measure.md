@@ -3,9 +3,10 @@
 In 1999, NASA lost the Mars Climate Orbiter — a 327
 million-dollar project — because two software modules
 exchanged numerical values without agreement on units. One
-produced thrust in pound-force per second; another read it
-as newtons per second. Nobody had written units on the
-interface. The probe disintegrated on Mars.
+produced impulse in pound-force seconds; another read it as
+newton-seconds. Nobody had written units on the
+interface. The probe came in too low and was lost
+in the Martian atmosphere.
 
 It's an extreme example, but the family is huge: two
 components sharing the same numeric type but not the same
@@ -454,18 +455,15 @@ in everyday code. Typical cases:
 - `Int<Seconds>` vs `Int<Milliseconds>` — wrongly expressed
   timeouts are responsible for a non-trivial percentage of
   intermittent bugs.
-- `String<Email>` vs `String<Username>` — strings that
-  passed through different validations.
-- `String<RawHtml>` vs `String<Sanitized>` — input not
-  escaped vs ready for safe injection.
 
-The first two cases over `Int` work in any current version
-of kaikai. The last two over `String` are partially
-implemented; full handling of branded types over `String`
-and arbitrary records is an extension the language doc lists
-as a near milestone.
+Units label numeric types: `Int`, `Real`, and `Decimal`. A
+string has no way to take one: `"ada@x.cl"<Email>` is not a
+valid literal. To keep a validated email apart from a
+username, use a record with a private field (§4.1): the module
+exposes the function that validates and builds the value, and
+nobody else can make one.
 
-The two `Int` cases in a program that runs. The commented-out
+Two of those cases in a program that runs. The commented-out
 lines are precisely the ones the compiler rejects:
 
 ```kai
@@ -514,7 +512,7 @@ timeout = 30
 
 Units are erased after type checking. The binary that
 `kai build` produces operates with plain `Int`, `Real`, and
-`String`. The unit **doesn't exist** at runtime: no tag, no
+`Decimal`. The unit **doesn't exist** at runtime: no tag, no
 dynamic verification, no overhead. The promise is
 the same as algebraic effects and contracts: information in
 the type, zero cost at runtime.

@@ -652,9 +652,10 @@ valores.
 
 ## 3.8 Tres formas de cuerpo de función
 
-El cuerpo de una función puede tomar **tres formas**. Lo viste
-en el capítulo 1, aquí lo fijas, y el cap. 6 vuelve sobre ellas
-con más profundidad.
+El cuerpo de una función puede tomar **tres formas**. Las dos
+primeras ya las usaste en los capítulos 1 y 2; aquí las fijas
+junto con la tercera, y el cap. 6 vuelve sobre ellas con más
+profundidad.
 
 Forma corta, con `=` y una sola expresión:
 

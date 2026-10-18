@@ -660,9 +660,10 @@ What's new:
   only `x` returned; if you wanted both, you'd write
   `return(x) -> (x, state)`.
 
-From the body's view there's no mutation: only invocations of
-pure-looking operations. Mutation lives entirely inside the
-handler, and nothing shows outside the `handle`.
+The body sees no mutation: it only performs the effect's `get`
+and `set` operations, without knowing where the value is kept.
+Mutation lives entirely inside the handler, and nothing shows
+outside the `handle`.
 
 The same shape builds `Reader` (read-only environment),
 `Writer` (output accumulation), counters, caches, sessions — no
@@ -1273,8 +1274,9 @@ The body of each clause above is `$extern_handler("kai_default_log_info")`.
 form. In kaikai it introduces a **compiler intrinsic**, a
 construct the compiler resolves directly instead of looking up a
 function defined in kaikai code. The general form is
-`$name(args)`. Today there's just one: `$extern_handler`. There
-may be more tomorrow; the sigil is reserved for that family.
+`$name(args)`. The set of intrinsics is closed, and the only one
+that appears in source code, yours or the stdlib's, is
+`$extern_handler`.
 
 `$extern_handler("kai_default_log_info")` means: "the body of this
 clause is a call to the C symbol `kai_default_log_info`". The
@@ -1342,21 +1344,25 @@ fn greet(name: String) : Unit / MyLog {
   MyLog.info("hi, " ++ name)
 }
 
-fn main() : Unit / Stdout {
+fn main() : Unit / Stdout + MyLog {
+  greet("kaikai")  # no handle: the default fires
   let r = handle {
-    MyLog.info("hello from extern_handler")
+    greet("ada")
     7
   } with MyLog {
-    info(msg, resume) -> resume(())   # silence inside the handle
+    info(msg, resume) -> resume(())  # silence inside the handle
   }
-  print("result: #{r}")
+  println("result: #{r}")
 }
 ```
 
-Inside the `handle ... with MyLog` the explicit clauses win and
-the `info` is silenced. Without that `handle`, the default would
-fire and print via the C runtime. `greet` doesn't know the
-difference: for it, `MyLog` is whatever the context decides.
+The first call to `greet` has no `handle` around it, so the
+default fires: the C runtime writes a timestamped line to
+stderr, `[2026-10-18T01:54:45Z] INFO  hi, kaikai`. Inside the
+`handle ... with MyLog` the explicit clauses win and the greeting
+to `ada` is silenced. Stdout gets only `result: 7`. `greet`
+doesn't know the difference: for it, `MyLog` is whatever the
+context decides.
 
 ### When there's no default — the effect without a net
 
@@ -1523,12 +1529,14 @@ category; they're instances of (2).
 ### Why the sigil has an odd name
 
 `$extern_handler` may sound long because the sigil opens a
-system: `$` reserves the namespace of a **family** of
-intrinsics, and `$extern_handler` is the one that lives there. Any other bridge to the runtime — asking the current
-`errno`, calling a platform-specific symbol — comes in under the
-same sigil with a descriptive name: `$os_name`,
-`$panic_with_trace`. Reserving `$<ident>(args)` leaves the door
-open without relitigating the syntax every time.
+system: `$` reserves the namespace of a **closed family** of
+intrinsics, operations the compiler implements and no kaikai
+code can define. The compiler uses other members of the family
+internally, when it rewrites a `var` or a non-tail `resume`;
+in source code only `$extern_handler` appears. A name outside
+the family, such as `$os_name()`, is a compile error. The sigil
+guarantees an intrinsic is never mistaken for a function
+call.
 
 If you never bridge an effect to C, you'll never write
 `$extern_handler`. But when you see it in the stdlib you'll know
@@ -1699,16 +1707,19 @@ fn with_resource() : Unit / Yield[String] + Stdout =
 ```
 
 ```
- run examples/ch12/16_dropping_the_generator.kai
+$ kai run examples/ch12/16_dropping_the_generator.kai
 dropping the generator runs the cleanup
   opening the file
-  read 'line 1' and I'm asking for no more
   closing the file
+  read 'line 1' and I'm asking for no more
 the producer is gone
 ```
 
 The `finally` ran on its own, the moment the `Gen` was left
-ownerless and before `main` moved on. Discarding a generator
+ownerless and before `main` moved on. Note the order: the file
+closes before the consumer prints what it read. The pattern
+`Next(l, _)` doesn't bind the continuation, so the generator is
+left ownerless at the `match` itself. Discarding a generator
 takes it apart.
 
 That's the division of labor the row proposes. It doesn't forbid
@@ -1725,10 +1736,11 @@ compose with `async`: hence `async def`, and hence
 the combinations for more still. It's §12.1's complaint in a
 different costume.
 
-Here the whole mechanism is 108 lines of stdlib. The compiler
-doesn't know `Yield`: there is no `yield` keyword, there's an
-operation that happens to be called that. And it composes with
-everything else because it isn't a special case of anything.
+Here the whole mechanism fits in about a hundred lines of
+stdlib. The compiler doesn't know `Yield`: there is no `yield`
+keyword, there's an operation that happens to be called that.
+And it composes with everything else because it isn't a special
+case of anything.
 
 That's what you buy when the continuation is a first-class
 value: generators nobody had to add to the language.
@@ -1919,10 +1931,10 @@ in a language with classical dependency injection.
 **12.9.** Why doesn't the `Fail` of §12.5 carry a `default { }`
 block? Pick three hypothetical effects (yours or stdlib ones you
 imagine) and for each decide whether it would have a default.
-Argue in one line why or why not. Then take the argument behind
-`Fail`'s retirement from the stdlib (appendix D §D.6) and apply
-it to all three: which of them would be better expressed as
-`Result[a, e]`?
+Argue in one line why or why not. Then take the argument for
+why the stdlib declares no `Fail` effect (appendix D §D.6) and
+apply it to all three: which of them would be better expressed
+as `Result[a, e]`?
 
 **12.10.** Read the declaration of `Stdout` in
 `stdlib/io/console.kai` in the language repo. What does the

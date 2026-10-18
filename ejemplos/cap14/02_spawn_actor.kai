@@ -8,7 +8,7 @@
 import actor
 import spawn
 
-fn trabajador() : Unit / Actor[String] + Console {
+fn trabajador() : Unit / Actor[String] + Stdout {
   let t1 = Actor.receive()
   Stdout.print("trabajando: " ++ t1)
   let t2 = Actor.receive()
@@ -17,7 +17,7 @@ fn trabajador() : Unit / Actor[String] + Console {
   Stdout.print("trabajando: " ++ t3)
 }
 
-fn main() : Unit / Console + Spawn + Cancel {
+fn main() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
     let pid = spawn_actor(() => trabajador())
     Actor.send(pid, "tarea-1")

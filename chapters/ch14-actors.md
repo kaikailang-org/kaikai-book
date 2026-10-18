@@ -220,7 +220,7 @@ To start an actor that runs in its own fiber:
 import actor
 import spawn
 
-fn worker() : Unit / Actor[String] + Console {
+fn worker() : Unit / Actor[String] + Stdout {
   let t1 = Actor.receive()
   Stdout.print("working: " ++ t1)
   let t2 = Actor.receive()
@@ -229,7 +229,7 @@ fn worker() : Unit / Actor[String] + Console {
   Stdout.print("working: " ++ t3)
 }
 
-fn main() : Unit / Console + Spawn + Cancel {
+fn main() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
     let pid = spawn_actor(() => worker())
     Actor.send(pid, "task-1")
@@ -255,13 +255,12 @@ and returns the `Pid` so the parent can send it messages.
 The worker's signature declares `Actor[String]`: it needs
 the effect to call `Actor.receive()`.
 
-`main` also has `Actor[String]` in its row, because
-`Actor.send(pid, "task-1")` invokes an operation of the
-`Actor[String]` effect, and every effect operation requires
-the effect to be available in context. The `with_mailbox` in
-`main` provides that capability; the `pid` already identifies
-the destination mailbox, and the handler only dispatches the
-operation.
+`main` also invokes an `Actor[String]` operation
+(`Actor.send(pid, "task-1")`), but its row doesn't carry the
+effect: the `with_mailbox` around those calls is the handler
+that serves them, and a handled effect doesn't leave the
+block. The `pid` already identifies the destination mailbox;
+the handler only dispatches the operation.
 
 The `spawn.yield()`s at the end give the scheduler a chance
 to run the worker. Without them, `main` would exit before
@@ -285,9 +284,17 @@ import time
 
 fn main() : Unit / Stdout + Spawn + Cancel + Clock + Actor[String] {
   with_mailbox {
+    # Empty mailbox: the deadline elapses before anything arrives.
+    match receive_timeout(time.millis(10)) {
+      Some(m) -> Stdout.print("unexpected: " ++ m)
+      None -> Stdout.print("timeout: nobody answered")
+    }
+
+    # Now there's a message on hand: it arrives before the deadline.
+    Actor.send(Actor.self(), "pong")
     match receive_timeout(time.millis(10)) {
       Some(m) -> Stdout.print("received: " ++ m)
-      None    -> Stdout.print("timeout: nobody answered")
+      None -> Stdout.print("unexpected: timeout")
     }
   }
 }
@@ -497,11 +504,12 @@ register observation on the actor's life.
 ### Links: bidirectional
 
 `Link.link(pid)` declares that the current actor and `pid`
-are bound: if either fails, the other receives
+are bound: when either one terminates, whether it returned,
+crashed or was cancelled, the other receives
 `Cancel.raise()`. It's the pattern for two actors that
 depend on each other symmetrically (a worker and its queue,
-two sides of a handshake). For "supervisor watches worker",
-use a monitor.
+two sides of a handshake). To watch another actor without
+tying your life to its own, use a monitor.
 
 ### `set_trap_exit` — receiving the crash instead of suffering it
 
@@ -532,8 +540,10 @@ parent: got -> Crashed
 
 Without that line, the child's crash reaches the parent and
 the program goes down with it. With it, the parent is left in
-a position to decide. It is the piece that turns a link into
-supervision.
+a position to decide. The link stops being a symmetric pact
+and becomes a one-way notice channel: it's how you supervise
+when you need to know *how* the child ended, which a monitor
+won't tell you.
 
 Two conditions that bite when missing. The fiber has to be
 **inside a `with_mailbox`** for the message to have somewhere
@@ -552,7 +562,7 @@ want to stop watching.
 When the observed one dies, the notice reaches you **through
 the ordinary mailbox**: the runtime pushes the dead actor's pid
 there and you read it with the same `Actor.receive()` as any
-other message. That is all a monitor says today: *this actor
+other message. That is all a monitor says: *this actor
 terminated*. It doesn't say how.
 
 ### Learning how it died: `Link` + trap exit
@@ -563,7 +573,7 @@ For the cause you go back to `set_trap_exit(true)`, Erlang's
 
 ```kai
 # examples/ch14/07_trap_exit.kai (excerpt)
-fn supervise() : Unit / Actor[String] + Spawn + Console + Link + Cancel {
+fn supervise() : Unit / Actor[String] + Spawn + Stdout + Link + Cancel {
   spawn.set_trap_exit(true)
   let me = Actor.self()
 
@@ -583,26 +593,12 @@ a child died: Crashed
 
 The child binds itself with `Link.link(parent)` and then either
 returns cleanly or calls `Cancel.raise()`. Without
-`set_trap_exit`, the first death would cancel the supervisor
-and the second would never be seen.
+`set_trap_exit`, the first child to end would cancel the
+supervisor and the second notice would never be seen.
 
-That `String` is a v1 simplification. The language design (`docs/actors.md`) specifies something richer —
-a `MonitorDown(ref, cause)` with
-`cause = Normal | Crashed(String) | Cancelled`, travelling
-through the actor's typed mailbox as one more variant of your
-own message type:
-
-```kai
-# The specified shape, not implemented yet.
-type SupervisorMsg
-  = Work(Task)
-  | Down(MonitorDown)
-```
-
-When that lands, the cause stops being a string and becomes a
-value you can `match` on. Until then the two routes above are
-what you have: the monitor tells you *who*, trap exit tells you
-*how*.
+The notice is a `String`, so the supervisor's mailbox has to
+be `Actor[String]`. The two routes split the work: the monitor
+tells you *who*, trap exit tells you *how*.
 
 ### When to pick each
 
@@ -617,7 +613,9 @@ what you have: the monitor tells you *who*, trap exit tells you
   cancellation from outside, panics. The supervisor stays
   alive and decides.
 - **`Link`**, when two actors form a unit and it doesn't
-  make sense for one to survive without the other.
+  make sense for one to survive without the other. With trap
+  exit, when the supervisor also needs the cause of the
+  termination.
 
 The §14.7 pattern uses explicit notification. It's the
 simplest, and also the only one where the supervisor gets the
@@ -652,19 +650,19 @@ fn process(tasks: [(Int, Int)], acc: Int) : BatchResult {
 }
 
 fn worker(supervisor: Pid[BatchResult], tasks: [(Int, Int)])
-    : Unit / Actor[BatchResult] + Console {
+    : Unit / Actor[BatchResult] + Stdout {
   let r = process(tasks, 0)
   Stdout.print("worker: batch ended as #{r}")
   Actor.send(supervisor, r)
 }
 
 fn attempt(me: Pid[BatchResult], batch: [(Int, Int)])
-    : BatchResult / Console + Spawn + Cancel + Actor[BatchResult] {
+    : BatchResult / Stdout + Spawn + Cancel + Actor[BatchResult] {
   let _ = spawn_actor(() => worker(me, batch))
   Actor.receive()
 }
 
-fn supervisor() : Unit / Console + Spawn + Cancel {
+fn supervisor() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
     let me = Actor.self()
     let first_batch  = [(10, 2), (20, 4), (30, 0)]
@@ -682,7 +680,7 @@ fn supervisor() : Unit / Console + Spawn + Cancel {
   }
 }
 
-fn main() : Unit / Console + Spawn + Cancel {
+fn main() : Unit / Stdout + Spawn + Cancel {
   supervisor()
 }
 ```
@@ -724,8 +722,9 @@ things:
 - **Cancel the worker if the supervisor gives up.** If the
   supervisor gives up while the worker is still processing,
   the worker should end too. With `Link.link(worker)` after
-  spawn, the supervisor's decision to return cancels the
-  worker automatically. The explicit alternative is to add a
+  spawn, a supervisor that returns cancels the worker
+  automatically, because a link reacts to any termination,
+  not only to crashes. The explicit alternative is to add a
   `Stop` message to the worker's protocol and send it
   before giving up.
 - **Persistent logging.** Instead of `Stdout.print`, send to
@@ -881,8 +880,8 @@ five tasks instead of three. What happens if you reduce the
 parent's `spawn.yield()`s? What's the minimum that lets all
 tasks get processed?
 
-**14.2.** Take `BoundedDropOldest` from §14.4 and change it
-to `BoundedDropNewest`. What's the expected output? Justify
+**14.2.** Take the `Bounded(2, DropOldest)` from §14.4 and
+change it to `Bounded(2, DropNewest)`. What's the expected output? Justify
 by reasoning about which messages remain in the mailbox as
 each `send` arrives.
 
@@ -890,8 +889,8 @@ each `send` arrives.
 one question and leaves. If you wanted a client that asks
 five questions in series, what would you change? And if you
 wanted to fire them all at once and receive replies as they
-come in (concurrently, not in parallel: the scheduler
-interleaves them on the same thread)? Hint: you'd need to
+come in, in whatever order the scheduler finishes them?
+Hint: you'd need to
 open several fibers in a nursery or group replies with a
 correlation id.
 

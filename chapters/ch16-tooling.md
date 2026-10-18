@@ -105,16 +105,16 @@ Two details:
 `kai run` and `kai build` are designed to feel immediate: a
 program of a few hundred lines compiles in under a second on a
 reasonable machine. That's no accident. The compiler is
-self-hosted (kaikai compiled in kaikai), avoids costly passes
-like global type inference where it doesn't need them, and
-lowers to LLVM in the same process — no intermediate files
-written, no external linker launched on the common path. For
-larger programs there's a cache (chapter 8 §8.8 covers the
-package cache; the per-file compilation cache is another
-story).
+self-hosted (kaikai compiled in kaikai) and lowers to LLVM in
+the same process: it builds the module through the LLVM API
+and emits the native object directly, with no intermediate
+`.ll` text and no separate `clang`. Only the final link
+against the runtime goes through `cc`. For larger programs
+there's a cache (chapter 8 §8.8 covers the package cache; the
+per-file compilation cache is another story).
 
 That "under a second" is the steady state, the one you live
-in: the chapter-17 case study — 420 lines across five modules —
+in: the chapter-17 case study — about 430 lines across five modules —
 builds in about 0.6 seconds. With a cold cache it costs several
 times that; on my machine, 4.1 seconds for the same project.
 Keep that in mind before you time a cold build and draw the
@@ -979,12 +979,24 @@ struct into a fresh record. The ABI classification (small struct
 in registers vs. memory, per SysV or AAPCS) is the C compiler's
 job, not kaikai's.
 
-There's one rule to know on the C side: the shim must declare
-the struct with the tag the compiler mints, `struct
-__kai_ffi_<Name>`, so the by-value calling convention lines up
-field-for-field. The canonical, compiling example lives in
-`examples/ffi/v2_struct_by_value.kai` with its `v2_shim.c`; `kai
-info ffi` carries the exact reference.
+On the C side, the shim includes the `kai_ffi.h` that kaikai
+generates beside the build, with one `typedef` per
+`extern "C" type`, and names those same types. That keeps one
+definition of each struct, so a layout mismatch is a C compile
+error rather than silently corrupted data at the boundary:
+
+```c
+#include "kai_ffi.h"        /* provides Color, Vector2 */
+
+Vector2 vec_add(Vector2 a, Vector2 b) {
+    Vector2 r = { a.x + b.x, a.y + b.y };
+    return r;
+}
+```
+
+The canonical example lives in
+`examples/ffi/v2_struct_by_value.kai` in the language repo;
+`kai info ffi` carries the reference.
 
 Struct-by-value works on **both backends**. On native, the
 emitter classifies the struct per the C ABI (registers vs.
@@ -1182,7 +1194,7 @@ At the time this book ships, kaikai knows three:
 |---|---|---|
 | `tongariki` | closed | Fast-iteration phase before 2026. Only packages that haven't migrated. |
 | `hanga-roa` | active (default) | The first public edition. This book is written against it. |
-| `orongo` | future | The stabilization edition. No version number is pinned to it yet — `hanga-roa` has already crossed the 0.100.x series without an edition change, which is exactly the demonstration that the commitment lives in the edition, not in a number. The "1.0" label is postponed indefinitely. |
+| `orongo` | future | The stabilization edition. No version number is pinned to it yet: an edition spans many compiler releases, because the commitment lives in the edition, not in a number. The "1.0" label is postponed indefinitely. |
 
 The names follow the Rapa Nui geography used across the
 ecosystem: places on Rapa Nui in chronological order —
@@ -1207,7 +1219,7 @@ The tooling comes down to three ideas:
    kaikai's tooling is designed against that clock.
 
 2. **One right way for each thing.** A canonical formatter
-   with no options. A package manager with MVS and no
+   with no style options. A package manager with MVS and no
    complex resolution. A test system integrated into the
    language. The philosophy is Go's: minimize the decisions
    about how to use the tools, so your time goes to deciding

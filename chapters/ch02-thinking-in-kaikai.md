@@ -74,6 +74,10 @@ The practical consequences show up quickly:
   function or replaced by another expression without disturbing
   the surrounding context; a statement, less so.
 
+This was one of the first things I settled when I started
+designing kaikai, before effects and before kinds. Everything
+else fell into place around it.
+
 You see the same with `match`. In most languages with a
 `switch`, each `case` is a statement that runs a block and then
 either breaks or falls through, depending on the rules. In
@@ -114,10 +118,11 @@ transformations happen, and avoids intermediate names. It is
 only possible because each step is an expression that can be
 composed with the next.
 
-`|>` is the most general of three pipe operators kaikai
-provides for chaining. The other two — `|` (map over lists) and
-`||` (flat-map) — are shortcuts for the cases that appear over
-and over. You study them in depth in chapter 6.
+`|>` is the most general of five pipe operators kaikai
+provides for chaining. The other four (`|` map over lists, `||`
+flat-map, `|?` filter, and `|!` each) are shortcuts for the
+cases that appear over and over. You study them in depth in
+chapter 6.
 
 ## 2.2 Immutability by default
 

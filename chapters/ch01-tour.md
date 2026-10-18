@@ -4,11 +4,12 @@ The best way to get to know a programming language is to read it
 and run it.
 That is how I learned every language I know, which is why this
 book opens with programs instead of definitions. This chapter
-tours kaikai in ten short programs. None runs longer than thirty
-lines, all of them compile, and together they cover the shapes
-you will see again and again: declarations, algebraic data
-types, pattern matching, effects, fibers, protocols, units of
-measure, contracts, inline tests, and typed holes.
+tours kaikai in eleven short programs. None runs longer than
+forty lines, all of them compile, and together they cover the
+shapes you will see again and again: declarations, algebraic
+data types, pattern matching, pipes, effects, fibers,
+protocols, units of measure, contracts, inline tests, and typed
+holes.
 
 You don't need every detail yet. You'll finish the chapter with
 a view of the language from above and the sense that you can
@@ -265,12 +266,13 @@ a constructor to `Expr` and forget an arm in `eval`, it does
 not compile. This is huge and will save you many hours.
 
 `let` introduces a local binding. The type is inferred from
-the right-hand side. There is no `var`, no `mutable`, no
-reassignment: `let e = ...` binds `e` to a value, and that
-value does not change. If you really need to mutate something,
-kaikai lets you, but it asks you to declare it (chapter 13).
-This is the other half of the habit change: **immutability by
-default**.
+the right-hand side. A `let` is never reassigned: `let e = ...`
+binds `e` to a value, and that value does not change. If you
+really need to mutate something, kaikai lets you, but it asks
+you to declare it: a local variable that changes is written
+with `var` and `:=` (chapter 2), and a mutable array lives
+under the `Mutable` effect (chapter 13). This is the other half
+of the habit change: **immutability by default**.
 
 ## 1.5 A custom effect with a handler
 
@@ -789,10 +791,13 @@ $ kai test file.kai    # run the `test "..." { ... }` blocks in the file
 ```
 
 `kai run` is the workhorse while you read this book. Edit a
-file, run it, look at the output, edit again.
+file, run it, look at the output, edit again. That loop is the
+one I cared most about making fast when I designed the tooling,
+because it is where the time actually goes.
 
 Chapter 16 covers the rest of the tooling: `fmt`, `lsp`,
-`watch`, editor integration. For now, `run` is enough.
+`watch`, editor integration, and the package commands (`init`,
+`add`, `fetch`, `update`). For now, `run` is enough.
 
 ## 1.14 How the rest of the book is laid out
 

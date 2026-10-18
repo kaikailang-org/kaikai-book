@@ -590,9 +590,16 @@ los dos es el error clásico.
 
 Una restricción acompaña: en un mismo camino de ejecución
 `resume` se llama **una vez**. Dos llamadas son un error de
-compilación. Reanudar dos veces el mismo cómputo es
-*multi-shot*, cuesta copiar los frames de la fibra, y vive aparte
-bajo `resume_multishot`.
+compilación:
+
+```
+error: `resume` may be called twice on one path
+  = help: the continuation is one-shot
+```
+
+Reanudar dos veces el mismo cómputo es *multi-shot*, cuesta
+copiar los frames de la fibra, y vive aparte bajo
+`resume_multishot`.
 
 ¿Para qué sirve? Para todo lo que tenga que pasar *alrededor* del
 resto del programa: cronometrar un tramo, cerrar un recurso,
@@ -639,8 +646,8 @@ Lo nuevo:
   estado final y se devuelve solo `x`; si quisieras ambos,
   escribirías `return(x) -> (x, state)`.
 
-Para el body no hay mutación: solo invocaciones a operaciones
-puras. La
+El body no ve mutación: solo invoca las operaciones `get` y
+`set` del efecto, sin saber dónde se guarda el valor. La
 mutación vive entera dentro del handler, y desde afuera del
 `handle` no se ve.
 
@@ -1206,8 +1213,8 @@ $ kai run ejemplos/cap12/07_alias.kai
 Hasta aquí escribiste a mano cada `handle`. Pero en algunos
 efectos una implementación es tan obvia que escribirla cada vez
 es ceremonia pura: si tu efecto es `Log` y lo "razonable" es
-imprimir con timestamp, querrías que esa implementación venga con
-el efecto.
+escribir en stderr con timestamp, querrías que esa
+implementación venga con el efecto.
 
 Para eso declaras un **bloque `default { }`** dentro del efecto.
 Es lo mismo que un `handle ... with`, pero vive al lado de las
@@ -1253,8 +1260,9 @@ El cuerpo de cada cláusula del ejemplo anterior es
 especial. En kaikai introduce un **compiler intrinsic**, una
 construcción que el compilador resuelve directamente en vez de
 buscar una función definida en código kaikai. La forma general es
-`$nombre(args)`. Hoy hay uno solo: `$extern_handler`. Mañana puede
-haber más; el sigil queda reservado para esa categoría.
+`$nombre(args)`. El conjunto de intrinsics es cerrado, y el único
+que aparece en código fuente, tuyo o del stdlib, es
+`$extern_handler`.
 
 `$extern_handler("kai_default_log_info")` significa: "el cuerpo
 de esta cláusula es una llamada al símbolo C `kai_default_log_info`".
@@ -1326,21 +1334,25 @@ fn greet(name: String) : Unit / MyLog {
   MyLog.info("hola, " ++ name)
 }
 
-fn main() : Unit / Stdout {
+fn main() : Unit / Stdout + MyLog {
+  greet("kaikai")  # sin handle: dispara el default
   let r = handle {
-    MyLog.info("hello from extern_handler")
+    greet("ada")
     7
   } with MyLog {
-    info(msg, resume) -> resume(())   # silencia adentro del handle
+    info(msg, resume) -> resume(())  # silencia adentro del handle
   }
-  print("result: #{r}")
+  println("result: #{r}")
 }
 ```
 
+La primera llamada a `greet` no tiene un `handle` alrededor, así
+que dispara el default: el runtime de C escribe en stderr una
+línea con timestamp, `[2026-10-18T01:54:44Z] INFO  hola, kaikai`.
 Adentro del `handle ... with MyLog` ganan las cláusulas
-explícitas y el `info` queda silenciado. Sin ese `handle`, el
-default dispararía e imprimiría vía el runtime de C. `greet` no
-se entera: para ella, `MyLog` es lo que el contexto decida.
+explícitas y el saludo a `ada` queda silenciado. Por stdout sale
+solo `result: 7`. `greet` no se entera: para ella, `MyLog` es lo
+que el contexto decida.
 
 ### Cuándo no hay default: el efecto sin red
 
@@ -1357,7 +1369,7 @@ en el stdlib? Un efecto de falla no aporta nada que
 `/ Fail` en todo el stdlib. Y su forma, una operación que
 devuelve `Nothing`, es justamente la que *no* puede expresar la
 falla interesante, aquella en la que el consumidor elige si
-saltear o abortar. Para eso el efecto tiene que devolver `Unit` y dejar que
+saltar o abortar. Para eso el efecto tiene que devolver `Unit` y dejar que
 el handler decida si llama a `resume`. El apéndice D tiene la
 tabla completa.
 
@@ -1507,12 +1519,15 @@ una cuarta categoría; son instancias de (2).
 ### Por qué el sigil tiene un nombre raro
 
 `$extern_handler` puede sonar largo porque el sigil abre un
-sistema: `$` reserva el espacio de nombres de una **familia** de
-intrinsics, y `$extern_handler` es el que vive ahí. Cualquier otro puente al runtime (pedir el
-`errno` actual, llamar a un símbolo de plataforma específica)
-entra por el mismo sigil con un nombre descriptivo: `$os_name`,
-`$panic_with_trace`. Reservar `$<ident>(args)` deja la puerta
-abierta sin volver a discutir la sintaxis cada vez.
+sistema: `$` reserva el espacio de nombres de una **familia
+cerrada** de intrinsics, operaciones que implementa el
+compilador y que ningún código kaikai puede definir. El
+compilador usa otros miembros de la familia por dentro, al
+transformar un `var` o un `resume` fuera de cola; en código
+fuente solo aparece `$extern_handler`. Un nombre que no está en
+la familia, como `$os_name()`, es un error de compilación. El
+sigil garantiza que un intrinsic nunca se confunda con una
+llamada a función.
 
 Si nunca conectas un efecto a C, nunca escribirás
 `$extern_handler`. Pero cuando lo veas en el stdlib sabrás qué
@@ -1679,16 +1694,19 @@ fn con_recurso() : Unit / Yield[String] + Stdout =
 ```
 
 ```
- run ejemplos/cap12/16_soltar_el_generador.kai
+$ kai run ejemplos/cap12/16_soltar_el_generador.kai
 soltar el generador corre la limpieza
   abriendo el archivo
-  leí 'línea 1' y no pido más
   cerrando el archivo
+  leí 'línea 1' y no pido más
 el productor ya no existe
 ```
 
 El `finally` corrió solo, cuando el `Gen` quedó sin dueño y antes
-de que `main` siguiera. Descartar un generador lo desarma.
+de que `main` siguiera. Fíjate en el orden: el archivo se cierra
+antes de que el consumidor imprima lo que leyó. El patrón
+`Next(l, _)` no liga la continuación, así que el generador queda
+sin dueño en el `match` mismo. Descartar un generador lo desarma.
 
 Esa es la división del trabajo que propone la fila. No te prohíbe
 hacer I/O en un productor, una regla cómoda de implementar y
@@ -1704,10 +1722,10 @@ descubrió que no componía con `async`: por eso existen
 sintaxis nueva, y las combinaciones, más sintaxis todavía. Es la
 queja del §12.1 con otro disfraz.
 
-Aquí el mecanismo completo son 108 líneas de stdlib. El
-compilador no conoce `Yield`: no hay palabra clave `yield`, hay
-una operación que se llama así. Y compone con todo lo demás
-porque no es un caso especial de nada.
+Aquí el mecanismo completo cabe en un centenar de líneas de
+stdlib. El compilador no conoce `Yield`: no hay palabra clave
+`yield`, hay una operación que se llama así. Y compone con todo
+lo demás porque no es un caso especial de nada.
 
 Eso compras cuando la continuación es un valor de primera clase:
 generadores que nadie tuvo que agregarle al lenguaje.
@@ -1896,9 +1914,9 @@ en un lenguaje con inyección de dependencias clásica.
 `default { }`? Anota tres efectos hipotéticos (los tuyos o de
 stdlib que imagines) y para cada uno decide si llevaría default.
 Argumenta en una línea por qué sí o por qué no. Después toma el
-argumento del retiro de `Fail` del stdlib (apéndice D §D.6) y
-aplícalo a los tres: ¿cuál de ellos se expresaría mejor con
-`Result[a, e]`?
+argumento por el que el stdlib no declara un efecto `Fail`
+(apéndice D §D.6) y aplícalo a los tres: ¿cuál de ellos se
+expresaría mejor con `Result[a, e]`?
 
 **12.10.** Lee la declaración de `Stdout` en
 `stdlib/io/console.kai` del repositorio del lenguaje. ¿Qué hace la

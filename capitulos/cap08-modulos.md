@@ -32,8 +32,8 @@ Tres decisiones de diseño aparecen en estas tres líneas:
 - **`pub` marca lo que el módulo exporta.** Una declaración es
   privada al archivo salvo que lleve `pub`; solo lo marcado es
   visible desde otro módulo que importe este. Es al revés de
-  Java o C++, donde lo público es el default y hay que recordar
-  marcar lo privado.
+  Kotlin o Scala, donde lo público es el default y hay que
+  recordar marcar lo privado.
 - **Los nombres del módulo no necesitan declararse.** El
   archivo `aritmetica.kai` es el módulo `aritmetica`. Si lo
   pones bajo un subdirectorio como `util/aritmetica.kai`,
@@ -193,11 +193,6 @@ su propio `geometria.kai`; lo que cambia es la línea del
 import geometria
 
 fn main() {
-  # Un constructor de un módulo importado se accede con prefijo,
-  # pero la sintaxis de record literal con prefijo no está
-  # disponible: hay que importar el constructor explícito si se
-  # necesita aquí (ver `02_dos_archivos`). Aquí usamos solo la
-  # función pública.
   let d = geometria.distancia_origen(3.0, 4.0)
   println("distancia al origen = #{d}")
 }

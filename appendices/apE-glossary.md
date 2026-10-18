@@ -82,7 +82,7 @@ Chapter 11.
 ## D
 
 **Default handler.** The handler the runtime installs
-automatically around `main` for certain effects (`Console`,
+automatically around `main` for certain effects (`Stdout`,
 `File`, `Spawn`, etc.). User-installed handlers via
 `handle ... with X` take priority over the default while in
 scope.
@@ -120,7 +120,11 @@ covered. Chapter 5.
 without an explicit conversion, and their arithmetic wraps
 in two's complement at the type's width. In an `extern "C"`
 signature they cross with the exact width they declare.
-Chapter 3 §3.4.
+Chapter 3 §3.4. A second family, `U8`, `U16`, `U32`, `U64`,
+`I8`, `I16`, `I32`, and `I64`, only annotates a width: on the
+kaikai side the value is a plain `Int`, and the width counts
+at the C boundary and in `Layout` fields (`U32<be>`,
+chapter 19 §19.8).
 
 **Fiber.** A unit of cooperative execution. In kaikai a
 fiber is lightweight (hundreds of bytes), has its own heap,
@@ -323,11 +327,12 @@ signatures of top-level functions, leaving holes in the
 bodies, and filling the inner pieces afterward.
 Chapter 15.
 
-**Trap exit.** An actor's ability to **not** propagate
-cancellation automatically when a sibling fiber falls.
-Enabled with `fiber_set_trap_exit(true)`; the actor
-receives an informational message instead of
-`Cancel.raise()`. Chapter 14.
+**Trap exit.** An actor's ability to **not** go down with
+a linked peer when that peer terminates. Enabled with
+`spawn.set_trap_exit(true)`, which performs the `Spawn`
+effect's `set_trap_exit` operation; the actor receives a
+message in its mailbox (such as `"Normal"` or `"Crashed"`)
+instead of `Cancel.raise()`. Chapter 14.
 
 ## U
 

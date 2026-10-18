@@ -32,7 +32,7 @@ Three design decisions appear in these three lines:
 - **`pub` marks what the module exports.** A declaration is
   private to the file unless it carries `pub`; only what's
   marked is visible to a module that imports this one. This is
-  the opposite of Java or C++, where public is the
+  the opposite of Kotlin or Scala, where public is the
   default and you have to remember to write `private`.
 - **Module names need no declaration.** The file
   `arithmetic.kai` is the module `arithmetic`. Put it under a
@@ -631,7 +631,7 @@ ref = "v0.1.0"
 sha = "abc123def456..."
 ```
 
-If two developers run `kai install` with the same `kai.toml`
+If two developers run `kai fetch` with the same `kai.toml`
 and the same `kai.lock`, they **download exactly the same
 SHA**, the same file tree, and end up with the same binary.
 That reproducibility is the lockfile's core promise.

@@ -13,8 +13,9 @@ fn area(s: Shape) : Real =
     Circle(r) -> 3.14159 * r * r
     Rectangle(w, h) -> w * h
     Triangle(a, b, c) -> {
+      # Heron's formula, with s as the semi-perimeter.
       let s = (a + b + c) / 2.0
-      s
+      real_sqrt(s * (s - a) * (s - b) * (s - c))
     }
   }
 
@@ -29,6 +30,8 @@ fn main() {
   println("color: #{name(Red)}, #{name(Green)}, #{name(Blue)}")
   let c = Circle(2.0)
   let r = Rectangle(3.0, 4.0)
+  let t = Triangle(3.0, 4.0, 5.0)
   println("circle: area = #{area(c)}")
   println("rectangle: area = #{area(r)}")
+  println("triangle: area = #{area(t)}")
 }

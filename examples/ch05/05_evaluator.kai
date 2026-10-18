@@ -34,22 +34,6 @@ fn lookup(env: Env, name: String) : Result[Real, EvalError] {
   case [_, ...rest], n -> lookup(rest, n)
 }
 
-# Integer-approximation square root (so we don't depend on
-# math.sqrt). Only for x >= 0.
-fn sqrt(x: Real) : Real =
-  if x < 0.0 {
-    0.0
-  } else {
-    sqrt_loop(x, x / 2.0 + 1.0, 20)
-  }
-
-fn sqrt_loop(x: Real, guess: Real, fuel: Int) : Real =
-  if fuel <= 0 {
-    guess
-  } else {
-    sqrt_loop(x, (guess + x / guess) / 2.0, fuel - 1)
-  }
-
 fn eval(env: Env, e: Expr) : Result[Real, EvalError] =
   match e {
     Lit(n) -> Ok(n)
@@ -71,7 +55,7 @@ fn eval(env: Env, e: Expr) : Result[Real, EvalError] =
     }
     Sqrt(x) -> {
       let v = eval(env, x)!
-      if v < 0.0 { Err(NegativeSqrt(v)) } else { Ok(sqrt(v)) }
+      if v < 0.0 { Err(NegativeSqrt(v)) } else { Ok(real_sqrt(v)) }
     }
   }
 

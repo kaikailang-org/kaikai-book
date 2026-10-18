@@ -643,10 +643,12 @@ block, a `match` arm can be a block, a lambda body can be a
 block. The whole language reduces to expressions returning
 values.
 
-## 3.8 The difference between `=` and `{ ... }` in a function body
+## 3.8 Three function-body forms
 
-A function body can take two shapes. You saw this in chapter
-1; here you pin it down.
+A function body can take **three forms**. You already used the
+first two in chapters 1 and 2; here you pin them down along
+with the third, and chapter 6 returns to all of them in more
+depth.
 
 Short form, with `=` and a single expression:
 
@@ -659,7 +661,7 @@ fn sign(n: Int) : String =
   else { "positive" }
 ```
 
-Long form, with `{ ... }`:
+Long form, with `{ ... }` and intermediate bindings:
 
 ```kai
 fn square_plus_one(x: Int) : Int {
@@ -668,12 +670,27 @@ fn square_plus_one(x: Int) : Int {
 }
 ```
 
-The compiler accepts both. The difference is for the reader:
+Multi-clause form, with `case` arms, when the function decides
+by the shape of its arguments:
+
+```kai
+fn sign(n: Int) : String {
+  case 0            -> "zero"
+  case k when k > 0 -> "positive"
+  case _            -> "negative"
+}
+```
+
+The compiler accepts all three. The difference is for the
+reader:
 
 - **Short form** when the function is a direct expression with
   no intermediate steps. Reads like a mathematical definition.
 - **Long form** when there are intermediate bindings or several
   steps that benefit from visual separation.
+- **Multi-clause** when the function dispatches on patterns
+  over its arguments. It is the natural shape for many
+  recursive functions and for deciders over sum types.
 
 There's no "preferred" form: pick whichever communicates intent
 better for that particular function.
