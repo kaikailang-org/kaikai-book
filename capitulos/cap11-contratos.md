@@ -1,56 +1,53 @@
 # Capítulo 11 · Programación por contrato y refinement types
 
-Este capítulo cierra la Parte II y completa el hilo
-"información en el tipo, costo cero en runtime" que abren las
-unidades de medida (cap. 10) y rematan aquí dos mecanismos que
-provienen de Eiffel (1986) y Ada 2012: los **contratos**
-(precondiciones y postcondiciones que viven en la firma de
-una función) y los **refinement types** (restricciones
-sobre los valores que un tipo admite).
+Con este capítulo cierras la Parte II y el hilo "información
+en el tipo, costo cero en runtime" que abrieron las unidades de
+medida (cap. 10). Lo rematan dos mecanismos que vienen de Eiffel
+(1986) y Ada 2012: los **contratos** (precondiciones y
+postcondiciones en la firma de una función) y los **refinement
+types** (restricciones sobre los valores que un tipo admite).
 
 Son ideas de hace cuarenta años, y sigo pensando que la industria
 les hizo mucho menos caso del que merecían.
 
-Los dos mecanismos comparten la misma idea: **enunciar
-restricciones en el tipo, hacer que el compilador las
-verifique cuando puede, y diferirlas a runtime cuando no
-puede**. Donde difieren es en el alcance: los contratos
-hablan de **operaciones** (qué espera y qué garantiza una
-función); los refinements hablan de **valores** (qué números
-o strings son válidos). Las dos cubren áreas distintas y se
-complementan.
+Los dos mecanismos comparten una idea: **enunciar restricciones
+en el tipo, que el compilador las verifique cuando puede y las
+difiera a runtime cuando no**. Difieren en el alcance: los
+contratos hablan de **operaciones** (qué espera y qué garantiza
+una función); los refinements, de **valores** (qué números o
+strings son válidos). Se complementan.
 
 ## 11.1 Por qué contratos y refinements van juntos
 
-Imagina que quieres modelar una cuenta bancaria. La regla
-natural es "el saldo nunca puede ser negativo". Hay dos
-formas de expresar esa regla:
+Imagina que modelas una cuenta bancaria. La regla natural es
+"el saldo nunca puede ser negativo", y puedes expresarla de dos
+formas:
 
 - **En el valor**: declarar `type SaldoValido = Int where
   self >= 0`. Cualquier valor de tipo `SaldoValido` cumple la
-  regla por construcción. El compilador rechaza cualquier
-  intento de meter un negativo.
+  regla por construcción; el compilador rechaza cualquier
+  negativo.
 - **En la operación**: declarar `fn retirar(c: Cuenta, monto:
   Int) : Cuenta requires c.saldo >= monto ensures
   result.saldo >= 0`. La función exige una condición sobre
   los argumentos y promete una sobre el resultado.
 
-Las dos formas dicen lo mismo y la una sin la otra es
-incompleta. Los refinements describen **qué valores son
-legales**; los contratos describen **qué hacen las operaciones
-con esos valores**. Una cuenta bancaria robusta usa los dos:
-saldo refinado a no negativo, operaciones con
-precondiciones que aseguran que la regla se mantiene.
+Las dos dicen lo mismo, y una sin la otra queda incompleta.
+Los refinements describen **qué valores son legales**; los
+contratos, **qué hacen las operaciones con esos valores**. Una
+cuenta bancaria robusta usa los dos: saldo refinado a no
+negativo y operaciones con precondiciones que mantienen la
+regla.
 
-kaikai trata las dos como un solo proyecto. La doc del
-lenguaje (`refinements-and-contracts.md`) dice:
+kaikai los trata como un solo proyecto. La doc del lenguaje
+(`refinements-and-contracts.md`) dice:
 
 > Together they form a single coherent mechanism — types
 > describe what values are valid, contracts describe what
 > operations guarantee — and the two share most of the
 > implementation machinery.
 
-Es por eso que viven en el mismo capítulo.
+Por eso viven en el mismo capítulo.
 
 ## 11.2 `requires` y `ensures` en una firma
 
@@ -82,12 +79,11 @@ fn retirar(saldo: Int, monto: Int) : Int
 Tres componentes:
 
 - **`requires <expr>`**: una **precondición**. La expresión
-  tiene que ser `true` al **entrar** a la función. La
-  responsabilidad es de quien llama: si se viola, el bug está
-  afuera, no adentro de la función.
+  tiene que ser `true` al **entrar** a la función. Responde
+  quien llama: si se viola, el bug está afuera.
 - **`ensures <expr>`**: una **postcondición**. La expresión
-  tiene que ser `true` al **salir** de la función. Aquí la
-  responsabilidad es del cuerpo: si se viola, el bug es interno.
+  tiene que ser `true` al **salir** de la función. Responde el
+  cuerpo: si se viola, el bug es interno.
 - **`result`**: un nombre reservado dentro del `ensures`
   que se refiere al valor de retorno.
 
@@ -103,18 +99,18 @@ fn retirar(c: Cuenta, monto: Int) : Cuenta
   Cuenta { ...c, saldo: c.saldo - monto }
 ```
 
-Dos precondiciones (el monto positivo, y que haya saldo
-suficiente), una postcondición (la cuenta resultante tiene
-exactamente `c.saldo - monto`). Las precondiciones se
-verifican en orden al entrar; la postcondición al salir.
+Dos precondiciones (monto positivo y saldo suficiente) y una
+postcondición (la cuenta resultante tiene exactamente
+`c.saldo - monto`). Las precondiciones se verifican en orden al
+entrar; la postcondición, al salir.
 
-Tres detalles que vale fijar:
+Tres detalles:
 
-- **`requires` y `ensures` no son comentarios**. Son código
-  que el compilador emite como verificaciones reales. Si una
-  precondición se viola en runtime, el programa aborta con
-  un mensaje claro que incluye el valor que rompió el
-  contrato y una pista de cómo descartarlo:
+- **`requires` y `ensures` son código**: el compilador los
+  emite como verificaciones reales. Si una precondición se
+  viola en runtime, el programa aborta con un mensaje que
+  incluye el valor que rompió el contrato y una pista de cómo
+  descartarlo:
 
   ```
   panic: requires violated in `divide`
@@ -125,15 +121,14 @@ Tres detalles que vale fijar:
   ```
 
   La línea `argument b was:` te muestra el valor ofensor sin
-  que tengas que reproducir el caso, y `help: narrow` apunta
+  reproducir el caso, y `help: narrow` apunta
   al refinement que habría convertido este abort de runtime en
   un error de compilación.
 
 - **El compilador prueba estáticamente lo que puede**. Si
-  llamas a `divide(10, 0)` con literales, el compilador ve
-  que `b == 0` y rechaza la llamada en compile time: no
-  esperas a runtime. Si llamas con valores dinámicos, inserta
-  el assert.
+  llamas a `divide(10, 0)` con literales, ve que `b == 0` y
+  rechaza la llamada en compile time. Con valores dinámicos,
+  inserta el assert.
 
 - **Los contratos se verifican también en `--release`**. El
   build optimizado no los apaga: un `requires` que depende de
@@ -142,7 +137,7 @@ Tres detalles que vale fijar:
 
 ## 11.3 `result` y los nombres en alcance dentro del `ensures`
 
-Dentro de una postcondición tienes a disposición:
+Dentro de una postcondición tienes:
 
 - **`result`**: el valor de retorno.
 - **Los nombres de los parámetros**: sus valores de entrada.
@@ -160,11 +155,10 @@ fn ordenar(xs: [Int]) : [Int]
 = ...
 ```
 
-La primera dice "la salida es el doble de la entrada". La
-segunda dice "la lista resultante tiene el mismo largo que
-la entrada": una invariante razonable de cualquier
-ordenamiento. Fíjate que **no** estamos diciendo que `result`
-está ordenado, solo que conserva el largo. Las
+La primera dice "la salida es el doble de la entrada"; la
+segunda, "la lista resultante tiene el mismo largo que la
+entrada", una invariante razonable de cualquier ordenamiento.
+Fíjate que **no** dice que `result` está ordenado. Las
 postcondiciones documentan lo que vale la pena documentar; no
 tienen que ser exhaustivas.
 
@@ -173,8 +167,8 @@ A diferencia de Eiffel, **no hay `old`**. En Eiffel necesitas
 son mutables y el `balance` que ves en el `ensures` ya cambió.
 En kaikai los records son inmutables: el `c` que entra y el
 `result` que sale son **valores distintos**, los dos en
-alcance, sin necesidad de un mecanismo para "el valor antes
-de la llamada".
+alcance, y no hace falta nombrar "el valor antes de la
+llamada".
 
 Las dos cláusulas en firmas que corren, con `result` nombrando
 el valor de retorno:
@@ -208,9 +202,8 @@ $ kai run ejemplos/cap11/01_contratos_basicos.kai
 
 ## 11.4 Refinement types
 
-Mientras que los contratos hablan de operaciones, los
-**refinement types** hablan de valores. Un refinement type es
-un tipo base más un predicado:
+Los **refinement types** hablan de valores. Un refinement type
+es un tipo base más un predicado:
 
 ```kai
 type NoNeg = Int where self >= 0
@@ -219,24 +212,24 @@ type Edad = Int where self >= 0 and self <= 130
 type Puerto = Int where self >= 1 and self <= 65535
 ```
 
-El predicado se refiere a `self`, el valor que estamos
-restringiendo. Cualquier valor de tipo `NoNeg` cumple `self
+El predicado se refiere a `self`, el valor restringido.
+Cualquier valor de tipo `NoNeg` cumple `self
 >= 0` por construcción; cualquier `Probabilidad` cae en el
 intervalo unitario; cualquier `Puerto` está dentro del rango
 TCP.
 
-Construir un valor del tipo refinado requiere que el predicado
-se cumpla. Si lo cumples con un literal, el compilador lo
-verifica en compile time:
+Para construir un valor del tipo refinado, el predicado tiene
+que cumplirse. Con un literal, el compilador lo verifica en
+compile time:
 
 ```kai
 let x: NoNeg = 16        # OK: 16 >= 0
 let y: NoNeg = -5     # ERROR: -5 no satisface self >= 0
 ```
 
-Si lo cumples con un valor dinámico, el compilador inserta una
-verificación en runtime: igual que con un `requires` cuyo argumento
-no se puede deducir estáticamente.
+Con un valor dinámico, inserta una verificación en runtime,
+igual que con un `requires` cuyo argumento no se puede deducir
+estáticamente.
 
 Dos refinements declarados y usados, con las dos líneas que el
 compilador rechaza comentadas al final:
@@ -275,11 +268,10 @@ lluvia mañana con prob 0.3
 
 ### Dónde se chequea: no solo en un `let`
 
-El `let` es el caso fácil de ver, pero el chequeo no vive ahí.
-Va donde sea que un valor **entre** a un tipo refinado: un campo
-de record, el payload de un constructor, un elemento de lista,
-un `var`. Cada uno de esos es una construcción, y cada uno se
-verifica.
+El `let` es el caso fácil de ver, pero el chequeo va donde sea
+que un valor **entre** a un tipo refinado: un campo de record,
+el payload de un constructor, un elemento de lista, un `var`.
+Cada uno es una construcción, y cada uno se verifica.
 
 ```kai
 type Servicio = { nombre: String, puerto: Puerto }
@@ -300,15 +292,14 @@ panic: refinement violated in `main`
 predicate: self >= 1 and self <= 65535
 ```
 
-Esto importa más de lo que parece. Quiere decir que no puedes
-contrabandear un valor inválido metiéndolo dentro de una
-estructura: la frontera del refinamiento no es la firma de una
-función, es el tipo, en cualquier lugar donde aparezca.
+Esto importa más de lo que parece: no puedes contrabandear un
+valor inválido metiéndolo dentro de una estructura. La frontera
+del refinamiento es el tipo, en cualquier lugar donde aparezca.
 
 ### El refinamiento no entra solo a un genérico
 
-Hay un límite que conviene conocer antes de chocar con él. Una
-`[Int]` no se vuelve `[Puerto]` por su cuenta:
+Conoce este límite antes de chocar con él: una `[Int]` no se
+vuelve `[Puerto]` por su cuenta:
 
 ```kai
 fn abrir_todos(ps: [Puerto]) : Int = length(ps)
@@ -324,15 +315,14 @@ nothing checks `self >= 1 and self <= 65535`; map the value
 through a function that checks it
 ```
 
-El error dice exactamente por qué: dentro de `[t]` no hay ningún
-lugar donde poner el chequeo. Verificar la lista entera sería un
-costo que no pediste; dejarla pasar sería mentir. Así que el
-compilador te manda a hacerlo explícito: pasa los elementos por
-una función que devuelva `Puerto`, y cada uno se verifica al
-entrar.
+El error dice por qué: dentro de `[t]` no hay dónde poner el
+chequeo. Verificar la lista entera sería un costo que no
+pediste; dejarla pasar sería mentir. Así que lo haces
+explícito: pasas los elementos por una función que devuelva
+`Puerto`, y cada uno se verifica al entrar.
 
-Con un tipo mutable la regla es más estricta todavía, y en las
-dos direcciones:
+Con un tipo mutable la regla es más estricta, y en las dos
+direcciones:
 
 ```
 error: argument 1 of `cero`: `Array[Int where self >= 1 and self
@@ -344,28 +334,26 @@ Tiene que ser así: si un `Array[Puerto]` pasara por
 `Array[Int]`, quien lo recibe podría escribirle un cero y el
 refinamiento quedaría roto a espaldas del dueño.
 
-Las funciones que aceptan tipos refinados **se benefician de
-la garantía sin verificarla**. Si tu firma dice `n: NoNeg`,
-adentro puedes suponer `n >= 0` sin escribir un `if`. Eso es
-exactamente lo que un contrato `requires n >= 0` hace, pero
-codificado en el tipo en vez de en la firma.
+Las funciones que aceptan tipos refinados **aprovechan la
+garantía sin verificarla**. Si tu firma dice `n: NoNeg`, adentro
+supones `n >= 0` sin escribir un `if`: lo mismo que un
+`requires n >= 0`, pero codificado en el tipo.
 
-¿Cuándo usas uno y cuándo el otro? La regla simple:
+Cuándo usar uno u otro:
 
 - **Refinement type** cuando la restricción **define qué es
   un valor válido** del dominio. `Edad`, `Probabilidad`,
-  `Puerto` son ejemplos clásicos: el tipo no tiene sentido
-  fuera de la restricción.
-- **Contrato** cuando la restricción es **sobre la operación**,
-  no sobre el valor. "no dividir por cero" es del operando de
+  `Puerto`: el tipo no tiene sentido fuera de la restricción.
+- **Contrato** cuando la restricción es **sobre la operación**.
+  "no dividir por cero" es del operando de
   división; "el monto a retirar tiene que ser positivo" es de
   la operación retirar; "la lista resultante mantiene el
   largo" es del comportamiento de la función.
 
-A veces los dos aplican y eliges según legibilidad. La cuenta
-bancaria del §11.7 usa contratos porque "el saldo no se
-puede dejar negativo" es una propiedad del **comportamiento de
-las operaciones**, no del valor del saldo.
+Cuando los dos aplican, eliges por legibilidad. La cuenta
+bancaria del §11.7 usa contratos porque "el saldo no se puede
+dejar negativo" es una propiedad del **comportamiento de las
+operaciones**.
 
 ## 11.5 Cuándo se prueba estáticamente, cuándo en runtime
 
@@ -381,37 +369,36 @@ divide(10, 0)              # ERROR de compilación: 0 != 0 es falso
 let x: NoNeg = -5      # ERROR de compilación: -5 < 0
 ```
 
-El programa ni siquiera llega a generar binario, que es la
-garantía más fuerte que puedes pedir.
+El programa ni siquiera genera binario: la garantía más fuerte
+que puedes pedir.
 
 **Compile time, parcialmente probado.** Cuando los rangos se
 pueden inferir de un análisis acotado, kaikai prueba lo
-prudente sin invocar un solver SMT pesado. El alcance es
-limitado: comparadores con literales sobre `Int`, `Bool`. Si
-el predicado pasa por aritmética compleja o por
-funciones que el compilador no puede inspeccionar, se difiere.
+prudente sin un solver SMT. El alcance es limitado:
+comparadores con literales sobre `Int`, `Bool`. Si el predicado
+pasa por aritmética compleja o por funciones que el compilador
+no puede inspeccionar, se difiere.
 
-**Runtime.** Cuando lo anterior no es decidible, el compilador
-emite un assert en el código generado. El programa compila;
-la verificación se hace al ejecutar la función. Si falla, aborta
-con `panic: requires violated`.
+**Runtime.** Cuando nada de lo anterior decide, el compilador
+emite un assert. El programa compila y la verificación ocurre
+al ejecutar la función; si falla, aborta con
+`panic: requires violated`.
 
 Lo que kaikai **no hace**, deliberadamente, es **invocar un
 solver SMT como Z3 o CVC5** para probar contratos
 arbitrariamente complejos. Esa es la frontera con SPARK (el
 subset verificable de Ada). kaikai prefiere un evaluador de
-intervalos pequeño, decidible, lineal (y diferir el resto a
-runtime), sobre tener compilación impredecible y dependencias
-externas pesadas.
+intervalos pequeño, decidible, lineal, y diferir el resto a
+runtime, antes que una compilación impredecible con
+dependencias externas pesadas.
 
 La regla mental: **lo que el compilador puede probar barato, lo
-prueba; lo demás se prueba al ejecutarse**. El binario lleva
-ambos casos sin que tengas que distinguir cuál de los dos
-aplicó.
+prueba; lo demás se prueba al ejecutarse**. No necesitas
+distinguir cuál de los dos casos aplicó.
 
-Un programa con las dos caras: la línea comentada no compila
-porque el cero es literal, y la que queda sí compila y aborta
-al llegar al cero por cálculo.
+En este programa la línea comentada no compila porque el cero
+es literal; la que queda compila y aborta al llegar al cero por
+cálculo.
 
 ```kai
 # ejemplos/cap11/02_violacion.kai
@@ -443,8 +430,8 @@ argument b was: 0
 
 ## 11.6 Tres formas de garantía
 
-Llevamos tres mecanismos para "garantizar que el código hace
-lo correcto" repartidos en tres capítulos:
+Ya conoces tres mecanismos para "garantizar que el código hace
+lo correcto", repartidos en tres capítulos:
 
 | Mecanismo | Cap. | Qué garantiza | Cuándo se verifica |
 |---|---|---|---|
@@ -453,8 +440,8 @@ lo correcto" repartidos en tres capítulos:
 | **Tipos suma + `match`** | 5 | Cubrir todos los casos posibles del tipo | Compile time |
 | **Contratos + refinements** | 11 | Restricciones sobre entrada/salida y valores válidos | Compile time cuando se puede, runtime cuando no |
 
-Las cuatro son herramientas distintas con áreas que se solapan.
-Una función bien escrita probablemente las use todas:
+Las cuatro se solapan en parte. Una función bien escrita
+probablemente las use todas:
 
 - **Tipos** que son lo más estrechos posibles para el dominio
   (sum types, refinements, units of measure).
@@ -466,9 +453,8 @@ Una función bien escrita probablemente las use todas:
   ("invertir dos veces es identidad", "ordenar preserva
   el largo").
 
-No son redundantes: cada uno atrapa una clase distinta de
-bugs y los cuatro juntos forman una protección mucho más
-densa que cualquiera por separado. Y los cuatro tienen costo
+Cada uno atrapa una clase distinta de bugs, y juntos protegen
+mucho más que cualquiera por separado. Los cuatro tienen costo
 cero en runtime cuando no fallan: un `test` que pasa no se
 ejecuta en producción; un contrato que se puede probar
 estáticamente no genera assert; un refinement legal no genera
@@ -476,8 +462,7 @@ verificación dinámica.
 
 ## 11.7 La familia Design by Contract
 
-Los contratos no son invención de kaikai. Son una idea con
-historia, y vale la pena ubicar a kaikai en esa historia.
+Los contratos tienen historia, y kaikai tiene un lugar en ella.
 
 **Eiffel (Bertrand Meyer, 1986)** introdujo el término "Design
 by Contract" y la mayoría de las ideas: `require`/`ensure`
@@ -496,13 +481,12 @@ deposit (amount: REAL)
 end
 ```
 
-kaikai toma la idea pero pone los contratos en la **firma**,
-no en el cuerpo, y elimina `old` porque los records son
-inmutables.
+kaikai toma la idea, pero pone los contratos en la **firma** y
+elimina `old` porque los records son inmutables.
 
-**Ada 2012** agregó "aspect specifications" a Ada con la
-sintaxis `with Pre =>`, `with Post =>`. Esto es lo más
-parecido a kaikai estilísticamente:
+**Ada 2012** agregó "aspect specifications" con la sintaxis
+`with Pre =>`, `with Post =>`, lo más parecido a kaikai en
+estilo:
 
 ```ada
 function Divide (A, B : Integer) return Integer
@@ -516,12 +500,11 @@ kaikai son la misma idea anotacional. Ada también introdujo
 range 1 .. Integer'Last`), que son los antepasados directos de
 los refinement types de kaikai.
 
-**SPARK** es el subset verificable de Ada, que usa un solver
-SMT para probar contratos arbitrarios estáticamente. Kaikai
-**no adopta esto a propósito**: SPARK requiere instalar Z3 o
-similar, y los tiempos de compilación se vuelven impredecibles.
-La doc del lenguaje (`refinements-and-contracts.md`) lo dice
-explícito: el evaluador de intervalos es de unas pocas
+**SPARK**, el subset verificable de Ada, usa un solver SMT para
+probar contratos arbitrarios estáticamente. Kaikai **no lo
+adopta a propósito**: SPARK requiere instalar Z3 o similar, y
+los tiempos de compilación se vuelven impredecibles. La doc del
+lenguaje (`refinements-and-contracts.md`) lo dice: el evaluador de intervalos es de unas pocas
 centenas de líneas, decidible, lineal; lo que no entra ahí se
 posterga a runtime sin remordimiento.
 
@@ -538,10 +521,9 @@ Lo que **distingue** a kaikai en esta familia:
    externas.
 
 2. **Pureza por defecto**. Eiffel y Ada manejan mutabilidad
-   rampante; los contratos tienen que lidiar con `old` y
-   aliasing. kaikai parte de inmutabilidad: la postcondición
-   habla de la entrada y de la salida como dos valores que coexisten,
-   sin máquina extra.
+   rampante; sus contratos lidian con `old` y aliasing. kaikai
+   parte de la inmutabilidad: la postcondición habla de la
+   entrada y la salida como dos valores que coexisten.
 
 3. **Continuidad con el resto del sistema de tipos**.
    Contratos y refinements son la **tercera pata** de
@@ -554,12 +536,11 @@ Lo que **distingue** a kaikai en esta familia:
 
 ## 11.8 Lo que kaikai no hace, y por qué
 
-Vale enumerar lo que decidí **no** implementar, y por qué:
+Esto es lo que decidí **no** implementar:
 
 - **No SMT solving**. Si tu contrato es `ensures result.entries
-  == sort(c.entries)`, kaikai no va a probar estáticamente
-  que tu cuerpo en efecto ordena la lista. Lo va a verificar
-  en runtime.
+  == sort(c.entries)`, kaikai no prueba estáticamente que tu
+  cuerpo ordena la lista; lo verifica en runtime.
 - **No refinements arbitrarios sobre estructuras complejas**.
   `Real where 0.0 <= self <= 1.0` es legal. `[Int] where
   list.length(self) > 0` no lo es: el refinement directo se
@@ -569,14 +550,13 @@ Vale enumerar lo que decidí **no** implementar, y por qué:
   tiene clases ni herencia; los contratos viven en la firma
   de cada función individual.
 
-¿Por qué estas restricciones? El argumento es el mismo de
-todo el lenguaje: **simplicidad y predecibilidad**. Un sistema
-de tipos que invoca un solver es opaco: el programador no
-sabe por qué su programa compila o no, y los mensajes de
-error se vuelven incomprensibles. Un sistema acotado, que
-prueba lo obvio y difiere lo demás, da garantías más débiles
-pero **comprensibles**, y deja al runtime del programa
-saludable como red de seguridad.
+El argumento es el de todo el lenguaje: **simplicidad y
+predecibilidad**. Un sistema de tipos que invoca un solver es
+opaco: no sabes por qué tu programa compila o no, y los
+mensajes de error se vuelven incomprensibles. Un sistema
+acotado, que prueba lo obvio y difiere lo demás, da garantías
+más débiles pero **comprensibles**, con el runtime como red de
+seguridad.
 
 ## 11.9 Caso de estudio: cuenta bancaria
 
@@ -610,20 +590,18 @@ fn retirar(c: Cuenta, monto: Int) : Cuenta
 ```
 
 Tres operaciones, cinco precondiciones, tres postcondiciones.
-Lectura humana:
+En palabras:
 
 - **`abrir`** abre una cuenta con saldo inicial no negativo.
   La postcondición confirma que el saldo de la cuenta nueva es
   exactamente lo depositado.
-- **`depositar`** exige que el monto sea positivo (no
-  acepta depósitos de cero o negativos), y promete que el
-  saldo final es el inicial más el monto.
+- **`depositar`** exige monto positivo y promete que el saldo
+  final es el inicial más el monto.
 - **`retirar`** exige monto positivo y suficiente saldo, y
   promete que el saldo final es el inicial menos el monto.
 
-¿Qué pasa si alguien (tú, en seis meses, con prisa)
-escribe `retirar(cuenta, -50)` (pasando un negativo)? El
-programa no compila. La llamada está comentada al final de
+¿Qué pasa si alguien (tú, en seis meses, con prisa) escribe
+`retirar(cuenta, -50)`? El programa no compila. La llamada está comentada al final de
 `ejemplos/cap11/03_cuenta_bancaria.kai`; si la descomentas, el
 compilador responde:
 
@@ -631,38 +609,35 @@ compilador responde:
 ejemplos/cap11/03_cuenta_bancaria.kai:49:17: error: call to `retirar`: literal args violate `monto > 0`
 ```
 
-El argumento es una constante y el compilador alcanza a
-evaluarla contra el `requires`. Cuando el monto negativo llega
-desde afuera, de un formulario o de un archivo, el mismo
-contrato se revisa al entrar y el programa aborta con un
-mensaje que apunta a la línea exacta del `requires`. Nada de
-fallar en silencio ni de arrastrar un saldo inconsistente.
+El argumento es una constante y el compilador la evalúa contra
+el `requires`. Cuando el monto negativo llega desde afuera, de
+un formulario o un archivo, el contrato se revisa al entrar y
+el programa aborta apuntando a la línea exacta del `requires`.
+Nada de fallar en silencio ni de arrastrar un saldo
+inconsistente.
 
-¿Y si el cuerpo de `retirar` tuviera un bug (alguien cambia
-`c.saldo - monto` por `c.saldo + monto` accidentalmente)? El
-`ensures result.saldo == c.saldo - monto` se viola al salir
-y aborta también. La postcondición es tu seguro contra bugs
+¿Y si alguien cambia por accidente `c.saldo - monto` por
+`c.saldo + monto` en el cuerpo de `retirar`? El
+`ensures result.saldo == c.saldo - monto` se viola al salir y
+también aborta. La postcondición es tu seguro contra bugs
 internos, así como el `requires` es tu seguro contra abusos
 de quien llama.
 
-Con cuatro líneas de contratos, esta cuenta bancaria mínima
-documenta sus reglas, las verifica al ejecutarse, y deja un
-diagnóstico claro cuando se rompen. Compáralo con la versión
-sin contratos:
+Con cuatro líneas de contratos, esta cuenta documenta sus
+reglas, las verifica al ejecutarse y deja un diagnóstico claro
+cuando se rompen. Compárala con la versión sin contratos:
 
 ```kai
 fn retirar(c: Cuenta, monto: Int) : Cuenta =
   Cuenta { ...c, saldo: c.saldo - monto }
 ```
 
-Funciona en el caso feliz. Pero alguien que llama con un monto
+Funciona en el caso feliz. Pero quien llama con un monto
 negativo acaba con una cuenta cuyo saldo creció (porque
-`c.saldo - (-50) == c.saldo + 50`), y nadie se entera. Alguien
-que llama con más monto que saldo termina con una cuenta de
-saldo negativo, y
-nadie se entera. Los bugs que en kaikai con contratos son
-abortos inmediatos, en kaikai sin contratos son saldos
-incorrectos sin que nadie se entere en producción.
+`c.saldo - (-50) == c.saldo + 50`), y quien retira más que el
+saldo deja la cuenta en negativo. Nadie se entera. Los bugs que
+con contratos son abortos inmediatos, sin contratos son saldos
+incorrectos en producción.
 
 ## Ejercicios
 

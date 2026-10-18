@@ -1,15 +1,15 @@
 # Appendix F · Going further
 
-The book covered kaikai but barely touched the family of
+You know kaikai now, but you've barely touched the family of
 ideas it's built on. If you want to dig in, here's a short
-list of sources worth reading, grouped by topic. Not meant
-to be exhaustive — meant to be useful.
+list of sources, grouped by topic. Not meant to be
+exhaustive — meant to be useful.
 
 ## F.1 Algebraic effects
 
-The piece of the language that most rewards outside reading
-is algebraic effects. The literature is accessible and the
-originals are worth going to directly.
+Algebraic effects are the piece of the language that most
+rewards outside reading. The literature is accessible; go to
+the originals.
 
 - **Plotkin, Pretnar, *"Handlers of Algebraic Effects"***
   (ESOP 2009). The paper that introduced handlers as we
@@ -133,11 +133,11 @@ originals are worth going to directly.
 
 ## F.9 Closing
 
-If the book left you wanting to try something, the best way
-to learn is to write code. Take any program you've written
-in another language (any language) and try porting it to
-kaikai. You'll run into things the book didn't cover, you'll
-open issues, you'll learn what no book can teach.
+If the book left you wanting to try something, write code.
+Take a program you've written in another language and port it
+to kaikai. You'll run into things the book didn't cover and
+learn what no book can teach — and maybe open an issue along
+the way.
 
-The compiler is alive, the language is evolving, and the
-community is small but attentive. There's room for more.
+The compiler is alive and the language keeps growing. There's
+room for more.

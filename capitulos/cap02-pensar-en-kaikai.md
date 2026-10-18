@@ -1,20 +1,16 @@
 # Capítulo 2 · Pensar en kaikai
 
-En el capítulo 1 te mostré el lenguaje desde arriba.
-Antes de bajar
-al detalle de tipos, funciones y módulos, conviene
-que nos detengamos para revisar
-algunos hábitos que kaikai pide y que probablemente
-no traigas si vienes de
-lenguajes como Python, Java, Go, JavaScript o C#.
+En el capítulo 1 viste el lenguaje desde arriba. Antes de bajar
+al detalle de tipos, funciones y módulos, este capítulo repasa
+algunos hábitos que kaikai pide y que probablemente no traes si
+vienes de Python, Java, Go, JavaScript o C#.
 
-Este es el capítulo más corto del libro, y se puede saltar. Si
-ya programaste en Haskell, OCaml, Elixir o Scala, esto te va a
-sonar familiar, así que puedes pasar a la Parte II y nos vemos
-en el capítulo 3.
-Si vienes de un mundo imperativo, dedícale los veinte minutos
-que pide. Te van a ahorrar incomodidades en las siguientes
-ciento cincuenta páginas.
+Es el capítulo más corto del libro, y se puede saltar. Si ya
+programaste en Haskell, OCaml, Elixir o Scala, todo esto te va a
+sonar familiar: nos vemos en el capítulo 3. Si vienes de un
+mundo imperativo, dedícale los veinte minutos que pide; te van
+a ahorrar incomodidades en las siguientes ciento cincuenta
+páginas.
 
 La teoría de cada idea la encuentras en los capítulos
 siguientes. Lo que quiero aquí es nombrar el cambio de
@@ -64,10 +60,10 @@ En la versión imperativa hay que **declarar `s` primero**,
 porque el `if` no
 sabe devolver nada; después hay que **mutar `s` en cada rama**.
 En kaikai, el `if` *es* el valor, y `s` se ata directo al
-resultado: no hay una declaración separada de la asignación,
-no hay asignación en absoluto. `s` se ata una vez y no cambia.
+resultado una sola vez: no hay asignación, ni antes ni en las
+ramas.
 
-Esto tiene consecuencias prácticas que vas a notar pronto:
+Las consecuencias prácticas se notan pronto:
 
 - **Menos líneas, sin perder claridad.** Lo que antes eran tres
   pasos (declarar, decidir, asignar) se convierte en uno.
@@ -83,12 +79,12 @@ Este fue uno de los primeros puntos que decidí cuando empecé a diseñar kaikai
 antes que los efectos y antes que los kinds. Todo lo demás se
 acomodó alrededor.
 
-Vas a ver lo mismo en `match`. En la mayoría de los lenguajes con
+Lo mismo pasa con `match`. En la mayoría de los lenguajes con
 `switch`, cada `case` es una sentencia que ejecuta un bloque y
 después sale (o sigue, según las reglas del lenguaje). En
 kaikai, `match` es una expresión que devuelve un valor, y cada
 rama es la expresión que ese valor podría ser. Lo viste en el
-capítulo 1, en `label` y en `eval`. Volverás a verlo
+capítulo 1, en `label` y en `eval`, y vas a usarlo
 constantemente.
 
 Una pieza relacionada: el cuerpo de una función puede tomar dos
@@ -109,8 +105,8 @@ Con `{ ... }` cuando hay varios pasos o conviene visualmente
 separar. El compilador acepta ambas; la diferencia es para quien
 lee.
 
-Una consecuencia útil de tener todo como expresión es que las
-**transformaciones encadenadas** se vuelven cómodas. kaikai trae
+Como todo es expresión, las **transformaciones encadenadas** se
+vuelven cómodas. kaikai trae
 del mundo Elixir el operador pipe `|>`:
 
 ```kai
@@ -126,7 +122,7 @@ que se puede componer con la siguiente.
 `|>` es el más general de cuatro operadores que kaikai ofrece
 para encadenar. Los otros tres (`|` map sobre listas, `||`
 flat-map y `|?` filter) son atajos para los casos que
-aparecen una y otra vez. Los vemos en detalle en el capítulo 6.
+aparecen una y otra vez. Los estudias a fondo en el capítulo 6.
 
 ## 2.2 Inmutabilidad por defecto
 
@@ -137,16 +133,15 @@ en kaikai eso significa una de dos cosas:
 - En realidad necesitas un valor nuevo, derivado del primero. La
   forma correcta es atar otro nombre, o redefinir `x` en un
   ámbito interno.
-- En realidad necesitas mutación visible. Eso es un caso real
-  pero pequeño, y kaikai te lo da, pero te pide declararlo. La
+- En realidad necesitas mutación visible. Es un caso real pero
+  pequeño: kaikai te lo da, y te pide declararlo. La
   mutación de un arreglo, por ejemplo, vive bajo el efecto
   `Mutable`, que aparece en la firma de cualquier función que la
   use. Lo retomas con calma en el capítulo 13.
 
-¿Por qué tomar este camino? Porque la mayoría de las veces
-"cambiar una variable" es una limitación heredada del modelo
-imperativo, no una necesidad real. Cuando programas con valores
-que no cambian:
+La razón: la mayoría de las veces "cambiar una variable" es
+una limitación heredada del modelo imperativo, no una necesidad
+real. Cuando programas con valores que no cambian:
 
 - **El razonamiento se vuelve local.** Si `x` se ató a `5` en la
   línea 12, sigue siendo `5` en la línea 30. Punto. No hay que
@@ -158,7 +153,7 @@ que no cambian:
   existe.
 - **Los tests son más simples.** Una función pura (entrada,
   salida, sin estado escondido) se prueba dándole entradas y
-  comparando salidas. Eso es todo.
+  comparando salidas.
 
 Una nota sobre vocabulario. La forma habitual de atar un nombre
 es `let`, que es inmutable. Para los casos en que de verdad
@@ -173,9 +168,8 @@ n := n + 1
 println("#{n}")   # 1
 ```
 
-Aquí está la cosa interesante: `var` no es realmente una
-construcción nueva del lenguaje, es **azúcar sintáctico** sobre
-el efecto `State`. La línea `var n := 0` se reescribe a un
+Lo interesante: `var` es **azúcar sintáctico** sobre el efecto
+`State`. La línea `var n := 0` se reescribe a un
 `handle ... with State[Int](0) as n { ... }` que abarca el
 resto del bloque. Leer `n` se reescribe a `n.get()`, y `n := v` a
 `n.set(v)`. El lenguaje base es el mismo de los efectos
@@ -197,7 +191,7 @@ distinción la retomas en el capítulo 13.
 La regla práctica es simple: usa `let` por defecto; si
 necesitas una variable local que cambia, `var` con `:=`;
 si lo que quieres mutar es algo visible desde afuera, ya
-estamos en territorio de efectos y vas a tener que declararlos.
+estás en territorio de efectos y vas a tener que declararlos.
 
 ## 2.3 `Option` y `Result` en vez de `null` y excepciones
 
@@ -260,9 +254,9 @@ En la versión kaikai, el `match` es exhaustivo: si te olvidas
 del caso `None`, no compila. El compilador te recuerda lo que
 en Python depende de tu memoria.
 
-¿Y las excepciones? kaikai tiene un mecanismo equivalente, los
-efectos algebraicos del capítulo 12, con los que se declara en
-tres líneas un efecto que aborta. Pero también ahí lo que puede
+Para las excepciones, kaikai tiene un mecanismo equivalente:
+los efectos algebraicos del capítulo 12, con los que declaras en
+tres líneas un efecto que aborta. También ahí lo que puede
 fallar aparece en el tipo. Las "excepciones invisibles" que en
 Java o Python pueden brotar de cualquier llamada, en kaikai no
 existen. Si una función puede saltar a otro lado, su firma lo
@@ -288,13 +282,12 @@ fn cargar() : Result[Usuario, Error] {
 }
 ```
 
-Es lo mismo que el `?` de Rust. Y conviene mencionar lo que
-**no** es: en Elixir hay una convención de nombrar `File.read!`
-a la versión que lanza excepción en vez de devolver un tuple
-`{:ok, _} | {:error, _}`. En kaikai la convención es la
-inversa: `!` no es parte de un nombre, es un operador, y
-**nunca lanza una excepción**. Solo desempaca el caso feliz y
-propaga el caso negativo a través del tipo de retorno. Si
+Es lo mismo que el `?` de Rust. Ojo con Elixir, donde la
+convención es la inversa: `File.read!` nombra la versión que
+lanza excepción en vez de devolver un tuple
+`{:ok, _} | {:error, _}`. En kaikai `!` es un operador, no parte
+de un nombre, y **nunca lanza una excepción**: desempaca el caso
+feliz y propaga el caso negativo a través del tipo de retorno. Si
 viste muchos `File.read!` en código Elixir y te pone
 nervioso, puedes relajarte: en kaikai esa misma sintaxis está
 del lado seguro.
@@ -322,10 +315,10 @@ match expr {
 ```
 
 Cada rama es un **patrón** seguido de la expresión que ese
-patrón produce. `Lit(n)` no solo dice "esto fue construido con
-`Lit`", también declara que `n` es el `Int` que vino adentro,
-listo para usarse a la derecha. Comprobar, desempacar y nombrar
-en una sola pieza.
+patrón produce. `Lit(n)` reconoce que el valor se construyó con
+`Lit` y declara que `n` es el `Int` que vino adentro, listo para
+usarse a la derecha. Comprobar, desempacar y nombrar en una sola
+pieza.
 
 Los patrones se anidan. Si tienes una `Option[Result[Int, Error]]`
 y quieres distinguir las tres formas posibles, lo escribes así:
@@ -361,8 +354,8 @@ una de esas herramientas que no quieres soltar.
 
 ## 2.5 Funciones puras y efectos visibles
 
-Las ideas anteriores convergen en una más grande, que es
-la apuesta central del lenguaje: **separar lo puro de lo que
+Las ideas anteriores convergen en la apuesta central del
+lenguaje: **separar lo puro de lo que
 toca el mundo**, y tener al sistema de tipos cuidando esa
 distinción.
 
@@ -383,8 +376,8 @@ capítulo 1: una función que escribe a stdout dice
 dice nada después del `/`. Su firma es `fn f(x: Int) : Int`,
 sin más.
 
-El efecto del lado derecho del `/` no es decoración sino una
-restricción: el compilador no te deja llamar a una función con
+El efecto del lado derecho del `/` es una restricción: el
+compilador no te deja llamar a una función con
 efectos desde un contexto donde esos efectos no estén siendo
 manejados. Un handler en algún lado de la pila tiene que tomarse
 el problema. Esto resuelve, de una vez y a nivel del lenguaje,
@@ -404,10 +397,9 @@ varias incomodidades viejas:
   el tipo, y la elige quien llama.
 
 Si nunca has visto esto, suena demasiado ambicioso para ser
-cierto. El capítulo 12 le dedica todo el
-espacio que merece. Por ahora basta con saber que las firmas que
-ves con `/ algo` no son ruido: son información sobre lo que esa
-función puede hacerle a tu programa.
+cierto; el capítulo 12 le dedica el espacio que merece. Por
+ahora basta con saber que una firma con `/ algo` te dice lo que
+esa función puede hacerle a tu programa.
 
 ## 2.6 El tipo no es la única etiqueta
 
@@ -419,8 +411,8 @@ está, qué puede fallar al calcularlo, quién es dueño de su
 memoria) vive en comentarios, en convenciones de nombres, o
 en tu cabeza.
 
-En kaikai, el tipo es una etiqueta entre varias. La sección
-anterior te acaba de mostrar la segunda: los **efectos**, que
+En kaikai, el tipo es una etiqueta entre varias. La segunda ya
+la conociste en la sección anterior: los **efectos**, que
 viven en la firma después del `/` y que el compilador combina
 y verifica con reglas propias. Más adelante vas a encontrar
 otras: **unidades de medida** que multiplican y se cancelan
@@ -433,10 +425,10 @@ verifica tipos. A cada una de estas familias el lenguaje la
 llama un **kind**.
 
 No necesitas el mecanismo todavía; el capítulo 19 lo recorre
-completo, con nombre y apellido. Lo que sí conviene llevarse
-de aquí es el hábito de lectura: cuando kaikai rechace un
-programa que "se veía bien", la pregunta no es solo *qué tipo
-esperaba*, sino *qué familia de etiquetas está en juego*. La
+completo, con nombre y apellido. De aquí te llevas el hábito de
+lectura: cuando kaikai rechace un programa que "se veía bien",
+pregúntate qué tipo esperaba y también *qué familia de
+etiquetas está en juego*. La
 mitad de las veces el compilador no te está corrigiendo un
 tipo: te está diciendo que mezclaste metros con segundos,
 dólares con euros, o memoria de una región con otra. Esa es
@@ -493,9 +485,8 @@ lo explora con más audacia de lo que se ha visto hasta ahora.
 Tu primer kind aparece en el capítulo 10, con las unidades de
 medida, y el catálogo completo está en el capítulo 19.
 
-El resto del libro entra en detalle en cada una de las
-decisiones tomadas al diseñar el lenguaje.
-Si llegaste hasta aquí, ya tienes el mapa.
+El resto del libro entra en el detalle de cada decisión. Si
+llegaste hasta aquí, ya tienes el mapa.
 
 ## Ejercicios
 

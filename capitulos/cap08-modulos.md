@@ -1,23 +1,19 @@
 # Capítulo 8 · Módulos, imports, organización del código
 
 Hasta ahora todo tu código ha vivido en un archivo. Es la forma
-correcta de partir, pero apenas el programa crece, un archivo
-único se vuelve un problema: los lectores se pierden, los
-cambios chocan, las búsquedas confunden módulos lógicos que
-están físicamente revueltos. Hay que partir el código en
-pedazos con nombres.
+correcta de partir, pero cuando el programa crece el archivo
+único estorba: quien lo lee se pierde y los cambios chocan.
+Toca partir el código en pedazos con nombre.
 
-kaikai resuelve esto con un sistema deliberadamente simple, y la
-simpleza aquí es mía y es a propósito. **Un archivo es un
-módulo.** No hay declaraciones `module Foo`, ni
-archivos especiales que reabran un módulo desde otro lado.
-El nombre del módulo se deriva de la ruta del archivo y eso es
-todo. Por encima de los módulos viene una segunda escala: un
-**proyecto**, descrito por un `kai.toml`, que organiza sus
-módulos y sus dependencias externas. Y por encima del proyecto,
-un **package manager** que resuelve dependencias entre proyectos.
-
-Este capítulo recorre las tres escalas, de menos a más.
+kaikai lo resuelve con un sistema simple, y esa simpleza la
+elegí a propósito. **Un archivo es un módulo.** No hay
+declaraciones `module Foo`, ni archivos especiales que reabran
+un módulo desde otro lado; el nombre del módulo sale de la ruta
+del archivo. Por encima viene el **proyecto**, descrito por un
+`kai.toml`, que organiza sus módulos y dependencias externas. Y
+por encima del proyecto, un **package manager** que resuelve
+dependencias entre proyectos. Recorres las tres escalas de
+menos a más.
 
 ## 8.1 Un archivo, un módulo
 
@@ -33,11 +29,11 @@ pub fn doble_mas_uno(x: Int) : Int = helper(duplicar(x))
 
 Tres decisiones de diseño aparecen en estas tres líneas:
 
-- **`pub` marca lo que el módulo exporta.** Por defecto, una
-  declaración es privada al archivo. Solo las cosas marcadas
-  con `pub` son visibles desde otro módulo que importe este.
-  Es exactamente al revés de Java o C++, donde lo público es
-  el default y hay que recordar marcar lo privado.
+- **`pub` marca lo que el módulo exporta.** Una declaración es
+  privada al archivo salvo que lleve `pub`; solo lo marcado es
+  visible desde otro módulo que importe este. Es al revés de
+  Java o C++, donde lo público es el default y hay que recordar
+  marcar lo privado.
 - **Los nombres del módulo no necesitan declararse.** El
   archivo `aritmetica.kai` es el módulo `aritmetica`. Si lo
   pones bajo un subdirectorio como `util/aritmetica.kai`,
@@ -48,10 +44,9 @@ Tres decisiones de diseño aparecen en estas tres líneas:
   funciones: una construcción es visible afuera si y solo si
   está marcada `pub`.
 
-Las funciones privadas son útiles para descomponer una pública
-sin contaminar el namespace del consumidor. En `aritmetica`,
-`helper` solo existe dentro del archivo; quien importa el
-módulo no la ve.
+Las funciones privadas te dejan descomponer una pública sin
+contaminar el namespace de quien importa: `helper` solo existe
+dentro de `aritmetica`.
 
 El ejemplo que corre es ese mismo archivo con un `main` que
 usa las dos funciones públicas:
@@ -91,11 +86,10 @@ módulo bajo el prefijo `aritmetica.`. La función
 `doble_mas_uno` se llama como `aritmetica.doble_mas_uno`.
 
 El prefijo es a propósito, y sé que a alguna gente le molesta.
-Cuando un proyecto crece a quince o
-veinte módulos, ver `aritmetica.doble_mas_uno` en una
-expresión te dice de inmediato de dónde sale. La alternativa,
-importar todos los nombres sueltos al namespace del
-consumidor, ahorra teclas pero pierde esa pista.
+Cuando un proyecto crece a quince o veinte módulos, ver
+`aritmetica.doble_mas_uno` en una expresión te dice de
+inmediato de dónde sale. Importar todos los nombres sueltos
+ahorra teclas pero pierde esa pista.
 
 El mismo prefijo se usa para los tipos que el módulo exporta y
 para construirlos:
@@ -127,10 +121,10 @@ $ kai run ejemplos/cap08/02_dos_archivos/main.kai
 distancia = 5
 ```
 
-Tres usos del prefijo, los tres coherentes: en la anotación
-de tipo (`: geometria.Punto`), en la construcción del record
-(`geometria.Punto { ... }`), y en la llamada a la función
-(`geometria.distancia(a, b)`). Un único patrón mental.
+El prefijo va en la anotación de tipo (`: geometria.Punto`),
+en la construcción del record (`geometria.Punto { ... }`) y en
+la llamada (`geometria.distancia(a, b)`). Un único patrón
+mental.
 
 Si el módulo está bajo un subdirectorio, el import usa el
 mismo nombre punteado que el módulo:
@@ -158,14 +152,14 @@ $ kai run ejemplos/cap08/05_proyecto/main.kai
 3^4 = 81
 ```
 
-Fíjate en dos detalles: el archivo está en `util/matematica.kai`,
-el módulo se llama `util.matematica`, pero al usarlo, el
-prefijo es solo `matematica` (el último segmento). Eso evita
-prefijos largos sin perder el origen estructural.
+El archivo está en `util/matematica.kai` y el módulo se llama
+`util.matematica`, pero al usarlo el prefijo es solo
+`matematica`, el último segmento. Así evitas prefijos largos
+sin perder el origen estructural.
 
 ### Tres formas de importar
 
-kaikai admite tres formas que cubren el espacio:
+kaikai admite tres formas:
 
 ```kai
 import math.vector                      # use qualified: vector.dot(a, b)
@@ -173,22 +167,22 @@ import math.vector as V                 # alias: V.dot(a, b)
 import math.vector.{dot, cross}         # nombres específicos en alcance
 ```
 
-La primera es la más común y la que debería ser tu opción por defecto: el
-prefijo `vector.` deja claro de dónde sale cada nombre. La
-segunda es útil cuando el nombre del módulo es largo o aparece
-muchas veces y un alias corto te gana legibilidad sin perder
-la pista. La tercera es la **importación selectiva**: una lista
-explícita de nombres que se traen al namespace local. Te conviene
-solo cuando los nombres son los protagonistas del archivo y el
+La primera es la más común y la opción por omisión: el prefijo
+`vector.` deja claro de dónde sale cada nombre. La segunda
+sirve cuando el nombre del módulo es largo o aparece muchas
+veces, y un alias corto gana legibilidad sin perder la pista.
+La tercera es la **importación selectiva**: una lista explícita
+de nombres que se traen al namespace local. Conviene solo
+cuando esos nombres son los protagonistas del archivo y el
 prefijo se vuelve ruido (un `Punto` que aparece cuarenta veces,
-por ejemplo). A cambio, el lector ya no sabe de dónde salió
+por ejemplo). A cambio, quien lee ya no sabe de dónde salió
 `Punto` sin mirar arriba.
 
-**No hay wildcard import.** Es decir, no existe
-`import math.vector.*` o equivalente que traiga "todo lo que el
-módulo exporta" al namespace local. Es una decisión
-deliberada: el wildcard parece cómodo al escribir pero hace que
-el lector futuro no sepa de dónde vino un nombre.
+**No hay wildcard import**: no existe `import math.vector.*` ni
+nada equivalente que traiga "todo lo que el módulo exporta" al
+namespace local. Lo decidí así porque el wildcard es cómodo al
+escribir, pero deja al lector futuro sin saber de dónde vino un
+nombre.
 
 Las tres formas como tres proyectos que corren. Cada uno trae
 su propio `geometria.kai`; lo que cambia es la línea del
@@ -271,17 +265,16 @@ error: bare name 'MAX' is exported by multiple modules: sensores, alarmas
   = help: qualify the constant, e.g. `sensores.MAX`
 ```
 
-Elegir por ti sería peor que el error. Cualquier regla de
-desempate, el orden de los imports digamos, haría que *cuál* de
-los dos `MAX` obtienes dependa de cómo quedaron ordenadas las
-líneas, y esa es la clase de trampa que se cobra el día que
-alguien las ordena alfabéticamente y el programa cambia de
-significado sin que nadie toque una expresión.
+Elegir por ti sería peor que el error. Con cualquier regla de
+desempate, el orden de los imports digamos, *cuál* de los dos
+`MAX` obtienes dependería de cómo quedaron ordenadas las
+líneas, y el día que alguien las ordene alfabéticamente el
+programa cambia de significado sin que nadie toque una
+expresión.
 
-El error es el mismo para cualquier clase de nombre. Arriba es
-una constante, pero un tipo, un efecto o un protocolo en disputa
-dan el mismo reporte, con los candidatos nombrados y la línea de
-ayuda cambiando la palabra: `type candidates`, `effect
+Un tipo, un efecto o un protocolo en disputa dan el mismo
+reporte que la constante, con los candidatos nombrados y la
+palabra que corresponde: `type candidates`, `effect
 candidates`.
 
 La salida es el calificador, y funciona en todas partes donde
@@ -319,9 +312,9 @@ al de `ea`.
 
 Hay un caso que no llega a disputa: el homónimo de algo que ya
 venía puesto. Si importas un módulo que declara su propio
-`effect Log`, en ese archivo `Log` a secas es el del módulo. Lo
-que importaste a mano le gana a lo que venía puesto, y el del
-stdlib sigue a un calificador de distancia, como `effects.Log`.
+`effect Log`, en ese archivo `Log` a secas es el del módulo: lo
+que importaste le gana a lo que venía puesto, y el del stdlib
+queda a un calificador de distancia, como `effects.Log`.
 
 La regla vale igual para las funciones, y ahí es más fácil
 tropezar, porque los nombres del core son los más obvios del
@@ -342,9 +335,9 @@ error: type mismatch in function call
   = note: found:    ([Int], (Int) -> Int) -> ?t4
 ```
 
-No es un misterio ni hay que adivinar: el error te muestra la
-firma que encontró. Y las dos salidas son las de siempre,
-calificar o usar el pipe:
+No hay que adivinar: el error te muestra la firma que
+encontró. Las salidas son las de siempre, calificar o usar el
+pipe:
 
 ```kai
 list.map(xs, doble)  # [2, 4, 6]
@@ -390,15 +383,14 @@ warning: unused import `actor`
 Hoy es advertencia y en la edición Orongo pasa a ser error,
 como en Go. La migración es mecánica: borrar la línea.
 
-Hay una excepción que vale conocer, porque si no parece un
-falso negativo. Un módulo que solo trae `impl` al scope se usa
-**por estar cargado**, no por nombrarse; ese import no se
-reporta aunque no aparezca en ninguna línea.
+Una excepción, para que no la confundas con un falso negativo:
+un módulo que solo trae `impl` al scope se usa **por estar
+cargado**, no por nombrarse, y ese import no se reporta aunque
+no aparezca en ninguna línea.
 
-Vale la pena mirar dos veces antes de borrar, eso sí: puede que
-el import esté de más, o puede que el nombre que ibas a usar lo
-estés sacando de otra parte sin darte cuenta. En los dos casos
-estás mejor sabiéndolo.
+Antes de borrar, eso sí, mira dos veces: puede que el import
+sobre, o que el nombre que ibas a usar lo estés sacando de otra
+parte sin darte cuenta. En los dos casos te conviene saberlo.
 
 ## 8.3 Visibilidad: el contrato del módulo
 
@@ -407,15 +399,13 @@ no marcado es privado, y al marcar algo `pub` estás diciendo
 "voy a sostener este nombre, esta firma, este tipo".
 
 Una regla que el lenguaje no impone pero que conviene aplicar:
-**lo público debe ser estrecho.** Cada nombre `pub` es un
-contrato que vas a tener que mantener. Si exportas una
-función auxiliar útil hoy pero específica de tu
-implementación, mañana cuando refactorices vas a tener que
-elegir entre romper a quien la usa o cargar con código que
-ya no quieres. Lo público se mide en lo que prometes; lo
-privado, en lo que puedes cambiar sin avisar.
+**lo público debe ser estrecho.** Si exportas una función
+auxiliar útil hoy pero específica de tu implementación, el día
+que refactorices tendrás que elegir entre romper a quien la usa
+o cargar con código que ya no quieres. Lo público se mide en lo
+que prometes; lo privado, en lo que puedes cambiar sin avisar.
 
-En la práctica, esto se traduce a:
+En la práctica:
 
 - **Tipos exportados:** sí, suelen ser parte del contrato.
 - **Funciones helper:** rara vez. Si las necesitas exportar,
@@ -440,15 +430,11 @@ nombraste explícitamente.
 
 ### Campos privados dentro de un tipo público
 
-Hay una asimetría útil. Cuando declaras `pub type T = { ... }`,
-los campos del record son **públicos por defecto**: el tipo
-está en el contrato, sus campos también. Eso es lo que
-quieres la mayoría de las veces.
-
-Pero a veces el tipo en sí merece ser parte del contrato y
-algún campo es detalle de implementación. La palabra `priv`
-antes del nombre del campo lo marca como invisible para
-otros módulos:
+Cuando declaras `pub type T = { ... }`, los campos del record
+son **públicos por defecto**: si el tipo está en el contrato,
+sus campos también, y casi siempre es lo que quieres. Pero a
+veces algún campo es detalle de implementación. La palabra
+`priv` antes del nombre del campo lo oculta a otros módulos:
 
 ```kai
 pub type Cuenta = {
@@ -460,11 +446,11 @@ pub type Cuenta = {
 Desde fuera del módulo que declara `Cuenta`, `c.saldo` no
 compila y un literal `Cuenta { nombre: "x", saldo: 100.0 }`
 tampoco. Solo el módulo declarante puede leer el campo y
-mencionarlo al construir. El §4.1.1 mostró el detalle del
-patrón; lo importante para el cap. 8 es que `priv` opera a
-**granularidad de campo**, complementa el `pub` que controla
-visibilidad a nivel de declaración, y juntos cubren un caso
-muy común: "el tipo se exporta, su interior no".
+mencionarlo al construir. El detalle del patrón lo conociste
+en §4.1.1; aquí importa que `priv` opera a **granularidad de
+campo** y complementa a `pub`, que opera por declaración.
+Juntos cubren un caso muy común: "el tipo se exporta, su
+interior no".
 
 Un proyecto de dos archivos lo muestra desde el otro lado del
 límite del módulo. El cliente construye y lee la cuenta solo
@@ -509,8 +495,8 @@ ahorros: 150
 
 Hay un módulo especial que **no necesitas importar**: el
 **core**. Funciones como `println`, `assert`, `string_concat`,
-`real_sqrt` viven en el namespace global y están disponibles en
-todo archivo .kai sin trámite. En otros lenguajes, esto se llama
+`real_sqrt` viven en el namespace global, disponibles sin
+trámite en todo archivo .kai. En otros lenguajes esto se llama
 *prelude* (Haskell) o *built-ins* (Python); kaikai lo llama
 core, y vive bajo `stdlib/core/` en el árbol del compilador.
 
@@ -533,10 +519,10 @@ programa usa.
 
 ## 8.5 Proyectos: `kai.toml`
 
-Hasta aquí hablamos de **módulos** dentro de un mismo árbol de
-archivos. Cuando esos módulos se convierten en una unidad que
-quieres versionar, distribuir, o que depende de otras unidades
-similares, pasas a una segunda escala: el **proyecto**.
+Hasta aquí trabajaste con **módulos** dentro de un mismo árbol
+de archivos. Cuando esos módulos forman una unidad que quieres
+versionar o distribuir, o que depende de otras, pasas a la
+segunda escala: el **proyecto**.
 
 Un proyecto kaikai se describe con un archivo `kai.toml` en su
 raíz. La forma mínima es esta:
@@ -559,8 +545,7 @@ flags y otros sustos.
 (convención cz). Después de 1.0, semver estándar.
 
 `[dependencies]` es la tabla donde declaras qué otros proyectos
-necesita el tuyo. Vacío si tu proyecto no depende de nadie más
-fuera del stdlib.
+necesita el tuyo. Queda vacía si solo dependes del stdlib.
 
 ### `edition`
 
@@ -575,21 +560,20 @@ edition = "hanga-roa"
 [dependencies]
 ```
 
-`edition` ata el código fuente a una versión del **contrato
+`edition` amarra el código fuente a una versión del **contrato
 del lenguaje**: sintaxis, semántica del sistema de tipos,
 firma del stdlib, API del binario `kai`. Mientras una edición
 esté activa, kaikai garantiza que tu proyecto seguirá
-compilando al subir el compilador, aunque internamente
-cambien cosas. Cuando una edición se cierra y entra una
-nueva, kaikai sigue aceptando la anterior: solo tienes
-que decir cuál usas.
+compilando al subir el compilador. Cuando una edición se
+cierra y entra una nueva, kaikai sigue aceptando la anterior:
+solo tienes que decir cuál usas.
 
-Si omites el campo, el compilador asume la edición default de
-la instalación. Eso está bien para borradores; pero en un
-proyecto que va a vivir, fijar la edición es lo que evita
-que un upgrade silencioso te cambie el suelo. El cap. 16
-cuenta el resto: cómo se eligen las ediciones, cómo
-migrar entre ellas, y qué pasa con APIs marcadas como
+Si omites el campo, el compilador asume la edición
+predeterminada de la instalación. Para un borrador basta; en
+un proyecto que va a vivir, fijar la edición evita que una
+actualización silenciosa te cambie el suelo. El resto lo
+encuentras en el cap. 16: cómo se eligen las ediciones, cómo
+migrar entre ellas y qué pasa con las APIs marcadas como
 `#[unstable]`.
 
 ### Crear un proyecto nuevo
@@ -605,7 +589,7 @@ archivos `.kai` y los importas como en §8.2.
 
 ## 8.6 Dependencias: git, path, lock
 
-Cuando declaras una dependencia, tienes tres formas:
+Una dependencia se declara de tres formas:
 
 ```toml
 [dependencies]
@@ -620,14 +604,13 @@ es lo que git entiende como referencia: una tag (`v0.1.0`),
 una branch (`main`), o un commit (`abc1234`). Las tags son la
 convención; branches y commits son escapes para casos puntuales.
 
-La segunda (string `"<source>@<ref>"`) es la misma cosa pero
-abreviada. El `@` separa source de ref.
+La segunda (string `"<source>@<ref>"`) es lo mismo abreviado,
+con `@` separando source de ref.
 
 La tercera (`{ path = "..." }`) es la **dependencia local**.
 Apunta a otro proyecto en tu disco, normalmente porque lo estás
-desarrollando en paralelo. Edita el código de la dependencia,
-vuelve a correr tu app, los cambios se ven al instante sin
-republicar.
+desarrollando en paralelo. Editas la dependencia, vuelves a
+correr tu app y los cambios se ven al instante, sin republicar.
 
 ### Agregar una dependencia
 
@@ -638,8 +621,7 @@ $ kai add github.com/kaikailang-org/manutara@v0.1.0
 `kai add` hace dos cosas atómicamente: clona la dependencia y
 escribe la entrada en `kai.toml`. Si el clone falla (URL mala,
 ref que no existe, error de red), ni el manifest ni el lockfile
-cambian. Esto es importante: el árbol de trabajo nunca queda
-en un estado inconsistente.
+cambian: el árbol de trabajo nunca queda inconsistente.
 
 ### El lockfile
 
@@ -657,11 +639,11 @@ ref = "v0.1.0"
 sha = "abc123def456..."
 ```
 
-El lockfile cierra el contrato. Si dos programadores corren
-`kai fetch` con el mismo `kai.toml` y el mismo `kai.lock`,
-**bajan exactamente la misma SHA**, exactamente el mismo árbol
-de archivos, exactamente el mismo binario al final. La
-reproducibilidad es la promesa central del lockfile.
+Si dos programadores corren `kai fetch` con el mismo
+`kai.toml` y el mismo `kai.lock`, **bajan exactamente la misma
+SHA**, el mismo árbol de archivos, y terminan con el mismo
+binario. Esa reproducibilidad es la promesa central del
+lockfile.
 
 Por eso `kai.lock` se commitea junto al código: es parte del
 contrato del proyecto. `kai.toml` declara qué quieres; `kai.lock`
@@ -679,21 +661,18 @@ declara qué obtuviste.
 
 ## 8.7 Selección de versiones: MVS
 
-Cuando un proyecto depende transitivamente del mismo otro
-proyecto por dos rutas distintas con versiones distintas
-declaradas, ¿qué versión gana?
-
-kaikai resuelve esto con **minimum-version selection (MVS)**,
-el algoritmo que usa Go modules. La regla es brutal pero
-clara: del conjunto de versiones declaradas por la cadena
-transitiva entera, gana la **máxima**.
+Un proyecto puede depender transitivamente de otro por dos
+rutas, con versiones distintas declaradas en cada una. kaikai
+decide cuál gana con **minimum-version selection (MVS)**, el
+algoritmo que usa Go modules. La regla es brutal pero clara:
+de las versiones declaradas en toda la cadena transitiva, gana
+la **máxima**.
 
 Si tu app declara `manutara@v0.1.0` y una dependencia tuya
-declara `manutara@v0.2.0`, todo el proyecto usa `v0.2.0`. La
-suposición subyacente es que las versiones son
-*backwards-compatible* dentro de un major: si todo el mundo
-respeta semver, subir al mayor número no debería romper a
-nadie.
+declara `manutara@v0.2.0`, todo el proyecto usa `v0.2.0`. MVS
+supone que las versiones son *backwards-compatible* dentro de
+un major: si todo el mundo respeta semver, subir al mayor
+número no debería romper a nadie.
 
 MVS contrasta con el algoritmo de Cargo o npm, que resuelve
 restricciones complejas y a veces baja a una versión menor
@@ -722,18 +701,16 @@ La estructura del cache es:
     789abc012def.../              # otra SHA del mismo repo
 ```
 
-Cada entrada se identifica por su SHA, no por la ref que el
-usuario ve. Esto significa que tres proyectos distintos que
-piden `manutara@v0.1.0` comparten el mismo árbol en disco. Y
-si en algún momento `v0.1.0` se actualiza upstream (movimiento
-de tag, que no debería pasar pero pasa), el cache fijado al
-SHA original sigue intacto.
+Cada entrada se identifica por su SHA, no por la ref que tú
+ves. Así, tres proyectos que piden `manutara@v0.1.0` comparten
+el mismo árbol en disco, y si `v0.1.0` cambia upstream (mover
+una tag no debería pasar, pero pasa), el cache fijado al SHA
+original sigue intacto.
 
-`kai fetch` se puede correr explícitamente, pero **`kai run`
-y `kai build` lo invocan automáticamente** cuando detectan
-deps no resueltas. En la práctica, después de `git clone` de un
-proyecto, basta con `kai run main.kai`: el driver baja lo que
-falta y corre.
+Puedes correr `kai fetch` a mano, pero **`kai run` y
+`kai build` lo invocan automáticamente** cuando detectan deps
+no resueltas. Después de clonar un proyecto, basta con
+`kai run main.kai`: el driver baja lo que falta y corre.
 
 El cache no crece sin límite. Una entrada que ningún build usa
 en cinco días se borra sola, y si la vuelves a necesitar, el
@@ -784,9 +761,9 @@ privado.
 
 ### Paso 2: revisar `pub`
 
-Repasa cada `pub`. Pregunta para cada uno: ¿es de verdad parte
-del contrato del módulo, o es un helper que dejé exportado por
-inercia? Cada `pub` extra es un compromiso futuro.
+Repasa cada `pub` y pregúntate si de verdad es parte del
+contrato del módulo o un helper que quedó exportado por
+inercia. Cada `pub` extra es un compromiso futuro.
 
 ### Paso 3: extraer una dependencia local
 
@@ -841,13 +818,12 @@ siguen siendo los mismos.
 
 Esa es la trayectoria completa: de archivo único a módulos, de
 módulos a proyectos, de proyecto local a dependencia
-distribuida. Cada paso es reversible y opcional; ninguno te
-obliga al siguiente.
+distribuida. Cada paso es reversible, y ninguno te obliga al
+siguiente.
 
 ## 8.10 Filosofía: simple y previsible
 
-Las decisiones de este capítulo no son las más expresivas que
-existen. Hay lenguajes con sistemas de módulos más potentes:
+Hay lenguajes con sistemas de módulos más expresivos:
 re-exports automáticos, alias dinámicos, módulos parametrizados
 por valores. kaikai elige una variante austera y se queda ahí.
 
@@ -856,8 +832,7 @@ ahorra dolores de cabeza vale más que lo que agrega potencia.
 Un sistema de módulos donde nada se importa sin que aparezca
 en una lista visible, donde el nombre de un módulo se deriva
 de su ruta, y donde las dependencias se fijan a un SHA exacto
-es un sistema que se entiende leyéndolo, sin tener que
-ejecutarlo mentalmente.
+se entiende leyéndolo, sin tener que ejecutarlo mentalmente.
 
 Es el mismo principio que en pattern matching exhaustivo: si
 el compilador te puede llevar al lugar exacto donde tienes que

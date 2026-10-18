@@ -1,11 +1,10 @@
 # Chapter 12 · Algebraic effects
 
-This is the chapter where kaikai earns its novelty. Up to now
-we've seen types, pattern matching, protocols, units of
-measure, contracts. All elegant pieces, none unique to kaikai:
-you'd find counterparts in Haskell, Rust, F#. **Algebraic
-effects** are what set kaikai apart from nearly every
-production-ready language today.
+This is where kaikai earns its novelty. So far you've used
+types, pattern matching, protocols, units of measure,
+contracts — elegant pieces, but you'd find counterparts in
+Haskell, Rust, F#. **Algebraic effects** set kaikai apart from
+nearly every production-ready language today.
 
 They are also the reason this project exists, as I recounted in
 the prologue.
@@ -15,26 +14,24 @@ declares in its signature which effects it uses, but not how
 they happen**. Printing to a screen, reading a file, failing
 with an error, suspending execution, generating a random
 number — these are all effects. The function says "I need
-this capability"; code further up decides what "this
-capability" means in the current context. The separation
-between **what** and **how** is the heart of the system.
+this capability"; code further up decides what it means in
+the current context. The separation between **what** and
+**how** is the heart of the system.
 
-If that sounds like *dependency injection*, hold the thought.
-If it sounds like exceptions, hold that too. If it sounds
-like generators, also yes. The reason one mechanism resembles
-so many things is that, in the theory underneath, all those
-things are the same. Algebraic effects are the generalization.
+If that sounds like *dependency injection*, exceptions, or
+generators, hold the thought. One mechanism resembles so many
+things because, in the theory underneath, they're all the same.
+Algebraic effects are the generalization.
 
-We'll move slowly. This chapter rewards patience more than
-speed: the first reading is for each idea to register; solid
-intuition lands when you come back a month later and it
-suddenly feels obvious.
+Take it slowly. The first reading is for each idea to
+register; solid intuition lands when you come back a month
+later and it suddenly feels obvious.
 
 ## 12.1 The friction effects resolve
 
-Before showing the syntax, let's look at the concrete
-problems effects solve. If you recognize the pattern from
-your work, you'll know why a new tool is worth learning.
+Before the syntax, consider the concrete problems effects
+solve. If you recognize the pattern from your own work, you'll
+know why a new tool is worth learning.
 
 ### Invisible exceptions
 
@@ -47,15 +44,14 @@ def load_user(id):
     return db.get(id)   # can this fail? with what exceptions?
 ```
 
-Languages with checked exceptions (Java) tried to fix it by
-forcing you to declare `throws`. The result was that people
-wrote `throws Exception` to silence the compiler, and we were
-back where we started. Modern functional languages (Rust,
-OCaml, kaikai's chapter 5) push you toward `Result` or
-`Option`: the cost of failure shows up in the type, the
-caller decides what to do. Good for local failures, heavy
-when many functions fail: signatures fill up with wrapping
-and unwrapping.
+Java's checked exceptions tried to fix it by forcing you to
+declare `throws`. People wrote `throws Exception` to silence
+the compiler, and we were back where we started. Modern
+functional languages (Rust, OCaml, kaikai's chapter 5) push
+you toward `Result` or `Option`: the cost of failure shows up
+in the type, and the caller decides. Good for local failures,
+heavy when many functions fail: signatures fill up with
+wrapping and unwrapping.
 
 ### `async`/`await` infection
 
@@ -71,35 +67,33 @@ async function process(path) {
 }
 ```
 
-Bob Nystrom named this in 2015 with his famous essay **"What
-Color is Your Function?"**. The idea: `async` splits functions
-into two colors. Red ones (`async`) and blue ones (non-async).
-A red function can call a blue one, but a blue one can't call
-a red one. If you have a blue function and you need to use a
-red one inside, you have to repaint the blue. And the one
-that called it. All the way up. It's an infection that won't
+Bob Nystrom named this in 2015 in a famous essay, **"What
+Color is Your Function?"**. `async` splits functions into two
+colors: red (`async`) and blue (non-async). A red function can
+call a blue one, but not the other way around. If your blue
+function needs a red one inside, you have to repaint it — and
+the one that called it, all the way up. The infection won't
 stay local.
 
-The essay's point isn't that `async` is bad, but that this
-kind of marker in the signature — specific to one type of
-effect — creates two parallel systems that don't compose. `async` doesn't compose with generators: you need
-`async function*`. It doesn't compose cleanly with exceptions
-(exceptions in async functions become rejected promises).
-Each new combination needs its own syntax.
+The essay doesn't call `async` bad. Its point is that this kind
+of signature marker, specific to one kind of effect, creates
+parallel systems that don't compose. `async` doesn't compose
+with generators: you need `async function*`. It doesn't compose
+cleanly with exceptions either (inside async functions they
+become rejected promises). Each new combination needs its own
+syntax.
 
-Algebraic effects solve the problem at the root: **there are
-no special colors**, only one dimension — the effect row.
-`async` doesn't need to be a syntactic property of the
-function; it's simply one effect among others. And the row
-extends without new syntax: `/ Async + Fail` is no stranger
-than `/ Async`.
+Algebraic effects go to the root: **there are no special
+colors**, only one dimension — the effect row. `async` stops
+being a syntactic property of the function and becomes one
+effect among others. And the row extends without new syntax:
+`/ Async + Fail` is no stranger than `/ Async`.
 
 ### Dependency injection
 
 To make a function testable, you pass the "external things"
 it uses as parameters: the clock, the logger, the database
-client. You pass mocks in tests, the real things in
-production.
+client. Mocks in tests, the real things in production.
 
 ```java
 class Processor {
@@ -125,15 +119,15 @@ The three frustrations share the same shape:
   test, framework) without the function knowing.
 - Multiple capabilities must **compose cleanly**.
 
-Algebraic effects are **one construct** that covers all four.
-What exceptions, `async`/`await`, and dependency injection do
-separately and often poorly, effects do with a single
+Algebraic effects cover all four with **one construct**. What
+exceptions, `async`/`await`, and dependency injection do
+separately, and often poorly, effects do with a single
 mechanism.
 
 ## 12.2 Declaring an `effect`
 
-An effect is an **interface**. It declares what operations
-exist, with what signatures, but not how they're implemented.
+An effect is an **interface**: it declares what operations
+exist and their signatures, but not how they're implemented.
 
 ```kai
 effect Log {
@@ -141,19 +135,17 @@ effect Log {
 }
 ```
 
-This introduces an effect named `Log` with one operation,
-`log`, that takes a string and returns nothing useful. Any
-function that calls `Log.log(...)` is using the `Log` effect.
+This introduces an effect `Log` with one operation, `log`,
+that takes a string and returns nothing useful. Any function
+that calls `Log.log(...)` uses the `Log` effect.
 
-What it does **not** introduce: implementation. There's no
-body here, no `if`, no print. Just the signature. That's the
-fundamental difference with a protocol or a traditional
-interface: the effect decides nothing, it only declares what
-can be requested.
+Notice what's missing: implementation. No body, no `if`, no
+print; just the signature. That's the fundamental difference
+from a protocol or a traditional interface: the effect decides
+nothing, it only declares what can be requested.
 
-Operations in an effect are declared without the `fn` keyword
-and without a body — just name, parameters, return type. The
-same effect can have several operations:
+Operations are declared without `fn` and without a body —
+name, parameters, return type. An effect can have several:
 
 ```kai
 effect Io {
@@ -164,8 +156,8 @@ effect Io {
 
 Two dependencies may each declare an effect with the same name
 without colliding — they're different effects that happen to
-share a word. When you import both, say which one you mean with
-a qualifier, and it goes everywhere the name does: in the row
+share a word. If you import both, you pick one with a
+qualifier, and it goes everywhere the name does: in the row
 (`/ tracing.Trace`), in the handler head
 (`handle { ... } with tracing.Trace`), and on the operation
 itself (`tracing.Trace.log(msg)`). Then `with ea.Emit` reaches
@@ -174,8 +166,7 @@ rule; a bare name is fine whenever nothing collides.
 
 ## 12.3 Calling an operation: the signature changes
 
-To use an operation, call the effect as if it were a
-namespace and the operation a method:
+To use an operation, call it on the effect:
 
 ```kai
 fn greet(name: String) : Unit / Log {
@@ -188,19 +179,18 @@ Two new things:
 - **`Log.log(...)`** is the invocation syntax. The effect is
   the namespace; the operation is the method.
 - **`: Unit / Log`** in the signature. The slash introduces
-  the **effect row**. It's the list of effects the function
-  needs to run. Without `/ Log`, the function doesn't
-  compile: it's using a capability it didn't declare.
+  the **effect row**: the effects the function needs to run.
+  Without `/ Log`, the function doesn't compile: it uses a
+  capability it didn't declare.
 
 The type system guarantees that **every function using an
 effect declares it**. If you call `Log.log(...)` from a
 function without `/ Log`, the compiler rejects it with a
-clear message. There's no escape: effects are visible in the
-signature, always.
+clear message. Effects are visible in the signature, always.
 
-And this is recursive. If `greet` uses `Log` and `main` calls
-`greet`, then `main` also needs `Log` in its signature,
-unless it **handles** the effect first (that's §12.4).
+And it's recursive. If `greet` uses `Log` and `main` calls
+`greet`, `main` also needs `Log` in its signature, unless it
+**handles** the effect first (that's §12.4).
 
 ```kai
 fn main() : Unit / Log {       # propagates the effect
@@ -208,12 +198,11 @@ fn main() : Unit / Log {       # propagates the effect
 }
 ```
 
-This is the same contagion principle we saw with
-`async`/`await`, but without the color problem: there's no
-special syntax to "pay for the effect" at the call site.
-`Log.log(...)` is a call like any other. The signature is
-where the discipline lives, and adding a new effect doesn't
-introduce a new incompatible color: it only extends the row.
+It's the contagion you know from `async`/`await`, minus the
+colors: the call site carries no special syntax to "pay for
+the effect". `Log.log(...)` is a call like any other. The
+discipline lives in the signature, and a new effect doesn't
+introduce an incompatible color: it only extends the row.
 
 ### Several effects: the row
 
@@ -229,14 +218,14 @@ fn process() : Int / Log + Fail {
 }
 ```
 
-`Log + Fail` is the **row** of effects. Order doesn't matter:
-the row is a set, not a sequence. `Log + Fail` and
-`Fail + Log` are the same row to the compiler. The `+`
-operator is just syntax for building it.
+`Log + Fail` is the **row** of effects. The row is a set:
+order doesn't matter, and `Log + Fail` and `Fail + Log` are
+the same row to the compiler. The `+` is just syntax for
+building it.
 
-(`Fail` doesn't come from the stdlib: it's an effect we'll
-declare in §12.5, just like `Log` in §12.2. I use it here
-already because the name explains itself.)
+(`Fail` doesn't come from the stdlib: you declare it in §12.5,
+just like `Log` in §12.2. I use it here already because the
+name explains itself.)
 
 If this reminds you of chapter 10 — where `m * s` and `s * m`
 were the same unit — that is no coincidence. Effects are
@@ -244,13 +233,13 @@ another of §2.6's families of labels: they inhabit their own
 kind, with their own algebra (the row, where order doesn't
 count and duplicates collapse), and the compiler applies it
 when unifying signatures just as it applies the unit algebra.
-Chapter 19 shows both as entries in the same catalog.
+In chapter 19 you'll find both as entries in the same catalog.
 
 ## 12.4 Handling an effect with `handle ... with`
 
 The interesting part: **deciding what an effect means** at a
 specific point in the program. That's what `handle ... with`
-does.
+is for.
 
 ```kai
 fn main() {
@@ -266,12 +255,11 @@ fn main() {
 }
 ```
 
-Read literally: "run this block, and whenever someone inside
-invokes `Log.log`, do this". The handler intercepts each
-call to `log`, decides what happens, and resumes with
-`resume(...)`.
+Read it as: "run this block, and whenever someone inside
+invokes `Log.log`, do this". The handler intercepts each call
+to `log`, decides what happens, and resumes with `resume(...)`.
 
-Three details worth pinning down:
+Three details:
 
 - **`handle { body } with Effect { clauses }`** is a control
   construct, in the same family as `if` and `match` — not a
@@ -284,15 +272,14 @@ Three details worth pinning down:
 - **`resume(())` continues the body** from the point where
   `log` was called, with the value you passed as argument.
 
-The remarkable thing: **`main` doesn't need to declare `Log`
-in its signature**. The `handle` "consumes" it: the inside
-uses it, the `with` provides it, and `main`'s effect row
-comes out without `Log`. The type system stays strict, but
-the handler is the door through which an effect leaves the
-scope.
+The remarkable thing: **`main` doesn't declare `Log`**. The
+`handle` "consumes" it: the inside uses it, the `with` provides
+it, and `main`'s row comes out without `Log`. The type system
+stays strict; the handler is the door through which an effect
+leaves the scope.
 
-The effect, its operation and the handler that serves it, in a
-complete program:
+The effect, its operation and its handler, in a complete
+program:
 
 ```kai
 # examples/ch12/01_log_basic.kai
@@ -330,9 +317,8 @@ $ kai run examples/ch12/01_log_basic.kai
 
 ### The same body with two handlers
 
-The power shows when you notice that `greet` doesn't change
-between runs. One handler gives you verbose logs; another
-gives you silence:
+The power shows when you notice that `greet` doesn't change.
+One handler gives you verbose logs; another, silence:
 
 ```kai
 # Verbose handler
@@ -353,12 +339,11 @@ handle {
 }
 ```
 
-`greet` doesn't notice the difference. The same is true for a
-handler that writes to a file, one that accumulates messages
-into a list, one that ships them over the network. The
-function `greet` is **handler-agnostic**.
+`greet` doesn't notice the difference, and wouldn't with a
+handler that writes to a file, collects messages in a list, or
+ships them over the network. It's **handler-agnostic**.
 
-This is what replaces dependency injection. No constructor to
+This replaces dependency injection. No constructor to
 pass around, no service to mock; the handler is the
 implementation.
 
@@ -407,12 +392,12 @@ $ kai run examples/ch12/02_two_handlers.kai
 
 ## 12.5 `resume`: the handler decides what happens next
 
-`resume` is the piece that confuses people most at first, and
-the one that pays off most once you get it. It's the
-**continuation** of the body from the point of the operation.
+`resume` is the piece that confuses most at first and pays off
+most later. It's the **continuation** of the body from the
+point of the operation.
 
 When the body invokes `Log.log("hi")`, control jumps to the
-handler. The handler receives two things:
+handler, which receives two things:
 
 1. The argument passed to the operation: `"hi"`.
 2. A `resume` function that, when called, continues the body
@@ -431,8 +416,8 @@ log(msg, resume) -> {
 
 ### Operations that return values
 
-`Log.log` returns nothing useful, but other operations do.
-An effect can **supply** a value:
+`Log.log` returns nothing useful, but an effect can **supply**
+a value:
 
 ```kai
 effect Ask {
@@ -458,11 +443,10 @@ and decides what `String` to give the caller: here, `"world"`.
 `resume("world")` continues the body with that value, and the
 `++` concatenates it.
 
-This replaces many uses of dependency injection: instead of
-threading `name` as a parameter through the whole call tree,
-you "ask" for it via an effect, and the handler in `main`
-decides the answer. In tests, a different handler answers
-something else.
+Another use of dependency injection gone: instead of threading
+`name` as a parameter through the whole call tree, you "ask"
+for it via an effect, and the handler in `main` decides the
+answer. In tests, another handler answers something else.
 
 The operation that returns a value, and the `resume` that
 hands it back:
@@ -496,7 +480,7 @@ hello, world
 
 If the handler **doesn't** call `resume`, the body is
 discarded and the handler's value becomes the value of the
-entire `handle`. This is how exceptions are built:
+whole `handle`. That's how exceptions are built:
 
 ```kai
 effect Fail {
@@ -525,15 +509,13 @@ fn main() : Unit / Stdout {
 
 The signature `fail(reason: String) : Nothing` says the
 operation **never returns**. `Nothing` is kaikai's empty type
-(chapter 3's bottom type): no inhabitants, no value of
-`Nothing` can be constructed. By construction, there's
-nothing to pass to `resume`, so the type system guarantees
-you can't continue the body after `Fail.fail`. The program
-doesn't break if you try; the compiler doesn't let you write
-the code.
+(chapter 3's bottom type): it has no inhabitants. There's
+nothing to pass to `resume`, so the type system guarantees the
+body can't continue after `Fail.fail`. If you try, the
+compiler won't let you write the code.
 
-That's the key: kaikai's "exceptions" are a special case of
-the general mechanism. There's no special syntax for
+kaikai's "exceptions" are a special case of the general
+mechanism. There's no special syntax for
 `try/catch`; there's `handle` and an effect whose operation
 returns `Nothing`.
 
@@ -577,14 +559,14 @@ result: 0
 
 ### Code after `resume`
 
-In every example so far, `resume` was the last thing in the
-clause. That's **tail position**, and it's the shape you'll
-write ninety-nine percent of the time: the handler decides
+So far `resume` has always been the last thing in the clause.
+That's **tail position**, and it's what you'll write
+ninety-nine percent of the time: the handler decides
 something, resumes, and gets out of the way.
 
-But nothing forces you to stop there. If you put code **after**
-the `resume`, that code runs once the body is done, and `resume`
-hands you the `handle`'s result:
+But nothing forces you to stop there. Code **after** the
+`resume` runs once the body is done, and `resume` hands you the
+`handle`'s result:
 
 ```kai
 # examples/ch12/14_non_tail_resume.kai (fragment)
@@ -605,22 +587,20 @@ after:  start (handle = 42)
 result = 42
 ```
 
-Read the order slowly, because that's the part that surprises
-people. The two "before" lines come out in the order the body
-performed `log`. The two "after" lines come out **backwards**:
-`finish` first, because it was the last to suspend and the first
-whose body ran out. It's a stack unwinding, and it's exactly
+Read the order slowly, because it surprises. The two "before"
+lines come out in the order the body performed `log`. The two
+"after" lines come out **backwards**: `finish` first, because
+it was the last to suspend. It's a stack unwinding — exactly
 what you'd expect once you take `resume` for what it is: the
 rest of the computation.
 
-And look at what `resume` returned: `42`, the value the body
-produced, not the `()` that `log` declares as its return type.
-Out of tail position, `resume` isn't handing you the operation's
-return value any more — the body gets that, down below — it's
-handing you what came out of the whole `handle`. Mixing up the
-two is the classic mistake here.
+And look at what `resume` returned: `42`, the body's value, not
+the `()` that `log` declares. Out of tail position, `resume`
+hands you what came out of the whole `handle`; the operation's
+return value goes to the body, down below. Mixing up the two is
+the classic mistake.
 
-One restriction comes along with it: on any one execution path
+One restriction comes along: on any one execution path
 `resume` is called **once**. Two calls are a compile error:
 
 ```
@@ -632,17 +612,16 @@ Resuming the same computation twice is *multi-shot*, it costs a
 copy of the fiber's frames, and it lives separately under
 `resume_multishot`.
 
-What's this good for in practice? Anything that has to happen
-*around* the rest of the program and not just before it: timing
-a stretch, closing a resource, counting what happened inside. In
-§12.8 you'll meet `initially` and `finally`, the sugar for the
-common case of exactly this.
+What's it good for? Anything that has to happen *around* the
+rest of the program: timing a stretch, closing a resource,
+counting what happened inside. In §12.8 you'll meet `initially`
+and `finally`, the sugar for the common case.
 
 ## 12.6 Handlers with state: the `State` pattern
 
-So far our handlers have been stateless: they decide what to
-do and resume. But a handler can carry **its own state**
-without the body noticing. This replaces global mutation.
+So far the handlers have been stateless: they decide and
+resume. But a handler can carry **its own state** without the
+body noticing. This replaces global mutation.
 
 ```kai
 effect State[T] {
@@ -662,10 +641,10 @@ fn sum(xs: [Int]) : Int {
 }
 ```
 
-Three new things:
+What's new:
 
-- **`State[T]` is parametric.** The type `T` is what state
-  holds. Here it'll be `Int`.
+- **`State[T]` is parametric.** `T` is what the state holds;
+  here, `Int`.
 - **`with State[Int](0)`** installs the handler with initial
   state `0`. The argument in parentheses is the initial
   value.
@@ -676,19 +655,18 @@ Three new things:
   handler carries state: the operation's return value and the
   new state. Plain `resume(value)` leaves the state
   unchanged.
-- **`return(x) -> x`** runs when the body completes normally.
-  `x` is the body's result. Here we drop the final state and
-  return only `x`; if you wanted both, you'd write
+- **`return(x) -> x`** runs when the body completes normally,
+  with `x` as its result. Here the final state is dropped and
+  only `x` returned; if you wanted both, you'd write
   `return(x) -> (x, state)`.
 
-From the body's view, there's no mutation: only invocations
-to pure-looking operations. Mutation lives entirely inside
-the handler. From outside the `handle`, nothing shows.
+From the body's view there's no mutation: only invocations of
+pure-looking operations. Mutation lives entirely inside the
+handler, and nothing shows outside the `handle`.
 
-This pattern is generic: with the same shape you build
-`Reader` (read-only environment), `Writer` (output
-accumulation), counters, caches, sessions. All without
-touching global variables, all without threading parameters.
+The same shape builds `Reader` (read-only environment),
+`Writer` (output accumulation), counters, caches, sessions — no
+global variables, no threaded parameters.
 
 An accumulator that lives in the handler, not in the body:
 
@@ -728,11 +706,10 @@ sum([]) = 0
 ## 12.7 `var`, `Ref[T]` and `Array[T]`: two distinct mechanisms
 
 `State[T]` is the general tool for carrying a changing value,
-but writing `handle ... with State[Int](0)` every time you
-want a local counter would be tedious. So kaikai ships
-syntactic sugar and, separately, a stdlib effect for cases
-where memory outlives a block. They're two distinct
-constructs and worth keeping apart.
+but writing `handle ... with State[Int](0)` for every local
+counter would be tedious. So kaikai ships syntactic sugar and,
+separately, a stdlib effect for memory that outlives a block.
+Keep the two apart.
 
 ### `var`: sugar over `State[T]`
 
@@ -777,21 +754,20 @@ handle {
 ```
 
 Because the inserted `handle` lives **inside the same block**
-where the `var` appears, the `State[Int]` effect closes right
-there and never escapes the function's signature. From the
-caller's side, `count_evens` is just `: Int`. No effects.
+as the `var`, the `State[Int]` effect closes right there and
+never escapes the signature. To the caller, `count_evens` is
+just `: Int`, with no effects.
 
-The effect isn't being masked: the `handle` is literally next
-to the `var`. The row closes at the exact spot where the cell
-is declared.
+The effect isn't masked: the `handle` is literally next to the
+`var`, and the row closes where the cell is declared.
 
-And it isn't slow: the compiler detects the pattern "local
-cell with one-shot resume" and specializes it down to a stack
-frame slot, equivalent to a C mutable variable. Zero cost
-compared to the imperative code you'd otherwise write.
+Nor is it slow: the compiler detects the pattern "local cell
+with one-shot resume" and specializes it down to a stack frame
+slot, like a C mutable variable. Zero cost compared to the
+equivalent imperative code.
 
-A counter with `var`, which is the same `State[T]` written the
-way you'd write it in an imperative language:
+A counter with `var` — the same `State[T]`, written as you would
+in an imperative language:
 
 ```kai
 # examples/ch12/10_local_var.kai
@@ -819,12 +795,11 @@ evens in [] = 0
 
 ### `Mutable`: the effect behind `Ref[T]` and `Array[T]`
 
-`var` covers local cells. But there are cases where memory
-needs to **outlive a block**: an array you'll return, a cell
-you'll pass between functions, a structure shared by several
-routines. For those cases kaikai ships two stdlib types,
-`Ref[T]` and `Array[T]`, and both live under the **`Mutable`**
-effect.
+`var` covers local cells. Sometimes memory needs to **outlive
+a block**: an array you'll return, a cell you'll pass between
+functions, a structure shared by several routines. For that
+kaikai ships two stdlib types, `Ref[T]` and `Array[T]`, both
+under the **`Mutable`** effect.
 
 ```kai
 fn fill(n: Int) : Array[Int] {
@@ -849,16 +824,14 @@ fn fill(n: Int) : Array[Int] {
 `Mutable.ref_get(r)`, `Mutable.ref_set(r, v)`. No indexing
 sugar, but everything else is parallel to `Array[T]`.
 
-Look at the signature of `fill`: it says `: Array[Int]`,
-**without `Mutable`**. Why, given the function obviously
-mutates?
+Look at the signature of `fill`: `: Array[Int]`, **without
+`Mutable`**, though the function obviously mutates.
 
-Because `Mutable` follows the discipline of **observable
-effects**: the effect shows up in the signature only when the
-mutation is **visible to the caller**. And here it isn't. The
-array is created inside, filled inside, and returned only
-when it's complete. Whoever receives it gets a settled value;
-they don't observe any mutation.
+`Mutable` follows the discipline of **observable effects**: it
+shows up in the signature only when the mutation is **visible
+to the caller**. Here it isn't. The array is created inside,
+filled inside, and returned complete; whoever receives it gets
+a settled value and observes no mutation.
 
 ### When `Mutable` becomes visible
 
@@ -875,23 +848,22 @@ fn fill_in_place(a: Array[Int]) : Unit / Mutable {
 }
 ```
 
-Here `a` comes from outside. The caller holds a reference to
-the same array we're modifying. The mutation is visible to
-the caller, and the signature must declare it.
+Here `a` comes from outside, and the caller holds a reference
+to the same array the function modifies. The mutation is
+visible to the caller, so the signature must declare it.
 
-The rule from §12.3 still applies, just for any other effect:
-the type system guarantees that every function producing an
-observable effect declares it. Hidden assignments don't
-exist.
+The rule from §12.3 applies as for any other effect: every
+function producing an observable effect declares it. There are
+no hidden assignments.
 
 ### `Mutable` versus `State[T]`
 
-Both represent mutable state. When to use which?
+Both represent mutable state:
 
 - **`var` (which is `State[T]`)**: the cell lives inside the
-  block. No need to survive the function, no need to be
-  passed to other routines — just a local accumulator or
-  counter. Signature stays clean.
+  block. It doesn't outlive the function or get passed to
+  other routines — just a local accumulator or counter. The
+  signature stays clean.
 - **`Mutable` with `Ref[T]` or `Array[T]`**: memory outlives
   the block or is shared across functions. Appears in the
   signature whenever the mutation is observable to the
@@ -904,8 +876,8 @@ just need a local counter, it's `var`.
 ## 12.8 Composing effects: nested handlers
 
 Real functions use more than one effect. One that logs and
-accumulates can declare `/ Log + State[Int]`, and in `main`
-you handle it with two nested `handle`s:
+accumulates declares `/ Log + State[Int]`, and in `main` you
+handle it with two nested `handle`s:
 
 ```kai
 fn accumulate(xs: [Int]) : Int / Log + State[Int] {
@@ -937,15 +909,14 @@ fn main() : Unit / Stdout {
 
 Nesting order matters **when the handlers interact**. Here
 they don't: `State` only reads and writes its state, `Log`
-only prints. Either order works. But with `Fail` inside
+only prints, and either order works. But with `Fail` inside
 `State`, the order decides whether state survives a failure
 (outer `Fail`) or is discarded (inner `Fail`). Each
 combination has an explicit, checkable semantics.
 
-This is a deep difference with `try/catch + global
-variables`: there, the order is implicit and runtime-
-dependent. Here it's explicit and you decide it in the
-signature of the `handle`s.
+With `try/catch` and global variables the order is implicit
+and runtime-dependent. Here you decide it, in how you nest the
+`handle`s.
 
 Two effects in one body and two nested handlers serving them:
 
@@ -1003,11 +974,11 @@ total = 60
 
 Nesting brings a problem exceptions also have, and only half
 solve. If an outer handler abandons `resume` — like the `Fail`
-of §12.5 — the inner body never returns. Any line you wrote
+of §12.5 — the inner body never returns. The line you wrote
 *after* the `handle` to close a file, drop a lock, or return a
 connection to the pool never runs. The non-local jump ate it.
 
-A handler can carry two more clauses that close that gap:
+Two more clauses close that gap:
 
 - `initially { }` runs once, when the handler is installed,
   before the body. Its value is the handler state, readable as
@@ -1019,10 +990,10 @@ A handler can carry two more clauses that close that gap:
   cooperative cancellation (chapter 13). It does not run on
   `panic`, which aborts the process rather than unwinding it.
 
-Together they are the acquire/release bracket — and they are one
-for real, not by convention: the acquisition lives **inside** the
-construct that guarantees the release, so there is no window
-where the resource is open and still unguarded.
+Together they are the acquire/release bracket, by construction
+rather than convention: the acquisition lives **inside** the
+construct that guarantees the release, so there's no window
+where the resource is open and unguarded.
 
 ```kai
 # examples/ch12/12_cleanup.kai
@@ -1065,39 +1036,36 @@ aborted: network dropped before the second query
 ```
 
 The outer `Fail` abandoned `resume` and the `Conn` body never
-finished. The connection still closed — and it closed *before*
-the replacement value reached `main`. That order is not an
-accident: the inner scope unwinds along the jump's path, not
-after it.
+finished. The connection still closed — *before* the
+replacement value reached `main`: the inner scope unwinds along
+the jump's path, not after it.
 
-One rule is worth keeping in mind: **a cleanup runs in the
-evidence context of its installation**. If the `finally` performs
-an effect, that effect dispatches to the handlers that were live
-when the handler was installed, not to those at the jump site —
-those frames are already gone. The practical consequence is that
-a `finally` cannot perform the effect its own handler discharges.
-That is a compile error ("effect not handled"), not a runtime
-loop.
+Keep this rule in mind: **a cleanup runs in the evidence
+context of its installation**. If the `finally` performs an
+effect, it dispatches to the handlers live when the handler was
+installed, not to those at the jump site, whose frames are
+already gone. In practice, a `finally` cannot perform the effect
+its own handler discharges. The compiler tells you ("effect not
+handled"); it never becomes a runtime loop.
 
-`finally` takes no parameters and its value is discarded: it runs
-for its effect, not for what it returns. To transform the
-`handle`'s result there is `return(x)`, which is a different job.
+`finally` takes no parameters and its value is discarded: it
+runs for its effect. To transform the `handle`'s result there
+is `return(x)`.
 
 Two details about living with them. `initially` and the
 `with Eff(init)` form fill the same slot, so writing both is a
-parse error: you pick one. And neither word is reserved — they're
-contextual — so an effect of yours can still declare an operation
-named `finally` without anything breaking.
+parse error. And neither word is reserved — they're contextual —
+so an effect of yours can declare an operation named `finally`
+without anything breaking.
 
 ## 12.9 Named instances: the handler as a value
 
 So far, every operation finds its handler by the effect's name:
-`Log.log(...)` climbs to the nearest `handle ... with Log`. That
-leaves one question unanswered: what if you need **two** handlers
-of the same effect, alive at the same time, and you want to
-choose which one you're talking to?
+`Log.log(...)` climbs to the nearest `handle ... with Log`. What
+if you need **two** handlers of the same effect, alive at the
+same time, and want to choose which one you're talking to?
 
-The answer is to give each instance a name:
+You give each instance a name:
 
 ```kai
 handle {
@@ -1114,17 +1082,17 @@ type is the effect itself (`Cell`, `State[Int]`). Inside the
 body, `a.get()` performs against *that* instance — not against
 "the nearest `Cell`", but against the handler named `a`.
 
-The interesting part starts when the capability travels. A named
-instance **can be passed as an argument**:
+The interesting part starts when the capability travels: a
+named instance **can be passed as an argument**:
 
 ```kai
 fn add(c1: Cell, c2: Cell, dst: Cell) : Unit =
   dst.set(c1.get() + c2.get())
 ```
 
-Look at that signature carefully, because it holds a subtlety.
-`Cell` appears as a **parameter type**, not in the effect row.
-They are two distinct ways of asking for the same thing:
+Look at that signature carefully. `Cell` appears as a
+**parameter type**, not in the effect row. They're two ways of
+asking for the same thing:
 
 - **In the row** (`fn f() : T / Cell`): the effect is
   *demanded* — satisfied by a `handle` wrapping the call, or by
@@ -1154,27 +1122,26 @@ target = 30
 ```
 
 `add` sums whatever cells it is given, without knowing which is
-which. Before named instances, the only way out was declaring
-three identical effects — `CellA`, `CellB`, `CellDst` — and
-handling each one separately. Pure ceremony, and it doesn't
-scale.
+which. Without named instances you'd have to declare three
+identical effects — `CellA`, `CellB`, `CellDst` — and handle
+each separately. Pure ceremony, and it doesn't scale.
 
 One important restriction: the capability is **second-class**.
 It can travel down the stack — as a call argument, as the
-receiver of operations — but it cannot *escape*: stored in a
-record, returned from a function, captured by a closure that
-outlives the `handle`, or carried into a fiber with `spawn`. A
-handler is a promise with lexical scope; a value that needs to
-outlive its `handle` is not a capability, it's a `Ref[T]` under
-`Mutable` (§12.7) or an actor (chapter 14).
+receiver of operations — but it cannot *escape*: you can't
+store it in a record, return it, capture it in a closure that
+outlives the `handle`, or carry it into a fiber with `spawn`. A
+handler is a promise with lexical scope; what needs to outlive
+its `handle` is a `Ref[T]` under `Mutable` (§12.7) or an actor
+(chapter 14).
 
-If you come from dependency injection, this section should ring
-a bell: passing the capability as a parameter **is** injecting
-the dependency, with the difference that here the type tracks it
-and the compiler rejects the uses that would make it outlive its
-lifetime. And if the explicit wiring gets in your way, the
-effect row is still there: they are the two ends of the same
-mechanism, and you choose per call.
+If you come from dependency injection, this rings a bell:
+passing the capability as a parameter **is** injecting the
+dependency, except the type tracks it and the compiler rejects
+uses that would let it outlive its lifetime. And if the
+explicit wiring gets in your way, the effect row is still
+there: they're two ends of the same mechanism, and you choose
+per call.
 
 ## 12.10 Effect row aliases
 
@@ -1187,8 +1154,8 @@ effect Audit  { audit(user: String, action: String) : Unit }
 type Tracing = Log + Audit
 ```
 
-From there on, writing `: Unit / Tracing` is the same as
-writing `: Unit / Log + Audit`. The alias is **transparent**:
+From then on, `: Unit / Tracing` means `: Unit / Log + Audit`.
+The alias is **transparent**:
 it introduces no new effect, only shortens the row.
 
 ```kai
@@ -1199,13 +1166,12 @@ fn make_purchase(user: String, amount: Int) : Unit / Tracing {
 }
 ```
 
-One restriction: aliases must be **closed**. You can't write
-`type WithIo[e] = Io + e` (with a row variable). The
-restriction sidesteps unification complications the compiler
-doesn't need to pay for.
+One restriction: aliases are **closed**. You can't write
+`type WithIo[e] = Io + e` (with a row variable), which spares
+the compiler unification complications it doesn't need.
 
-An alias used across several signatures, which is where the
-saving shows:
+An alias used across several signatures, where the saving
+shows:
 
 ```kai
 # examples/ch12/07_alias.kai
@@ -1258,17 +1224,16 @@ $ kai run examples/ch12/07_alias.kai
 
 ## 12.11 Default handlers: the effect carries its own
 
-Every `handle` we've seen so far was written by hand. But there
-are effects where one of the implementations is so obvious that
-making the user write it every time is pure ceremony: if your
-effect is `Log` and the "reasonable" implementation writes to
-stderr with a timestamp, you'd want that implementation to ship
-with the effect.
+So far you've written every `handle` by hand. But for some
+effects one implementation is so obvious that writing it every
+time is pure ceremony: if your effect is `Log` and the
+"reasonable" implementation writes to stderr with a timestamp,
+you'd want it to ship with the effect.
 
-Kaikai lets you declare a **`default { }` block** inside the
-effect declaration. It's exactly like a `handle ... with`, but it
-lives next to the operations and the compiler installs it around
-`main` when nobody handles the effect by hand.
+For that you declare a **`default { }` block** inside the effect.
+It's just like a `handle ... with`, but it lives next to the
+operations, and the compiler installs it around `main` when
+nobody handles the effect by hand.
 
 ```kai
 effect Log {
@@ -1282,9 +1247,9 @@ effect Log {
 }
 ```
 
-The clauses inside the `default` block have the **same shape** as
-the ones in a `handle`: op name, parameters, `resume`, arrow, body.
-What changes is where they live and who fires them. If `main()`
+The clauses inside `default` have the **same shape** as those in
+a `handle`: op name, parameters, `resume`, arrow, body. What
+changes is where they live and who fires them. If `main()`
 declares `: Unit / Log` and no `handle ... with Log` wraps it, the
 compiler emits code equivalent to:
 
@@ -1297,13 +1262,12 @@ handle {
 }
 ```
 
-The user doesn't write that wrapping. The compiler derives it from
-the `default` block and emits it at program entry.
+You don't write that wrapping: the compiler derives it from the
+`default` block and emits it at program entry.
 
 ### `$extern_handler`: the sigil and the C bridge
 
 The body of each clause above is `$extern_handler("kai_default_log_info")`.
-That needs an explanation.
 
 `$` is a **sigil**: a character that marks a special syntactic
 form. In kaikai it introduces a **compiler intrinsic**, a
@@ -1313,19 +1277,16 @@ function defined in kaikai code. The general form is
 may be more tomorrow; the sigil is reserved for that family.
 
 `$extern_handler("kai_default_log_info")` means: "the body of this
-clause is a call to the C symbol `kai_default_log_info`". When the
-effect fires, the compiler doesn't look for a kaikai function by
-that name; it emits a direct call to the C runtime linked into the
-program.
+clause is a call to the C symbol `kai_default_log_info`". The
+compiler doesn't look for a kaikai function by that name; it
+emits a direct call to the C runtime linked into the program.
 
-This is the bridge between high-level algebraic effects and the
-concrete world — files, sockets, syscalls. OS primitives live in
+It's the bridge between algebraic effects and the concrete world — files, sockets, syscalls. OS primitives live in
 C; effects live in kaikai; `$extern_handler` joins them.
 
 ### When the default fires and when it doesn't
 
-The lookup rule is the one from §12.4 with one extra step at the
-bottom:
+The lookup rule is §12.4's, with one extra step at the bottom:
 
 1. The nearest `handle ... with Eff` that covers the op wins.
 2. If no enclosing handle exists and the op is in `main`'s row,
@@ -1333,10 +1294,9 @@ bottom:
 3. If even the default doesn't cover the op, the compiler rejects
    the program when typechecking `main`.
 
-Note the detail: the default **only** fires when the op would
-escape to `main`. If your function is inside a `handle`, the
-handle wins, not the default. There's no ambiguity, no surprising
-precedence: nearest wins, always.
+The default **only** fires when the op would escape to `main`.
+If your function is inside a `handle`, the handle wins. No
+ambiguity, no surprising precedence: nearest wins, always.
 
 ### Looking at the original example again
 
@@ -1359,16 +1319,16 @@ The C symbol writes to the process's real `stdout`. Since `main`
 doesn't handle `Stdout`, the compiler installs that default and
 the program prints.
 
-When you want to control the output (silence in tests, redirect
-to a file, capture it for assertions), you write your own `handle
-... with Stdout` and inside the block the runtime default doesn't
-participate. **Nearest wins**: the `handle` you wrote is closer
+To control the output (silence in tests, redirect to a file,
+capture it for assertions), you write your own
+`handle ... with Stdout`, and inside the block the default
+doesn't participate. **Nearest wins**: your `handle` is closer
 than the implicit wrapping at `main`'s entry.
 
 ### Your own default: the complete example
 
-If you declare an effect and equip it with a default, programs
-that just call `main` look just as simple:
+If you equip your own effect with a default, programs that just
+call `main` look just as simple:
 
 ```kai
 effect MyLog {
@@ -1393,23 +1353,22 @@ fn main() : Unit / Stdout {
 }
 ```
 
-Inside the `handle ... with MyLog`, the explicit clauses win: the
-`info` is silenced. If another `main` skipped that `handle`, the
-default would fire and print via the C runtime. `greet` doesn't
-know the difference: for it, `MyLog` is whatever the context
-decided.
+Inside the `handle ... with MyLog` the explicit clauses win and
+the `info` is silenced. Without that `handle`, the default would
+fire and print via the C runtime. `greet` doesn't know the
+difference: for it, `MyLog` is whatever the context decides.
 
 ### When there's no default — the effect without a net
 
-Not every effect carries a `default`. The `Fail` we declared in
-§12.5 is the clear counter-example: if an op can abort the program,
-you don't want "forgetting to handle it" to be legal. Since you
-declared it yourself and it carries no `default` block, a function
-producing `/ Fail` must be handled somewhere before `main`, or the
-compiler rejects with a clear message.
+Not every effect carries a `default`. The `Fail` you declared in
+§12.5 is the clear counter-example: if an op can abort the
+program, you don't want forgetting to handle it to be legal.
+Since it carries no `default` block, a function producing
+`/ Fail` must be handled somewhere before `main`, or the compiler
+rejects it with a clear message.
 
-Why `Fail` lives here, declared in the file itself rather than in
-the stdlib, is worth saying. A failure effect adds nothing
+Why does `Fail` live here, declared in the file itself, rather
+than in the stdlib? A failure effect adds nothing
 `Result[a, e]` with postfix `!` doesn't give you better: there
 isn't a single `/ Fail` row in the whole stdlib. And its shape —
 an operation returning `Nothing` — is precisely the one that
@@ -1418,18 +1377,17 @@ consumer picks whether to skip or abort. For that the op has to
 return `Unit` and let the handler decide whether to call `resume`.
 Appendix D has the full table.
 
-As an example, though, it's unbeatable: still the shortest way to
-show what an operation that never returns means.
+As an example, though, it's unbeatable: the shortest way to show
+an operation that never returns.
 
 The same applies to `State[T]`, `Reader[T]`, `Writer[W]`: generic
-effects where **no** reasonable implementation exists without
-context, so making the user write it isn't ceremony, it's
-discipline.
+effects with **no** reasonable implementation outside a context,
+so asking you to write one is discipline, not ceremony.
 
 The mental rule: an effect carries a `default` when there's **one
 obvious** implementation (write to `stdout`, read the system
 clock, generate pseudo-random numbers). If "reasonable" depends on
-the program, there's no default and the user provides it.
+the program, there's no default and you provide it.
 
 ### Wrapper function: the alternative when there's no default
 
@@ -1454,17 +1412,16 @@ fn main() {
 }
 ```
 
-This is what stdlib uses for constructs like
-`with_reader(env) { body }`, `with_writer { body }` and
-`with_mailbox { body }`. The difference from a default is that
-the wrapping is **explicit in the code**: whoever reads `main`
-sees the line, opens the function, knows what it does. A default
-lives in the effect declaration.
+The stdlib uses it for `with_reader(env) { body }`,
+`with_writer { body }` and `with_mailbox { body }`. Unlike a
+default, which lives in the effect declaration, the wrapping is
+**explicit in the code**: whoever reads `main` sees the line,
+opens the function, and knows what it does.
 
-If your effect has one reasonable default for production and a
-different one for tests, expose both as wrapper functions
+If your effect has one reasonable default for production and
+another for tests, expose both as wrapper functions
 (`with_test_log`, `with_quiet_log`) and let `main` use the
-default. Whoever writes tests calls the wrapper.
+default. Tests call the wrapper.
 
 The wrapper in a program: the body names no handler and the
 function decides which one gets installed.
@@ -1521,9 +1478,8 @@ $ kai run examples/ch12/09_wrapper_default.kai
 
 ## 12.12 The stdlib handlers are kaikai code
 
-When a program runs `println("hi")` and it just works, it's easy
-to imagine the compiler ships a special case for `Stdout`. It
-doesn't. The handlers the runtime installs around `main` for
+When `println("hi")` just works, it's easy to imagine the
+compiler ships a special case for `Stdout`. It doesn't. The handlers the runtime installs around `main` for
 `Stdout`, `Stdin`, `Random`, `Clock`, `File`, `Env`, `NetTcp`, and
 the rest are written in **plain stdlib kaikai**: each one is an
 `effect ... { ops; default { ... } }` using the same
@@ -1544,22 +1500,21 @@ blocks** and **`$extern_handler`**. For `Stdout`, it installs the
 default the same way it does for your `MyLog`: by walking the AST
 of the effect declaration, not by reading a hardcoded table.
 
-The motive isn't aesthetic: the AST becomes the single source
-of truth, with no internal tables to keep in sync, and user
-effects get exactly the same guarantees as stdlib ones. If your
+The motive is practical: the AST is the single source of truth,
+with no internal tables to keep in sync, and your effects get
+the same guarantees as stdlib ones. If your
 effect declares `default { }` with `$extern_handler`, the
 compiler installs it like a builtin.
 
 The practical consequence: **you can read how `Stdout` is
 implemented**. `kai doc effects.Stdout` shows its signature and
-its default; the effect is kaikai code like yours.
-If a question about default semantics comes up — "what happens if
-the pipe is closed?", "who catches `EPIPE`?" — the answer lives in
-the clause `print(s, resume) -> ...` or in the C symbol it
-bridges. There's no secret runtime behavior separate from code you
-can read.
+its default; the effect is kaikai code like yours. If you wonder
+about default semantics — "what happens if the pipe is
+closed?", "who catches `EPIPE`?" — the answer lives in the
+clause `print(s, resume) -> ...` or in the C symbol it bridges.
+The runtime has no secret behavior apart from code you can read.
 
-Worth repeating the rule, to nail down the model: the compiler
+The rule once more, to nail down the model: the compiler
 resolves an effect by checking, in order, (1) the nearest `handle
 ... with`, (2) the effect's `default { }` block if the op escapes
 to `main`, (3) compile error. The stdlib handlers aren't a fourth
@@ -1567,32 +1522,31 @@ category; they're instances of (2).
 
 ### Why the sigil has an odd name
 
-`$extern_handler` may sound long. The reason is that the sigil is
-a system, not a single operation: `$` reserves the namespace of a
-**family** of intrinsics, and `$extern_handler` is the one that
-lives there. Any other bridge to the runtime — asking the current
+`$extern_handler` may sound long because the sigil opens a
+system: `$` reserves the namespace of a **family** of
+intrinsics, and `$extern_handler` is the one that lives there. Any other bridge to the runtime — asking the current
 `errno`, calling a platform-specific symbol — comes in under the
 same sigil with a descriptive name: `$os_name`,
 `$panic_with_trace`. Reserving `$<ident>(args)` leaves the door
 open without relitigating the syntax every time.
 
-For your daily work: if you never bridge an effect to C, you'll
-never write `$extern_handler`. But when you see it in stdlib you
-know what it is: a clause that hands its body off to a runtime
-symbol, declared with the same syntax as any other handler.
+If you never bridge an effect to C, you'll never write
+`$extern_handler`. But when you see it in the stdlib you'll know
+what it is: a clause that hands its body off to a runtime
+symbol, with the same syntax as any other handler.
 
 ## 12.13 Generators: the continuation as a value
 
-At the top of this chapter I said that if it sounded like
-generators, hold that thought too. Time to pay that off, and it
-gets paid with a piece you already have.
+At the top of this chapter I asked you to hold the thought if
+this sounded like generators. Time to pay that off, with a piece
+you already have.
 
-In §12.5 we saw what a handler can do with `resume`: call it —
-in tail position or not — and the body carries on; or not call
-it, and the body is discarded. One is missing, and it's the
-interesting one: **keep it**.
+In §12.5 you learned what a handler can do with `resume`: call
+it — in tail position or not — and the body carries on; or not
+call it, and the body is discarded. The interesting one is
+missing: **keep it**.
 
-A kept `resume` is a value like any other. You can put it in a
+A kept `resume` is a value like any other. You put it in a
 constructor, return it, and call it later from somewhere else
 entirely. That is a generator.
 
@@ -1608,12 +1562,12 @@ pub fn generate[t, e](body: () -> Unit / Yield[t] + e) : Gen[t, e] / e =
 
 Read that clause slowly, because the whole idea is in it:
 `yield(v, resume) -> Next(v, resume)`. The handler resumes
-nothing. It packs the element together with the rest of the
-computation and returns it. Whoever receives that `Next(v, k)`
+nothing: it packs the element with the rest of the computation
+and returns it. Whoever receives that `Next(v, k)`
 holds the first element and a function that, whenever they say
 so, produces the next one.
 
-The `e` in all three signatures gets its own subsection below; for
+You'll come back to the `e` in all three signatures below; for
 now read it as "whatever effects the producer performs besides
 `Yield`".
 
@@ -1627,11 +1581,11 @@ fn naturals(from: Int) : Unit / Yield[Int] = {
 }
 ```
 
-That's ordinary recursion, the kind you wrote back in chapter 6.
-No special keyword, no state machine, no odd return type. The
-function never terminates and that's perfectly fine: it runs on
-its own stack segment and advances only when someone asks for
-the next element.
+Ordinary recursion, the kind you wrote back in chapter 6. No
+special keyword, no state machine, no odd return type. The
+function never terminates, and that's fine: it runs on its own
+stack segment and advances only when someone asks for the next
+element.
 
 Pulling the elements by hand shows the machinery:
 
@@ -1649,9 +1603,9 @@ match g {
 }
 ```
 
-That `k(())` is the call that runs `naturals` from where it left
-off to its next `Yield.yield`. And if you never call `k`, the
-producer never runs again: dropping a `Gen` discontinues its
+That `k(())` runs `naturals` from where it left off to its next
+`Yield.yield`. If you never call `k`, the producer never runs
+again: dropping a `Gen` discontinues its
 producer and releases its segment.
 
 ### In practice, the pipes
@@ -1675,23 +1629,23 @@ second: 11
 sum of odd squares up to 100: Some(286)
 ```
 
-`naturals(1)` never ends. `take_until` cuts. Between the two
+`naturals(1)` never ends; `take_until` cuts. Between the two
 there's no intermediate list, and the producer never generated
 an element nobody was going to look at. The `Some` is there
 because `reduce` returns an `Option`: a generator can be empty,
 and the type says so instead of inventing a zero.
 
 If chapter 6 left you wondering when to reach for `stream` and
-when for this, the answer is which side you're on. `stream`
+when for this, it depends on which side you're on. `stream`
 consumes something that already exists — a list, a file — and is
 a re-runnable recipe. `gen` is for when you write the producer
 yourself.
 
-And if you write it yourself but it is pure, the answer is
-neither: that is a `Seq`, §6.4's lazy sequence, whose cells are
-computed once and then shared. What sets `gen` apart is that its
-producer may perform effects, because it is the only one of the
-three that carries them in the row. A `Seq`'s stages must be pure,
+And if you write it yourself but it's pure, you want neither:
+you want a `Seq`, §6.4's lazy sequence, whose cells are computed
+once and then shared. What sets `gen` apart is that its producer
+may perform effects: it's the only one of the three that
+carries them in the row. A `Seq`'s stages must be pure,
 so a `Seq` reads no file and asks nobody anything.
 
 ### The producer's effects, and who serves them
@@ -1727,10 +1681,9 @@ There is no fourth: `take_until` cut at `3` and the producer never
 got to take another step.
 
 That leaves an uncomfortable question. If the consumer stops
-whenever it likes, and the producer had a file open, who closes it?
-From the consumer's side, nobody: it just stops calling `k`. The
-answer is the one from §12.8, and it arrives without the consumer
-knowing it exists.
+whenever it likes and the producer had a file open, who closes
+it? Not the consumer: it just stops calling `k`. The answer is
+§12.8's, and it arrives without the consumer knowing it exists.
 
 ```kai
 # examples/ch12/16_dropping_the_generator.kai (fragment)
@@ -1755,22 +1708,22 @@ the producer is gone
 ```
 
 The `finally` ran on its own, the moment the `Gen` was left
-ownerless, and before `main` moved on. Discarding a generator
-isn't forgetting about it: it's taking it apart.
+ownerless and before `main` moved on. Discarding a generator
+takes it apart.
 
 That's the division of labor the row proposes. It doesn't forbid
-I/O in a producer — that would be a rule easy to implement and
-annoying to use. It tells you in the type which effects have to be
-served to step it, and it guarantees that dropping it halfway is
-still a clean operation.
+I/O in a producer — a rule easy to implement and annoying to
+use. It tells you in the type which effects you must serve to
+step it, and guarantees that dropping it halfway is a clean
+operation.
 
 ### Why this matters more than it looks
 
 Python needed a keyword for generators, then found out it didn't
 compose with `async`: hence `async def`, and hence
 `async function*`. Every new capability asked for new syntax, and
-the combinations asked for more syntax still. It's the complaint
-from §12.1 all over again, in a different costume.
+the combinations for more still. It's §12.1's complaint in a
+different costume.
 
 Here the whole mechanism is 108 lines of stdlib. The compiler
 doesn't know `Yield`: there is no `yield` keyword, there's an
@@ -1778,16 +1731,14 @@ operation that happens to be called that. And it composes with
 everything else because it isn't a special case of anything.
 
 That's what you buy when the continuation is a first-class
-value: not that the language has generators, but that nobody had
-to add them.
+value: generators nobody had to add to the language.
 
 ## 12.14 Case study: configuration processor
 
-We close with an example that mixes the three patterns we
-saw: logging, state, failure. The program processes a list of
-lines with format `key=value`, parses them, logs each step,
-counts how many succeeded, and aborts if any line has the
-wrong format.
+We close with an example that mixes the three patterns you've
+used: logging, state, failure. The program takes `key=value`
+lines, parses them, logs each step, counts how many succeeded,
+and aborts if any line has the wrong format.
 
 ```kai
 effect Log {
@@ -1822,8 +1773,8 @@ fn process(lines: [String]) : Int / Log + State[Int] + Fail {
 }
 ```
 
-`process` declares the three effects in its signature and
-uses them freely: it parses (can fail), logs, accumulates.
+`process` declares the three effects and uses them freely: it
+parses (can fail), logs, accumulates.
 But it decides nothing about the context it runs in.
 
 In `main`, the three nested handlers decide:
@@ -1865,15 +1816,13 @@ $ kai run examples/ch12/08_config_parser.kai
 entries processed: 3
 ```
 
-And if a line is invalid, the outer `Fail` catches it, prints
-the reason, and `n` ends up `-1`. The inner `Log` and `State`
-already emitted whatever they caught before the failure.
+If a line is invalid, the outer `Fail` catches it, prints the
+reason, and `n` ends up `-1`. The inner `Log` and `State`
+already emitted whatever they got to before the failure.
 
-Why is this a good closing example? Because it shows the
-three patterns cooperating, each contributing something
-different, and because `process` is **directly testable**:
-no files, no IO, no mocks. In a test, the three handlers have
-different implementations: `Log` accumulates messages into a
+The three patterns cooperate, each doing its part, and
+`process` is **directly testable**: no files, no IO, no mocks.
+In a test, the three handlers get other implementations: `Log` accumulates messages into a
 list instead of printing, `Fail` propagates inside a
 `Result`, `State` starts from whatever value the test wants.
 
@@ -1888,15 +1837,15 @@ everything else:
    dependencies.
 
 2. **The handler decides what happens.** A function's body
-   declares it needs a capability. The handler in context
+   declares it needs a capability; the handler in context
    decides how to materialize it. That decoupling replaces
-   dependency injection, mocking, global configuration.
+   dependency injection, mocking, and global configuration.
 
 3. **Zero cost when unused.** The compiler resolves handlers
    at compile time when it can (which is most cases), and the
    generated code is as fast as if you'd written a direct
-   `if`. There's no structural overhead from having effects
-   in the type. Same promise as units of measure and
+   `if`, with no structural overhead from effects in the
+   type. Same promise as units of measure and
    contracts: rich information in the type, efficient code
    underneath.
 
@@ -1909,10 +1858,10 @@ default-handler model with no special cases: the stdlib
 handlers are declared in kaikai with the same shape yours use.
 But the underlying idea is old and solid.
 
-If after this chapter you're still not comfortable, don't
-worry. Effects are the piece that takes the longest to land.
-You'll read this chapter several times. Each reading peels
-back one more layer.
+If you're still not comfortable, don't worry. Effects are the
+piece that takes longest to land. You'll come back to this
+chapter several times, and each reading peels back one more
+layer.
 
 ## Exercises
 

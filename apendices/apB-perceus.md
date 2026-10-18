@@ -7,16 +7,14 @@ contador de referencias y, si llega a cero, libera la memoria.
 No hay GC, no hay borrow checker, no hay anotaciones de
 lifetime.
 
-Este apéndice se mete en el detalle. Para qué sirve: si vienes
-de Rust y te preguntas por qué kaikai no necesita borrow
-checker; si vienes de Java y te preguntas por qué kaikai no
-necesita pausas de GC; o si simplemente quieres entender cómo
-una idea publicada en 2021 cambió el equilibrio entre RC, GC y
-ownership.
+Este apéndice entra en el detalle. Te sirve si vienes de Rust y
+te preguntas por qué kaikai no necesita borrow checker, si
+vienes de Java y te preguntas por qué no necesita pausas de GC,
+o si quieres entender cómo una idea publicada en 2021 cambió el
+equilibrio entre RC, GC y ownership.
 
-No hace falta leer este apéndice para programar en kaikai. El
-modelo de §13.2 alcanza. Este texto es para quien quiere ver
-los engranajes.
+Para programar en kaikai te alcanza el modelo de §13.2. Esto es
+para ver los engranajes.
 
 ## B.1 El paper, en una frase
 
@@ -30,8 +28,8 @@ Leijen, PLDI 2021). La frase central:
 
 Tres palabras pesan ahí:
 
-- **After type checking.** El análisis se hace sobre el
-  programa ya tipado, no sobre el AST crudo. Esto da
+- **After type checking.** El análisis trabaja sobre el
+  programa ya tipado, no sobre el AST crudo, y eso le da
   información suficiente para razonar sobre forma y unicidad.
 - **Precise last-use.** Para cada variable, el compilador
   identifica el lugar exacto donde se usa por última vez.
@@ -39,8 +37,6 @@ Tres palabras pesan ahí:
 - **Reuse.** Es el truco que vuelve a Perceus competitivo con
   GC: cuando un valor se va a liberar y un valor del mismo
   shape se va a crear, el compilador reusa la misma memoria.
-
-Vamos por partes.
 
 ## B.2 Análisis paso a paso: dónde van los drops
 
@@ -80,21 +76,20 @@ una referencia (haciendo su propio drop al final). El segundo
 uso, `list.sum(xs)`, ya no necesita `dup`: es el último uso, y
 la referencia que ya tenía la función se transfiere.
 
-`list.sum` y `list.length` por dentro hacen lo mismo: cada vez
+Por dentro, `list.sum` y `list.length` hacen lo mismo: cada vez
 que recorren la cola de la lista, deciden si están en el último
-uso. Si lo están, no duplican. Si no, sí.
+uso. Si lo están, no duplican; si no, sí.
 
-El programa final tiene **el mínimo número de operaciones
-posibles** sobre los contadores. Esa minimización es el corazón
-del paper.
+El programa final tiene **el mínimo número posible de
+operaciones** sobre los contadores. Esa minimización es el
+corazón del paper.
 
 ## B.3 Reuse in place
 
-La parte más interesante de Perceus es el **reuse in place**.
-Cuando una función va a liberar un valor de cierto shape y
-crear inmediatamente otro del mismo shape, el compilador
-reutiliza el mismo bloque de memoria. No se libera, no se
-asigna: se sobreescribe.
+Lo más interesante de Perceus es el **reuse in place**. Cuando
+una función va a liberar un valor de cierto shape y crear de
+inmediato otro del mismo shape, el compilador reutiliza el
+bloque de memoria: en vez de liberar y asignar, sobreescribe.
 
 El ejemplo canónico es el `map` sobre listas:
 
@@ -117,12 +112,11 @@ Con reuse:
 1. Reescribir el cons existente con el nuevo head.
 
 Mismo cons, misma posición en memoria, mismo costo que una
-mutación. Pero **el resultado del programa es idéntico**: la
-función sigue siendo pura desde el punto de vista del
-programador.
+mutación, y **el resultado del programa es idéntico**: para ti,
+la función sigue siendo pura.
 
-Las condiciones para reuse in place son tres, todas verificables
-en tiempo de compilación:
+Las condiciones para reuse in place son tres, todas
+verificables en compilación:
 
 1. **El receptor es de uso único** (RC == 1).
 2. **El valor nuevo tiene el mismo shape**: mismo tag, mismos
@@ -130,23 +124,21 @@ en tiempo de compilación:
 3. **No hay aliasing en vivo en otra parte**: nadie más tiene un
    puntero al cons original.
 
-Cuando las tres se cumplen, el compilador emite código que es
-indistinguible de una mutación destructiva. Pero conceptualmente
-sigue siendo inmutable: si el programa cambiara y aparecieran
-dos referencias al cons, el reuse se desactivaría
-automáticamente y caería al patrón "liberar + asignar". El
-programador no nota.
+Cuando las tres se cumplen, el compilador emite código
+indistinguible de una mutación destructiva, pero el valor sigue
+siendo inmutable: si el programa cambiara y aparecieran dos
+referencias al cons, el reuse se desactivaría solo y caería al
+patrón "liberar + asignar". Tú no lo notas.
 
-Esta optimización es lo que hace que algoritmos como `map`,
-`filter`, AVL trees, parseo de listas, sean **tan rápidos como
-las versiones con mutación** en lenguajes imperativos. Es la
-razón por la que Koka y Lean 4 (que también usan Perceus)
-pueden compilar competitivo con C.
+Esta optimización vuelve a `map`, `filter`, los árboles AVL o
+el parseo de listas **tan rápidos como las versiones con
+mutación** de los lenguajes imperativos. Por eso Koka y Lean 4,
+que también usan Perceus, compilan a código competitivo con C.
 
 ## B.4 Comparación con `Rc<RefCell<T>>` de Rust
 
-Si vienes de Rust, te suena familiar: hay RC en Rust también
-(`Rc<T>`, `Arc<T>`). ¿En qué se diferencia Perceus?
+Si vienes de Rust, esto te suena: Rust también tiene RC
+(`Rc<T>`, `Arc<T>`). La diferencia con Perceus:
 
 | Aspecto | Rust `Rc<T>` | Perceus en kaikai |
 |---|---|---|
@@ -163,24 +155,22 @@ valor tiene un solo uso. En kaikai, **si el valor tiene un solo
 uso, no se emite RC**. El compilador inserta los `dup`s solo
 donde hacen falta, después del análisis de last-use.
 
-Eso significa que un programa kaikai funcional puro, donde nada
-se comparte de verdad entre varias variables, tiene cero
-overhead de RC. Las listas, los records, los closures, todos se
-liberan al instante en su último uso sin pasar por un contador.
-El RC solo aparece cuando el programa de verdad necesita
-compartir.
+Un programa kaikai funcional puro, donde nada se comparte de
+verdad entre varias variables, tiene cero overhead de RC: listas,
+records y closures se liberan en su último uso sin pasar por un
+contador. El RC aparece solo cuando el programa de verdad
+comparte.
 
 ## B.5 Y los ciclos, ¿qué?
 
 La crítica clásica al RC es que **no maneja ciclos**: si dos
 valores se referencian mutuamente y nadie más los referencia,
-ninguno baja a 0 nunca, y leakan. Es por eso que Python tiene un
-"cycle collector" arriba de su RC, y Rust te obliga a usar `Weak`
-manualmente.
+ninguno baja nunca a 0 y la memoria se fuga. Por eso Python tiene un
+"cycle collector" sobre su RC, y Rust te obliga a usar `Weak` a
+mano.
 
-¿Por qué Perceus no necesita ninguno de los dos?
-
-**Porque los valores en kaikai son inmutables.**
+Perceus no necesita ninguno de los dos **porque los valores en
+kaikai son inmutables**.
 
 Para crear un ciclo necesitas mutación: A apunta a B, después
 modificas B para que apunte a A. Sin mutación, no puedes
@@ -195,36 +185,35 @@ Todos ellos tienen disciplinas específicas que evitan ciclos
 (las mailboxes, por ejemplo, viven en un actor específico y el
 GC del runtime las maneja).
 
-En la práctica: un programa kaikai típico no construye ciclos.
-Las estructuras de datos son árboles (listas, AVL, JSON, ASTs).
-Cuando un programador quiere algo con ciclos (un grafo, un cache
-con LRU), recurre a estructuras explícitas que codifican la
-adjacencia sin punteros directos: índices en un array,
-identificadores en un mapa. Es más trabajo, pero el costo
-intelectual queda visible donde corresponde.
+En la práctica, un programa kaikai típico no construye ciclos:
+sus estructuras son árboles (listas, AVL, JSON, ASTs). Si
+necesitas algo con ciclos (un grafo, un cache con LRU), usas
+estructuras explícitas que codifican la adyacencia sin punteros
+directos: índices en un arreglo, identificadores en un mapa. Es
+más trabajo, pero el costo intelectual queda visible donde
+corresponde.
 
 ## B.6 Por qué la separación por fibra simplifica el RC
 
-El cap. 13 menciona que cada fibra tiene su propio heap. Esto
-no es solo aislación de errores: **es lo que hace que Perceus
-sea libre de locks**.
+El cap. 13 menciona que cada fibra tiene su propio heap. Además
+de aislar errores, **eso deja a Perceus libre de locks**.
 
 Si dos fibras compartieran punteros al mismo valor, los
 incrementos y decrementos del contador tendrían que ser
-**atómicos**. Atómico significa que la CPU emite una barrera de
-memoria, sincroniza con otros núcleos, suma overhead. En
-programas de muchas fibras, ese overhead es enorme.
+**atómicos**: la CPU emite una barrera de memoria y sincroniza
+con otros núcleos. En programas de muchas fibras, ese overhead
+es enorme.
 
 Cuando cada fibra tiene su propio heap, los contadores son
 locales. **No hay sincronización**. Un `dup` es un `++` sobre un
 entero, sin barreras. Un `drop` es un `--`, idem.
 
-Esto es por qué el modelo de fibras de kaikai y Perceus se
-diseñan juntos: cada uno habilita al otro. Las fibras aisladas
+Por eso el modelo de fibras de kaikai y Perceus se diseñan
+juntos: cada uno habilita al otro. Las fibras aisladas
 permiten RC sin sincronización; el RC eficiente permite
 millones de fibras sin un GC detrás.
 
-Cuando dos fibras necesitan compartir un valor, lo hacen via
+Cuando dos fibras necesitan compartir un valor, lo hacen vía
 una operación explícita (`send` a un mailbox, devolver de un
 `await`). El runtime copia el valor (o lo mueve si es seguro) al
 heap de la fibra receptora. La transferencia es explícita en el
@@ -232,9 +221,9 @@ programa, y por eso predecible.
 
 ## B.7 Lo que cuesta y lo que se gana
 
-Perceus tiene costos. Vale enumerarlos:
+Perceus tiene costos:
 
-- **El análisis estático es trabajo del compilador.** Más
+- **El análisis estático es trabajo del compilador**, más
   lento que tipos crudos. En kaikai, el análisis está integrado
   con la inferencia y se ejecuta en milisegundos para programas
   típicos.
@@ -261,7 +250,7 @@ Lo que se gana:
 
 ## B.8 Para seguir
 
-Si este apéndice te dejó con ganas de más, las fuentes:
+Las fuentes, si quieres más:
 
 - **Reinking, Xie, de Moura, Leijen. "Perceus: Garbage Free
   Reference Counting with Reuse"**. PLDI 2021. El paper.
@@ -276,6 +265,6 @@ Si este apéndice te dejó con ganas de más, las fuentes:
   también usa Perceus, con un enfoque más cercano a
   certificación formal.
 
-En el código de kaikai, el lugar donde vive el análisis es
-`stage2/perceus.kai`. Si quieres ver cómo se implementa, ese es
-el punto de partida.
+En el código de kaikai, el análisis vive en
+`stage2/perceus.kai`. Si quieres ver cómo se implementa,
+empieza ahí.

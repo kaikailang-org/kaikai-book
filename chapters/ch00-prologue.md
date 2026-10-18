@@ -7,8 +7,7 @@
 
 This book borrows that image from Rapa Nui culture.
 
-The word *effective* in this book's title carries two
-explanations. The first: the language implements effects, a
+The word *effective* in the title has two explanations. The first: the language implements effects, a
 style of programming that has so far lived in experimental
 and research languages. kaikai wants to take it mainstream.
 
@@ -89,10 +88,9 @@ original, is in this book: I'll let you find it for yourself.
 What I do want to say here has to do with a central fact in
 kaikai's making: the use of AI.
 
-The compiler this book describes was built in a month. The
-way Ogú was built in 60 hours, kaikai was built with the help
-of Claude Code in roughly a month. Something that could have
-taken years.
+The way Ogú was built in 60 hours, the compiler this book
+describes was built with the help of Claude Code in roughly a
+month. Something that could have taken years.
 
 My reasoning was this: the AI has read and understood, better
 than I have, every paper on algebraic effects, functional
@@ -103,13 +101,13 @@ I acted as the architect — much of the design already existed
 in my head — and the AI helped me put that design on disk.
 
 Along the way I invented a method for working with AI in
-language development at record speed. I documented it under the
-name ELP: *Empirical Lane Parallelism*. This way of using
-agents to amplify your development process and build robust
-software in little time lives in
-[github.com/lnds/elp](https://github.com/lnds/elp). I invite
-you to read it if you want to understand how a compiler as
-involved as kaikai's could come together in a single month.
+language development at record speed, and called it ELP:
+*Empirical Lane Parallelism*. It uses agents to amplify your
+development process and build robust software in little time,
+and it's documented at
+[github.com/lnds/elp](https://github.com/lnds/elp). Read it if
+you want to understand how a compiler as involved as kaikai's
+could come together in a single month.
 
 ## A note on how this book was written
 
@@ -122,9 +120,9 @@ edited again. We validated the examples against the compiler.
 We checked technical claims against the language documentation.
 We calibrated the book's voice against my blog.
 
-I'm saying this to acknowledge the reality software engineers
-face in 2026, not to apologize for it. The AI wrote parts of
-it, but every decision was mine. In *The End of
+I'm saying this because it's the reality software engineers
+face in 2026. The AI wrote parts of it, but every decision was
+mine. In *The End of
 Artisanal Software* I wrote that Jacquard looms are already
 among us and that the question is not whether we'll use them
 but how. This book is one concrete answer to that question:
@@ -142,7 +140,7 @@ and reports are welcome as issues or pull requests.
 ## Conventions
 
 A few paragraphs on how the book is organized and how to read
-it. None of this is hard, but knowing it upfront saves friction.
+it. Knowing this upfront saves friction.
 
 ### Structure
 
@@ -198,10 +196,10 @@ chapter's weight.
 
 ### Code
 
-Every block tagged `kai` is runnable. Copy it into a `.kai`
-file, compile with `kai run`, and you'll get the output the
-text promises. If a block carries *no* language tag, it's a
-terminal session: what comes after the `$` is what you type,
+Every block tagged `kai` is runnable: copy it into a `.kai`
+file, compile with `kai run`, and you get the output the text
+promises. A block with *no* language tag is a terminal
+session: what comes after the `$` is what you type,
 what comes below is the output.
 
 ```
@@ -229,23 +227,23 @@ without italics.
 
 ### Language editions
 
-The book is published in two editions: Spanish and English.
-Both live in the same repository, in parallel trees. This is
-the English edition. The Spanish edition is not a translation:
-the two were written in parallel, with the same structure and
-the same examples, each in its own native voice.
+The book is published in two editions, Spanish and English,
+which live in the same repository in parallel trees. This is
+the English edition. The two were written in parallel, with
+the same structure and the same examples, each in its own
+native voice.
 
 ### Living software
 
-The compiler, the stdlib and this book are evolving. Versions
-move, examples occasionally stop compiling between releases,
-appendices fall out of date. If you find a discrepancy between
+The compiler, the stdlib and this book are evolving. Between
+releases an example occasionally stops compiling or an appendix
+falls out of date. If you find a discrepancy between
 the book and the compiler you have installed, please file an
 issue against the
 [book's repo](https://github.com/kaikailang-org/kaikai-book/issues).
-The book records up front the compiler version each edition
-was validated against. This edition is validated against
-**kaikai 0.164.0**, the language's Hanga Roa edition.
+Each edition records up front the compiler version it was
+validated against; this one, **kaikai 0.164.0**, the language's
+Hanga Roa edition.
 
 ## Who should read this book
 
@@ -253,9 +251,7 @@ Programmers with experience in some language — Python,
 JavaScript, Go, Java, C#, Rust, anything — who are curious
 about a new one. I don't assume a functional background: if
 you've never touched Haskell, OCaml or Elixir, the introductory
-chapters carry you through. If you come from the functional
-world, you can skip to Part III and read what's distinctive
-about kaikai head-on.
+chapters carry you through.
 
 This is not a book for absolute beginners. I assume you know
 what a function is, what a list is, what a type is, what a

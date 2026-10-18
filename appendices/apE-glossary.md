@@ -5,9 +5,9 @@ are short and point to the chapter where the term appears.
 
 ## A
 
-**Actor.** A fiber with a typed mailbox on top. Processes
-messages it receives in order, keeps internal state between
-messages. In kaikai, actors are a library built on the
+**Actor.** A fiber with a typed mailbox on top. It processes
+incoming messages in order and keeps internal state between
+them. In kaikai, actors are a library built on the
 `Actor[Msg]` effect.
 
 **Algebraic effect.** An effect in the sense of chapter 12:
@@ -285,7 +285,7 @@ nothing. Written with `lazy` before a list literal, and inside
 construct lives. Compiler messages use spans to point to
 where an error occurred.
 
-**Spawn.** Create a new fiber or actor. Operation of the
+**Spawn.** Create a new fiber or actor; an operation of the
 `Spawn` effect.
 
 **Stage 0/1/2.** The three compilers that make up kaikai's
@@ -343,7 +343,6 @@ Syntactic sugar over `State[T]`. Chapter 12 §12.7.
 
 ## Y
 
-**Yield.** The act of a fiber handing control back to the
-scheduler so another fiber can run. `fiber_yield()` does
-it explicitly; IO operations and `Spawn.await` do it
+**Yield.** A fiber hands control back to the scheduler so
+another fiber can run. `fiber_yield()` does it explicitly; IO operations and `Spawn.await` do it
 implicitly.

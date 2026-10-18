@@ -3,16 +3,15 @@
 Términos que el libro usa con un significado específico, con
 su equivalencia en inglés cuando corresponde. Los términos en
 inglés están así a propósito: son los nombres que usan la
-documentación del lenguaje y la comunidad de los lenguajes
-funcionales, y traducirlos confunde más que ayuda. El glosario
-los nombra para que el lector que entra desde otro lenguaje
-encuentre rápido a qué se refieren.
+documentación del lenguaje y la comunidad funcional, y
+traducirlos confunde más que ayuda. Si llegas desde otro
+lenguaje, aquí encuentras rápido a qué se refieren.
 
 ## A
 
-**Actor.** Una fibra con un mailbox tipado encima. Procesa
-mensajes que recibe en orden, mantiene estado interno entre
-mensajes. En kaikai, los actores son una biblioteca construida
+**Actor.** Una fibra con un mailbox tipado encima. Procesa en
+orden los mensajes que recibe y mantiene estado interno entre
+ellos. En kaikai, los actores son una biblioteca construida
 sobre el efecto `Actor[Msg]`.
 
 **Algebraic effect** *(efecto algebraico)*. Un efecto en el
@@ -54,8 +53,8 @@ de medida.
 
 ## C
 
-**Cancellation** *(cancelación)*. El acto de pedirle a una
-fibra que termine antes de tiempo. En kaikai es un efecto:
+**Cancellation** *(cancelación)*. Pedirle a una fibra que
+termine antes de tiempo. En kaikai es un efecto:
 `Cancel.raise()`. La fibra puede instalar un handler para
 hacer limpieza antes de desenrollarse.
 
@@ -289,7 +288,7 @@ tener fin. Cap. 6 §6.4.
 una construcción. Los mensajes del compilador usan spans para
 señalar dónde ocurrió un error.
 
-**Spawn.** Crear una fibra o un actor nuevo. Operación del
+**Spawn.** Crear una fibra o un actor nuevo; operación del
 efecto `Spawn`.
 
 **Stage 0/1/2.** Los tres compiladores que forman el
@@ -349,7 +348,7 @@ Es azúcar sobre `State[T]`. Cap. 12 §12.7.
 
 ## Y
 
-**Yield** *(ceder)*. El acto en que una fibra le pasa el
-control al scheduler para que otra fibra pueda correr.
+**Yield** *(ceder)*. Una fibra le pasa el control al
+scheduler para que otra fibra pueda correr.
 `fiber_yield()` lo hace explícitamente; las operaciones de IO
 y `Spawn.await` lo hacen implícitamente.

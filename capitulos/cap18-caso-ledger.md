@@ -1,32 +1,28 @@
 # Capítulo 18 · Caso de estudio: ledger contable
 
-El capítulo 17 mostró un servidor HTTP: muchos clientes, una
-fibra por conexión, actores para encapsular estado. Es la
-familia de problemas donde lo que pesa es la concurrencia.
+En el capítulo 17 construiste un servidor HTTP: muchos
+clientes, una fibra por conexión, actores para encapsular
+estado. Ahí lo que pesa es la concurrencia.
 
-Este capítulo cierra el libro con un caso muy distinto: **un
-libro mayor contable**, donde lo que pesa es la precisión y no
-la concurrencia. Un débito que no calza con su crédito es un
-bug que tu auditor va a encontrar antes que tú, y aquí
-"funciona y pasa los tests" no alcanza: hay que poder mostrar
-**por qué** funciona. Lo elegí porque es donde un error de tipos
-deja de ser una molestia y se convierte en plata. El sistema de
-tipos tiene mucho que decir al respecto.
+Este capítulo cierra el libro con **un libro mayor contable**,
+donde lo que pesa es la precisión. Un débito que no calza con
+su crédito es un bug que tu auditor va a encontrar antes que
+tú, y "funciona y pasa los tests" no alcanza: tienes que poder
+mostrar **por qué** funciona. Lo elegí porque es donde un error
+de tipos deja de ser una molestia y se convierte en plata.
 
-Por qué fintech merece su propio capítulo: es uno de los
-dominios donde más caro sale equivocarse y donde más rinde
-tener garantías en el tipo. Mezclar USD con EUR cuesta plata;
-también sumar débitos con créditos, o permitir un retiro
-sin verificar saldo. Las herramientas del
-lenguaje (unidades de medida, contratos, branding) están
-hechas para que estas equivocaciones no compilen, no para que
-las descubras en producción.
+Fintech es uno de los dominios donde más caro sale equivocarse
+y donde más rinde tener garantías en el tipo. Mezclar USD con
+EUR cuesta plata; también sumar débitos con créditos, o
+permitir un retiro sin verificar saldo. Las unidades de
+medida, los contratos y el branding existen para que esas
+equivocaciones no compilen, no para que las descubras en
+producción.
 
-El programa: un ledger de doble entrada que mantiene cuentas
-con saldo, registra transacciones (cada una con débitos y
-créditos), valida que las transacciones cuadren, y persiste
-un log de auditoría inmutable. Tamaño: unas 280 líneas en cinco
-módulos.
+El programa es un ledger de doble entrada: mantiene cuentas
+con saldo, registra transacciones con débitos y créditos,
+valida que cuadren y persiste un log de auditoría inmutable.
+Son unas 280 líneas en cinco módulos.
 
 ## 18.1 La forma del programa
 
@@ -42,25 +38,24 @@ ledger/
 └── persistencia.kai     # actor que escribe el log de auditoría
 ```
 
-La estructura es deliberadamente similar al cap. 17. Lo que
-cambia es el énfasis:
+La estructura es deliberadamente similar a la del cap. 17;
+cambia el énfasis:
 
 - **`dominio.kai`** es más rico que el del cap. 17. Aparecen
   unidades de medida (`Real<USD>`), branded types
   (`Int<CuentaId>`, `Int<TransaccionId>`), y un sum type
   `Movimiento` que distingue débitos de créditos.
-- **`cuadre.kai`** es nuevo. Es un módulo dedicado a una
-  invariante: la suma de débitos en una transacción debe
-  igualar la suma de créditos. Aparece como función pura
-  testeable Y como **contrato** (`requires`) sobre la
-  operación de registrar.
+- **`cuadre.kai`** es nuevo, dedicado a una invariante: la
+  suma de débitos en una transacción debe igualar la suma de
+  créditos. Aparece como función pura testeable Y como
+  **contrato** (`requires`) sobre la operación de registrar.
 - **`almacen.kai`** es el actor de siempre, pero ahora valida
   cuadre antes de aceptar una transacción y mantiene saldos
   por cuenta. Las transacciones son **inmutables**: solo se
   agregan, nunca se modifican.
-- **`persistencia.kai`** es el log de auditoría. Idea conceptual
-  fuerte: en contabilidad, lo escrito queda. El archivo es
-  evidencia legal.
+- **`persistencia.kai`** es el log de auditoría. En
+  contabilidad, lo escrito queda: el archivo es evidencia
+  legal.
 
 ## 18.2 El dominio: unidades, branding, tipos algebraicos
 
@@ -92,47 +87,45 @@ pub type Transaccion = {
 }
 ```
 
-Tres decisiones del sistema de tipos vale enumerar:
+Tres decisiones del sistema de tipos:
 
-- **`Real<USD>` en vez de `Real`.** El cap. 10 cubrió las
-  unidades de medida. En este dominio importan especialmente:
-  un programa contable que mezcla USD con EUR sin convertir
-  produce números que parecen correctos pero no significan
-  nada. Con UoM, esa mezcla no compila. Para extender el
-  programa a múltiples monedas, declaras `unit EUR`, defines
-  una tasa de cambio como `Real<USD / EUR>`, y el sistema de
-  tipos te lleva de la mano. Sin UoM, lo descubres cuando un
-  cliente reclama. (El stdlib trae además `money`, con
+- **`Real<USD>` en vez de `Real`.** Las unidades de medida del
+  cap. 10 importan especialmente aquí: un programa contable
+  que mezcla USD con EUR sin convertir produce números que
+  parecen correctos pero no significan nada. Con UoM, esa
+  mezcla no compila. Para extender el programa a múltiples
+  monedas, declaras `unit EUR`, defines una tasa de cambio como
+  `Real<USD / EUR>` y el sistema de tipos te lleva de la mano.
+  Sin UoM, lo descubres cuando un cliente reclama. (El stdlib trae además `money`, con
   `Money[c: Currency]` sobre `Decimal` y las monedas ISO
   declaradas; el capítulo 19 lo cubre. Aquí seguimos con
   `Real<USD>` porque el punto es la técnica de UoM.)
-- **`Int<CuentaId>` vs `Int<TransaccionId>`.** El cap. 10
-  cubrió también los branded types. Tener `Int` puro como id
-  significa que pasar un id de transacción donde se espera un
-  id de cuenta compila igual y revienta en runtime (o peor,
-  sin avisar produce un resultado equivocado). Con
-  branding, el sistema de tipos te lo dice antes.
+- **`Int<CuentaId>` vs `Int<TransaccionId>`.** Branded types,
+  también del cap. 10. Con `Int` puro como id, pasar un id de
+  transacción donde se espera uno de cuenta compila igual y
+  revienta en runtime (o peor, produce sin avisar un resultado
+  equivocado). Con branding, el sistema de tipos te lo dice
+  antes.
 - **`Movimiento` como sum type.** Un débito y un crédito
   tienen los mismos campos físicos (cuenta + monto), pero
-  significan cosas distintas. Modelarlos como dos
-  constructores del mismo sum type tiene dos efectos: el
-  pattern match exhaustivo asegura que cualquier operación
-  los trate explícitamente, y el sistema de tipos no nos deja
-  sumar "monto de débito" con "monto de crédito" sin que
-  pasemos por una conversión clara.
+  significan cosas distintas. Como dos constructores del
+  mismo sum type, el pattern match exhaustivo obliga a toda
+  operación a tratarlos explícitamente, y el sistema de tipos
+  no te deja sumar "monto de débito" con "monto de crédito"
+  sin pasar por una conversión clara.
 
-Compárese con la versión sin tipos ricos: un record `{
+Compara con la versión sin tipos ricos: un record `{
 cuenta: Int, monto: Real, tipo: String }` donde `tipo` es
-`"debito"` o `"credito"`. Funciona, pero el `tipo: String`
-permite `"DEBITO"`, `"CR"`, `""`, todas inválidas. Cada
+`"debito"` o `"credito"`. Funciona, pero `tipo: String`
+permite `"DEBITO"`, `"CR"`, `""`, todas inválidas, y cada
 función que toca movimientos tiene que validarlo. Con el sum
 type, el inválido **no se puede construir**.
 
 ## 18.3 La invariante central: cuadre
 
-El módulo `cuadre.kai` es chico pero importante. Define la
-invariante del ledger de doble entrada: en cada transacción,
-la suma de los débitos debe igualar la suma de los créditos.
+El módulo `cuadre.kai` es chico y define la invariante del
+ledger de doble entrada: en cada transacción, la suma de los
+débitos debe igualar la suma de los créditos.
 
 ```kai
 fn debito(m: dominio.Movimiento) : [Real<USD>] = match m {
@@ -149,8 +142,8 @@ pub fn cuadra(ms: [dominio.Movimiento]) : Bool =
   total_debitos(ms) == total_creditos(ms)
 ```
 
-Son funciones puras que definen una sola invariante
-booleana. Los tests verifican el contrato pieza por pieza:
+Funciones puras para una sola invariante booleana. Los tests
+verifican el contrato pieza por pieza:
 
 ```kai
 test "cuadra con una entrada y una salida" {
@@ -165,11 +158,11 @@ test "no cuadra cuando los montos difieren" { ... }
 test "cuadra con múltiples líneas" { ... }
 ```
 
-No hay actores, ni IO, ni sockets: pura lógica. Si en seis
-meses cambiamos cómo se representan los movimientos, estos
-tests aseguran que la invariante sigue cumpliéndose.
+Sin actores, IO ni sockets: pura lógica. Si en seis meses
+cambias cómo se representan los movimientos, estos tests
+aseguran que la invariante se sigue cumpliendo.
 
-Y aquí es donde el cap. 11 rinde: declaramos también una
+Aquí rinde el cap. 11: el módulo declara también una
 **versión con contrato**:
 
 ```kai
@@ -183,15 +176,13 @@ pub fn aplicar_si_cuadra(ms: [dominio.Movimiento]) : [dominio.Movimiento]
 un grupo de movimientos que no cuadran es un error**. Si el
 compilador puede probarlo estáticamente, rechaza la llamada
 en compile time; si no, inserta un assert en runtime. El
-`ensures cuadra(result)` declara que **el resultado de la
-función también cuadra** (trivial aquí: devuelve la misma
-lista). Esos dos contratos juntos forman la firma legal de la
-función: las precondiciones que exige y la postcondición que
+`ensures cuadra(result)` declara que **el resultado también
+cuadra** (trivial aquí: devuelve la misma lista). Juntos
+forman la firma legal de la función: lo que exige y lo que
 garantiza.
 
-En un sistema contable real, este patrón se replica: cada
-operación que toca movimientos lleva en su firma los
-contratos del dominio.
+En un sistema contable real, cada operación que toca
+movimientos lleva en su firma los contratos del dominio.
 
 ## 18.4 El almacén: actor con invariantes
 
@@ -207,10 +198,9 @@ type Estado = {
 }
 ```
 
-La función `procesar` toma un comando y el estado, devuelve
-una respuesta y el estado nuevo. Lo importante: **toda
-transacción pasa por validación de cuadre antes de
-registrarse**.
+La función `procesar` toma un comando y el estado, y devuelve
+una respuesta y el estado nuevo. **Toda transacción pasa por
+validación de cuadre antes de registrarse**.
 
 ```kai
 Registrar(desc, movs) ->
@@ -235,38 +225,37 @@ Dos validaciones antes de aceptar:
 2. **Cuentas existentes**: todas las cuentas mencionadas en
    los movimientos están registradas.
 
-Si una falla, devolvemos un error sin modificar el estado.
-Eso es **transacción atómica**: o se aplica completa, o no se
-aplica nada. No hay "media transacción registrada con cuadre
-roto".
+Si una falla, `procesar` devuelve un error sin tocar el
+estado. Es una **transacción atómica**: se aplica completa o
+no se aplica. No existe "media transacción registrada con
+cuadre roto".
 
-Las transacciones **se acumulan, nunca se modifican**. La
-lista crece. Eso es deliberado: el ledger es por diseño un
-historial inmutable. Borrar una transacción del pasado no
-existe; corregir errores es escribir una **nueva** transacción
-inversa, que también queda en el historial.
+Las transacciones **se acumulan, nunca se modifican**. Es
+deliberado: el ledger es por diseño un historial inmutable.
+Borrar una transacción del pasado no existe; corregir un error
+es escribir una **nueva** transacción inversa, que también
+queda en el historial.
 
 Esa inmutabilidad sale gratis en kaikai. Las listas son
 inmutables por construcción; agregar un elemento crea una
-lista nueva. No hay "modificación destructiva" disponible
-para el bucle del actor a menos que se quisiera, con `var` o
-`Array[T]`. Y como el actor recursa con el estado nuevo, cada
-"versión" del ledger sobrevive intacta hasta el próximo paso.
+lista nueva. El bucle del actor no tiene "modificación
+destructiva" a mano salvo que la pidas con `var` o `Array[T]`.
+Y como el actor recursa con el estado nuevo, cada "versión"
+del ledger sobrevive intacta hasta el próximo paso.
 
 ## 18.5 El log de auditoría
 
-El módulo `persistencia.kai` es prácticamente idéntico al del
-cap. 17: un actor que recibe líneas de log y las agrega al
-archivo. La diferencia conceptual: para un sistema contable,
-**el archivo es la verdad**.
+El módulo `persistencia.kai` es casi idéntico al del cap. 17:
+un actor que recibe líneas de log y las agrega al archivo. La
+diferencia está en el dominio: para un sistema contable, **el
+archivo es la verdad**.
 
-En contabilidad real, los registros de transacciones son
-**append-only**: una vez escrito un asiento, queda. Las
-correcciones se hacen agregando nuevos asientos inversos, no
-modificando los originales. Esto es regulatorio (los
-auditores lo exigen) pero también arquitectónico: un sistema
-event-sourced que persiste todos los eventos permite
-reconstruir cualquier estado intermedio.
+En contabilidad real, los registros son **append-only**: un
+asiento escrito queda, y las correcciones se hacen con
+asientos inversos nuevos. Los auditores lo exigen, y además
+tiene una razón arquitectónica: un sistema event-sourced que
+persiste todos los eventos permite reconstruir cualquier
+estado intermedio.
 
 ```kai
 pub type Evento = Linea(String)
@@ -281,23 +270,20 @@ pub fn persistencia_loop(path: String) : Unit / Actor[Evento] + File {
 }
 ```
 
-Cada evento que el almacén produce (cuenta creada, transacción
-registrada) se manda al log via `Actor.send`. El log lo
-escribe en orden estricto FIFO. Si la escritura a disco se
-atrasa, los eventos se acumulan en el mailbox; el almacén
-sigue respondiendo.
+Cada evento del almacén (cuenta creada, transacción
+registrada) va al log vía `Actor.send`, que lo escribe en
+orden FIFO estricto. Si el disco se atrasa, los eventos se
+acumulan en el mailbox y el almacén sigue respondiendo.
 
-Una mejora para producción que dejamos como ejercicio: en vez
-de strings, persistir un formato estructurado (JSON, CBOR,
-TLV) que se pueda volver a leer al arrancar el sistema y
-reconstruir el estado. Esto es **event sourcing** y kaikai lo
-permite naturalmente.
+Queda como ejercicio una mejora para producción: persistir un
+formato estructurado (JSON, CBOR, TLV) en vez de strings, para
+releerlo al arrancar y reconstruir el estado. Eso es **event
+sourcing**, y kaikai lo permite naturalmente.
 
 ## 18.6 El main: ejecutar un escenario
 
-`main.kai` no abre un socket esta vez: simplemente ejecuta
-una secuencia de operaciones para mostrar el sistema en
-acción.
+`main.kai` no abre un socket esta vez: ejecuta una secuencia
+de operaciones para mostrar el sistema en acción.
 
 ```kai
 fn main() : Int / Stdout + File + Spawn + Cancel {
@@ -349,23 +335,23 @@ fn main() : Int / Stdout + File + Spawn + Cancel {
 ```
 
 `paso` es un helper que llama al almacén, imprime la
-respuesta, y registra el evento en el log de auditoría. Después de
-correr el `main`, el ledger tiene tres cuentas, dos
-transacciones registradas (la venta y el café), una rechazada
-(el intento descuadrado), y los saldos finales reflejan los
-asientos. El archivo `ledger.audit.log` contiene una línea
-por cada cuenta y transacción.
+respuesta y registra el evento en el log de auditoría. Al
+terminar `main`, el ledger tiene tres cuentas, dos
+transacciones registradas (la venta y el café) y una
+rechazada (el intento descuadrado); los saldos finales
+reflejan los asientos. El archivo `ledger.audit.log` tiene
+una línea por cada cuenta y transacción.
 
 ## 18.7 Lo que hace este caso distinto del cap. 17
 
-El patrón general es el mismo; lo que cambia es el énfasis. Lo
-que aparece en este capítulo y no aparecía en el anterior:
+El patrón general es el mismo; cambia el énfasis. Lo nuevo
+en este capítulo:
 
 - **Unidades de medida.** `Real<USD>` en cada monto. El sistema
   de tipos rechaza mezclar monedas sin conversión explícita
   (cap. 10).
 - **Branded types.** `Int<CuentaId>` vs `Int<TransaccionId>`.
-  El compilador no nos deja confundirlos (cap. 10).
+  El compilador no te deja confundirlos (cap. 10).
 - **Contratos.** `requires cuadra(ms)` en `aplicar_si_cuadra`.
   La invariante del dominio queda en la firma de la función,
   verificable estática o dinámicamente (cap. 11).
@@ -373,7 +359,7 @@ que aparece en este capítulo y no aparecía en el anterior:
   se modifican, solo se agregan. La estructura del ledger
   garantiza event sourcing.
 
-Lo que aparece igual:
+Lo que se repite:
 
 - **Sum types y match exhaustivo.** `Comando`, `Respuesta`,
   `Movimiento`. El compilador asegura que cada operación
@@ -385,15 +371,14 @@ Lo que aparece igual:
 - **Audit log via actor.** El patrón "un actor encapsula el
   IO costoso" se repite.
 
-Esa **simetría entre los dos casos** es la lección. Cambia el
-dominio (HTTP vs contabilidad), cambia qué herramientas del
-lenguaje pesan más, pero la estructura del programa sigue
-siendo la misma: dominio puro, actores con estado,
+Esa **simetría entre los dos casos** es la lección. Cambian
+el dominio y las herramientas que más pesan, pero la
+estructura sigue igual: dominio puro, actores con estado,
 persistencia separada, módulos por responsabilidad.
 
 ## 18.8 Cómo extenderlo
 
-Ideas para profundizar el ejemplo, en orden de dificultad:
+Ideas para extender el ejemplo, en orden de dificultad:
 
 - **Múltiples monedas.** Declarar `unit EUR`, `unit CLP`,
   cada cuenta tener su moneda como parámetro de tipo. Las
@@ -418,42 +403,39 @@ Ideas para profundizar el ejemplo, en orden de dificultad:
   0.0<USD>` (refinement type del cap. 11), el sistema de
   tipos rechaza cualquier movimiento que la deje en negativo.
 - **Servir por HTTP.** Combinar este programa con el del cap.
-  17: el bucle de accept queda igual, el handler que llamaba
-  al almacén ahora llama al almacén del ledger. La estructura
-  del programa cambia muy poco.
+  17: el bucle de accept queda igual y el handler llama ahora
+  al almacén del ledger. La estructura cambia muy poco.
 
-Cada una vuelve el sistema más cercano a uno de producción.
-Ninguna obliga a reescribir las piezas anteriores. La
-ortogonalidad rinde.
+Cada una acerca el sistema a uno de producción, y ninguna
+obliga a reescribir las piezas anteriores. La ortogonalidad
+rinde.
 
 ## 18.9 Por qué fintech es un buen banco de pruebas
 
 Fintech es uno de los pocos dominios donde la industria
 acepta de buen grado que las herramientas pesen más en el
-proceso de desarrollo. Si una función desembolsa el monto
-equivocado, la empresa prefiere que el compilador lo atrape
-antes que descubrirlo en producción. Si el sistema garantiza
+desarrollo. Si una función desembolsa el monto equivocado, la
+empresa prefiere que lo atrape el compilador y no producción.
+Si el sistema garantiza
 que los débitos cuadran con los créditos, el regulador
 duerme tranquilo. Si los tipos distinguen monedas, el cambio
 del próximo trimestre no introduce un bug sutil.
 
-Lenguajes que ofrecen esas garantías (Haskell, OCaml, F#) han
-tenido buena recepción en fintech histórica. kaikai
-intenta acercar el mismo nivel de garantías con menos
-ceremonia: unidades sin paquetes externos, contratos en la
-firma, branding sin macros. La promesa es que el código se
-puede escribir igual de directo que en Python o Go, con las
-garantías que da el sistema de tipos.
+Haskell, OCaml y F#, que ofrecen esas garantías, han tenido
+buena recepción en fintech. kaikai intenta acercar el mismo
+nivel de garantías con menos ceremonia: unidades sin paquetes
+externos, contratos en la firma, branding sin macros. La
+promesa es escribir tan directo como en Python o Go, con las
+garantías del sistema de tipos.
 
-¿Funciona la promesa? Eso lo decide quien escribe el código.
-Este capítulo intentó mostrar una sección de un dominio
-donde la apuesta vale la pena.
+Si la promesa se cumple lo decide quien escribe el código.
+Este capítulo te mostró un dominio donde la apuesta vale la
+pena.
 
 ## 18.10 Filosofía: el cierre del libro
 
-Hay un patrón que el libro ha venido proponiendo, capítulo a
-capítulo, sin nombrarlo explícitamente hasta ahora. Vale
-nombrarlo al final.
+El libro propone un patrón capítulo a capítulo sin haberlo
+nombrado. Es hora de nombrarlo.
 
 **El programa real está hecho de pequeñas piezas
 ortogonales.** Tipos puros que describen el dominio. Funciones
@@ -472,8 +454,9 @@ distintas, *No Silver Bullet* de Brooks, *Simple Made Easy*
 de Hickey, *Out of the Tar Pit* de Moseley y Marks. Lo que
 kaikai hace es ofrecer una sintaxis y un sistema de tipos
 que **vuelven natural** este estilo. Las firmas que no
-esconden nada salen gratis porque los efectos están en el tipo. Las funciones
-puras son baratas porque la inmutabilidad es por defecto.
+esconden nada salen gratis porque los efectos están en el
+tipo. Las funciones puras son baratas porque la inmutabilidad
+es por defecto.
 Los actores son una biblioteca porque los efectos
 algebraicos lo permiten. Las invariantes del dominio están
 en la firma porque los contratos están en el lenguaje.
@@ -489,7 +472,7 @@ libro cumplió su propósito.
 
 Gracias por leer hasta aquí. El compilador, el stdlib, los
 documentos de diseño y los ejemplos viven en
-`github.com/kaikailang-org/kaikai`. Hay una comunidad emergente, hay
-issues que cerrar, hay piezas del lenguaje que están todavía
-tomando forma. Si encuentras este experimento interesante,
-hay lugar para que ayudes a hacerlo mejor.
+`github.com/kaikailang-org/kaikai`. Hay issues que cerrar y
+piezas del lenguaje que todavía toman forma. Si este
+experimento te interesa, hay lugar para que ayudes a
+mejorarlo.

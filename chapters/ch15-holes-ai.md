@@ -9,12 +9,10 @@ in scope, what expressions could fit. The program keeps
 compiling with holes inside; it only aborts if execution
 reaches one.
 
-Let me be clear about one thing before going on, because the
-chapter title can mislead: holes are useful even if you never
-use an LLM. They let you
-design top-down (write the signature first, fill in the body
-later) and make progress piece by piece without the whole
-file failing to compile. That's the human side.
+The chapter title can mislead: holes are useful even if you
+never use an LLM. They let you design top-down (write the
+signature first, fill in the body later) and make progress
+piece by piece without the whole file failing to compile.
 
 But holes are also the piece around which kaikai is designed
 for **AI agents**. The compiler can emit its report as JSON,
@@ -24,7 +22,7 @@ calls it Tier 3): a new language, without a large training
 corpus, can be writable by an agent if the tooling is
 designed well.
 
-We'll take it in order, humans first.
+Humans first.
 
 ## 15.1 Typed holes: `?` and `?name`
 
@@ -37,32 +35,30 @@ fn circle_area(r: Real) : Real = ?formula
 ```
 
 This compiles. The function `circle_area` exists, has the
-correct signature, and can be called from other parts of the
-program. What happens when execution reaches `?formula` is
-that the program aborts with a clear message:
+correct signature, and you can call it from other parts of
+the program. When execution reaches `?formula`, the program
+aborts with a clear message:
 
 ```
 $ kai run examples/ch15/01_basic_hole.kai
 panic: unfilled hole: ?formula at line 6 col 34
 ```
 
-It isn't a compile-time error but a **deferred promise**:
-you left a gap that you'll fill later, and the system stays
-with you until you do. The panic gives you just enough to find
+A hole is a **deferred promise**: you left a gap that you'll
+fill later, and the system stays with you until you do. The panic gives you just enough to find
 it: the hole's name and its exact location.
 
 The type the compiler inferred doesn't ride in the panic, and
 it's the first thing you'll want. It lives in the structured
-report §15.7 puts to work: `kai build --holes-json` over this
+report you put to work in §15.7: `kai build --holes-json` over this
 same file returns `"expected_type": "Real"` alongside what's in
 scope and a list of candidates. The panic is for when the
 program surprises you at runtime; the report is for when you
 sit down to fill the gap.
 
-The difference between `?` and `?name` is that the name
-helps identify the hole in messages and, more importantly,
-makes **two holes with the same name within the same
-function share a type**:
+The name in `?name` identifies the hole in messages and,
+more importantly, makes **two holes with the same name
+within the same function share a type**:
 
 ```kai
 fn classify(n: Int) : String {
@@ -108,8 +104,8 @@ panic: unfilled hole: ?word at line 8 col 5
 
 ## 15.2 The conversation with the compiler
 
-The point of holes isn't that they abort nicely, it's what the
-compiler tells you about them. For each hole, it emits a
+The point of holes is what the compiler tells you about them,
+more than how nicely they abort. For each hole, it emits a
 **report**:
 
 ```
@@ -145,8 +141,8 @@ Four pieces of information:
   `Real`.
 - **`in scope (local)`**: the local names reachable from the
   hole, with their types. Here just `r : Real`, the parameter.
-  The `(local)` isn't decoration: the report shows you your own
-  names and counts the rest on the last line, because listing the
+  The `(local)` matters: the report shows you your own names
+  and counts the rest on the last line, because listing the
   nearly three hundred things the prelude brings along helps
   nobody. When you want them, `--holes-scope`.
 - **`candidates that fit`**: expressions the compiler can
@@ -154,25 +150,23 @@ Four pieces of information:
   **bounded**: a single function application, with arguments
   taken from what's in scope, and a cap of eight proposals.
 
-Those eight candidates are worth a careful look, because they
-teach something easy to misread: **none of them is the answer**.
-The area of a circle is `3.14 * r * r`, and that's two
-multiplications — two applications — so the search doesn't reach
-it. The candidates aren't an attempt to write your function. They
-are a list of what fits in the gap, which is a different thing and
-useful for a different reason: it tells you what you have on hand,
-and in what shape.
+Those eight candidates teach something easy to misread: **none
+of them is the answer**. The area of a circle is
+`3.14 * r * r`, and that's two multiplications — two
+applications — so the search doesn't reach it. The candidates
+are a list of what fits in the gap: they tell you what you
+have on hand, and in what shape, without trying to write your
+function.
 
-That's the conversation. While the signature is all you know, the
-compiler helps you see what can go inside it.
-
-Like any compiler report, it's cheap to ask for: you run
-`kai build --holes` and read. No guessing required.
+That's the conversation: while the signature is all you know,
+the compiler helps you see what can go inside it. And it's
+cheap to ask for: you run `kai build --holes` and read, no
+guessing required.
 
 ### The effect row filters too
 
-There's a piece a pure example can't show. Candidates are searched
-against the effect row **at the hole's position**, not against the
+A pure example hides one piece: candidates are searched against
+the effect row **at the hole's position**, not against the
 whole program. Two holes that expect the same type and see the same
 names in scope get different lists if their rows differ:
 
@@ -213,11 +207,10 @@ among the ones that fit outright:
     ...
 ```
 
-That "fits if you add" is my favorite part of the report. It
-doesn't just tell you what you can write there: it tells you what
-you could write if you were willing to pay one more effect in the
-signature. The decision stays yours, but now you make it looking
-at the price.
+That "fits if you add" is my favorite part of the report: besides
+what you can write there, it tells you what you could write if you
+were willing to pay one more effect in the signature. The decision
+stays yours, but now you make it looking at the price.
 
 ## 15.3 Top-down design: start from the signature
 
@@ -260,10 +253,10 @@ $ kai run examples/ch15/05_top_down_design.kai
 3 + 4*5 = 23
 ```
 
-The program runs. Evaluation works. Now you'll fill the two
+The program runs and evaluation works. Now you fill the two
 holes one by one: implement `parse` (takes `[Token]`,
 returns `Expr`), then `tokenize` (takes `String`, returns
-`[Token]`). And when you fill the last one, `main` can call
+`[Token]`). Once you fill the last one, `main` can call
 `compute("3 + 4*5")` directly.
 
 Contrast this with two more common ways of working:
@@ -276,14 +269,14 @@ Contrast this with two more common ways of working:
   If not, it's painful.
 
 Top-down with holes is the middle ground: the structure
-exists from the start, the correctness of each piece is
-verified as you fill it.
+exists from the start, and you verify each piece as you
+fill it.
 
 ## 15.4 Partial programs: keep moving with the rest compiling
 
-A consequence of designing with holes is that **you can
-always run what you have**. If a function is complete, you
-can test it without waiting for the whole file:
+With holes, **you can always run what you have**. If a
+function is complete, you test it without waiting for the
+whole file:
 
 ```kai
 fn double(x: Int) : Int = x * 2
@@ -297,9 +290,8 @@ fn main() : Unit / Stdout {
 ```
 
 `double` works and `kai run` prints its result. `average`
-waits to be implemented; as long as we don't call
-`average`, the program doesn't hit the hole and runs
-cleanly.
+waits to be implemented; as long as you don't call it, the
+program doesn't hit the hole and runs cleanly.
 
 This reduces a lot of friction in keeping a program
 "almost compiling" as you develop. Where other languages give
@@ -307,8 +299,7 @@ you a generic stub — `unimplemented()`, `return null` — in
 kaikai the `?` is a primitive of the idiom, and the compiler
 knows what type it has.
 
-One function written and another pending in the same file.
-What's done runs; the hole waits:
+The full file: what's done runs; the hole waits:
 
 ```kai
 # examples/ch15/02_partial_program.kai
@@ -332,7 +323,7 @@ double(5) = 10
 
 ### `todo!` — the other stub, and when to use it
 
-There is a second form, and the two are worth keeping apart:
+There is a second form, not to be confused with `?`:
 
 ```kai
 fn parse(s: String) : Config = todo!("parser still missing")
@@ -387,10 +378,10 @@ fn area(s: Shape) : Real {
 ```
 
 Here the `match` already covers all three constructors;
-what's missing is the expression in the last arm. The
-compiler verifies exhaustiveness (chapter 5 §5.4), tells
-you the `match` is complete, and reports the hole with
-`Real` as expected type and `b`, `h` in scope.
+only the expression in the last arm is missing. The
+compiler verifies exhaustiveness (chapter 5 §5.4), accepts
+the `match` as complete, and reports the hole with `Real`
+as expected type and `b`, `h` in scope.
 
 If you haven't yet decided whether you want `Triangle` in
 the type, you remove it and the compiler tells you `match`
@@ -442,9 +433,9 @@ square 4 -> 16
 
 ## 15.6 The LLM bet: a language designed for agents
 
-Up to here holes are a tool for humans. The most strategic
-part of chapter 15 is that **holes are also the entry point
-for an AI agent to write kaikai**.
+So far you've used holes as a tool for humans. The most
+strategic part of the chapter is that **holes are also the
+entry point for an AI agent to write kaikai**.
 
 The reasoning is simple. An LLM learns a language from the
 **corpus** in its training data. Languages with a lot of
@@ -453,11 +444,11 @@ generate; new languages with little public code are hard.
 If kaikai waited until it had a large corpus, it would
 miss the experiment.
 
-But there's an alternative: design the language so that the
-compiler is what teaches the agent, not the corpus. If when
-the LLM produces incorrect code, the compiler can say
-precisely what's missing and where, the LLM can iterate to
-the correct program in a few steps.
+The alternative is to design the language so that the
+compiler, rather than the corpus, teaches the agent. If the
+compiler says precisely what's missing and where every time
+the LLM produces incorrect code, the LLM can iterate to the
+correct program in a few steps.
 
 The key piece is **structured output**: the compiler emits
 JSON that the agent reads directly, without heuristic
@@ -468,7 +459,7 @@ parsing. Three relevant channels:
 3. **Compiler diagnostics in JSON**: type errors,
    non-exhaustive matches, unhandled effects.
 
-Chapter 5 §5.4 showed how a non-exhaustive match message
+In chapter 5 §5.4 you saw how a non-exhaustive match message
 looks in human form. The JSON version has the same fields
 as data: scrutinee type, list of missing variants, list of
 covered variants, suggestion. An agent can parse it and
@@ -520,7 +511,7 @@ candidates along with the row they're missing; and `doc` holds the
 docstring of the function containing the hole.
 
 For a human this is noisy; for an agent it's exactly what's
-needed. And that precision changes the practical outcome: an agent
+needed. That precision has a practical payoff: an agent
 getting it right on the first try instead of the third is what
 separates a usable tool from one that just gets in the way.
 
@@ -548,8 +539,8 @@ information arrives already structured.
 
 ## 15.9 A workflow with an agent
 
-When a programmer works with an AI agent on kaikai, the
-reasonable flow is this:
+When you work with an AI agent on kaikai, the reasonable
+flow is this:
 
 1. **The human writes the signature and the tests.** Defines
    what the program is expected to do. Puts holes in the
@@ -567,7 +558,7 @@ reasonable flow is this:
 4. **The agent iterates.** Reads the counterexample,
    adjusts, proposes another implementation.
 
-Three things worth noting about this flow:
+Three things about this flow:
 
 - **The human decides the what.** Signature, tests,
   properties are what say what the program should do.
@@ -584,8 +575,8 @@ agent's, and the compiler is what reconciles the two.
 
 ## 15.10 What the language doesn't automate
 
-Holes are a tool for talking to the compiler. They're not a
-tool for talking to the programmer's judgment. There are
+Holes are a tool for talking to the compiler; the
+programmer's judgment lies outside their reach. There are
 things the compiler can't tell you, that no `--holes-json`
 will deliver:
 
@@ -680,8 +671,7 @@ ascending lexicographic order. If both pass, the agent is
 done.
 
 The human never touched the body. The compiler validated
-types and tests. The agent iterated if needed. Each one did
-what it does best.
+types and tests. The agent iterated if needed.
 
 Is it always this clean? No. There are functions where the
 agent fails three times before getting it. There are
@@ -692,10 +682,10 @@ cheap (seconds), and the cost of being wrong is transparent
 
 ## 15.12 Philosophy: three ideas worth remembering
 
-1. **Holes are a primitive for dialogue.** They're not
-   `null` or `unimplemented()`: they're a legal form of
-   expression that compiles, that the compiler understands,
-   and for which it emits structured information. The human
+1. **Holes are a primitive for dialogue.** Unlike `null` or
+   `unimplemented()`, they're a legal form of expression that
+   compiles, that the compiler understands, and for which it
+   emits structured information. The human
    uses them for top-down design; the agent uses them as
    entry point.
 

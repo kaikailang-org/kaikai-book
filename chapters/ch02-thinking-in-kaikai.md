@@ -1,21 +1,19 @@
 # Chapter 2 · Thinking in kaikai
 
-In chapter 1 I showed you the language from above. Before getting
-into the detail of types, functions, and modules, it is worth
-pausing on a handful of habits kaikai asks of you that you
-probably did not bring with you from Python, Java, Go,
-JavaScript, or C#.
+In chapter 1 you saw the language from above. Before getting
+into types, functions, and modules, this chapter goes over a
+handful of habits kaikai asks of you that you probably didn't
+bring from Python, Java, Go, JavaScript, or C#.
 
 This is the shortest chapter in the book, and you can skip it.
 If you have already programmed in Haskell, OCaml, Elixir, or
-Scala, what follows will sound familiar — head to Part II and
-we'll meet you in chapter 3. If you come from an imperative
-background, give it the twenty minutes it asks for. They will
-save you a lot of friction across the next hundred and fifty
-pages.
+Scala, what follows will sound familiar — see you in chapter 3.
+If you come from an imperative background, give it the twenty
+minutes it asks for; they'll save you a lot of friction across
+the next hundred and fifty pages.
 
-We are not going to open up the theory of each idea — that's
-the job of the chapters that follow. What I want here is to name
+You'll find the theory behind each idea in the chapters that
+follow. What I want here is to name
 the habit change, show it, and give you the words to recognize
 it when it shows up.
 
@@ -58,11 +56,11 @@ let s = if x > 0 { "positive" } else { "non-positive" }
 println(s)
 ```
 
-The imperative version forces you to **declare `s` first**, because the `if` cannot return anything; then it
-**assigns to `s` in each branch**. In kaikai, the `if` *is* the
-value, and `s` binds directly to the result. Declaration and
-assignment merge. There is no assignment at all: `s` is bound
-once and never changes.
+The imperative version forces you to **declare `s` first**,
+because the `if` cannot return anything; then it **assigns to
+`s` in each branch**. In kaikai, the `if` *is* the value, and
+`s` binds directly to the result, once: no assignment before,
+none in the branches.
 
 The practical consequences show up quickly:
 
@@ -81,7 +79,7 @@ You see the same with `match`. In most languages with a
 either breaks or falls through, depending on the rules. In
 kaikai, `match` is an expression that returns a value, and each
 arm is the expression that value might be. You saw this in
-chapter 1, in `label` and in `eval`. You will see it
+chapter 1, in `label` and in `eval`, and you'll use it
 constantly.
 
 A related point: the body of a function can take two shapes,
@@ -102,8 +100,8 @@ Use `{ ... }` when there are several steps or visual separation
 helps. The compiler accepts both; the difference is for the
 reader.
 
-A useful consequence of treating everything as an expression is
-that **chained transformations** become comfortable. From the
+Because everything is an expression, **chained
+transformations** become comfortable. From the
 Elixir world, kaikai borrows the pipe operator `|>`:
 
 ```kai
@@ -119,7 +117,7 @@ composed with the next.
 `|>` is the most general of three pipe operators kaikai
 provides for chaining. The other two — `|` (map over lists) and
 `||` (flat-map) — are shortcuts for the cases that appear over
-and over. Chapter 6 covers the three in detail.
+and over. You study them in depth in chapter 6.
 
 ## 2.2 Immutability by default
 
@@ -131,14 +129,13 @@ in kaikai that means one of two things:
   right move is to bind another name, or to redefine `x` in a
   nested scope.
 - You actually need *visible* mutation. That's a real but small
-  case, and kaikai gives it to you, but it asks you to declare
-  it. Mutation of an array, for example, lives under the
-  `Mutable` effect, which appears in the signature of any
-  function that uses it. We'll cover this calmly in chapter 12.
+  case: kaikai gives it to you, and asks you to declare it.
+  Mutation of an array, for example, lives under the `Mutable`
+  effect, which appears in the signature of any function that
+  uses it. You'll take it up properly in chapter 13.
 
-Why take this path? Because most of the time, "changing a
-variable" is a habit inherited from the imperative model, not
-a real need. When you program with values that don't change:
+The reason: most of the time, "changing a variable" is a habit
+inherited from the imperative model, not a real need. When you program with values that don't change:
 
 - **Reasoning becomes local.** If `x` was bound to `5` on line
   12, it is still `5` on line 30. Period. No need to hunt for
@@ -150,7 +147,7 @@ a real need. When you program with values that don't change:
   but at the end of the method it was Y") just doesn't exist.
 - **Tests are simpler.** A pure function — input, output, no
   hidden state — is tested by giving it inputs and comparing
-  outputs. That's all.
+  outputs.
 
 A note on vocabulary. The usual way to bind a name is `let`,
 which is immutable. For the cases where you really need a
@@ -164,8 +161,7 @@ n := n + 1
 println("#{n}")   # 1
 ```
 
-What's worth noticing: `var` is not really a new
-construct in the language. It is **syntactic sugar** over the
+The interesting part: `var` is **syntactic sugar** over the
 `State` effect. The line `var n := 0` rewrites to a
 `handle ... with State[Int](0) as n { ... }` covering the rest
 of the block. Reading `n` rewrites to `n.get()`, and `n := v` to
@@ -182,8 +178,8 @@ signature it would have without it.
 More visible mutations — writing to an array that lives beyond
 the block, sending to another actor's mailbox, modifying memory
 observed from outside — *do* show up in the signature, under
-effects like `Mutable`, `Actor`, or whichever fits. We'll see
-that distinction in chapter 12.
+effects like `Mutable`, `Actor`, or whichever fits. You'll
+come back to that distinction in chapter 13.
 
 The practical rule is simple: use `let` by default; if you
 need a local variable that changes, `var` with `:=`;
@@ -251,9 +247,9 @@ In the kaikai version, `match` is exhaustive: if you forget the
 `None` branch, it does not compile. The compiler reminds you
 of what Python leaves to your memory.
 
-What about exceptions? kaikai has an equivalent mechanism — the
+For exceptions, kaikai has an equivalent mechanism — the
 algebraic effects of chapter 12, which let you declare an
-aborting effect in three lines — but there too, what can fail
+aborting effect in three lines — and there too, what can fail
 appears in the type. The "invisible exceptions" that in Java or
 Python can spring out of any call do not exist in kaikai. If a
 function can jump elsewhere, its signature says so.
@@ -279,13 +275,13 @@ fn load() : Result[User, Error] {
 }
 ```
 
-This is the same as Rust's `?`. And it is worth saying what it
-**isn't**: in Elixir, naming a function `File.read!` is a
-convention for the version that *raises* an exception instead
-of returning an `{:ok, _} | {:error, _}` tuple. In kaikai the
-convention is the opposite: `!` is not part of a name, it is an
-operator, and it **never raises**. It only unpacks the happy
-case and propagates the negative one through the return type.
+This is the same as Rust's `?`. Watch out with Elixir, where
+the convention is the opposite: `File.read!` names the version
+that *raises* an exception instead of returning an
+`{:ok, _} | {:error, _}` tuple. In kaikai `!` is an operator,
+not part of a name, and it **never raises**: it unpacks the
+happy case and propagates the negative one through the return
+type.
 If you have seen plenty of `File.read!` in Elixir code and it
 made you nervous, you can relax: in kaikai that same syntax is
 on the safe side.
@@ -313,10 +309,9 @@ match expr {
 ```
 
 Each arm is a **pattern** followed by the expression that
-pattern produces. `Lit(n)` doesn't only say "this was built
-with `Lit`"; it also declares that `n` is the `Int` carried
-inside, ready to use on the right-hand side. Check, unpack,
-bind — in one move.
+pattern produces. `Lit(n)` recognizes a value built with `Lit`
+and declares that `n` is the `Int` carried inside, ready to use
+on the right-hand side. Check, unpack, bind — in one move.
 
 Patterns nest. If you have an `Option[Result[Int, Error]]` and
 you want to distinguish the three possible shapes, you write:
@@ -351,8 +346,7 @@ tools you don't want to give up.
 
 ## 2.5 Pure functions and visible effects
 
-The ideas above converge on a bigger one, which is the
-language's central bet: **separate the pure from what touches
+The ideas above converge on the language's central bet: **separate the pure from what touches
 the world**, and have the type system police that distinction.
 
 A *pure* function is a function whose result depends only on
@@ -360,8 +354,8 @@ its arguments. Calling it with the same arguments always
 returns the same value. It does not print, and it does not read
 from disk.
 
-Pure functions are easy to test, easy to reason about, easy to
-parallelize, easy to cache. The catch is that a program made
+Pure functions are easy to test, reason about, parallelize,
+and cache. The catch is that a program made
 only of pure functions does nothing useful: it never talks to
 the world.
 
@@ -373,8 +367,8 @@ its signature. A function that uses `Log` says
 the world, says nothing after the `/`. Its signature is just
 `fn f(x: Int) : Int`.
 
-The effect on the right-hand side of `/` is not decoration. It
-is a constraint: the compiler will not let you call an effectful
+The effect on the right-hand side of `/` is a constraint: the
+compiler will not let you call an effectful
 function from a context where those effects are not being
 handled. Some handler up the stack has to take ownership.
 This solves, all at once and at the language level, several
@@ -394,9 +388,9 @@ old itches:
   the caller.
 
 If you've never seen this before, it sounds too ambitious to be
-true. Chapter 12 gives it the space it deserves. For now, it is enough to know that the signatures you
-see with `/ something` are not noise: they are information
-about what that function can do to your program.
+true; chapter 12 gives it the space it deserves. For now, it's
+enough to know that a signature with `/ something` tells you
+what that function can do to your program.
 
 ## 2.6 The type is not the only label
 
@@ -408,8 +402,8 @@ it is in, what can fail while computing it, who owns its
 memory — lives in comments, in naming conventions, or in your
 head.
 
-In kaikai, the type is one label among several. The previous
-section just showed you the second: **effects**, which live in
+In kaikai, the type is one label among several. You met the
+second in the previous section: **effects**, which live in
 the signature after the `/` and which the compiler combines
 and checks with rules of their own. Further on you will meet
 others: **units of measure** that multiply and cancel the way
@@ -422,10 +416,10 @@ types. Each of these families is what the language calls a
 **kind**.
 
 You don't need the mechanism yet; chapter 19 walks through all
-of it, names included. What is worth taking from here is the
-reading habit: when kaikai rejects a program that "looked
-fine", the question is not just *what type it expected* but
-*which family of labels is in play*. Half the time the
+of it, names included. What you take from here is the reading
+habit: when kaikai rejects a program that "looked fine", ask
+what type it expected and also *which family of labels is in
+play*. Half the time the
 compiler is not correcting a type: it is telling you that you
 mixed meters with seconds, dollars with euros, or one region's
 memory with another's. That is information that in other
@@ -448,7 +442,7 @@ are mine. What I chose was which ones to put together.
   passing messages rather than sharing memory, and the
   supervision model with `link` and `monitor`. In kaikai those
   processes are called fibers and actors.
-- **From Elixir** also comes the pipe operator `|>` we saw
+- **From Elixir** also comes the pipe operator `|>` you met
   earlier.
 - **From Koka (Daan Leijen, Microsoft Research)** and
   **Effekt (Andreas Rossberg, Jonathan Brachthäuser)** come

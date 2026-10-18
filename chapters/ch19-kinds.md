@@ -2,27 +2,26 @@
 
 This chapter pays a promise §2.6 left open: in kaikai the type
 is not the only label, and the families of labels — the
-**kinds** — share one mechanism that someone owed you in full.
-You have been touching it in pieces. When you wrote
-`fn average[u: Measure](...)` in chapter 10, that `u: Measure`
-annotation was not an ordinary type parameter: `u` could not be
+**kinds** — share one mechanism. You have already touched it in
+pieces. When you wrote `fn average[u: Measure](...)` in chapter
+10, `u` was not an ordinary type parameter: it could not be
 `Int` or `String` or any type at all, only a *unit*. You were
 quantifying over a different family of things, with different
 rules.
 
 And there isn't just one. The types the inferencer unifies, the
-effect rows composed in every signature, the units that multiply
-and cancel, the stdlib's currencies, the runtime's memory
-regions: each is a distinct kind, with its own algebra. kaikai
-declares all of them in one place, with one mechanism, and this
-chapter walks the whole catalog.
+effect rows in every signature, the units that multiply and
+cancel, the stdlib's currencies, the runtime's memory regions:
+each is a distinct kind, with its own algebra. kaikai declares
+all of them in one place, with one mechanism, and here you walk
+the whole catalog.
 
 It is the most abstract chapter in the book, which is why it
 comes last: you need none of this to write productive kaikai. But
 if you made it here, I'd bet the question has already formed on
 its own: what do chapter 10's units, chapter 12's effects and
 chapter 13's memory have in common? The answer is short and, I
-think, elegant. Let's see it.
+think, elegant.
 
 ## 19.1 What a kind is
 
@@ -35,13 +34,12 @@ inhabits the kind `Type`. The unit `m` inhabits the kind
 You saw the practical consequence in chapter 10: a parameter
 `[u: Measure]` accepts only units, and the compiler reasons about
 `u` with the rules of units — `u^2` makes sense, `u` and `kg`
-unify only if they are the same. Compare an ordinary `[t]`
-parameter, which accepts types and is reasoned about with the
-rules of types. The kind annotation tells the compiler **which
-algebra to use** when it has to decide whether two things are
-equal.
+unify only if they are the same. An ordinary `[t]` parameter,
+by contrast, accepts types and follows the rules of types. The
+kind annotation tells the compiler **which algebra to use** to
+decide whether two things are equal.
 
-That is the whole concept: a kind is a family of habitants, plus
+That is the whole concept: a kind is a family of habitants plus
 the algebra the compiler unifies them with. kaikai calls that
 algebra a **theory**.
 
@@ -66,10 +64,9 @@ a kind. Three things define one:
   theory decides *at compile time* which programs are legal, then
   vanishes from the binary.
 - **The catalog is closed.** You can declare new habitants
-  (`unit parsec`) and even new kinds (§19.5), but you cannot
-  declare a new theory. Try, and the compiler answers
-  `unknown theory`. That is a design decision, not a temporary
-  limitation; §19.12 defends it.
+  (`unit parsec`) and even new kinds (§19.5), but not a new
+  theory: the compiler answers `unknown theory`. §19.12 defends
+  why that design decision is permanent.
 
 ## 19.3 The full catalog
 
@@ -106,7 +103,7 @@ mints habitants of `Type`. `effect` mints habitants of `Effect`.
 *derived* — every `type T[a]` of one parameter already is one —,
 and `Dim` writes `with Int`, meaning its habitants are `Int`
 *values* (`<3>`, `<128>`), not minted symbols. You have been
-minting kind habitants for the whole book; all that was missing was
+minting kind habitants for the whole book; you were missing only
 the org chart:
 
 | Kind | Theory | Introducer | Habitants | What the theory decides |
@@ -128,7 +125,7 @@ chapter 3 — and you'll notice it serves **two** kinds, `Type` and
 engine classifies only one kind. `EffectRow` is chapter 12's row
 unification; `Nominal` is symbol equality, which the core already
 knew how to do; `ConstructorApp` binds one-argument constructors,
-and we see it in §19.11. The other four are described by algebraic
+and you use it in §19.11. The other four are described by algebraic
 properties. Two look nearly identical — `AbelianGroup` and `Module`
 — and the difference is *which operation* their properties govern.
 In `AbelianGroup`, the habitants themselves form a group under
@@ -146,9 +143,8 @@ demanded, never the reverse. And `Composition` is associative but
 measure (§19.8).
 
 Note what is **not** in the table: anything of yours. The
-language's complete catalog fits on one screen. Nine kinds, eight
-theories, and every chapter you have read so far is built on
-them.
+language's complete catalog fits on one screen: nine kinds, eight
+theories, and every chapter you have read builds on them.
 
 ## 19.4 Quantifying over any kind
 
@@ -162,7 +158,7 @@ fn insert[r: Region](t: Tree<r>, k: Int) : Tree<r>
 pub fn convert[a: Currency, b: Currency](m: Money[dec.Decimal]<a>, rate: dec.Decimal) : Money[dec.Decimal]<b>
 ```
 
-The first you wrote in chapter 10. The second you will meet in
+The first you wrote in chapter 10. The second you write in
 §19.6. The third comes verbatim from `stdlib/money.kai`. All
 three say the same thing: "for any habitant of this kind". And in
 all three, the compiler applies the kind's theory when checking
@@ -205,10 +201,10 @@ world's physics, but the algebra holds no opinions about physics
 
 ## 19.5 Your own kinds
 
-`Measure` is not special. The `kind` declaration is available to
-you, with the three non-builtin theories as options. One case where
-it pays: separating unit systems that must never mix, not even
-through an accidental conversion.
+`Measure` is not special. You can use the `kind` declaration
+too, with the three non-builtin theories as options. It pays off,
+for instance, in separating unit systems that must never mix, not
+even through an accidental conversion.
 
 ```kai
 # Listing 19.2 — examples/ch19/02_own_kind.kai
@@ -238,16 +234,16 @@ $ kai run examples/ch19/02_own_kind.kai
 Each `kind ... with word` also mints its own introducer word:
 here `metric` and `imperial` declare habitants exactly as `unit`
 does for `Measure`. Two habitants of different kinds **never**
-unify, even when both measure length. Within chapter 10, `m + ft`
-was a unit error; here it is a deeper one: there is not even a
-shared algebra in which to pose the question. It is the Mars
-Climate Orbiter class of bug — pound-force read as newtons —
-closed not by a naming convention but by a kind boundary.
+unify, even when both measure length. In chapter 10, `m + ft`
+was a unit error; here the error runs deeper: there is no shared
+algebra in which to pose the question. It is the Mars Climate
+Orbiter class of bug — pound-force read as newtons — closed by a
+kind boundary instead of a naming convention.
 
 Additive kinds can be declared too
 (`kind Points : Module with points`): they fit quantities that
 add and scale but where "points squared" would be nonsense — game
-points, frequent-flyer miles, academic credits. The four remaining
+points, frequent-flyer miles, academic credits. The four
 `builtin` theories accept no user kinds: write
 `kind Zone : Nominal` and the compiler tells you a builtin
 theory cannot classify a user-declared kind. Regions, types,
@@ -256,13 +252,13 @@ the language.
 
 ## 19.6 Region: memory as a habitant
 
-Chapter 13 owes you one. When we said Perceus inserts increments
-and decrements at the exact points where values die, a question
-was left open: what if a computation builds a million short-lived
-values only to fold them into one number? Every cell pays its way
-in and out of the counter, and all that bookkeeping is work a
-human reading the program would know to be unnecessary: *none of
-this survives the computation*.
+Chapter 13 owes you one. There you learned that Perceus inserts
+increments and decrements at the exact points where values die,
+and a question was left open: what if a computation builds a
+million short-lived values only to fold them into one number?
+Every cell pays its way in and out of the counter, and a human
+reading the program knows all that bookkeeping is wasted: *none
+of this survives the computation*.
 
 The `region` block is how you tell the compiler:
 
@@ -292,7 +288,7 @@ Every constructor written lexically inside the block allocates in
 an **arena**: a slab of memory that grows by bump — a pointer
 that advances, no counter anywhere — and is freed whole at the
 closing brace. The two lists above pay not a single increment or
-decrement. The scalar crosses the boundary for free.
+decrement, and the scalar crosses the boundary for free.
 
 What if the structure needs to cross *functions* before folding?
 That is where the kind comes in. The `region { r -> ... }` form
@@ -342,10 +338,9 @@ type is declared once, knowing nothing about regions, and any
 function becomes region-polymorphic by annotating `[r: Region]`.
 A hundred nodes, zero counter operations, one free.
 
-`Nominal` is the simplest theory in the catalog, and here is
-why: each `region { r -> }` block mints a *fresh* habitant,
-distinct from every other. Two regions never unify. That is what
-keeps a `Tree<r1>` out of an arena `r2` that is freed at a
+`Nominal` is the simplest theory in the catalog: each
+`region { r -> }` block mints a *fresh* habitant, distinct from
+every other, and two regions never unify. That keeps a `Tree<r1>` out of an arena `r2` that is freed at a
 different time: the error is a type error, at compile time, by
 the same mechanism that rejects `m + ft`.
 
@@ -370,8 +365,8 @@ truckload.
 
 ## 19.7 Money: the algebra that is missing on purpose
 
-Chapter 10 modeled currencies with `unit USD`, and it works. But
-it leaves a curious door open: in `Measure`, habitants form a
+In chapter 10 you modeled currencies with `unit USD`, and it
+works. But it leaves a curious door open: in `Measure`, habitants form a
 group under product, so `USD^2` and `USD*EUR` are perfectly
 formable units. No sane accounting program produces them on
 purpose — but a bug can, and the type system would accept them
@@ -382,8 +377,8 @@ For money, the stdlib uses the `Currency` kind, whose theory
 `Money[t]<c>`: a **carrier** `t` (the type holding the amount)
 tagged with currency `c` in the `<>` slot. For real money the
 carrier is `Decimal` — exact fixed-point arithmetic, not floating
-point, which is the only defensible choice —, so the type you'll
-actually write is almost always `Money[Decimal]<USD>`:
+point, which is the only defensible choice — so you'll almost
+always write `Money[Decimal]<USD>`:
 
 ```kai
 # Listing 19.5 — examples/ch19/05_money.kai
@@ -437,14 +432,13 @@ result unit `EUR USD` does not exist
     habitant products and powers are not expressible
 ```
 
-That error is worth reading twice. It does not say "operation
-forbidden by a special rule for money". It says the result type
-**cannot be formed**: in the algebra of `Currency` there is no
-habitant that means "euros times dollars". It is the difference
-between a guard at the door and a building without that door. The
-same mechanism that grants the physicist her `kg·m/s^2` denies
-the accountant his `USD*EUR` — not two checking systems, but two
-theories in one catalog.
+Read that error twice. No special rule for money forbids the
+operation: the result type **cannot be formed**, because the
+algebra of `Currency` has no habitant meaning "euros times
+dollars". It is the difference between a guard at the door and a
+building without that door. The mechanism that grants the
+physicist her `kg·m/s^2` denies the accountant his `USD*EUR` —
+two theories in one catalog are enough.
 
 And this answers the question left hanging in chapter 10: when
 `unit USD`, when `Money[USD]`? If you are learning the mechanics
@@ -459,9 +453,9 @@ program and throws in `Decimal` for free.
 When you serialize an integer to bytes —for a network protocol, a
 file format, a binary record— you have to pick an order: most
 significant byte first (*big-endian*, network order) or the other
-way (*little-endian*)? Getting it wrong is not a type error in most
-languages: it is a corrupted number you find three layers down. The
-`Layout` kind lifts that decision into the type.
+way (*little-endian*)? In most languages, getting it wrong gives
+you a corrupted number you find three layers down. The `Layout`
+kind lifts that decision into the type.
 
 A fixed-width field carries two things: its width, which comes from
 the base type (`U32` is four bytes, `U16` two), and its order,
@@ -498,22 +492,21 @@ Here is where the theory comes in. `Composition` composes the
 fields **in the order you wrote them** —that is why it is
 associative but not commutative: moving a field changes the
 layout— and sums each one's measure, its byte size, to give the
-record's size. That `over Int` you saw in the catalog
-(`kind Layout : Composition over Int`) names exactly that measure:
+record's size. The catalog's `over Int`
+(`kind Layout : Composition over Int`) names that measure:
 a size is an integer and the sum has to be exact. The result is a
 positional, byte-exact binary format, its order checked at compile
 time and —like every kind— erased from the binary.
 
 ## 19.9 Perm: permissions the type chases
 
-The kinds so far classify *quantities* — meters, dollars, bytes.
-`Perm` classifies something else: **capabilities**. Its theory,
-`Semilattice`, is the odd one in the catalog, and it is worth
-understanding because it opens a door the others don't.
+The kinds you have met so far classify *quantities* — meters,
+dollars, bytes. `Perm` classifies **capabilities**. Its theory,
+`Semilattice`, is the odd one in the catalog, and it opens a door
+the others don't.
 
 The concrete case lives in the stdlib's file API. A `FileHandle`
-is not a bare handle: it carries in its type what the code may do
-with it. `open_read` returns `FileHandle<read>`; `open_write`
+carries in its type what the code may do with it. `open_read` returns `FileHandle<read>`; `open_write`
 returns `FileHandle<read + write>`. And each operation asks for
 exactly what it uses: `read_chunk` requires `<read>`, `write_chunk`
 requires `<write>`.
@@ -552,8 +545,7 @@ hello, kaikai
 
 Look at `first_line`: it asks for a `FileHandle<read>`, but the
 handle `open_write` produced is a `FileHandle<read + write>`, and
-the program still compiles. That is what makes `Semilattice`
-distinctive. In the other kinds, two habitants unify only if they
+the program still compiles. That sets `Semilattice` apart. In the other kinds, two habitants unify only if they
 are *equal* — `U32<be>` never passes where `U32<le>` is expected.
 In `Perm`, they unify by **subsumption**: a handle with more
 capabilities serves where fewer are asked, never the reverse. `read
@@ -633,9 +625,9 @@ $ kai run examples/ch19/10_dim.kai
 `head` is generic over the length: `[n: Dim]` says "for any
 length", exactly as `[u: Measure]` said "for any unit". But `dot`
 goes further: its two arguments are `Vec[Real]<n>` with the
-**same** `n`. The type forces the vectors to match in size; adding
-a `<2>` to a `<3>` is not a runtime error you find with an
-out-of-range index, it is a type that cannot be formed.
+**same** `n`. The type forces the vectors to match in size;
+adding a `<2>` to a `<3>` yields a type that cannot be formed,
+rather than an out-of-range index at runtime.
 
 And the wrong index is caught where it is written:
 
@@ -719,7 +711,7 @@ allows it: unifying `s[Int]` with `Box[Int]` binds `s` to `Box`,
 and with `[Int]` binds `s` to `List`; two shapes unify only if they
 are the same constructor —`List` with `List`, never `List` with
 `Vec`—. A shape is atomic: it does not compose or partially apply,
-so `s[t[Int]]` is a formation error, not a type. It is the
+so `s[t[Int]]` never forms a type. It is the
 expressiveness of a functor —abstracting over the container—
 without the higher-kinded types that bring it in Haskell: after
 monomorphization, every call is a direct static dispatch.
@@ -750,15 +742,15 @@ silhouette as chapter 9's protocols — closed single dispatch over
 a simple mechanism, rather than open typeclasses over a complex
 one — applied one floor up.
 
-What the catalog gives you today, you have seen: dimensions for
-the physicist, currencies for the accountant, arenas for the
-microsecond-chaser, and a single mental model for all three. And
-the catalog is designed to grow: a new entry is one decidable
+What the catalog gives you today, you have already used:
+dimensions for the physicist, currencies for the accountant,
+arenas for the microsecond-chaser, and a single mental model for
+all three. And it is designed to grow: a new entry is one decidable
 unification theory plus one introducer word, and the rest of the
 language — quantification, the `<...>` syntax, runtime erasure —
 receives it for free. Which entries earn a slot is a design
-conversation, not a mechanism problem. The mechanism, as you just
-saw, fits on one screen.
+conversation. The mechanism, as you just confirmed, fits on one
+screen.
 
 ## Exercises
 

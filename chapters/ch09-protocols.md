@@ -1,9 +1,9 @@
 # Chapter 9 · Protocols
 
-So far you've seen how to group data (records, sum types)
-and how to define functions over it. What's missing is a
-concrete question: **how do you add operations to a type
-from outside its declaration?**
+You already know how to group data in records and sum types,
+and how to write functions over it. One concrete question
+remains: **how do you add operations to a type from outside
+its declaration?**
 
 For example: `Point` is a record with two fields. You want
 it to print as `(3, 4)` when it appears in interpolation.
@@ -15,24 +15,23 @@ kaikai's answer is **protocols**: a named contract with a
 small set of operations, that any type can satisfy. I picked the
 word "protocol" over "trait" or "interface" because it describes
 what actually happens: two parties agreeing on how to talk.
-Conceptually, protocols do what **interfaces** do in Go,
-**traits** in Rust, **protocols** in Clojure and Elixir, and
-the easy part of **typeclasses** in Haskell. But kaikai
-picks a precise point in the design space:
-**single-dispatch, explicit, no constraint propagation, no
-higher-kinded types**. That removes complexity from the
-type system at the cost of some things you can't express —
-and this chapter covers both sides.
+Protocols do what **interfaces** do in Go, **traits** in Rust,
+**protocols** in Clojure and Elixir, and the easy part of
+**typeclasses** in Haskell — from a precise point in the
+design space: **single-dispatch, explicit, no constraint
+propagation, no higher-kinded types**. That removes
+complexity from the type system at the cost of some things
+you can't express. In this chapter you get both sides.
 
 ## 9.1 Why protocols exist
 
 Three concrete pains protocols solve.
 
-**Printing your types without writing it each time.** When
-you declare a record, wanting to print it in logs, responses,
-errors should not cost you a `user_to_string` function per
-type. With `Show` implemented once, interpolation
-`"#{user}"` uses it automatically.
+**Printing your types without writing it each time.**
+Printing a record in logs, responses, or errors should not
+cost you a `user_to_string` function per type. With `Show`
+implemented once, interpolation `"#{user}"` uses it
+automatically.
 
 **Structural equality without effort.** Any new type needs
 "this equals that" at some point. Without protocols, you
@@ -41,19 +40,18 @@ rest of the project remembering which name you used in which
 file. With `Eq`, the operation is called `eq` for all of
 them.
 
-**Comparison, hashing, serialization.** Same argument as the
-previous one, multiplied by the three standard operations almost
-every type needs eventually.
+**Comparison, hashing, serialization.** Same argument,
+multiplied by three operations almost every type needs
+eventually.
 
-Without protocols, each of the three is solved with naming
-conventions case by case, or with huge `match`es enumerating
-each possible type. With one mechanism, the three (and the
-ones to come) are solved in one line per type.
+Without protocols, each case is solved with naming conventions
+or with huge `match`es enumerating every possible type. With
+one mechanism, these three and the ones to come take one line
+per type.
 
 ## 9.2 Declaring a `protocol` and `impl`
 
-The syntax is direct. A protocol declares a name and one or
-more operations:
+A protocol declares a name and one or more operations:
 
 ```kai
 protocol Show {
@@ -77,7 +75,7 @@ impl Show for Point {
 }
 ```
 
-And from then on, `show(p)` calls your implementation when
+From then on, `show(p)` calls your implementation when
 `p : Point`:
 
 ```kai
@@ -88,7 +86,7 @@ fn main() {
 }
 ```
 
-Three details worth pinning down:
+Four details worth pinning down:
 
 - **The body of the `impl` lists the protocol's functions one
   by one**, with the standard `fn` syntax. Each `fn` in the
@@ -115,8 +113,8 @@ Three details worth pinning down:
   from §8.2: the qualifier is a tiebreaker, and a bare name is
   fine whenever nothing collides.
 
-It's worth coming back to the orphan rule, because with the
-builtins you hit it sooner than you'd expect: sooner or later
+With the builtins you hit the orphan rule sooner than you'd
+expect: sooner or later
 you want an `Int` or a `String` to behave differently in your
 domain. The compiler spells out exactly where you stand:
 
@@ -188,9 +186,8 @@ use all the time:
 | `Serialize` | `to_string`, `from_string` | Text ↔ value conversion |
 
 The primitive types (`Int`, `Real`, `Bool`, `String`, `Char`)
-already have implementations for the five protocols. When you
-declare a new type, you choose which protocols are worth
-implementing for it.
+already implement all five. For a new type, you choose which
+ones are worth implementing.
 
 `Ord` is worth a note: it has **three operations**, not one.
 `cmp(a, b) : Int` returns a negative integer if `a < b`, zero
@@ -214,9 +211,8 @@ impl Ord for Account {
 }
 ```
 
-If implementing three operations of `Ord` feels like too much
-work, hold on for §9.4: in many cases, the compiler derives
-them for you.
+If three operations feel like too much work, hold on for
+§9.4: in many cases the compiler derives them for you.
 
 `Eq` by id and `Ord` by balance on the same type, which is
 exactly the case where deriving doesn't help:
@@ -279,9 +275,9 @@ smaller balance: 50
 
 ## 9.4 `#[derive(...)]` and when to use it
 
-For records where the obvious "delegate to each field"
-implementation is enough, kaikai gives you a shortcut: the
-`#[derive(...)]` directive before the type declaration.
+When the obvious implementation — delegate to each field —
+is enough, kaikai gives you a shortcut: the `#[derive(...)]`
+directive before the type declaration.
 
 ```kai
 #[derive(Show)]
@@ -306,9 +302,8 @@ $ kai run example.kai
 Person { name: Ada, age: 30 }
 ```
 
-The canonical format — `TypeName { field: value, ... }` — is
-what `#[derive(Show)]` produces, and is reasonable for
-debugging and logs. If you want a different format (say,
+That canonical format, `TypeName { field: value, ... }`, is
+fine for debugging and logs. If you want a different format (say,
 the classic `(3, 4)` for a point), you write the `impl` by
 hand, like §9.1.
 
@@ -327,9 +322,9 @@ The practical rule:
   by some fields only, comparison by a specific field (not
   the natural ordering).
 
-You already saw `#[derive(Show)]` over `Point` in the tour
-(§1.7); here we show the manual implementation too and when
-each form pays off.
+You already used `#[derive(Show)]` on `Point` in the tour
+(§1.7); now you also know when the hand-written `impl` pays
+off.
 
 Two derived types, one with `Show` and one with both:
 
@@ -376,10 +371,10 @@ p == r: false
 ### Derives that aren't protocols: `Json`
 
 Not everything a record derives is one of the five protocols.
-There are two more derives, of a different nature: `Layout`, which
-fixes a record's byte order for binary serialization (we see it in
-chapter 19), and `Json`, which maps the record onto the JSON
-format.
+There are two more derives, of a different nature: `Layout`,
+which fixes a record's byte order for binary serialization
+(you'll meet it in chapter 19), and `Json`, which maps the
+record onto the JSON format.
 
 `#[derive(Json)]` generates two things: `to_json`, which turns
 your record into a JSON value, and a `<type>_of_json` shim, which
@@ -417,8 +412,8 @@ $ kai run examples/ch09/06_json.kai
 call back (p2)
 ```
 
-The mapping rules are the ones you'd expect, and worth having
-straight because the compiler applies them without asking. Field
+The mapping rules are the ones you'd expect, and the compiler
+applies them without asking. Field
 names go to the wire verbatim — no case conversion. An `Option[T]`
 field accepts an explicit `null` and a missing key alike — both
 decode to `None`; **every other field is required**. Keys the
@@ -454,9 +449,8 @@ adjacent?— and the derive won't pick for you. For that,
 
 ## 9.5 Custom protocols
 
-The five from the stdlib are the most common, but nothing
-prevents you from declaring your own. It's exactly the same
-syntax the stdlib uses, but in your code:
+Nothing stops you from declaring your own protocols, with
+the same syntax the stdlib uses:
 
 ```kai
 protocol Drawable {
@@ -483,10 +477,9 @@ impl Drawable for Triangle {
 }
 ```
 
-From then on, three different types share the operation
-`draw`. The polymorphic function `draw` resolves
-statically: the compiler knows in each call which `impl` to
-use from the type of the argument.
+Now three different types share the operation `draw`,
+which resolves statically: the compiler knows at each call
+which `impl` to use from the type of the argument.
 
 `Drawable` is a toy example; real cases you'll see in
 kaikai code include `Encodable` for various formats,
@@ -545,9 +538,9 @@ Triangle 4x6
 
 ## 9.6 Why no Haskell-style typeclasses
 
-kaikai's protocols may resemble Haskell typeclasses — and
-draw inspiration from them — but are **deliberately
-simpler**. Three things kaikai doesn't do that Haskell does:
+kaikai's protocols draw on Haskell typeclasses, but are
+**deliberately simpler**. Three things Haskell does that
+kaikai doesn't:
 
 **No constraints in function signatures.** This is the most
 visible difference. In Haskell, a function that sorts a list
@@ -582,10 +575,10 @@ function, and you pass it:
 list.sort_by(transactions, cmp)   # cmp comes from impl Ord for Transaction
 ```
 
-The difference is small to write but big conceptually: in
-Haskell the `Ord` is implicit, in kaikai it's explicit. The
-function `sort_by` doesn't "demand" `T` to have `Ord` — it
-demands that **someone pass it a comparison function**.
+It's little to type, but the conceptual difference is big:
+what travels implicitly in Haskell, you write in kaikai.
+`sort_by` doesn't "demand" that `T` have `Ord`, only that
+**someone pass it a comparison function**.
 That this function comes from an `impl Ord for T` is the
 caller's decision, not the signature's.
 
@@ -601,7 +594,7 @@ not "carry" `Ord` to the functions it calls. The bound in
 §9.7 documents what *that* function asks for; it doesn't
 propagate on its own to the functions it invokes.
 
-What do you gain with these restrictions? Three things:
+These restrictions buy you three things:
 
 - **Fast compilation**. Type inference stays
   Hindley-Milner extended with effects, no Haskell-style
@@ -615,7 +608,7 @@ What do you gain with these restrictions? Three things:
   When you see `sort xs` in Haskell, you have to look at
   `sort`'s signature to know which `Ord` is used.
 
-What do you lose? Some abstractions that are elegant in
+In exchange, you lose some abstractions that are elegant in
 Haskell — particularly everything that lives over Functor
 and friends. I made that trade-off with my eyes open: the
 abstractions I wanted to prioritize live in the effect system
@@ -623,11 +616,10 @@ abstractions I wanted to prioritize live in the effect system
 
 ## 9.7 Protocol bounds on generic functions
 
-So far protocols showed up in two places: the `impl` that
-implements them and the call site that calls an operation.
-There's a third. A generic function over some `T` can
-**require that `T` implement a protocol**, and write it in
-the signature:
+So far protocols showed up in the `impl` that implements
+them and the call site that calls an operation. There's a
+third place: a generic function over some `T` can **require
+that `T` implement a protocol**, and say so in the signature:
 
 ```kai
 fn show_two[T: Show](a: T, b: T) : String =
@@ -674,23 +666,23 @@ fn larger[T: Ord](a: T, b: T) : T = max(a, b)
 fn render[T: Drawable](x: T) : String = "[" ++ draw(x) ++ "]"
 ```
 
-Now read carefully, because this is where kaikai parts ways
-with Haskell even though the syntax looks alike. The bound is
-a **statement of intent**, not the propagating constraint of
-§9.6. The compiler doesn't resolve a dictionary and inject
-it: what happens is that each call monomorphizes the function
-to the concrete type, and there `show`, `eq`, or `cmp`
+Read carefully, because this is where kaikai parts ways with
+Haskell even though the syntax looks alike. The bound is a
+**statement of intent**, not the propagating constraint of
+§9.6: the compiler doesn't resolve a dictionary and inject
+it. Each call monomorphizes the function to the concrete
+type, and there `show`, `eq`, or `cmp`
 resolve to the matching `impl` — the same static dispatch as
 always. The bound documents the contract in the signature and
 makes the error, when a type doesn't implement the protocol,
 clear: `no impl of 'Ord' for type 'X'`.
 
-This is the natural evolution of a generic over some bare
-`T`: from "this function works for any type" to "this
-function works for any type that knows how to `show`". The
-bound doesn't give you Haskell's implicit resolver or its
-propagation; it gives you the contract written where it's
-read, which is almost always what you wanted.
+It's the natural next step from a generic over a bare `T`:
+from "this function works for any type" to "this function
+works for any type that knows how to `show`". Without
+Haskell's implicit resolver or its propagation, the bound
+leaves the contract written where it's read, which is almost
+always what you wanted.
 
 The three shapes of bound in one program: one from the stdlib,
 one of your own, and one demanding two protocols at once.
@@ -738,11 +730,10 @@ equal: 1
 
 ## 9.8 Operators: `+`, `==`, `<` as protocols
 
-A practical note: standard operators **are** protocols. `==`
-is `Eq.eq`, `<` is comparison based on `Ord.cmp`, `+` is
-`Add.add`. When you declare `impl Eq for Account`,
-automatically `a1 == a2` (with `a1, a2 : Account`) calls
-your implementation.
+Standard operators **are** protocols. `==` is `Eq.eq`, `<` is
+comparison based on `Ord.cmp`, `+` is `Add.add`. When you
+declare `impl Eq for Account`, automatically `a1 == a2` (with
+`a1, a2 : Account`) calls your implementation.
 
 ```kai
 #[derive(Eq)]
@@ -757,9 +748,9 @@ fn main() {
 
 This unifies syntax: `+` for `Int`, `Real`, vectors,
 matrices, money — all those that have `impl Add for ...`.
-`==` for everything that has `Eq`. The uniformity isn't
-accidental; it's the first benefit of having a single
-mechanism for "operations dispatched by type".
+`==` for everything that has `Eq`. That uniformity is the
+first benefit of having a single mechanism for "operations
+dispatched by type".
 
 Operators kaikai treats as protocols:
 
@@ -770,10 +761,10 @@ Operators kaikai treats as protocols:
 | `+`, `-`, `*`, `/` | `Add`, `Sub`, `Mul`, `Div` | `add`, `sub`, `mul`, `div` |
 | `++` | `Concat` | `concat` |
 
-Primitive types implement them all. Your types implement
-them when you declare them. And when an operator doesn't
-make sense for a type, you simply don't implement it — and
-the compiler rejects that expression.
+Primitive types implement them all; yours do once you write
+the `impl`. When an operator doesn't make sense for a type,
+you don't implement it, and the compiler rejects the
+expression.
 
 ## Exercises
 

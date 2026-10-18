@@ -13,8 +13,8 @@ componentes que comparten el mismo tipo numérico pero no la
 misma interpretación. Pasar segundos donde se esperan
 milisegundos. Sumar saldos en monedas distintas. Mezclar un
 `UserId` con un `OrderId` porque ambos son enteros. En todos
-los casos, el sistema de tipos del lenguaje ve dos números o
-dos strings y no tiene cómo distinguirlos.
+los casos el sistema de tipos ve dos números o dos strings y
+no tiene cómo distinguirlos.
 
 kaikai resuelve esta familia entera con una sola
 construcción: las **unidades de medida**. La idea, heredada
@@ -24,18 +24,17 @@ cualquier operación que mezcle unidades incompatibles. La
 unidad **vive en el tipo**, **se borra en runtime**, y queda
 documentada en cada firma que la toca.
 
-Y si el §2.6 te dejó la idea de que en kaikai el tipo no es
-la única etiqueta, este capítulo es donde esa idea se vuelve
-tangible: las unidades son tu primer encuentro de cuerpo
-entero con un **kind**: una familia de etiquetas con su
-propia álgebra, distinta de los tipos. Ya usaste otra sin
-mirarla de frente (la fila de efectos); esta es la primera
-que vas a declarar y manipular tú.
+Si el §2.6 te dejó la idea de que en kaikai el tipo no es la
+única etiqueta, aquí esa idea se vuelve tangible: las unidades
+son tu primer encuentro de cuerpo entero con un **kind**, una
+familia de etiquetas con su propia álgebra, distinta de los
+tipos. Ya usaste otra sin mirarla de frente (la fila de
+efectos); esta es la primera que declaras y manipulas tú.
 
-Este capítulo cubre las unidades clásicas (física, finanzas,
-tiempo) y su uso menos obvio pero más frecuente en código del
-día a día: los **branded types**, donde la unidad es solo
-una etiqueta que distingue tipos que el lenguaje, sin ella,
+Aprendes las unidades clásicas (física, finanzas, tiempo) y
+su uso menos obvio pero más frecuente en el código del día a
+día: los **branded types**, donde la unidad es solo una
+etiqueta que distingue tipos que, sin ella, el lenguaje
 trataría como iguales.
 
 ## 10.1 `unit` y literales anotados
@@ -50,10 +49,9 @@ unit sec
 unit kg
 ```
 
-Eso es todo. `unit USD` introduce un símbolo `USD` que el
-sistema de tipos puede usar como anotación. No hay
-implementación, no hay valor en runtime: `unit` solo
-declara la existencia del símbolo.
+`unit USD` introduce un símbolo `USD` que el sistema de tipos
+puede usar como anotación. No hay implementación ni valor en
+runtime: `unit` solo declara que el símbolo existe.
 
 Para anotar un número con una unidad, usas paréntesis
 angulares en el literal:
@@ -72,14 +70,13 @@ Tres cosas que vale fijar:
   unidades.
 - **El literal y el tipo se anotan los dos.** `1.50<USD>` es
   un literal `Real` con unidad `USD`. `Real<USD>` es el tipo.
-  Los dos coinciden, pero conviene entender que cada uno
-  cumple un rol distinto.
+  Coinciden, pero cumplen roles distintos.
 - **El compilador permite cualquier identificador como
   unidad.** Por convención, las unidades SI van en minúscula
   (`m`, `s`, `kg`), las nombradas por personas en titlecase
   (`Newton`, `Pascal`), y las monedas en mayúsculas según ISO
-  4217 (`USD`, `EUR`, `CLP`). El compilador no fuerza ninguna
-  de estas convenciones: es estilo de la comunidad.
+  4217 (`USD`, `EUR`, `CLP`). Son convenciones de la
+  comunidad; el compilador no las fuerza.
 
 ## 10.2 Aritmética con unidades
 
@@ -124,7 +121,7 @@ el compilador rechaza con un error que dice "esperaba `USD`,
 encontré `EUR`". El programa nunca corre con valores mezclados:
 el bug se detecta antes de que exista.
 
-La regla más amplia es:
+La regla general:
 
 - **`+`, `-`** entre dos valores de la misma unidad: legal,
   preserva la unidad.
@@ -137,8 +134,8 @@ La regla más amplia es:
 La aritmética con un valor sin unidad y uno con unidad es
 asimétrica. Multiplicar por un escalar (`2.0 * precio`) es
 legal: el escalar se trata como adimensional. Sumar un
-escalar (`precio + 1.0`) es error: no sabemos en qué unidad
-está el `1.0`.
+escalar (`precio + 1.0`) es error: no hay cómo saber en qué
+unidad está el `1.0`.
 
 ## 10.3 Álgebra de unidades: producto, cociente, potencia
 
@@ -168,9 +165,8 @@ simplifica a `m^2`, `sec / sec` se cancela a sin-unidad,
 sobre los símbolos de unidad, y cualquier expresión legal en
 matemática elemental sobre unidades es legal en kaikai.
 
-Puesto en un programa, lo que se ve es que la unidad viaja con
-el valor hasta la impresión, incluido el `sec^2` que nadie
-declaró:
+En un programa, la unidad viaja con el valor hasta la
+impresión, incluido el `sec^2` que nadie declaró:
 
 ```kai
 # ejemplos/cap10/02_algebra_unidades.kai
@@ -219,7 +215,7 @@ unit Pascal = Newton / m^2
 unit Hertz  = 1 / sec
 ```
 
-Y a partir de ahí, `Real<Newton>` es exactamente lo mismo que
+Desde ahí, `Real<Newton>` es exactamente lo mismo que
 `Real<kg * m / sec^2>`: el compilador los acepta
 intercambiables. La diferencia es para quien lee:
 `Real<Newton>` comunica intención; `Real<kg * m / sec^2>`
@@ -263,13 +259,13 @@ Dividir dos medidas rara vez da un número redondo. Cien metros
 en 9.58 segundos son 10.438413361169102 m/sec, y eso es lo que
 imprime un `Real`: los dígitos que hacen falta para releerlo
 como el mismo número. Para un informe quieres dos decimales, y
-aquí aparece la pregunta natural: ¿redondear me deja un número
-pelado?
+la duda natural es si redondear te deja un número pelado.
 
-No. La familia de redondeo de `math.real` (`trunc`, `floor`,
-`ceil`, `round`, `round_half_even`, `round_to`) es genérica
-sobre `Measure`, de la misma forma que el `promedio` que
-escribes en el §10.4. Entra un `Real<u>` y sale un `Real<u>`.
+No te lo deja. La familia de redondeo de `math.real` (`trunc`,
+`floor`, `ceil`, `round`, `round_half_even`, `round_to`) es
+genérica sobre `Measure`, de la misma forma que el `promedio`
+que escribes en el §10.4. Entra un `Real<u>` y sale un
+`Real<u>`.
 
 ```kai
 # ejemplos/cap10/07_redondeo.kai
@@ -305,12 +301,11 @@ donde el compilador la revisa.
 
 ## 10.4 Unidades genéricas
 
-Hasta aquí, cada función opera sobre una unidad concreta. Pero
+Hasta aquí cada función opera sobre una unidad concreta, pero
 muchas operaciones son **agnósticas a la unidad**: promediar,
-sumar, ordenar, encontrar el máximo. Esas funciones se
-escriben **genéricas sobre la unidad**, igual que una función
-puede ser genérica sobre el tipo de los elementos de una
-lista.
+sumar, ordenar, encontrar el máximo. Esas se escriben
+**genéricas sobre la unidad**, igual que una función puede ser
+genérica sobre el tipo de los elementos de una lista.
 
 ```kai
 fn promedio[u: Measure](a: Real<u>, b: Real<u>) : Real<u> =
@@ -322,8 +317,8 @@ fn promedio[u: Measure](a: Real<u>, b: Real<u>) : Real<u> =
 unidad. `Measure` no es un caso aislado: es una entrada del
 catálogo de kinds del lenguaje (`stdlib/core/kinds.kai`), el
 mismo mecanismo que clasifica tipos, efectos, monedas y
-regiones de memoria. El capítulo 19 lo recorre completo. La
-función `promedio` acepta dos `Real<u>` y devuelve
+regiones de memoria, y lo recorres completo en el capítulo
+19. La función `promedio` acepta dos `Real<u>` y devuelve
 un `Real<u>`: el "para cualquier u" es lo que permite usarla
 con `USD`, `kg`, `m/sec`, lo que sea, **siempre y cuando los
 dos argumentos tengan la misma unidad**.
@@ -373,16 +368,15 @@ el programa no compila.
 Las unidades genéricas son lo que hace al sistema **escalable**.
 Las funciones del stdlib (`list.sum`, `list.max`, `list.min`)
 son polimórficas sobre la unidad: si pasas una `[Real<USD>]`,
-te devuelven `Real<USD>`. Si pasas una `[Real<kg>]`, te
-devuelven `Real<kg>`. La unidad se preserva sin que tú la
-nombres.
+devuelven `Real<USD>`; si pasas una `[Real<kg>]`, `Real<kg>`.
+La unidad se preserva sin que la nombres.
 
 ## 10.5 Conversiones explícitas
 
-¿Qué pasa cuando **sí** quieres mezclar dos unidades distintas?
-Por ejemplo, sumar un saldo en USD con uno en EUR. El
-compilador no te lo permite por accidente, pero te lo
-permite con una **conversión explícita**.
+A veces **sí** quieres mezclar dos unidades distintas, por
+ejemplo sumar un saldo en USD con uno en EUR. El compilador no
+te lo deja hacer por accidente, pero sí con una **conversión
+explícita**.
 
 La técnica es un factor de conversión que lleva la unidad
 cociente `destino/origen`. Multiplicar por él cancela la
@@ -401,22 +395,20 @@ multiplicación produce `Real<EUR^2 / USD>`, que no calza con
 el tipo `Real<USD>` esperado en el `let`.
 
 La regla mental: **la conversión es una multiplicación por un
-factor cuyas unidades cancelan a la salida**. Es exactamente
-lo que se hace en física a mano cuando uno escribe "10 km × 1000
-m/km = 10000 m". kaikai obliga a escribir esa multiplicación
-explícita.
+factor cuyas unidades cancelan a la salida**. Es lo mismo que
+haces a mano en física cuando escribes "10 km × 1000 m/km =
+10000 m"; kaikai te obliga a escribir esa multiplicación.
 
-Lo hice a propósito, y creo que además libera. A propósito porque
-forzar una conversión visible hace que el programador piense
-qué tasa está usando, en qué momento se aplicó, y de dónde
-salió. Liberador porque, una vez escrita la conversión, el
-compilador garantiza que no la olvidaste en ningún lugar.
+Lo hice a propósito, y creo que además libera. Una conversión
+visible te obliga a pensar qué tasa usas, cuándo se aplica y de
+dónde salió; y una vez escrita, el compilador garantiza que no
+la olvidaste en ningún lugar.
 
 ## 10.6 Branded types
 
 Las unidades son útiles cuando el valor "tiene una dimensión
 física": metros, kilogramos, dólares. Pero la misma maquinaria
-se aplica a un caso más cotidiano y más frecuente: **distinguir
+se aplica a un caso más cotidiano: **distinguir
 valores que tienen el mismo tipo subyacente pero significan
 cosas distintas**.
 
@@ -450,10 +442,9 @@ let order_id: Int<OrderId> = 99<OrderId>
 cancelar_orden(user_id)   # ERROR de tipo: UserId ≠ OrderId
 ```
 
-El compilador detecta el bug antes de que exista. La técnica
-de usar una unidad como **etiqueta** sobre un tipo numérico
-se llama **branded type**, y es uno de los usos que más rinde
-en código del día a día. Casos típicos:
+Usar una unidad como **etiqueta** sobre un tipo numérico se
+llama **branded type**, y es de los usos que más rinden en el
+código del día a día. Casos típicos:
 
 - `Int<UserId>` vs `Int<OrderId>`: identificadores que
   comparten tipo subyacente.
@@ -521,12 +512,11 @@ timeout = 30
 ### Costo cero en runtime
 
 Las unidades se borran después de la verificación de tipos. El
-binario que produce `kai build` opera con `Int` plano,
-`Real` plano, `String` plano. La unidad **no existe** en
-runtime: no hay tag, no hay verificación dinámica, no hay
-overhead. La promesa es la misma de los efectos algebraicos
-y de los contratos: información en el tipo, costo cero en
-runtime.
+binario que produce `kai build` opera con `Int`, `Real` y
+`String` planos. La unidad **no existe** en runtime: ni tag, ni
+verificación dinámica, ni overhead. La promesa es la misma de
+los efectos algebraicos y de los contratos: información en el
+tipo, costo cero en runtime.
 
 ## 10.7 Caso de estudio: cartera multi-moneda
 
@@ -600,12 +590,12 @@ vez de `<USD / EUR>`), tampoco. La cartera completa es **un
 mini-sistema de tipos sobre dinero** que el compilador
 sostiene.
 
-¿Qué pasa el día que un colega llega y agrega una nueva
-moneda? Declara un `unit JPY`, agrega su tasa, y el resto del
-código sigue compilando o no según corresponda. Ningún
+El día que un colega agrega una nueva moneda, declara un
+`unit JPY`, agrega su tasa, y el resto del código sigue
+compilando o no según corresponda. Ningún
 cálculo viejo se rompe (los tipos son ortogonales), y los
 cálculos que necesitan considerar JPY tienen que decirlo
-explícito. Es el mismo principio que el cap. 5 mostró con las
+explícito. Es el principio que conociste en el cap. 5 con las
 uniones de errores: agregar un componente nuevo es seguro
 porque el compilador te lleva al lugar exacto donde necesitas
 hacer algo.
@@ -620,19 +610,19 @@ let total = sumar(saldo_usd, saldo_eur)   # compila, suma valores
                                           # sin convertir.
 ```
 
-Funciona, devuelve un número, y produce un total que **no
-significa nada**. En kaikai con unidades, ese mismo programa
-no compila. El bug que en otros lenguajes se descubre en
-producción (o nunca, según la suerte) aquí no existe.
+Funciona, devuelve un número y produce un total que **no
+significa nada**. Con unidades, ese programa no compila: el
+bug que en otros lenguajes se descubre en producción (o nunca,
+según la suerte) aquí no existe.
 
 Una nota para código de producción: el stdlib trae un módulo
-`money` con las monedas ISO ya declaradas y un tipo
-`Money[c: Currency]` montado sobre `Decimal` (aritmética
-exacta, no punto flotante). Usa un kind propio, `Currency`,
-más restrictivo que `Measure`: permite sumar y escalar, pero
-`USD^2` o `USD*EUR` ni siquiera se pueden escribir. El
-capítulo 19 explica esa diferencia; para aprender la mecánica
-de unidades, el `Real<USD>` de este capítulo es el camino.
+`money` con las monedas ISO ya declaradas y un tipo `Money[c:
+Currency]` montado sobre `Decimal` (aritmética exacta, no punto
+flotante). Usa un kind propio, `Currency`, más restrictivo que
+`Measure`: permite sumar y escalar, pero `USD^2` o `USD*EUR` ni
+siquiera se pueden escribir. Esa diferencia la encuentras en el
+capítulo 19; para aprender la mecánica de unidades, el
+`Real<USD>` de este capítulo es el camino.
 
 ## Ejercicios
 

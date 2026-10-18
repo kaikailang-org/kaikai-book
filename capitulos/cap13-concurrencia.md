@@ -4,40 +4,36 @@ La concurrencia es donde la mayoría de los lenguajes acumulan
 deuda. Threads con shared memory llevan a races que aparecen una
 vez al mes y se arreglan tres veces antes de irse de verdad;
 `async`/`await` introduce colores de funciones; los actores
-corrigen lo anterior pero
-históricamente vienen con GC y un runtime pesado.
+corrigen lo anterior pero históricamente vienen con GC y un
+runtime pesado.
 
 Peleé con las tres formas en su momento, y de esa pelea salió la
-apuesta de kaikai, que es una combinación poco usual: **fibras
-cooperativas + memoria por fibra + Perceus**. La estructura tiene
-tres consecuencias que valen la pena nombrar antes de la
-sintaxis:
+apuesta de kaikai, una combinación poco usual: **fibras
+cooperativas + memoria por fibra + Perceus**. Antes de la
+sintaxis, sus tres consecuencias:
 
 - **No hay shared memory entre fibras.** Cada fibra tiene su
   propio heap. Lo que una pasa a otra se copia o se mueve.
   Las data races desaparecen por construcción.
 - **No hay GC ni borrow checker.** Perceus libera la memoria
-  cuando el último uso de cada valor termina, sin un colector
-  asincrónico y sin pedirle al programador que anote lifetimes.
-  El compilador descubre dónde poner los `free`s analizando el
-  programa.
+  cuando termina el último uso de cada valor, sin un colector
+  asincrónico y sin que anotes lifetimes. El compilador
+  descubre dónde poner los `free`s.
 - **La concurrencia es un efecto.** `spawn` es una operación de
   un efecto `Spawn`, no una palabra clave. Crear y esperar
   fibras se compone con el resto del sistema (`State`, `Cancel`,
   un `Fail` que declares tú) usando la maquinaria del cap. 12.
 
-Vamos por partes.
-
 ## 13.1 El modelo: fibras aisladas
 
 Una **fibra** es una unidad de ejecución parecida a un thread,
-pero mucho más liviana: del orden de cientos de bytes en vez de
-megabytes. Una aplicación kaikai puede tener miles o cientos de
-miles de fibras vivas sin reventar.
+pero mucho más liviana: cientos de bytes en vez de megabytes.
+Una aplicación kaikai puede tener miles o cientos de miles de
+fibras vivas sin reventar.
 
-Las fibras son **cooperativas**. Cada una corre hasta que llega a
-un **punto de yield**: una llamada que voluntariamente le pasa el
-control al scheduler. Los puntos de yield son explícitos:
+Las fibras son **cooperativas**. Cada una corre hasta llegar a
+un **punto de yield**: una llamada que le pasa el control al
+scheduler. Los puntos de yield son explícitos:
 
 - `spawn.yield()`: "ya pude correr un rato, prueba otra".
 - `spawn.await(f)`: "espera a que termine la fibra `f`".
@@ -46,47 +42,45 @@ control al scheduler. Los puntos de yield son explícitos:
 
 Sin yield, una fibra corre hasta terminar. Eso es **determinismo
 local**: dentro de un bloque sin yields, sabes exactamente qué
-pasa. Comparado con threads preemptivas, esto te quita una clase
-entera de bugs: no hay carrera sobre datos que toques entre dos
-yields porque nadie te va a interrumpir.
+pasa. Frente a threads preemptivas te ahorras una clase entera
+de bugs: nadie te interrumpe entre dos yields, así que no hay
+carrera sobre los datos que tocas ahí.
 
 A cambio, una fibra que nunca cede el control bloquea a todas las
-demás. Es responsabilidad del programador poner yields donde tenga
-sentido. En la práctica, las llamadas a IO ya los traen, y el
-único caso donde hay que pensar en yields manuales es en bucles
-puros de CPU intenso.
+demás. Poner yields donde tenga sentido te toca a ti; en la
+práctica las llamadas a IO ya los traen, y solo piensas en
+yields manuales en bucles puros de CPU intenso.
 
 ### Memoria por fibra
 
 Cada fibra tiene su **propio heap**. Cuando una fibra crea un
-record, una lista, un closure, el espacio sale de ese heap. La
-otra fibra no puede tocarlo: ni leerlo, ni escribirlo. El sistema
-de tipos lo garantiza.
+record, una lista o un closure, el espacio sale de ese heap, y
+otra fibra no puede leerlo ni escribirlo. El sistema de tipos
+lo garantiza.
 
-¿Cómo se comunican dos fibras entonces? Pasándose valores.
-Cuando una fibra envía un mensaje a otra (vía mailbox de actor o
-vía el resultado de un `await`), el valor se copia al heap de la
-fibra receptora. Para tipos pequeños esto es trivial; para
-estructuras grandes, kaikai usa Perceus para mover en vez de
-copiar cuando el emisor ya no va a usar el valor.
+Dos fibras se comunican pasándose valores. Cuando una envía un
+mensaje a otra (vía mailbox de actor o vía el resultado de un
+`await`), el valor se copia al heap de la receptora. Para tipos
+pequeños esto es trivial; para estructuras grandes, kaikai usa
+Perceus para mover en vez de copiar cuando el emisor ya no va a
+usar el valor.
 
 Lo importante es la garantía: **no hay manera de que dos fibras
 tengan un puntero al mismo objeto**. Las data races, los
 problemas de visibility de memoria, los bugs de cache coherence:
 todo lo que en threads tradicionales necesita lectura/escritura
-con `Atomic` o locks no existe aquí. La concurrencia es por
-mensajes, no por memoria compartida.
+con `Atomic` o locks no existe aquí.
 
 ## 13.2 Perceus en una página
 
-¿Cómo se libera la memoria? Sin GC y sin borrow checker, hay un
-tercer enfoque: **reference counting estricto basado en Perceus**
+Sin GC ni borrow checker, la memoria se libera con un tercer
+enfoque: **reference counting estricto basado en Perceus**
 (Lorenz, Leijen, Reinking, 2021).
 
-La idea es que el compilador analiza cada función para descubrir
-en qué punto cada valor deja de ser usado. En ese punto inserta
-una instrucción que decrementa el contador de referencias del
-valor: si llega a cero, se libera; si no, se queda para otro uso.
+El compilador analiza cada función para descubrir en qué punto
+cada valor deja de usarse, y ahí inserta una instrucción que
+decrementa su contador de referencias: si llega a cero, se
+libera; si no, queda para otro uso.
 
 ```kai
 fn ejemplo(xs: [Int]) : Int {
@@ -113,7 +107,7 @@ A diferencia de un borrow checker:
   referencias al mismo valor, el compilador inserta los
   increments y decrements necesarios.
 
-¿El costo? Cuando un valor se usa varias veces, los contadores
+El costo: cuando un valor se usa varias veces, los contadores
 se mueven. Para valores muy compartidos esto puede agregar
 overhead, y Perceus tiene optimizaciones agresivas para
 minimizarlo (reuse in place: si un valor está por liberarse y
@@ -126,16 +120,15 @@ estructura descartable solo para plegarla a un escalar,
 existe un escape opt-in: el bloque `region`, que asigna en
 una arena y la libera entera de un golpe, sin contadores de
 por medio. Es parte del mismo catálogo de kinds que las
-unidades del capítulo 10, y lo vemos en el capítulo 19.
+unidades del capítulo 10, y lo conoces en el capítulo 19.
 
 Por qué esto importa para concurrencia: Perceus funciona por
-fibra. Cada fibra tiene sus propios contadores, sus propios
-liberados. No hay sincronización entre fibras para ningún
-contador: nunca dos fibras se pasan punteros al mismo valor
-con contador compartido. Esa es la razón por la que el modelo
-"fibras aisladas" cierra cuando se le agrega Perceus: el
-mismo invariante que protege contra data races también
-simplifica el RC.
+fibra. Cada fibra tiene sus propios contadores y sus propios
+liberados, y no hay sincronización entre fibras para ningún
+contador, porque nunca dos fibras se pasan punteros al mismo
+valor con contador compartido. Por eso el modelo de "fibras
+aisladas" cierra con Perceus: el mismo invariante que protege
+contra data races simplifica el RC.
 
 ## 13.3 Crear y esperar fibras: las operaciones básicas
 
@@ -173,16 +166,15 @@ A
 B
 ```
 
-**"Una salida posible" es literal, y conviene detenerse aquí.**
-Este programa no promete ese orden. `A` y `B` son fibras
-independientes: nada en el código dice que la primera `A` va
-antes que la primera `B`. El runtime reparte las fibras entre
-tantos hilos del sistema como núcleos tenga tu máquina, así
-que en la práctica vas a ver órdenes distintos entre corrida y
-corrida: `A A A B B B` es tan válido como el intercalado de
-arriba.
+**"Una salida posible" es literal.** Este programa no promete
+ese orden. `A` y `B` son fibras independientes: nada en el
+código dice que la primera `A` va antes que la primera `B`. El
+runtime reparte las fibras entre tantos hilos del sistema como
+núcleos tenga tu máquina, así que vas a ver órdenes distintos
+entre corrida y corrida: `A A A B B B` es tan válido como el
+intercalado de arriba.
 
-Si quieres la salida perfectamente alternada, hay una manera:
+Para obtener la salida perfectamente alternada:
 
 ```
 $ KAI_THREADS=1 kai run ejemplos/cap13/01_dos_fibras.kai
@@ -196,11 +188,10 @@ B
 
 `KAI_THREADS=1` fuerza al scheduler a un solo hilo, y ahí sí
 `spawn.yield()` es lo único que decide de quién es el turno.
-Es el modo con el que vas a querer leer los ejemplos de este
-capítulo cuando el punto sea *ver* la alternancia. Volvemos
-sobre esto en §13.8; por ahora quédate con la idea de que la
-alternancia es una propiedad del scheduler de un hilo, no una
-garantía del lenguaje.
+Usa ese modo para leer los ejemplos del capítulo cuando el
+punto sea *ver* la alternancia. Lo retomas en §13.8; por ahora
+quédate con que la alternancia es una propiedad del scheduler
+de un hilo, no una garantía del lenguaje.
 
 Lectura literal:
 
@@ -214,33 +205,33 @@ Lectura literal:
   retorne.
 
 `Spawn` aparece en la firma de `worker` porque la función llama
-a `spawn.yield()`, que es una operación de `Spawn`. La fila
-contagia hacia arriba como con cualquier efecto del cap. 12.
+a `spawn.yield()`, una operación de `Spawn`. La fila contagia
+hacia arriba como cualquier efecto del cap. 12.
 
 ### Por qué los yields son explícitos
 
 En lenguajes con threads preemptivas (Java, Go, Rust con
 `std::thread`), el scheduler puede interrumpir un thread en
-cualquier instrucción. Eso obliga a programar como si cualquier
-línea pudiera ser interrumpida por otra fibra modificando
-datos compartidos.
+cualquier instrucción, y eso te obliga a programar como si
+cualquier línea pudiera ser interrumpida por otra fibra que
+modifica datos compartidos.
 
 En kaikai, **una fibra sigue corriendo hasta que llega a un
-punto de yield**. Entre yields, tienes determinismo local: si
-modificas un valor local, nadie más lo va a tocar hasta que tú
-cedas el control. Esto reduce mucho la carga cognitiva.
+punto de yield**. Entre yields tienes determinismo local: nadie
+toca un valor local tuyo hasta que cedas el control. Esto
+reduce mucho la carga cognitiva.
 
 A cambio, tienes que **acordarte de poner los yields**. La regla
-mental es: si tu función tiene un bucle largo de puro cómputo,
+mental: si tu función tiene un bucle largo de puro cómputo,
 agrega un `spawn.yield()` cada cierto número de iteraciones.
 Las funciones de IO ya yieldan por dentro.
 
 ## 13.4 Nurseries: concurrencia estructurada
 
-`spawn.spawn` + `spawn.await` funciona, pero tiene un problema:
-si te olvidas del `await`, la fibra se queda viva más allá del
-scope donde la creaste. Y si esa fibra falla, te enteras tarde
-o no te enteras.
+`spawn.spawn` + `spawn.await` funciona, pero si te olvidas del
+`await`, la fibra sigue viva más allá del scope donde la
+creaste. Y si esa fibra falla, te enteras tarde o no te
+enteras.
 
 Las **nurseries** atan las fibras a un scope léxico. Una fibra
 solo puede vivir dentro de un nursery, y el nursery espera a
@@ -287,8 +278,7 @@ capacidad para crear fibras:
   porque el nursery espera a las fibras de todos modos, y
   `|> ignore` dice que lo descartas a propósito.
 - `n.await(f)` espera a esa fibra y devuelve su valor. Solo lo
-  necesitas cuando quieres el resultado; para esperar a secas
-  no hace falta.
+  necesitas cuando quieres el resultado.
 - `n.select([a, b, ...])` espera a que cualquiera termine y
   cancela las demás.
 - `n.cancel(f)` cancela una fibra específica.
@@ -298,8 +288,8 @@ Lo que el nursery garantiza:
 
 - **Al salir del bloque, todas las hijas terminaron.** El
   nursery hace *join* automático de cada hija al cerrar la
-  llave, sin que tengas que pedir un `await`. No hay fugas: una
-  fibra no sobrevive al `nursery` que la creó.
+  llave, sin que pidas un `await`. No hay fugas: ninguna fibra
+  sobrevive al `nursery` que la creó.
 - **Si una hija falla por su cuenta, las demás se cancelan.**
   Cuando una hija lanza `Cancel` sin que nadie se lo haya
   pedido (un crash), el nursery cancela a las hermanas que
@@ -320,14 +310,14 @@ afuera, la cascada baja.*
 Esto se llama **concurrencia estructurada**. La idea es de
 Nathaniel Smith en su ensayo *"Notes on structured concurrency,
 or: Go statement considered harmful"* (2018), y aparece también
-en Trio, Kotlin coroutines, Swift y OCaml 5 Eio. La forma de
-kaikai integra el patrón en el sistema de efectos: la capacidad
-`Spawn` solo está disponible dentro de un nursery, y eso es lo
-que el sistema de tipos exige.
+en Trio, Kotlin coroutines, Swift y OCaml 5 Eio. kaikai integra
+el patrón en el sistema de efectos: la capacidad `Spawn` solo
+está disponible dentro de un nursery, y el sistema de tipos lo
+exige.
 
-`n.select` en uso, que es la primitiva de carrera: el nursery
-devuelve el valor de la primera hija que termina y cancela a la
-otra sin que tú lo pidas.
+`n.select` es la primitiva de carrera: el nursery devuelve el
+valor de la primera hija que termina y cancela a la otra sin
+que lo pidas.
 
 ```kai
 # ejemplos/cap13/04_race.kai
@@ -373,18 +363,18 @@ ganó: 1
 
 ### Por qué `Cancel` aparece en la firma de `main`
 
-Fíjate que `main` declara `/ Stdout + Spawn + Cancel`. ¿Por qué
-`Cancel`? Porque cada `spawn`, `await` y `select` es un punto
-de yield, y todo punto de yield puede recibir una
-`Cancel.raise()` desde el scheduler (si alguien cancela el
-nursery desde afuera, o si una fibra hermana falla). Toda
-función que use `Spawn` carga implícitamente `Cancel`.
+`main` declara `/ Stdout + Spawn + Cancel` porque cada `spawn`,
+`await` y `select` es un punto de yield, y todo punto de yield
+puede recibir una `Cancel.raise()` desde el scheduler (si
+alguien cancela el nursery desde afuera, o si una fibra
+hermana falla). Toda función que use `Spawn` carga
+implícitamente `Cancel`.
 
 ### `nursery` es azúcar sobre un `handle`
 
 `nursery { n -> ... }` parece una palabra clave del lenguaje,
 pero no lo es. Las fibras son **un efecto** llamado `Spawn`,
-con esta declaración en el stdlib:
+declarado así en el stdlib:
 
 ```kai
 effect Spawn {
@@ -402,17 +392,16 @@ de compilación a `handle { body } with Spawn as n { ... }`,
 con un handler interno que gestiona el árbol de fibras hijas,
 espera a las pendientes al salir y propaga fallos.
 
-Eso significa que el lenguaje core **no tiene primitivas de
-concurrencia**: tiene efectos. Las fibras, los nurseries, la
-cancelación son una biblioteca construida sobre dos efectos
-del stdlib (`Spawn` y `Cancel`). El cap. 14 va a hacer lo
-mismo para los actores (efecto `Actor[Msg]`), y el patrón se
-repite: lo distintivo de kaikai no es la lista de
-construcciones, sino que **todas son la misma construcción**
-(efectos algebraicos) con nombres distintos.
+El lenguaje core, entonces, **no tiene primitivas de
+concurrencia**: tiene efectos. Las fibras, los nurseries y la
+cancelación son una biblioteca sobre dos efectos del stdlib
+(`Spawn` y `Cancel`). En el cap. 14 los actores repiten el
+patrón (efecto `Actor[Msg]`): lo distintivo de kaikai es que
+**todas sus construcciones son la misma** (efectos
+algebraicos) con nombres distintos.
 
-Tres hijas y un `await` por cada una, que es la forma de
-quedarse con los resultados en vez de solo esperarlos:
+Para quedarte con los resultados en vez de solo esperarlos,
+un `await` por hija:
 
 ```kai
 # ejemplos/cap13/05_worker_pool.kai
@@ -492,11 +481,11 @@ sale, sin quedarse colgada ni abortar el proceso.
 La clave conceptual: `Cancel.raise()` es la **operación**, y
 `handle ... with Cancel { ... }` es el handler. Mismo patrón
 del cap. 12: la cancelación es un efecto más, con un handler
-escrito por el usuario o instalado por el runtime.
+que escribes tú o que instala el runtime.
 
 ### `Spawn.cancel(f)` y los handlers de `Cancel`
 
-Vale distinguir dos nombres parecidos:
+Dos nombres parecidos que conviene separar:
 
 - **El efecto `Cancel`** es lo que la fibra **recibe** cuando
   la cancelación le llega. Su única op `raise()` la inyecta
@@ -507,18 +496,17 @@ Vale distinguir dos nombres parecidos:
 
 Cuando llamas `n.spawn(...)` con un binding `n` y obtienes una
 fibra hija, `Spawn.cancel(hija)` no la mata: agenda la entrega.
-La hija, en su próximo yield, recibe `Cancel.raise()` y su
-propio handler de `Cancel` corre: exactamente el que la fibra
-hija instaló con `with Cancel { ... }`. Si no instaló ninguno,
-la fibra se desenrolla limpiamente y los handlers más arriba
-en la pila (típicamente del nursery) toman el control.
+La hija, en su próximo yield, recibe `Cancel.raise()` y corre
+su propio handler de `Cancel`, el que instaló con
+`with Cancel { ... }`. Si no instaló ninguno, se desenrolla
+limpiamente y los handlers más arriba en la pila (típicamente
+del nursery) toman el control.
 
 La única excepción es el **trap-exit** del modelo de actores
 (cap. 14): una fibra puede marcarse para que los crashes de
-sus pares se conviertan en mensajes en su mailbox en vez de
-gatillar cancelación, pero esa es una opción explícita y
-local; el default sigue siendo la cancelación cooperativa
-descrita aquí.
+sus pares le lleguen como mensajes a su mailbox en vez de
+gatillar cancelación. Es una opción explícita y local; por
+omisión rige la cancelación cooperativa descrita aquí.
 
 Una hija que se rinde por su cuenta, las hermanas que reciben
 la cancelación, el cleanup de cada una y la caída que el
@@ -616,35 +604,34 @@ kai: nursery child cancelled; no survivors
 
 ## 13.6 Memoria mutable por fibra
 
-El cap. 12 §12.7 cubrió `var` (celdas locales, azúcar sobre
-`State[T]`) y el efecto `Mutable` (que rige a `Ref[T]` y
-`Array[T]` cuando la mutación es observable). Toda esa
-maquinaria funciona igual que en código secuencial, con una
-sola adición que viene del modelo de fibras: **la memoria
-mutable vive en el heap de la fibra que la creó**.
+En el cap. 12 §12.7 conociste `var` (celdas locales, azúcar
+sobre `State[T]`) y el efecto `Mutable` (que rige a `Ref[T]` y
+`Array[T]` cuando la mutación es observable). Todo eso funciona
+igual que en código secuencial, con una sola adición del modelo
+de fibras: **la memoria mutable vive en el heap de la fibra que
+la creó**.
 
 Cuando una fibra crea un `Array[T]` o un `Ref[T]`, el espacio
-sale de su propio heap. Otra fibra no tiene cómo acceder a esa
-memoria: no hay punteros compartidos, no hay paso por
-referencia entre fibras. Si una fibra quiere darle un valor
-mutable a otra, lo manda por mailbox (cap. 14) y el runtime
-mueve el contenido al heap del receptor.
+sale de su propio heap y ninguna otra fibra tiene cómo
+acceder a él: no hay punteros compartidos ni paso por
+referencia entre fibras. Para darle un valor mutable a otra
+fibra, lo mandas por mailbox (cap. 14) y el runtime mueve el
+contenido al heap del receptor.
 
-Esta es la pieza que hace que la mutación no introduzca data
-races en kaikai. En un lenguaje con threads y memoria
-compartida, un `Array[T]` mutable necesita locks o atomics
-para ser tocado desde varios hilos. En kaikai, el sistema de
-tipos garantiza que ningún `Array[T]` está siendo modificado
-por dos fibras al mismo tiempo, porque ningún `Array[T]` es
-accesible desde dos fibras al mismo tiempo. La aislación de
-memoria del §13.1 cubre también las celdas mutables.
+Por eso la mutación no introduce data races en kaikai. Con
+threads y memoria compartida, un `Array[T]` mutable necesita
+locks o atomics para tocarse desde varios hilos. En kaikai, el
+sistema de tipos garantiza que ningún `Array[T]` está siendo
+modificado por dos fibras al mismo tiempo, porque ningún
+`Array[T]` es accesible desde dos fibras al mismo tiempo. La
+aislación de memoria del §13.1 cubre también las celdas
+mutables.
 
 ## 13.7 Por qué las fibras no pueden escapar de su nursery
 
 Un detalle del sistema de tipos: **`Fiber[T]` no es un valor
-movible**. No puedes devolverlo de una función, no puedes
-guardarlo en un `Option` o un record, no puedes pasarlo a otra
-fibra.
+movible**. No puedes devolverlo de una función, guardarlo en un
+`Option` o un record, ni pasarlo a otra fibra.
 
 ```kai
 fn no_compila() : Fiber[Int] {       # ERROR
@@ -654,10 +641,9 @@ fn no_compila() : Fiber[Int] {       # ERROR
 }
 ```
 
-¿Por qué? Porque una fibra solo tiene sentido dentro del
-nursery que la creó. Si se permitiera devolverla, ¿quién la
-esperaría? ¿Quién la cancelaría si el nursery termina? La
-estructura se rompe.
+Una fibra solo tiene sentido dentro del nursery que la creó.
+Si pudieras devolverla, ¿quién la esperaría? ¿Quién la
+cancelaría al terminar el nursery? La estructura se rompe.
 
 Una lista de fibras dentro del mismo nursery es legal:
 
@@ -668,13 +654,12 @@ nursery { n ->
 }
 ```
 
-Pero esa lista vive dentro del nursery. No puede salir.
+Pero esa lista vive dentro del nursery y no puede salir.
 
-Esto cierra el modelo: cada fibra tiene un padre conocido, cada
-fibra termina antes de que su padre termine, y el sistema de
-tipos lo garantiza al nivel sintáctico, no al nivel de
-convención. **No hay manera de que una fibra se quede
-huérfana.**
+Esto cierra el modelo: cada fibra tiene un padre conocido y
+termina antes que él, y el sistema de tipos lo garantiza a
+nivel sintáctico, no por convención. **No hay manera de que
+una fibra se quede huérfana.**
 
 ## 13.8 Caso de estudio: repartir trabajo entre fibras
 
@@ -682,9 +667,8 @@ Cerramos con un patrón que vas a escribir muchas veces:
 repartir una lista de tareas entre varias fibras trabajadoras
 y juntar los resultados al final.
 
-Antes del código, una restricción que conviene tener clara,
-porque decide la forma de la solución: **los handlers de
-efectos son locales a la fibra**. Si instalas un handler de
+Antes del código, una restricción que decide la forma de la
+solución: **los handlers de efectos son locales a la fibra**. Si instalas un handler de
 `State` en el `main` y una fibra hija ejecuta `State.get()`,
 el programa ni siquiera compila:
 
@@ -698,24 +682,23 @@ error: effect not handled in spawned fiber: State
   = help: handle the effect inside the spawned body: `handle { ... } with State { ... }`
 ```
 
-No es un descuido del compilador, es el mismo invariante de
-aislación que sostiene todo el capítulo. Una capacidad es
-parte del contexto de una fibra, y una fibra no hereda el
-contexto de quien la creó. Lo que tú le pasas a través de un
-`spawn` son los valores que capturas en el lambda, de ida, y el
-valor de retorno que recoge `await`, de vuelta. Las capacidades
+Es el mismo invariante de aislación que sostiene todo el
+capítulo: una capacidad es parte del contexto de una fibra, y
+una fibra no hereda el contexto de quien la creó. A través de
+un `spawn` pasas los valores que capturas en el lambda, de ida,
+y el valor de retorno que recoge `await`, de vuelta. Las capacidades
 que sí resuelven dentro de una hija son de dos clases, y
 ninguna es tuya: las que el runtime provee por fibra (`Stdout`,
 `Clock`) y las que son de la fibra por construcción (`Cancel`,
 `Spawn`, `Actor`).
 
-El compilador lo ataja en la línea del `spawn`, que es donde
-está el error, en vez de dejarlo reventar en runtime cuando la
-fibra llega a la operación.
+El compilador lo ataja en la línea del `spawn`, donde está el
+error, en vez de dejarlo reventar en runtime cuando la fibra
+llega a la operación.
 
-Así que la "cola compartida" que uno escribiría en Go con un
+Así que la "cola compartida" que escribirías en Go con un
 canal, o en Java con un `BlockingQueue`, aquí no se escribe
-así. Se reparte el trabajo por adelantado y cada fibra devuelve
+así. Repartes el trabajo por adelantado y cada fibra devuelve
 lo suyo:
 
 ```kai
@@ -730,10 +713,10 @@ fn procesar_lote(id: Int, lote: [String]) : [String] / Spawn =
     })
 ```
 
-`procesar_lote` no sabe que existen otras fibras. Recibe su
-lote, lo recorre, y va armando la lista de salida. El
-`spawn.yield()` está para que las trabajadoras se turnen; no
-cambia el resultado, solo lo hace concurrente de verdad.
+`procesar_lote` no sabe que existen otras fibras: recibe su
+lote, lo recorre y arma la lista de salida. El `spawn.yield()`
+está para que las trabajadoras se turnen; no cambia el
+resultado, solo lo hace concurrente de verdad.
 
 El `main` reparte, espera y concatena:
 
@@ -763,13 +746,11 @@ worker 3: foxtrot
 (6 tareas procesadas)
 ```
 
-Y esta vez la salida **sí** está garantizada, a diferencia de
-los ejemplos anteriores del capítulo. No porque las fibras
-corran en orden, que corren como quieran y en los núcleos que
-haya, sino porque nadie imprime desde una fibra. Las
-trabajadoras solo devuelven listas; el `main` las concatena en
-el orden que él eligió al escribir `n.await(a) ++ n.await(b) ++
-n.await(c)`, y recién ahí imprime. El orden de la salida es una
+Esta vez la salida **sí** está garantizada. Las fibras corren
+como quieran y en los núcleos que haya, pero ninguna imprime:
+solo devuelven listas, y el `main` las concatena en el orden
+que eligió al escribir `n.await(a) ++ n.await(b) ++
+n.await(c)`; recién ahí imprime. El orden de la salida es
 consecuencia del código, no del scheduler.
 
 Esa es una regla de diseño que vale más que el ejemplo: **si
@@ -784,7 +765,7 @@ es un actor, y es el capítulo 14.
 
 ### Concurrencia y paralelismo
 
-Vale ser preciso con dos palabras que se confunden seguido.
+Dos palabras que se confunden seguido:
 
 **Concurrencia** es una propiedad de tu programa: tener varias
 líneas de trabajo vivas a la vez, que progresan de manera
@@ -792,13 +773,12 @@ independiente. **Paralelismo** es una propiedad de la máquina:
 que dos de esas líneas ejecuten instrucciones en el mismo
 instante, en núcleos distintos.
 
-kaikai te da las dos. Las fibras son el mecanismo de
-concurrencia: livianas, cooperativas, atadas a un nursery. Y el
-runtime las reparte por defecto sobre tantos hilos del sistema
-como núcleos tenga la máquina, con un scheduler M:N que roba
-trabajo entre hilos. No hay que pedirlo ni configurar nada: el
-programa que escribiste en §13.3 ya usa tus dieciséis núcleos si
-los tienes.
+kaikai te da las dos. Las fibras, cooperativas y atadas a un
+nursery, son el mecanismo de concurrencia, y el runtime las
+reparte por omisión sobre tantos hilos del sistema como núcleos
+tenga la máquina, con un scheduler M:N que roba trabajo entre
+hilos. No pides ni configuras nada: el programa que escribiste
+en §13.3 ya usa tus dieciséis núcleos si los tienes.
 
 Lo que **no** cambia con el número de hilos es la semántica:
 
@@ -813,12 +793,12 @@ Lo que **no** cambia con el número de hilos es la semántica:
 
 Lo que sí cambia es lo que ya viste: **el orden en que se
 intercalan fibras independientes deja de ser predecible**. Con
-un hilo, `spawn.yield()` decidía los turnos y la salida era
-reproducible. Con varios, no. Por eso `KAI_THREADS=1` sigue
-existiendo: fuerza el scheduler cooperativo de un solo hilo,
-byte a byte idéntico al de antes. Es la herramienta para
-depurar una carrera, para un test que compara salida literal,
-o para leer un ejemplo pedagógico como los de este capítulo.
+un hilo, `spawn.yield()` decide los turnos y la salida es
+reproducible; con varios, no. Para eso está `KAI_THREADS=1`:
+fuerza el scheduler cooperativo de un solo hilo. Es la
+herramienta para depurar una carrera, para un test que compara
+salida literal o para leer un ejemplo pedagógico como los de
+este capítulo.
 
 ```sh
 $ ./programa                  # tantos hilos como núcleos
@@ -826,18 +806,17 @@ $ KAI_THREADS=4 ./programa    # cuatro, ni más ni menos
 $ KAI_THREADS=1 ./programa    # cooperativo, reproducible
 ```
 
-Ahora sí, la pregunta útil: **¿te va a servir?** Si tu programa
-está limitado por IO, esperar red, leer archivos o recibir
-mensajes, las fibras ya te pagaban antes, porque mientras una
-espera bytes las otras corren. Si está limitado por CPU, antes
-las fibras te daban estructura pero no velocidad; hoy sí te
-dan velocidad, siempre que el trabajo se pueda partir en
-pedazos que no dependan uno del otro. El ejemplo de esta
-sección es exactamente esa forma.
+La pregunta útil es si te va a servir. Si tu programa está
+limitado por IO (esperar red, leer archivos, recibir
+mensajes), las fibras te pagan incluso con un hilo, porque
+mientras una espera bytes las otras corren. Si está limitado
+por CPU, además de estructura te dan velocidad, siempre que el
+trabajo se pueda partir en pedazos que no dependan uno del
+otro. El ejemplo de esta sección tiene exactamente esa forma.
 
 ## 13.9 Filosofía: dos invariantes que vale recordar
 
-Si quieres recordar dos cosas del capítulo, que sean estas:
+Del capítulo, quédate con dos cosas:
 
 1. **Cada fibra tiene su propio heap.** No hay shared memory
    entre fibras. La comunicación es por mensajes (mailbox de
@@ -856,7 +835,7 @@ sincronización. La estructura léxica es lo que permite
 liberar la memoria predeciblemente al final del scope.
 Cualquier modelo que rompa uno de los dos rompe el otro.
 
-A cambio, hay clases enteras de bugs que no tienes que pensar:
+A cambio, dejas de pensar en clases enteras de bugs:
 
 - No hay `volatile` ni `Atomic` ni memory ordering.
 - No hay `lock` ni `mutex` ni `RwLock`.
@@ -865,9 +844,8 @@ A cambio, hay clases enteras de bugs que no tienes que pensar:
 - No hay GC pause-the-world.
 
 Es un trade-off: pierdes la libertad de tener punteros
-arbitrarios entre fibras. Pero la ganancia (en seguridad, en
-predictibilidad, en simplicidad mental) es lo que justifica
-el modelo.
+arbitrarios entre fibras. Lo que ganas en seguridad y en
+simplicidad mental justifica el modelo.
 
 ## Ejercicios
 

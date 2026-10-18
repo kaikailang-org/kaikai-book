@@ -3,19 +3,17 @@
 The best way to get to know a programming language is to read it
 and run it.
 That is how I learned every language I know, which is why this
-book opens with programs instead of definitions. This chapter is
-a guided tour of kaikai in ten short programs.
-None of them runs longer than thirty lines, every one of them
-compiles, and together they cover the shapes you will see again
-and again in the rest of the book: declarations, algebraic data
+book opens with programs instead of definitions. This chapter
+tours kaikai in ten short programs. None runs longer than thirty
+lines, all of them compile, and together they cover the shapes
+you will see again and again: declarations, algebraic data
 types, pattern matching, effects, fibers, protocols, units of
 measure, contracts, inline tests, and typed holes.
 
-We will not explain every detail yet. The point is to leave you
-with a view of the language from above, and the sense that you
-can already read kaikai code even when some of the corners are
-still blurry. The corners come into focus in the chapters that
-follow.
+You don't need every detail yet. You'll finish the chapter with
+a view of the language from above and the sense that you can
+already read kaikai code, even if some corners are still blurry;
+the chapters that follow bring them into focus.
 
 If you want to follow along on your own machine, the source
 files for this chapter live under `examples/ch01/` in the book
@@ -48,23 +46,21 @@ Four things to notice before moving on:
   you will type it a lot.
 - Curly braces `{ ... }` group a block of statements, but a
   block is also an expression: the last value it produces is
-  the value of the block. We don't lean on this here, but you
-  will use it.
+  the value of the block. You don't need it here, but you will
+  use it.
 - `println` does not require an `import`. It is available in
   every program because it writes to standard output through
-  an effect that kaikai installs by default. Chapter 12 goes
-  into this properly; for now it is enough to know that it
-  works.
+  an effect that kaikai installs by default. You dig into this
+  in chapter 12; for now it is enough to know that it works.
 
 There is no semicolon at the end of the line. There is no
 `return` for a function that does not return a value. You don't
 even need to declare a return type on `main` when there is
 nothing useful to return. All of this is by design: kaikai
 tries not to make you write the obvious. When there *is*
-something useful to return, one convention is worth knowing up
-front: a `main` returning `Int` uses that number as the
-process's exit status, just like C or Go. Chapter 16 §16.1
-picks it up.
+something useful to return, a convention applies: a `main`
+returning `Int` uses that number as the process's exit status,
+just like C or Go. §16.1 picks it up.
 
 ## 1.2 Algebraic types and `match`: FizzBuzz
 
@@ -128,11 +124,10 @@ Fizz
 FizzBuzz
 ```
 
-What is interesting about this version is not that it prints
-`1, 2, Fizz, 4, Buzz, ...`. Any language can do that. What is
-interesting is what we did to get there.
+Any language can print `1, 2, Fizz, 4, Buzz, ...`. What's
+interesting is how this one gets there.
 
-We defined a **sum type**: `Tag` is one of four constructors.
+First, a **sum type**: `Tag` is one of four constructors.
 Three are bare names (`Both`, `Fizz`, `Buzz`) and one carries a
 payload (`Other(Int)`). If you come from an imperative
 language, this looks like an `enum` with associated data. If
@@ -146,38 +141,36 @@ you see: four ways to construct a value of type `Tag`.
 branch is a block that produces a value. The `if` itself is an
 expression that returns a `Tag`, and the body of the function
 *is* that expression — no `return`, no intermediate
-assignment. This is what chapter 2 will call **expression, not
+assignment. In chapter 2 you'll call this **expression, not
 statement**, and it is one of the few habit changes you will
 have to make.
 
 `label` consumes a `Tag` with `match`. Each arm is a **pattern**
 followed by `->` and the expression that pattern produces. The
-pattern `Other(n)` doesn't only say "this was built with the
-`Other` constructor"; it also unpacks the payload and binds it
-to the name `n`, ready to use on the right-hand side.
-Destructuring, comparing, and declaring a name happen in a
-single move.
+pattern `Other(n)` recognizes the `Other` constructor, unpacks
+the payload and binds it to the name `n`, ready to use on the
+right-hand side: destructuring, comparing, and declaring a name
+in a single move.
 
 `loop` is recursive. There is no `while` statement and no `for`
 statement: recursion is the base of iteration. A `while` does
 exist, but it is an ordinary stdlib function that reads like a
-keyword, and chapter 6 covers it along with the rest of the
-iteration conveniences. So that base does not cost your program anything,
+keyword, and you'll meet it in chapter 6 along with the rest of
+the iteration conveniences. So that base does not cost your program anything,
 the language guarantees **mandatory tail-call optimization**: a
 recursive call in tail position does not consume stack.
 `loop(1, 1_000_000)` works without blowing up.
 
-One thing that will look strange and that we leave for chapter
-12: the signature of `loop` says `: Unit / Stdout`. The part
-after the slash is the set of **effects** the function uses.
-`Stdout` means "this function writes to the terminal". Without
-it, the compiler would not let you call `println` inside. Don't
-worry about the details yet — the full story is in chapter 12.
+One thing that will look strange, and that chapter 12 explains:
+the signature of `loop` says `: Unit / Stdout`. The part after
+the slash is the set of **effects** the function uses. `Stdout`
+means "this function writes to the terminal". Without it, the
+compiler would not let you call `println` inside.
 
 ## 1.3 Pipes: iterating without writing a loop
 
-We saw that iteration rests on recursion. In practice you will
-almost never write that recursion by hand: to walk a collection
+Iteration rests on recursion, but in practice you will almost
+never write that recursion by hand: to walk a collection
 kaikai has five operators — the **pipes** — and each one says in
 a single symbol what happens to the collection.
 
@@ -219,16 +212,15 @@ minus one and the element plus one", with no parameter name to
 invent. When the name helps, the explicit lambda is still
 there: `grades | (n) => n * 2`.
 
-What there isn't is a `for`. A pipeline reads left to right,
-each step does one thing, and the last one's value is the value
-of the expression. Chapter 6 takes them seriously, lazy
-versions included; here it is enough that you recognize them
-when they show up.
+There's no `for`. A pipeline reads left to right, each step
+does one thing, and the last one's value is the value of the
+expression. Chapter 6 takes them seriously, lazy versions
+included; here it's enough that you recognize them.
 
 ## 1.4 A calculator with a recursive AST
 
-Something with a bit more meat. A small calculator that
-represents arithmetic expressions as a tree.
+Something with more meat: a small calculator that represents
+arithmetic expressions as a tree.
 
 ```kai
 type Expr
@@ -259,33 +251,32 @@ $ kai run examples/ch01/03_calculator.kai
 
 `Expr` is a sum type just like the one in FizzBuzz, with one
 difference: **it mentions itself in its own constructors**.
-`Add` takes two `Expr`s. So does `Mul`. `Neg` takes one. As a
-result, a value of type `Expr` can be a tree of any depth.
+`Add` and `Mul` take two `Expr`s, `Neg` takes one, so a value
+of type `Expr` can be a tree of any depth.
 
 That is the key tool for representing languages,
 configurations, queries, commands, almost any structure with
-nesting. You will see it often. Chapter 5 dedicates a whole
-section to this pattern.
+nesting. You'll use it a lot, and chapter 5 gives it a whole
+section.
 
 `eval` walks the tree with `match`. Each case recurses on the
 children. Exhaustiveness is checked by the compiler: if you add
 a constructor to `Expr` and forget an arm in `eval`, it does
 not compile. This is huge and will save you many hours.
-Chapter 5 explores it carefully; for now, trust it.
 
 `let` introduces a local binding. The type is inferred from
 the right-hand side. There is no `var`, no `mutable`, no
 reassignment: `let e = ...` binds `e` to a value, and that
 value does not change. If you really need to mutate something,
-kaikai lets you, but it asks you to declare it (chapter 12).
+kaikai lets you, but it asks you to declare it (chapter 13).
 This is the other half of the habit change: **immutability by
 default**.
 
 ## 1.5 A custom effect with a handler
 
-Until now, every effect we used was `println`, which works
-because kaikai installs a default handler for it. Let's see
-what happens when we declare our own.
+So far the only "effect" you've used is `println`, which works
+because kaikai installs a default handler for it. Now you
+declare your own.
 
 ```kai
 effect Log {
@@ -317,7 +308,7 @@ $ kai run examples/ch01/04_effect.kai
 
 This is the example most likely to make you slow down. That is
 fine. Algebraic effects are kaikai's distinctive bet, and I want
-you to see them running before we explain them seriously.
+you to see them running before explaining them properly.
 
 What is going on:
 
@@ -330,16 +321,16 @@ What is going on:
   doesn't know whether messages go to the terminal, to a file,
   or nowhere at all.
 - The decision happens at `handle ... with Log { ... }`. There,
-  inside `main`, we say: "for this block, when someone invokes
+  inside `main`, you say: "for this block, when someone invokes
   `Log.log(msg)`, run this code". The handler prints the
   message with an `[INFO]` prefix and hands control back via
   `resume(())`, which continues the program where it left off.
 
 It resembles try/catch, dependency injection, middleware, and
-callbacks at once — and it's a single idea underlying all four. If it confuses you the first
-time around, that's fine. Chapter 12 returns to it with time
-and several examples before asking you to write a handler of
-your own.
+callbacks at once — and it's a single idea underlying all four.
+If it confuses you the first time around, that's fine: chapter
+12 returns to it with time and several examples before asking
+you to write a handler of your own.
 
 What is worth keeping from this section: the type of `greet`
 tells you it needs `Log`. The compiler will not let you call
@@ -349,7 +340,7 @@ of languages that have invisible exceptions.
 
 ## 1.6 Two cooperative fibers
 
-The fifth program of the tour uses concurrency.
+The next program uses concurrency.
 
 ```kai
 import spawn
@@ -390,8 +381,8 @@ Without the `spawn.yield` calls, worker A would run all three
 iterations before giving B a chance. With them, the output
 ends up interleaved.
 
-The `KAI_THREADS=1` in that command deserves a note. By
-default kaikai spreads fibers across as many OS threads as
+About the `KAI_THREADS=1` in that command: by default kaikai
+spreads fibers across as many OS threads as
 your machine has cores, and then the order of `A` and `B` is
 the scheduler's call: it changes run to run. On a single
 thread, `spawn.yield` is the only thing handing out turns, and
@@ -400,20 +391,19 @@ this example, not how you'll run your programs; chapter 13
 takes it apart properly.
 
 The signature of `worker` is `: Unit / Stdout + Spawn`. Two
-effects: the one we already knew for printing, and `Spawn` for
+effects: the one you already know for printing, and `Spawn` for
 spawning and coordinating fibers. The `+` operator composes
 effects: a function may carry several at once, declared in its
 type.
 
 `(() => worker("B", 3))` is a **lambda**: an anonymous
-function with no arguments that calls `worker`. We pass it to
+function with no arguments that calls `worker`. You pass it to
 `spawn.spawn` so it runs inside the new fiber.
 
-There is much to say about kaikai's concurrency model — why
-fibers are isolated, how they cancel, what happens to memory —
-but all of it lives in chapter 12. What matters for the tour is
-that the language has structured concurrency as a first-class
-feature, and it is treated, once again, as an effect.
+kaikai's concurrency model — why fibers are isolated, how they
+cancel, what happens to memory — lives in chapter 13. For the
+tour, it's enough that the language has first-class structured
+concurrency and treats it, once again, as an effect.
 
 ## 1.7 Custom-fitted types with protocols
 
@@ -425,9 +415,9 @@ is missing: **records**, which are what most languages call a
 type Point = { x: Int, y: Int }
 ```
 
-And with that comes the natural question: how do you "add
-operations" to a type? For example, how do we tell the compiler
-that my `Point` knows how to print itself as a string?
+With that comes the natural question: how do you "add
+operations" to a type? For example, how do you tell the compiler
+that your `Point` knows how to print itself as a string?
 
 kaikai's answer is **protocols**: a named contract with a small
 set of operations, that any type may satisfy. Conceptually it
@@ -533,7 +523,6 @@ There is much more to say — generic units, unit algebra
 useful variant called *branded types* that tags strings and
 integers with names like `UserId` or `OrderId` so the compiler
 won't let you confuse them. All of that lives in chapter 10.
-For now, knowing it exists is enough.
 
 ## 1.9 Programming by contract
 
@@ -577,13 +566,12 @@ refers to the return value. The postcondition is checked **on
 exit**: if some internal bug made the function return something
 that violated it, the program aborts there too.
 
-Contracts are not comments. They are code the compiler emits as
-real checks: static where it can manage, dynamic where it can't.
-The day something violates a contract, you find out at the exact
-spot.
+Contracts are code: the compiler emits them as real checks,
+static where it can manage, dynamic where it can't. The day
+something violates a contract, you find out at the exact spot.
 
-How do they differ from the tests in the next section? A test
-says "for this specific input, I expect this specific output". A
+Compared with the tests in the next section, the difference is
+scope. A test says "for this specific input, I expect this specific output". A
 contract says "for **every** input satisfying this precondition,
 the output satisfies this postcondition". One is a fixed case;
 the other is a universal promise documented in the signature.
@@ -641,17 +629,15 @@ There are two close relatives that share the same shape:
 - **`bench "..." { ... }`** is a benchmark: the runner runs
   the block many times and reports nanoseconds per iteration.
 
-The three forms complement each other: `test` for fixed
-cases, `check` for invariants that must hold over any input,
-`bench` to measure performance instead of guessing. Chapter 7
-treats each one in detail.
+`test` is for fixed cases, `check` for invariants that must
+hold over any input, `bench` to measure performance instead of
+guessing. Chapter 7 treats each one in detail.
 
 ## 1.11 Holes: gaps that still compile
 
-There is one last construct worth seeing in the tour, because it
-shifts how you write code a little. kaikai lets you leave
-**holes** where you don't yet know what belongs, and the program
-compiles anyway.
+One last construct, because it shifts how you write code a
+little: kaikai lets you leave **holes** where you don't yet know
+what belongs, and the program compiles anyway.
 
 ```kai
 fn circle_area(r: Real) : Real = ?formula
@@ -676,7 +662,7 @@ without the hole being filled, the program aborts with
 `panic: unfilled hole`. Since `main` never calls it, the program
 above finishes cleanly.
 
-What is this good for? Three things:
+It's good for three things:
 
 - **Designing top-down.** You write the function's signature,
   leave the body as `?`, and compile. The compiler tells you
@@ -701,10 +687,10 @@ takes that bet apart at length.
 
 ## 1.12 Dependencies and projects: `kai.toml`
 
-Every example in the tour so far has been a loose file. A real
-project looks different: you will have several files, you will
-depend on libraries other people published, and you will want a
-colleague to clone the repo and get exactly the build you have.
+So far you've written loose files. In a real project you have
+several files, you depend on libraries other people published,
+and you want a colleague to clone the repo and get exactly the
+build you have.
 
 kaikai handles this with a minimal manifest, **`kai.toml`**:
 
@@ -742,8 +728,8 @@ to go fetch it.
 Chapter 8 covers this properly: how to organize a project into
 modules, what goes in `[dependencies]`, how version selection
 works when two dependencies want different things. For now it's
-enough to know it exists, and that **you don't need an external
-build system**: `kai` is the only binary.
+enough to know that **you don't need an external build system**:
+`kai` is the only binary.
 
 ## 1.13 Installing and running `kai`
 
@@ -810,9 +796,9 @@ Chapter 16 covers the rest of the tooling: `fmt`, `lsp`,
 
 ## 1.14 How the rest of the book is laid out
 
-We saw, without going deep, almost everything that makes
-kaikai distinctive. The rest of the book takes each piece and
-treats it seriously.
+You've now seen, without going deep, almost everything that
+makes kaikai distinctive. The rest of the book takes each piece
+seriously.
 
 - **Part II — The Language** (chapters 3 to 11) covers basic
   types, compound types, sum types and `match`, functions,
@@ -831,7 +817,7 @@ treats it seriously.
 - Before all that, **chapter 2** softens a few assumptions if
   you come from an imperative world: expressions vs
   statements, immutability by default, `Option` instead of
-  `null`, visible effects. It is short but useful.
+  `null`, visible effects.
 
 If you come from Haskell, OCaml, Elixir, or Scala, you can
 skip chapter 2 and even skim Part II; what is new for you

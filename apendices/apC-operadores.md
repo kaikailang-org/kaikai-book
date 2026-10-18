@@ -1,9 +1,8 @@
 # Apéndice C · Tabla de operadores y precedencia
 
-Este apéndice resume todos los operadores del lenguaje con su
-precedencia y asociatividad. Está pensado como referencia
-rápida: cuando dudas cómo parsea `a | f |> g`, lo consultas y
-sigues.
+Todos los operadores del lenguaje, con su precedencia y
+asociatividad. Es referencia rápida: cuando dudas cómo parsea
+`a | f |> g`, lo consultas y sigues.
 
 La precedencia está numerada de más alta (1, aprieta primero)
 a más baja (8, aprieta último). Cada nivel se resuelve contra
@@ -33,9 +32,9 @@ el nivel inmediatamente superior.
   `a / b / c` es `(a / b) / c`.
 - **Nivel 4 (aditivos).** `+` y `-` binarios sobre números, `++`
   para concatenar strings.
-- **Nivel 5 (comparaciones).** **No se encadenan.** Escribir
-  `a < b < c` es error de sintaxis. La forma correcta es
-  `a < b and b < c`. Esto elimina la clase de bugs donde
+- **Nivel 5 (comparaciones).** **No se encadenan.**
+  `a < b < c` es error de sintaxis; se escribe
+  `a < b and b < c`. Así desaparece la clase de bugs donde
   `1 == 1 == true` parsea inesperadamente.
 - **Nivel 6 (`and`) y 7 (`or`).** Lógicos con corto-circuito.
   `and` aprieta más fuerte que `or`, así que
@@ -48,8 +47,8 @@ el nivel inmediatamente superior.
 
 ## C.2 Operadores que **no** son operadores
 
-Algunas formas que parecen operadores en otros lenguajes son
-construcciones de sintaxis aparte en kaikai:
+Algunas formas que en otros lenguajes parecen operadores son,
+en kaikai, construcciones de sintaxis aparte:
 
 - **`=` (asignación de `let`)**: parte de la sintaxis de `let`,
   no es un operador. `let x = expr` es una declaración.
@@ -80,10 +79,9 @@ construcciones de sintaxis aparte en kaikai:
 
 ## C.3 Equivalencias útiles
 
-Algunos operadores son azúcar sintáctica para llamadas a
-funciones del stdlib. Conocer las equivalencias ayuda cuando
-el operador no parece funcionar o cuando uno quiere ver el
-mecanismo subyacente.
+Algunos operadores son azúcar para llamadas a funciones del
+stdlib. Las equivalencias te ayudan cuando el operador no
+parece funcionar o cuando quieres ver el mecanismo de abajo.
 
 | Operador        | Equivale a                              |
 |-----------------|-----------------------------------------|
@@ -101,8 +99,8 @@ mecanismo subyacente.
 
 ## C.4 Recordatorio: comparación no asociativa
 
-La regla del nivel 5 merece énfasis aparte porque es donde el
-lector que viene de otros lenguajes más se sorprende.
+La regla del nivel 5 merece énfasis aparte: es la que más
+sorprende si vienes de otros lenguajes.
 
 En la mayoría de los lenguajes:
 
@@ -119,7 +117,6 @@ que escribas la intención explícitamente:
 1 < 2 and 2 < 3         # rango: cada lado se compara explícito
 ```
 
-Esto elimina una clase pequeña pero molesta de bugs. Para
-quien venga de Python y le moleste tener que escribir más,
-vale recordar que la regla es la misma de Pascal, Eiffel y
-SQL. No es una rareza de kaikai.
+Así desaparece una clase pequeña pero molesta de bugs. Si
+vienes de Python y te molesta escribir más, la regla es la
+misma de Pascal, Eiffel y SQL. No es una rareza de kaikai.

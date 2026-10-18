@@ -1,9 +1,9 @@
 # Capítulo 9 · Protocolos
 
-Hasta aquí viste cómo agrupar datos (records, tipos suma) y
-cómo definir funciones que operan sobre esos datos. Lo que
-falta es responder una pregunta concreta: **¿cómo le agregas
-operaciones a un tipo desde fuera de su declaración?**
+Ya sabes agrupar datos en records y tipos suma, y escribir
+funciones que operan sobre ellos. Falta responder una pregunta
+concreta: **¿cómo le agregas operaciones a un tipo desde fuera
+de su declaración?**
 
 Por ejemplo: `Punto` es un record con dos campos. Quieres que
 se imprima como `(3, 4)` cuando aparece en una interpolación.
@@ -14,25 +14,24 @@ La respuesta de kaikai son los **protocolos**: un contrato con
 nombre y un puñado de operaciones, que cualquier tipo puede
 satisfacer. Elegí la palabra "protocolo" y no "trait" ni
 "interfaz" porque describe mejor lo que pasa: dos partes que
-acuerdan cómo hablarse. Conceptualmente, los protocolos hacen lo que las
+acuerdan cómo hablarse. Los protocolos hacen lo que las
 **interfaces** de Go, los **traits** de Rust, los **protocols**
 de Clojure y Elixir, y la parte fácil de las **typeclasses**
-de Haskell. Pero kaikai elige un punto preciso del espacio de
-diseño: **single-dispatch explícito, sin propagación de
-constraints, sin tipos de orden superior**. Eso le saca
-complejidad al sistema de tipos a cambio de algunas cosas que
-no se pueden expresar, y este capítulo cubre las dos caras.
+de Haskell, pero desde un punto preciso del espacio de diseño:
+**single-dispatch explícito, sin propagación de constraints,
+sin tipos de orden superior**. Eso le saca complejidad al
+sistema de tipos a cambio de algunas cosas que no se pueden
+expresar. En este capítulo conoces las dos caras.
 
 ## 9.1 Por qué hay protocolos
 
-Los protocolos resuelven tres dolores concretos, y vale la pena
-verlos uno por uno.
+Los protocolos resuelven tres dolores concretos.
 
-**Imprimir tus tipos sin escribir cada vez.** Cuando declaras
-un record, querer imprimirlo en logs, en respuestas, en
-errores, no debería costarte una función `usuario_a_string`
-por cada tipo. Con `Show` implementado una vez, la
-interpolación `"#{usuario}"` lo usa automáticamente.
+**Imprimir tus tipos sin escribir cada vez.** Imprimir un
+record en logs, respuestas o errores no debería costarte una
+función `usuario_a_string` por cada tipo. Con `Show`
+implementado una vez, la interpolación `"#{usuario}"` lo usa
+automáticamente.
 
 **Igualdad estructural sin esfuerzo.** Cualquier tipo nuevo
 necesita "esto es igual a aquello" en algún momento. Sin
@@ -41,20 +40,18 @@ y vives el resto del proyecto recordando cuál nombre usaste
 en cuál archivo. Con `Eq` implementado, la operación se llama
 `eq` para todos.
 
-**Comparación, hashing, serialización.** El mismo argumento
-del párrafo anterior, multiplicado por las tres operaciones
-estándar que casi todo tipo necesita en algún momento.
+**Comparación, hashing, serialización.** El mismo argumento,
+multiplicado por tres operaciones que casi todo tipo necesita
+tarde o temprano.
 
-Sin protocolos, cada uno de los tres se resuelve con
-convenciones de nombres caso por caso, o con `match` enormes
-que enumeran cada tipo posible. Con un solo mecanismo, los
-tres y los que vengan después se resuelven en una línea por
-tipo.
+Sin protocolos, cada caso se resuelve con convenciones de
+nombres o con `match` enormes que enumeran cada tipo posible.
+Con un solo mecanismo, estos tres y los que vengan después se
+resuelven en una línea por tipo.
 
 ## 9.2 Declarar un `protocol` y `impl`
 
-La sintaxis es directa. Un protocolo declara un nombre y una
-o más operaciones:
+Un protocolo declara un nombre y una o más operaciones:
 
 ```kai
 protocol Show {
@@ -79,8 +76,8 @@ impl Show for Punto {
 }
 ```
 
-Y a partir de ese momento, `show(p)` llama a tu
-implementación cuando `p : Punto`:
+Desde ahí, `show(p)` llama a tu implementación cuando
+`p : Punto`:
 
 ```kai
 fn main() {
@@ -90,7 +87,7 @@ fn main() {
 }
 ```
 
-Tres detalles que conviene fijar:
+Cuatro detalles que conviene fijar:
 
 - **El cuerpo del `impl` lista las funciones del protocolo, una por una**, con la sintaxis estándar de `fn`. Cada `fn` en el bloque tiene que coincidir con la firma declarada en el `protocol`, sustituyendo `Self` por el tipo concreto.
 
@@ -100,7 +97,7 @@ Tres detalles que conviene fijar:
 
 - **El nombre se puede calificar.** Cuando dos de tus imports exportan un protocolo con el mismo nombre, dices cuál: `impl dibujo.Render for Caja`, y lo mismo dentro de un derive, `#[derive(protocols.Show)]`. Es la regla general del §8.2: el calificador es un desempate, y el nombre pelado está bien mientras nada colisione.
 
-Vale volver a la regla orphan, porque con los builtin se topa antes de lo que uno esperaría: tarde o temprano quieres que un `Int` o un `String` se comporten distinto en tu dominio. El compilador te explica exactamente dónde estás parado:
+Con los builtin, la regla orphan aparece antes de lo que esperas: tarde o temprano quieres que un `Int` o un `String` se comporten distinto en tu dominio. El compilador te dice exactamente dónde estás parado:
 
 ```
 error: orphan rule: `impl Show for Int` is in module `a`, but `Show` is declared in
@@ -155,9 +152,8 @@ p está en (3, 4)
 
 ## 9.3 Los cinco protocolos del stdlib
 
-kaikai trae cinco protocolos en `stdlib/protocols.kai` que
-vas a usar todo el tiempo. La tabla siguiente los lista con
-sus operaciones:
+kaikai trae en `stdlib/protocols.kai` cinco protocolos que
+vas a usar todo el tiempo:
 
 | Protocolo | Operaciones | Para qué |
 |---|---|---|
@@ -168,9 +164,8 @@ sus operaciones:
 | `Serialize` | `to_string`, `from_string` | Conversión texto ↔ valor |
 
 Los tipos primitivos (`Int`, `Real`, `Bool`, `String`, `Char`)
-ya tienen implementaciones para los cinco protocolos. Cuando
-declaras un tipo nuevo, eliges qué protocolos vale la pena
-implementar para él.
+ya implementan los cinco. Para un tipo nuevo, eliges cuáles
+vale la pena implementar.
 
 `Ord` merece una nota: tiene **tres operaciones**, no una.
 `cmp(a, b) : Int` devuelve un entero negativo si `a < b`, cero
@@ -194,8 +189,8 @@ impl Ord for Cuenta {
 }
 ```
 
-Si `Ord` te da pereza implementar tres operaciones, espera a
-§9.4: en muchos casos, el compilador las deriva por ti.
+Si te da pereza implementar tres operaciones, espera a §9.4:
+en muchos casos el compilador las deriva por ti.
 
 `Eq` por id y `Ord` por saldo sobre el mismo tipo, que es
 exactamente el caso donde derivar no sirve:
@@ -259,8 +254,8 @@ menor saldo: 50
 
 ## 9.4 `#[derive(...)]` y cuándo usarlo
 
-Para records donde la implementación obvia "delega en cada
-campo" basta, kaikai te ofrece un atajo: la directiva
+Cuando basta la implementación obvia, la que delega en cada
+campo, kaikai te ofrece un atajo: la directiva
 `#[derive(...)]` antes de la declaración de tipo.
 
 ```kai
@@ -286,11 +281,10 @@ $ kai run ejemplo.kai
 Persona { nombre: Ada, edad: 30 }
 ```
 
-El formato canónico, `TipoNombre { campo: valor, ... }`,
-es lo que el `#[derive(Show)]` produce, y es razonable para
-debugging y logs. Si quieres otro formato (por ejemplo, el
-clásico `(3, 4)` para un punto), escribes el `impl` a mano,
-como en §9.1.
+Ese formato canónico, `TipoNombre { campo: valor, ... }`, sirve
+para debugging y logs. Si quieres otro formato (por ejemplo, el
+clásico `(3, 4)` para un punto), escribes el `impl` a mano, como
+en §9.1.
 
 `#derive` funciona para los cinco protocolos del stdlib,
 siempre que **cada campo del record también implemente** el
@@ -307,9 +301,8 @@ La regla práctica:
   campos, comparación según un campo específico (no el orden
   natural).
 
-Ya viste `#[derive(Show)]` sobre `Punto` en el tour (§1.7); aquí
-mostramos también la implementación manual y cuándo conviene
-una sobre la otra.
+Ya usaste `#[derive(Show)]` sobre `Punto` en el tour (§1.7);
+ahora sabes también cuándo conviene el `impl` manual.
 
 Dos tipos derivados, uno con `Show` y otro con los dos:
 
@@ -357,8 +350,9 @@ p == r: false
 
 No todo lo que deriva un record es uno de los cinco protocolos.
 Hay dos derives más, de otra naturaleza: `Layout`, que fija el
-orden de bytes de un record para serialización binaria (lo vemos
-en el cap. 19), y `Json`, que lleva el record al formato JSON.
+orden de bytes de un record para serialización binaria (lo
+encuentras en el cap. 19), y `Json`, que lleva el record al
+formato JSON.
 
 `#[derive(Json)]` genera dos cosas: `to_json`, que convierte tu
 record a un valor JSON, y un shim `<tipo>_of_json`, que lo
@@ -397,8 +391,8 @@ $ kai run ejemplos/cap09/06_json.kai
 llamar (p2)
 ```
 
-Las reglas del mapeo son las que uno esperaría, y vale tenerlas
-claras porque el compilador las aplica sin preguntar. Los nombres
+Las reglas del mapeo son las esperables, y el compilador las
+aplica sin preguntar. Los nombres
 de campo van al JSON tal cual, sin conversión de mayúsculas. Un
 campo `Option[T]` acepta un `null` explícito y una clave ausente
 por igual (ambos decodifican a `None`); **cualquier otro campo es
@@ -426,7 +420,7 @@ nada que leer, exige un `default` o que el campo sea `Option`. Un
 campo que necesita dos ajustes (saltado y con default) se escribe con
 dos atributos, como arriba.
 
-Una limitación que conviene saber de antemano: `#[derive(Json)]`
+Una limitación que conviene saber: `#[derive(Json)]`
 funciona sobre records, **no sobre tipos suma**. Codificar una
 unión etiquetada es una convención (¿el tag va en una clave
 `"type"`, en un envoltorio, adyacente?) y el derive no elige por
@@ -434,9 +428,8 @@ ti. Para eso, `to_json`/`of_json` a mano.
 
 ## 9.5 Protocolos propios
 
-Los cinco del stdlib son los más comunes, pero nada te impide
-declarar los tuyos. Es exactamente la misma sintaxis que usa
-el stdlib, pero en tu código:
+Nada te impide declarar tus propios protocolos, con la misma
+sintaxis que usa el stdlib:
 
 ```kai
 protocol Drawable {
@@ -463,10 +456,9 @@ impl Drawable for Triangulo {
 }
 ```
 
-A partir de ese momento, tres tipos distintos comparten la
-operación `dibujar`. La función polimórfica `dibujar` se
-resuelve estáticamente: el compilador sabe en cada llamada
-qué `impl` usar a partir del tipo del argumento.
+Ahora tres tipos distintos comparten la operación `dibujar`,
+que se resuelve estáticamente: el compilador sabe en cada
+llamada qué `impl` usar a partir del tipo del argumento.
 
 `Drawable` es un ejemplo de juguete; los casos reales que
 verás en código kaikai incluyen `Encodable` para distintos
@@ -526,9 +518,9 @@ Triángulo 4x6
 
 ## 9.6 Por qué no hay typeclasses al estilo Haskell
 
-Los protocolos de kaikai pueden parecerse a las typeclasses
-de Haskell (y se inspiran en ellas), pero son **deliberadamente
-más simples**. Tres cosas que kaikai no hace y que Haskell sí:
+Los protocolos de kaikai se inspiran en las typeclasses de
+Haskell, pero son **deliberadamente más simples**. Hay tres
+cosas que Haskell hace y kaikai no:
 
 **Sin constraints en firmas de funciones.** Esta es la
 diferencia más visible. En Haskell, una función que ordena
@@ -566,8 +558,8 @@ list.sort_by(transacciones, cmp)   # cmp viene de impl Ord for Transaccion
 
 Cuesta poco escribirla, pero la distinción conceptual pesa: lo
 que en Haskell viaja implícito, en kaikai lo escribes tú.
-La función `sort_by` no "exige" que `T` tenga `Ord`: solo
-exige que **alguien le pase una función de comparación**. Que
+`sort_by` no "exige" que `T` tenga `Ord`, solo que **alguien
+le pase una función de comparación**. Que
 esa función venga de un `impl Ord for T` es decisión del que
 llama, no de la firma de `sort_by`.
 
@@ -583,7 +575,7 @@ no "lleva" el `Ord` consigo a las funciones que llama. La
 cota de §9.7 documenta qué pide *esa* función; no se propaga
 sola a las que ella invoque.
 
-¿Qué se gana con estas restricciones? Tres cosas:
+Estas restricciones te dan tres cosas:
 
 - **Compilación rápida**. La inferencia de tipos sigue siendo
   Hindley-Milner extendido con efectos, sin el costo del
@@ -597,7 +589,7 @@ sola a las que ella invoque.
   en Haskell, tienes que mirar la firma de `sort` para saber
   qué `Ord` se está usando.
 
-¿Qué se pierde? Algunas abstracciones que en Haskell son
+A cambio se pierden algunas abstracciones que en Haskell son
 elegantes, particularmente todo lo que vive sobre Functor y
 amigos. Ese trade-off lo tomé con los ojos abiertos: las
 abstracciones que quise priorizar viven en el sistema de
@@ -605,9 +597,9 @@ efectos (cap. 12) y no en el de tipos.
 
 ## 9.7 Cotas de protocolo en funciones genéricas
 
-Hasta aquí los protocolos aparecían en dos lugares: el `impl`
-que los implementa y el call site que llama la operación.
-Falta un tercero. Una función genérica sobre un `T` cualquiera
+Hasta aquí los protocolos aparecían en el `impl` que los
+implementa y en el call site que llama la operación. Falta un
+tercer lugar: una función genérica sobre un `T` cualquiera
 puede **exigir que ese `T` implemente un protocolo**, y
 escribirlo en la firma:
 
@@ -656,23 +648,22 @@ fn mayor[T: Ord](a: T, b: T) : T = max(a, b)
 fn render[T: Dibujable](x: T) : String = "[" ++ dibujar(x) ++ "]"
 ```
 
-Ahora bien, lee con cuidado, porque aquí es donde kaikai se
-separa de Haskell aunque la sintaxis se parezca. La cota es
-una **declaración de intención**, no la constraint con
-propagación de §9.6. No es que el compilador resuelva un
-diccionario y lo inyecte: lo que ocurre es que cada llamada
-monomorfiza la función al tipo concreto, y ahí `show`, `eq` o
-`cmp` se resuelven al `impl` que corresponde, el mismo
-despacho estático de siempre. La cota documenta el contrato
-en la firma y hace que el error, cuando un tipo no implementa
-el protocolo, sea claro: `no impl of 'Ord' for type 'X'`.
+Lee con cuidado, porque aquí kaikai se separa de Haskell
+aunque la sintaxis se parezca. La cota es una **declaración de
+intención**, no la constraint con propagación de §9.6: el
+compilador no resuelve un diccionario ni lo inyecta. Cada
+llamada monomorfiza la función al tipo concreto, y ahí `show`,
+`eq` o `cmp` se resuelven al `impl` que corresponde, el mismo
+despacho estático de siempre. La cota documenta el contrato en
+la firma y hace que el error, cuando un tipo no implementa el
+protocolo, sea claro: `no impl of 'Ord' for type 'X'`.
 
-Esto es la evolución natural de un genérico sobre un `T`
-cualquiera: de "esta función sirve para cualquier tipo" a
-"esta función sirve para cualquier tipo que sepa hacer `show`".
-La cota no te da el resolver implícito de Haskell ni la
-propagación; te da el contrato escrito donde se lee, que casi
-siempre es lo que querías.
+Es el paso natural desde un genérico sobre un `T` cualquiera:
+de "esta función sirve para cualquier tipo" a "esta función
+sirve para cualquier tipo que sepa hacer `show`". Sin el
+resolver implícito de Haskell ni la propagación, la cota deja
+el contrato escrito donde se lee, que casi siempre es lo que
+querías.
 
 Las tres formas de cota en un programa: una del stdlib, una
 propia, y una que exige dos protocolos a la vez.
@@ -720,7 +711,7 @@ iguales: 1
 
 ## 9.8 Operadores: `+`, `==`, `<` como protocolos
 
-Una nota práctica: los operadores estándar **son** protocolos.
+Los operadores estándar **son** protocolos.
 `==` es `Eq.eq`, `<` es comparación basada en `Ord.cmp`, `+`
 es `Add.add`. Cuando declaras `impl Eq for Cuenta`,
 automáticamente `c1 == c2` (con `c1, c2 : Cuenta`) llama a tu
@@ -739,9 +730,9 @@ fn main() {
 
 Esto unifica la sintaxis: `+` para `Int`, `Real`, vectores,
 matrices, monedas, todos los que tengan `impl Add for ...`.
-`==` para todo lo que tenga `Eq`. La uniformidad no es
-casualidad; es el primer beneficio de tener un mecanismo
-único para "operaciones dispatched por tipo".
+`==` para todo lo que tenga `Eq`. Esa uniformidad es el primer
+beneficio de tener un mecanismo único para "operaciones
+dispatched por tipo".
 
 Los operadores que kaikai trata como protocolos:
 
@@ -752,10 +743,9 @@ Los operadores que kaikai trata como protocolos:
 | `+`, `-`, `*`, `/` | `Add`, `Sub`, `Mul`, `Div` | `add`, `sub`, `mul`, `div` |
 | `++` | `Concat` | `concat` |
 
-Los tipos primitivos los implementan todos. Los tipos tuyos
-los implementan cuando los declaras. Y cuando algún operador
-no tiene sentido para un tipo, simplemente no lo implementas,
-y el compilador rechaza esa expresión.
+Los tipos primitivos los implementan todos; los tuyos, cuando
+escribes el `impl`. Si un operador no tiene sentido para un
+tipo, no lo implementas y el compilador rechaza la expresión.
 
 ## Ejercicios
 

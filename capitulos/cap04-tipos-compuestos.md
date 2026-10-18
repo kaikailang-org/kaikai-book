@@ -1,14 +1,13 @@
 # Capítulo 4 · Tipos compuestos
 
-Los tipos primitivos del capítulo anterior te dan piezas
-sueltas. Para construir programas de verdad, los juntas en
-estructuras: agregados con campos nombrados, listas, tuplas y
-las dos joyas del stdlib que vas a ver más que cualquier otro
-tipo, `Option` y `Result`.
+Los tipos primitivos del capítulo anterior son piezas sueltas.
+Para construir programas de verdad las juntas en estructuras:
+agregados con campos nombrados, listas, tuplas y las dos joyas
+del stdlib que vas a usar más que cualquier otro tipo, `Option`
+y `Result`.
 
-Este capítulo cubre todo eso. Los **sum types** (`type Tag =
-Foo | Bar(Int)`) que viste en el tour merecen su propio
-capítulo y los tratamos en el 5.
+Los **sum types** (`type Tag = Foo | Bar(Int)`) que viste en
+el tour tienen capítulo propio, el 5.
 
 ## 4.1 Records
 
@@ -25,12 +24,11 @@ type Empleado = {
 }
 ```
 
-La coma final del último campo es opcional pero idiomática:
-hace que agregar un campo nuevo no toque la línea anterior, lo
-que mantiene los diffs de git limpios.
+La coma final es opcional pero idiomática: agregar un campo
+nuevo no toca la línea anterior y el diff queda limpio.
 
-Para construir un valor del record, escribes el nombre del tipo
-seguido de las llaves con los campos:
+Para construir un valor escribes el nombre del tipo y los
+campos entre llaves:
 
 ```kai
 let origen = Punto { x: 0, y: 0 }
@@ -45,8 +43,7 @@ println("p está en (#{p.x}, #{p.y})")
 println("#{ada.nombre} tiene #{ada.edad} años")
 ```
 
-Eso es lo que necesitas para el día a día. Hay tres detalles
-que conviene tener presentes:
+Con eso te basta para el día a día. Tres detalles más:
 
 - **Los records son inmutables.** No existe `p.x = 7`. Si
   necesitas un punto con un campo distinto, construyes uno
@@ -57,15 +54,14 @@ que conviene tener presentes:
   let p2 = Punto { ...p, x: 7 }    # Punto { x: 7, y: 4 }
   ```
 
-  El `...p` copia todos los campos de `p`, y los inicializadores
-  que vienen después (aquí `x: 7`) reemplazan los que se
-  repiten. Es la misma idea del spread sobre listas que verás
-  en §4.3, aplicada a records.
+  El `...p` copia todos los campos de `p` y los
+  inicializadores que siguen (aquí `x: 7`) reemplazan los
+  repetidos. Es el spread de listas de §4.3, aplicado a
+  records.
 
 - **Los records son nominales.** `Punto { x: Int, y: Int }` y
-  otro tipo `Posicion { x: Int, y: Int }` con los mismos
-  campos son distintos. El compilador no los confunde aunque
-  tengan la misma forma. Lo quise así: si quieres una
+  otro tipo `Posicion { x: Int, y: Int }` son distintos
+  aunque tengan la misma forma. Lo quise así: si quieres una
   posición, di posición.
 
 - **El spread tiene reglas.** Solo un spread por literal, y
@@ -128,10 +124,10 @@ Ada ahora gana 2200
 
 ### 4.1.1 Campos privados
 
-Por defecto los campos de un record son públicos: cualquier
+Por omisión los campos de un record son públicos: cualquier
 módulo que importe el tipo los puede leer y mencionar al
-construir el record. La palabra `priv` antes del nombre del
-campo invierte ese default:
+construirlo. `priv` antes del nombre del campo invierte esa
+regla:
 
 ```kai
 # módulo `caja`
@@ -171,15 +167,15 @@ fn main() {
 
 La regla es estricta: ni lectura desde afuera, ni mención
 dentro de un literal de construcción. Si el módulo `caja`
-quiere que un consumidor pueda crear cuentas, expone
-constructores (`abrir`) y operaciones (`depositar`) que
-mantengan los invariantes; el campo crudo queda escondido.
+quiere que otros creen cuentas, expone constructores
+(`abrir`) y operaciones (`depositar`) que mantengan los
+invariantes; el campo crudo queda escondido.
 
-Esto convierte el record en un tipo abstracto liviano:
-forma pública, interior bajo control del autor. Lo usaremos
-así en el cap. 17 para esconder el estado del actor del
-almacén, y en el cap. 18 para que los saldos del libro mayor
-no se construyan por fuera del módulo de dominio.
+El record queda como un tipo abstracto liviano: forma
+pública, interior bajo control del autor. Así lo usas en el
+cap. 17 para esconder el estado del actor del almacén, y en
+el cap. 18 para que los saldos del libro mayor no se
+construyan por fuera del módulo de dominio.
 
 El tipo con un campo privado, su constructor y la línea que el
 compilador no deja pasar:
@@ -214,9 +210,8 @@ ahorros: 150
 
 ## 4.2 Acceso a campos y destructuring
 
-Acceder con `.` está bien para uno o dos campos. Cuando
-necesitas varios campos a la vez, **destructuring** es más
-limpio:
+Para uno o dos campos, `.` basta. Cuando necesitas varios a
+la vez, **destructuring** es más limpio:
 
 ```kai
 fn distancia_cuadrada(a: Punto, b: Punto) : Int {
@@ -228,9 +223,9 @@ fn distancia_cuadrada(a: Punto, b: Punto) : Int {
 }
 ```
 
-Cuando los nombres de los campos te sirven tal cual, puedes
-omitir el `:` y dejar solo el nombre, atando el campo a una
-variable del mismo nombre:
+Si los nombres de los campos te sirven tal cual, omites el
+`:` y cada campo queda amarrado a una variable del mismo
+nombre:
 
 ```kai
 fn describir(p: Punto) : String {
@@ -239,12 +234,11 @@ fn describir(p: Punto) : String {
 }
 ```
 
-`let Punto { x, y } = p` es equivalente a
-`let Punto { x: x, y: y } = p`, solo que más conciso.
+`let Punto { x, y } = p` equivale a
+`let Punto { x: x, y: y } = p`.
 
-El destructuring también funciona en `match`. Esa es su forma
-más útil: decidir qué hacer **según los valores específicos
-de los campos**.
+Donde el destructuring más rinde es en `match`: decides qué
+hacer **según los valores de los campos**.
 
 ```kai
 fn clasificar(p: Punto) : String =
@@ -256,11 +250,10 @@ fn clasificar(p: Punto) : String =
   }
 ```
 
-El compilador verifica exhaustividad, igual que con sum types:
-si quitas la última rama, no compila. La exhaustividad sobre
-campos `Int` la cubre el patrón final `Punto { x, y }`, que
-calza con cualquier `Punto`. Sin esa rama, el `match` no es
-total.
+El compilador verifica exhaustividad, igual que con sum types.
+Sobre campos `Int` la cubre el patrón final `Punto { x, y }`,
+que calza con cualquier `Punto`; si quitas esa rama, no
+compila.
 
 Las tres formas de abrir un record, una después de la otra:
 
@@ -326,10 +319,10 @@ Los dos últimos llevan paso, y el paso no se escribe: se deduce
 de los dos primeros elementos. `[1, 3..10]` avanza de dos en dos
 porque `3 - 1` es dos, y `[10, 9..1]` baja porque la resta sale
 negativa. Es la forma de Haskell, y tiene una ventaja sobre
-anotar el paso aparte: lo que lees es lo que vas a obtener,
-empezando por los dos primeros elementos de la lista.
+anotar el paso aparte: los dos primeros elementos que lees son
+los que obtienes.
 
-Un detalle de costo que conviene saber: el rango es **lazy**. El
+Un detalle de costo: el rango es **lazy**. El
 runtime lo guarda como tres números (inicio, fin, paso), no como
 diez celdas, y los elementos se generan recién cuando algo los
 consume. `[1..1_000_000] |> list.sum` no materializa un millón
@@ -355,17 +348,15 @@ fn anteponer(h: Int, t: [Int]) : [Int] = [h, ...t]
 fn anteponer_concat(h: Int, t: [Int]) : [Int] = [h] ++ t
 ```
 
-La diferencia no es solo de lectura. `[h, ...t]` dice "una lista
-que empieza con `h` y sigue con `t`", que es la misma forma del
-patrón con que la vas a descomponer después, y emite el cons
-directo. `[h] ++ t` dice "pega estas dos listas", y para eso
-construye una lista de un elemento que existe solo para ser
-pegada, y eso pide memoria una vez por llamada.
+`[h, ...t]` dice "una lista que empieza con `h` y sigue con
+`t`", la misma forma del patrón con que la vas a descomponer
+después, y emite el cons directo. `[h] ++ t` dice "pega estas
+dos listas", y para eso construye una lista de un elemento que
+solo existe para ser pegada: memoria pedida una vez por llamada.
 
-Medir eso tiene su truco, y vale la pena saberlo antes de
-intentarlo. Si pones las dos formas en un `bench` cuyo cuerpo
-descarta el resultado, cada iteración cuesta menos que la
-resolución del reloj y el reporte te devuelve ruido (§7.4
+Medirlo tiene su truco. Si pones las dos formas en un `bench`
+cuyo cuerpo descarta el resultado, cada iteración cuesta menos
+que la resolución del reloj y el reporte te devuelve ruido (§7.4
 explica cómo se reconoce). Con el resultado consumido, compilado
 con `--release`, tres millones de iteraciones sobre una cola de
 ocho elementos, en mi máquina: **0,05 s para el spread contra
@@ -389,8 +380,8 @@ fn suma(xs: [Int]) : Int =
 
 `[]` calza con la lista vacía. `[h, ...t]` calza con cualquier
 lista no vacía, atando `h` al primer elemento (la "cabeza") y
-`t` al resto (la "cola"). Estos dos patrones cubren todos los
-casos posibles, lo que hace al `match` exhaustivo.
+`t` al resto (la "cola"). Entre los dos cubren todos los
+casos: el `match` es exhaustivo.
 
 Patrones más específicos también son legales:
 
@@ -402,18 +393,17 @@ match xs {
 }
 ```
 
-El compilador requiere que cubras todos los casos, así que si
-escribes solo `[]` y `[h, ...t]` te alcanza para cualquier
-lista; pero si quieres distinguir el caso de "exactamente un
-elemento", escribes `[unico]` antes del catch-all.
+Con `[]` y `[h, ...t]` ya cubres cualquier lista; si además
+quieres distinguir "exactamente un elemento", escribes
+`[unico]` antes del catch-all.
 
 Una convención del lenguaje: si la cola **te interesa**, le
 das un nombre, `[h, ...t]`, y después usas `t`. Si **no te
 interesa**, escribes `...` solo, sin nombre: `[h, ...]`. Es
 la diferencia entre "tomo la cabeza, el resto lo guardo para
 después" y "tomo la cabeza, el resto lo descarto". Un nombre
-inventado que no se usa es ruido visual; la forma corta
-comunica la intención sin pedirte un nombre que no aporta.
+inventado que no se usa es ruido; la forma corta dice la
+intención sin él.
 
 Para acceder por índice, el stdlib expone `list.nth`:
 
@@ -422,27 +412,25 @@ let primero = list.nth(xs, 0)    # Option[Int]
 let tercero = list.nth(xs, 2)    # Option[Int]
 ```
 
-Fíjate en el tipo de retorno: **`Option[a]`**, no `a`. Una
-lista enlazada no garantiza que un índice exista: si pides
-el elemento número 99 de una lista de tres, no hay valor que
-devolver. El tipo te obliga a considerarlo. Esto es coherente
-con `Option` y `Result` que conociste en §4.5: kaikai prefiere
-encerrar la posibilidad de fallar en el tipo antes que
-abortar en runtime.
+Fíjate en el tipo de retorno: **`Option[a]`**, no `a`. Si
+pides el elemento 99 de una lista de tres, no hay valor que
+devolver, y el tipo te obliga a considerarlo. Es lo mismo que
+hacen `Option` y `Result`, que retomas en §4.5: kaikai
+prefiere encerrar la posibilidad de fallar en el tipo antes
+que abortar en runtime.
 
-Hay dos cosas más que conviene saber sobre el acceso por
-índice. Una es que es **`O(n)`**: las listas son enlazadas, no
-indexadas; recorrer hasta la posición `i` cuesta `i` pasos.
-Para acceso aleatorio hay otros dos tipos: `Vec[T]`, que viene
-en un momento, y `Array[T]`, que conocerás en el capítulo 12.
+Dos cosas más sobre el acceso por índice. Es **`O(n)`**: las
+listas son enlazadas, no indexadas; recorrer hasta la
+posición `i` cuesta `i` pasos. Para acceso aleatorio hay
+otros dos tipos: `Vec[T]`, que viene en un momento, y
+`Array[T]`, que conocerás en el capítulo 12.
 
-La otra es que la sintaxis `xs[i]` que algunos lenguajes usan
-para listas, sobre una lista te la rechaza el typer: indexar
-es para `Vec` y `Array`. La razón es la misma de antes: `xs[i]`
-sugiere acceso barato y con resultado garantizado, lo que sería
-mentir sobre una lista enlazada.
+Y la sintaxis `xs[i]` que algunos lenguajes usan para listas
+el typer la rechaza sobre una lista: indexar es para `Vec` y
+`Array`. `xs[i]` sugiere acceso barato y con resultado
+garantizado, y sobre una lista enlazada eso sería mentir.
 
-Para la mayoría del código, tampoco vas a querer indexar a
+En la mayoría del código tampoco vas a querer indexar a
 mano. Recursión sobre `[h, ...t]` o las funciones de orden
 superior del capítulo 6 (`map`, `filter`, `reduce`) son la
 forma natural de procesar listas.
@@ -490,10 +478,10 @@ combo : longitud=7, suma=41
 
 ### `Vec[T]`: indexar sin renunciar a los valores
 
-Cuando de verdad necesitas indexar, la respuesta por defecto
-es `Vec[T]`: un buffer plano y contiguo, con acceso `O(1)`,
-que **se comporta como un valor**. Nada de efectos, ninguna
-operación es mutable.
+Cuando de verdad necesitas indexar, la respuesta es
+`Vec[T]`: un buffer plano y contiguo, con acceso `O(1)`, que
+**se comporta como un valor**, sin efectos ni operaciones
+mutables.
 
 Las operaciones viven en `collections.vec` y se usan
 calificadas. Son las que esperas: `vec.get`, `vec.set`,
@@ -538,12 +526,11 @@ Fíjate en que `a` no cambió. Esa es la garantía y no tiene
 excepciones: ningún nombre que apunte a un `Vec` ve nunca lo que
 otro escribe.
 
-Eso no quiere decir que cada escritura copie el buffer. Por
-debajo el runtime mira si el buffer está compartido, con el mismo
-conteo de referencias del cap. 13, y escribe en el lugar cuando
-tiene un solo dueño. En el ejemplo `a` se usa *después* del
-`set`, porque la línea siguiente lo imprime, así que en el
-momento de escribir está compartido y la escritura copia. Si en
+Eso no significa que cada escritura copie el buffer. El runtime
+mira si está compartido, con el mismo conteo de referencias del
+cap. 13, y escribe en el lugar cuando tiene un solo dueño. En el
+ejemplo `a` se usa *después* del `set` (la línea siguiente lo
+imprime), así que al escribir está compartido y se copia. Si en
 cambio enhebras el vector de forma lineal, al estilo acumulador,
 donde cada paso es el único dueño del que recibe, no se copia
 nada: construirlo pide memoria una sola vez.
@@ -560,9 +547,8 @@ un valor, `Array` cuando quieras mutación compartida de verdad.
 
 ## 4.4 Strings, no listas de chars
 
-Vale la pena detenerse un momento en algo que muchos lenguajes
-mezclan: en kaikai, **un `String` no es una lista de `Char`**.
-Son tipos distintos:
+Muchos lenguajes mezclan estas dos cosas. En kaikai, **un
+`String` no es una lista de `Char`**; son tipos distintos:
 
 ```kai
 let s: String = "hola"
@@ -573,27 +559,26 @@ let cs: [Char] = ['h', 'o', 'l', 'a']
 `s[0]` esperando un `Char`, y no puedes pasar un `String`
 donde se espera `[Char]`.
 
-¿Por qué? Porque en Unicode no hay una correspondencia simple
+La razón es que en Unicode no hay una correspondencia simple
 entre "carácter" e "índice". Un emoji puede ocupar varios
 codepoints; una letra acentuada puede tener una o dos
 representaciones; un grafema puede saltar bytes y codepoints
 arbitrariamente. Tratar a un string como lista de chars te
-obliga a tomar una decisión sobre qué cuenta como
-"carácter", y todas las decisiones son malas para algún caso.
+obliga a decidir qué cuenta como "carácter", y toda decisión
+falla en algún caso.
 
-Por dentro, un `String` es un buffer UTF-8. Las operaciones que
-tienen sentido viven en el módulo `string` del stdlib, y ahí kaikai
-es deliberado con una distinción que muchos lenguajes esconden: la
-diferencia entre **bytes** y **codepoints Unicode**. No son lo
-mismo apenas sales del ASCII, y el nombre de cada función te dice
-en qué unidad trabaja.
+Por dentro, un `String` es un buffer UTF-8. Sus operaciones
+viven en el módulo `string` del stdlib, que hace explícita una
+distinción que muchos lenguajes esconden: **bytes** contra
+**codepoints Unicode**. Apenas sales del ASCII no son lo mismo,
+y el nombre de cada función te dice en qué unidad trabaja.
 
-Tomemos `"café"` y midámoslo de las cuatro maneras.
+Mide `"café"` de las cuatro maneras:
 
 - `length(s)` cuenta **bytes**, en O(1). Para `"café"` devuelve 5,
   no 4: la `é` ocupa dos bytes en UTF-8. `byte_length(s)` es el
-  mismo número con el nombre dicho en voz alta, para cuando el
-  código quede más claro si la unidad no se sobreentiende.
+  mismo número con la unidad en el nombre, para cuando conviene
+  que no se sobreentienda.
 - `char_count(s)` cuenta **codepoints Unicode**. Para `"café"`
   devuelve 4, que es el largo que un lector diría en voz alta.
 - `chars(s)` decodifica el buffer y entrega los codepoints como
@@ -603,8 +588,8 @@ Tomemos `"café"` y midámoslo de las cuatro maneras.
   `from_bytes` es su inverso.
 
 Fíjate en que las dos vistas tienen **tipos distintos**: `[Char]`
-son caracteres, `[Byte]` son octetos. No es un detalle cosmético.
-Significa que no puedes cruzarlas por descuido: pasarle a
+son caracteres, `[Byte]` son octetos. Por eso no puedes
+cruzarlas por descuido: pasarle a
 `from_chars` el resultado de `bytes(s)` no compila, porque un
 octeto no es un carácter y el compilador lo sabe.
 
@@ -634,8 +619,8 @@ byte_slice(2,3): Some(fé)
 byte_slice(2,2): None
 ```
 
-Esas últimas tres líneas son las dos maneras de sacar un pedazo de
-un string. La diferencia entre ellas es la unidad:
+Las últimas tres líneas muestran las dos maneras de sacar un
+pedazo de un string, que difieren en la unidad:
 
 ```
 slice(s: String, desde: Int, largo: Int) : String
@@ -672,14 +657,14 @@ va a salir cara. (Grafemas como "é" compuesta de `e` + tilde
 combinante son otra capa todavía; ahí ni los codepoints alcanzan,
 pero rara vez los necesitas.)
 
-El mismo cuidado aparece al pasar de minúsculas a mayúsculas y de
-vuelta. `core.char` trae `to_upper`, `to_lower`, `is_upper` e
-`is_lower` para ASCII. Su hermano `core.char_unicode` extiende los
-cuatro a los alfabetos cuyo mapeo es un desplazamiento uniforme de
-codepoint: Latin-1, Latin Extended-A, griego y cirílico. Lo que
-cae fuera de esa regla pasa sin cambios, y kaikai prefiere
-decírtelo con el nombre del módulo antes que fingir cobertura
-completa de Unicode:
+El mismo cuidado aplica a mayúsculas y minúsculas. `core.char`
+trae `to_upper`, `to_lower`, `is_upper` e `is_lower` para ASCII.
+Su hermano `core.char_unicode` extiende los cuatro a los
+alfabetos cuyo mapeo es un desplazamiento uniforme de codepoint:
+Latin-1, Latin Extended-A, griego y cirílico. Lo que cae fuera
+de esa regla pasa sin cambios, y kaikai prefiere decírtelo con
+el nombre del módulo antes que fingir cobertura completa de
+Unicode:
 
 ```kai
 import core.char
@@ -722,7 +707,7 @@ La línea `ΩΜέΓΑ` marca el borde: `ωμεγα` se pliega entero, pero en
 desplazamiento fijo. Para cubrir Unicode entero necesitas tablas
 de conversión, y esas todavía no viven en el stdlib.
 
-Para concatenar, ya lo viste en el capítulo 3, usas `++`:
+Para concatenar usas `++`, como en el capítulo 3:
 
 ```kai
 let saludo = "hola, " ++ nombre
@@ -731,10 +716,9 @@ let saludo = "hola, " ++ nombre
 Y para interpolar, `#{...}` dentro de un literal `"..."`.
 
 `++` está bien para juntar dos o tres pedazos. Pero cuidado con
-armar un string grande pegando trozos en un loop: como un `String`
-es inmutable, cada `++` copia todo lo acumulado para producir uno
-nuevo, y eso te lleva a O(n²), el clásico cuadrático de la
-concatenación.
+armar un string grande pegando trozos en un ciclo: como un
+`String` es inmutable, cada `++` copia todo lo acumulado, y
+terminas en O(n²), el clásico cuadrático de la concatenación.
 
 Si lo que tienes es una lista de strings y un separador, ya está
 resuelto: `string.join` recorre la lista una sola vez y no deja
@@ -793,17 +777,17 @@ la función. Los detalles de la API (`new`, `with_capacity`,
 
 ## 4.5 `Option` y `Result`: el día a día
 
-Ya viste estos dos en el capítulo 2:
+Los conociste en el capítulo 2:
 
 ```kai
 type Option[a] = None | Some(a)
 type Result[a, e] = Ok(a) | Err(e)
 ```
 
-Aquí los miramos en uso. Los dos son tipos suma genéricos del
-stdlib que vas a usar **constantemente**. La idea, recordando:
-`Option` representa "puede no haber valor"; `Result`,
-"puede no haber valor o haber un error".
+Ahora los pones a trabajar. Son tipos suma genéricos del
+stdlib que vas a usar **constantemente**. `Option` dice "puede
+no haber valor"; `Result`, "puede no haber valor o haber un
+error".
 
 Una función que busca el primer elemento par de una lista:
 
@@ -850,10 +834,10 @@ Tres patrones que vas a ver mucho:
 
 - **Encadenar una falla con `!`.** Si tienes una expresión que
   devuelve `Result[A, E]` y quieres "si falla, propaga el
-  error; si no, sigue con el valor", escribes `expr!`. Esto
-  lo viste en §2.3.
+  error; si no, sigue con el valor", escribes `expr!`, como
+  en §2.3.
 - **Funciones de orden superior**: `option.map`, `option.and_then`,
-  `result.map_err`. Las cubrimos en el capítulo 6.
+  `result.map_err`. Llegan en el capítulo 6.
 - **Convertir entre los dos**: `option.ok_or(error)` toma un
   `Option[a]` y un error de tipo `e` y devuelve un
   `Result[a, e]`. Útil cuando la pérdida de información del
@@ -932,7 +916,7 @@ kaikai admite tuplas de **arity 2 a 4**. No hay tuplas de un
 elemento: un paréntesis solo, `(e)`, es agrupación, no
 tupla. Y `(a, b, c, d, e)` es un error de parseo.
 
-¿Por qué la cota? Porque las tuplas largas son ilegibles. Si
+La cota existe porque las tuplas largas son ilegibles. Si
 estás llegando a 5 elementos, casi siempre lo que querías era
 un record con campos nombrados.
 
@@ -961,9 +945,8 @@ es exactamente equivalente a
 let p = Pair { fst: 1, snd: 2 }
 ```
 
-Esto es útil saberlo cuando ves un tipo `Pair[Int, String]`
-en una firma de stdlib: ahora sabes que es lo mismo que
-`(Int, String)`, y que puedes destructurarlo con
+Cuando veas `Pair[Int, String]` en una firma del stdlib, sabes
+que es `(Int, String)` y que lo destructuras con
 `let (a, b) = p`.
 
 Una función que devuelve dos valores y quien la llama los
@@ -1024,10 +1007,9 @@ operaciones rinden `Mutable`. Si vienes de Python o Java, un
 diccionario que cambia en el lugar te suena obvio; lo nuevo
 aquí es que el lenguaje lo dice en el tipo. Una función que
 toca un `HashMap` lleva `/ Mutable` en su firma, y el
-compilador te obliga a declararlo. No es burocracia gratuita;
-es la misma honestidad con la que kaikai trata el resto de los
-efectos. La inmutabilidad sigue siendo el default, y la mutación
-queda marcada donde ocurre.
+compilador te obliga a declararlo, con la misma honestidad con
+que kaikai trata el resto de los efectos: la inmutabilidad
+sigue siendo la regla y la mutación queda marcada donde ocurre.
 
 El acceso por clave usa la indexación `m[clave]`, que devuelve
 un `Option` (`Some(v)` si la clave está, `None` si no), así

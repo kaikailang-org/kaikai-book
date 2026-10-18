@@ -1,15 +1,15 @@
 # Apéndice F · Para seguir
 
-El libro cubrió kaikai pero apenas tocó la familia de ideas
-sobre las que se construye. Si te interesa profundizar, esta
-es una lista corta de fuentes que vale la pena leer, agrupadas
-por tema. No pretende ser exhaustiva; pretende ser útil.
+Ya conoces kaikai, pero apenas tocaste la familia de ideas
+sobre las que se construye. Si quieres profundizar, aquí tienes
+una lista corta de fuentes agrupadas por tema. No pretende ser
+exhaustiva; pretende ser útil.
 
 ## F.1 Efectos algebraicos
 
-La pieza del lenguaje que más merece lectura externa es la de
-efectos algebraicos. La literatura es accesible y vale la
-pena ir al original.
+Los efectos algebraicos son la pieza del lenguaje que más
+merece lectura externa. La literatura es accesible y conviene
+ir al original.
 
 - **Plotkin, Pretnar, *"Handlers of Algebraic Effects"***
   (ESOP 2009). El paper que introduce los handlers como los
@@ -98,7 +98,7 @@ pena ir al original.
 
 - **Benjamin Pierce, *Types and Programming Languages*** (MIT
   Press, 2002). El libro de referencia para sistemas de tipos.
-  No se lee de una sentada, se consulta capítulo por capítulo.
+  Se consulta capítulo por capítulo.
 - **Robert Harper, *Practical Foundations for Programming
   Languages*** (Cambridge University Press, 2016, 2da ed.).
   Más moderno que Pierce. Cubre efectos, polimorfismo de filas,
@@ -134,12 +134,11 @@ pena ir al original.
 
 ## F.9 Cierre
 
-Si el libro te dejó con ganas de probar algo, la mejor manera
-de aprender es escribir código. Toma cualquier programa que
-ya hayas escrito en otro lenguaje (cualquier lenguaje), y
-pruébalo a portarlo a kaikai. Vas a tropezar con cosas que el
-libro no cubrió, vas a abrir issues, vas a aprender lo que
-ningún libro puede enseñar.
+Si el libro te dejó con ganas de probar algo, escribe código.
+Toma un programa que ya hayas escrito en otro lenguaje y
+pórtalo a kaikai. Vas a tropezar con cosas que el libro no
+cubrió y a aprender lo que ningún libro puede enseñar; de paso,
+quizás abras un issue.
 
-El compilador está vivo, el lenguaje está evolucionando, y la
-comunidad es pequeña pero atenta. Hay lugar para más.
+El compilador está vivo y el lenguaje sigue creciendo. Hay
+lugar para más.

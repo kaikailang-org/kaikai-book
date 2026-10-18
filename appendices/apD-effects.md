@@ -1,21 +1,20 @@
 # Appendix D · Stdlib effects catalog
 
-This appendix summarises the effects the stdlib exposes.
-Reference material: when a function's signature in the
-documentation says `: Unit / X`, you come here to confirm
-what `X` provides.
+The effects the stdlib exposes, for reference: when a
+function's signature in the documentation says `: Unit / X`,
+you come here to confirm what `X` provides.
 
 The full specification lives at
-`github.com/kaikailang-org/kaikai/docs/effects-stdlib.md`. Here we
-show the effect's declaration and what it's for.
+`github.com/kaikailang-org/kaikai/docs/effects-stdlib.md`. Here
+you get each effect's declaration and what it's for.
 
 ## D.1 Basic IO
 
 ### `Stdout`, `Stderr` and `Stdin`
 
 The three standard streams are separate effects, one per file
-descriptor. That granularity is what lets a test harness capture
-stdout without touching what goes to stderr.
+descriptor. That granularity lets a test harness capture stdout
+without touching what goes to stderr.
 
 ```kai
 effect Stdout {
@@ -43,7 +42,7 @@ silently, and anything left is catastrophic enough to panic.
 
 `is_tty()` answers whether the stream is a terminal, per
 `isatty(3)` on its own descriptor. It's the standard gate for
-ANSI colour: emit escapes when `Stdout.is_tty()`, plain text
+ANSI color: emit escapes when `Stdout.is_tty()`, plain text
 under a pipe or a redirection. `Env.get("NO_COLOR")` covers the
 other half of that convention.
 
@@ -83,7 +82,7 @@ effect File {
 ```
 
 Two levels. `read_file` / `write_file` move the whole file in
-one go, which is what you want most of the time. The rest is the
+one go, which is what you usually want. The rest is the
 chunked path, for files that don't fit or that you don't want to
 load whole.
 
@@ -91,8 +90,8 @@ Note the `<...>` on the handles: `FileHandle<read>` and
 `FileHandle<read + write>` carry the capability **in the type**.
 A handle opened for reading doesn't typecheck where a
 `FileHandle<write>` is expected, and the compiler decides that,
-not a runtime check. It's the `Perm` kind from chapter 19 §19.9
-doing its job. What the type states is what the code asked for
+not a runtime check: it's the `Perm` kind from chapter 19
+§19.9. What the type states is what the code asked for
 at open time, not the permission the operating system holds over
 the file: that failure still rides each op's `Result`.
 
@@ -113,9 +112,9 @@ Leveled logging. The default handler writes each message to
 stderr as `[ISO8601Z] LEVEL message`; installing your own lets
 you capture or filter it.
 
-A note for anyone arriving from chapter 12: there we declare our
-own, smaller `effect Log { log(msg: String) : Unit }` to teach
-the mechanism. There's no conflict — a local declaration shadows
+In chapter 12 you declared your own, smaller
+`effect Log { log(msg: String) : Unit }` to learn the
+mechanism. There's no conflict — a local declaration shadows
 the stdlib name within its file. If you want the four-level one,
 don't declare it.
 
@@ -133,7 +132,7 @@ emits a single line, `checkpoint` marks a named point. It comes
 from `trace`.
 
 Unlike everything else in this section, **`Trace` ships no
-default handler**. With none installed the program doesn't even
+default handler**: with none installed the program doesn't
 compile, because the name isn't in scope. The module carries
 two:
 
@@ -174,8 +173,8 @@ effect Random {
 
 A single operation, uniform over `[lo, hi]` with both ends
 included. The default handler seeds a PCG64 from the process
-clock and pid. Higher-level helpers live in the `Random` module,
-built on this one op. Not for cryptography.
+clock and pid. Higher-level helpers, built on this one op, live
+in the `Random` module. Not for cryptography.
 
 ### `SecureRandom`
 
@@ -258,10 +257,10 @@ effect NetDns {
 ```
 
 Same style as `NetTcp`. The stdlib ships **no** alias bundling
-the network effects — the only ones it declares are `Console` and
-`Io` (§D.9). A function using several sums them in its row,
-`/ NetTcp + NetUdp + NetDns`, or you declare the alias yourself,
-which is one line once the modules are imported:
+the network effects — it declares only `Console` and `Io`
+(§D.9). If a function uses several, you sum them in its row,
+`/ NetTcp + NetUdp + NetDns`, or declare the alias yourself, in
+one line once the modules are imported:
 
 ```kai
 import net.tcp
@@ -314,8 +313,8 @@ does take libc's full exit path.
 `start_piped` is the `popen` shape: it attaches pipes to the
 child's stdin, stdout and/or stderr — one flag each — and from
 there `write_stdin`, `close_stdin`, `read_stdout` and
-`read_stderr` carry the conversation. Keeping stderr a separate
-pipe is what lets a caller tell a diagnostic apart from output;
+`read_stderr` carry the conversation. With stderr on a separate
+pipe you can tell a diagnostic apart from output;
 merging the two streams is not offered, because once merged they
 cannot be told apart again.
 
@@ -408,7 +407,7 @@ mutation is visible to the caller. An array created locally
 and returned doesn't require `Mutable`.
 
 `array_set` and `array_grow` return the `Array[T]` rather than
-`Unit`. Not because they copy: they hand back the same array so
+`Unit` without copying: they hand back the same array so
 Perceus (appendix B) can reason about the last use and decide
 whether to mutate in place. Chaining the operation is idiomatic.
 
@@ -459,7 +458,7 @@ kaikai ships no `Fail` effect. Every fallible API returns
 `Result` and propagates with postfix `!`: there is not one
 `/ Fail` row across the stdlib.
 
-What to reach for, by what you need:
+What to reach for, depending on what you need:
 
 | You need | Use |
 |---|---|
@@ -472,8 +471,7 @@ What to reach for, by what you need:
 returns `Nothing`, which is why chapter 12 declares it **locally**
 in several examples. A `Fail` you declare yourself carries no
 default, so an unhandled `fail` is a compile error (`effect not
-handled: Fail`) rather than a runtime abort. That's the whole
-practical difference.
+handled: Fail`) rather than a runtime abort.
 
 ## D.7 Concurrency
 
@@ -516,7 +514,7 @@ The effect underlying chapter 14's actor model.
 `with_mailbox { ... }` and `spawn_actor(...)` are the
 stdlib wrappers that install this handler. `receive_timeout`
 returns `None` when nothing arrived within the deadline, which
-is what keeps an actor from hanging on a message that will
+keeps an actor from hanging on a message that will
 never come.
 
 ### `Link` and `Monitor`
@@ -587,7 +585,6 @@ runtime automatically installs a default handler:
 - `Spawn`, `Cancel` → the runtime's fiber scheduler.
 
 These handlers can be intercepted: any `handle ... with X
-{ ... }` the user installs wins over the runtime's handler
-for the duration of the `body` block. That's what enables
-mocking in tests, capturing output, simulating the clock,
-etc.
+{ ... }` you install wins over the runtime's handler for the
+whole `body` block. That's how you mock in tests, capture
+output, or simulate the clock.

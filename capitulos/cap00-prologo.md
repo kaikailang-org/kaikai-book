@@ -7,8 +7,7 @@
 
 Este libro toma esa imagen de la cultura rapanui prestada.
 
-El concepto de efectividad que aparece en el título de este
-libro tiene dos explicaciones. La primera: el lenguaje
+La efectividad del título tiene dos explicaciones. La primera: el lenguaje
 implementa efectos, una forma de programación que hasta ahora
 ha vivido en lenguajes experimentales o de investigación.
 kaikai quiere llevar este concepto al mainstream.
@@ -81,9 +80,9 @@ originalidad y novedad, es lo que está en este libro: te toca a ti descubrirlo.
 Lo que quiero comentar tiene que ver con un hecho central en la
 creación de kaikai: el uso de la IA.
 
-El compilador que se describe en este libro fue creado en un mes.
-Así como Ogú fue construido en 60 horas, kaikai fue construido con ayuda
-de Claude Code en un periodo de un mes. Algo que podría haber tomado años.
+Así como Ogú fue construido en 60 horas, el compilador que describe
+este libro se construyó con ayuda de Claude Code en un mes. Algo que
+podría haber tomado años.
 
 Mi reflexión fue la siguiente: la IA ha leído y entiende mejor que yo
 todos los papers sobre efectos algebraicos, programación funcional, diseño
@@ -94,9 +93,9 @@ Yo actué como arquitecto, ya tenía mucho diseño previo, la IA me ayudó a pla
 En el camino inventé una forma de trabajar con la IA en el desarrollo del
 lenguaje en tiempo récord.
 
-Ese método lo documenté en lo que llamo ELP: *Empirical Lane Parallelism*.
-Esta forma de usar los agentes para amplificar tu proceso de desarrollo
-y construir productos de software robustos en poco tiempo está
+A ese método lo llamo ELP: *Empirical Lane Parallelism*. Es una forma
+de usar los agentes para amplificar tu proceso de desarrollo y
+construir productos de software robustos en poco tiempo, y está
 documentada en mi repo: <https://github.com/lnds/elp>. Te invito a leerlo
 para que entiendas cómo pude construir un compilador tan complejo como
 el de kaikai en tan solo un mes.
@@ -112,9 +111,8 @@ a editar. Los ejemplos los validamos contra el compilador. Las
 afirmaciones técnicas las verificamos contra la documentación
 del lenguaje. La voz del libro la calibramos contra mi blog.
 
-Lo menciono no como disculpa, sino como reconocimiento de la
-realidad que vivimos los ingenieros de software en 2026.
-La IA escribió partes, mi
+Lo menciono porque es la realidad que vivimos los ingenieros de
+software en 2026. La IA escribió partes, mi
 juicio decidió todo. En *El fin del software artesanal* escribí
 que los telares de Jacquard ya están entre nosotros y
 que la pregunta no es si los usaremos sino cómo. Este libro es
@@ -132,9 +130,8 @@ y los reportes se aceptan como issues o pull requests.
 
 ## Convenciones
 
-Vale gastar unos párrafos en cómo está organizado el libro y
-cómo leerlo. Nada de esto es difícil, pero saberlo de antemano
-ahorra tropiezos.
+Unos párrafos sobre cómo está organizado el libro y cómo leerlo.
+Saberlo de antemano ahorra tropiezos.
 
 ### Estructura
 
@@ -189,12 +186,11 @@ ocho según el peso del capítulo.
 
 ### Código
 
-Todos los bloques marcados como `kai` son ejecutables. Puedes
-copiarlos a un archivo `.kai`, compilarlos con `kai run`, y
-producirán la salida que el texto promete. Si un bloque
-aparece *sin* marca de lenguaje, es porque muestra una sesión de
-terminal: lo que viene después del `$` es lo que tipeas, lo que
-viene debajo es la salida.
+Todos los bloques marcados como `kai` son ejecutables: los
+copias a un archivo `.kai`, los compilas con `kai run` y producen
+la salida que el texto promete. Un bloque *sin* marca de lenguaje
+muestra una sesión de terminal: lo que viene después del `$` es
+lo que tipeas, lo que viene debajo es la salida.
 
 ```
 $ kai run ejemplos/cap01/01_hola.kai
@@ -224,24 +220,23 @@ conceptos con traducción limpia al español (*tipo suma*,
 
 ### Idioma
 
-El libro se publica en dos ediciones: español e inglés. Ambas
-viven en el mismo repositorio, en árboles paralelos. Esta es la
+El libro se publica en dos ediciones, español e inglés, que
+viven en el mismo repositorio en árboles paralelos. Esta es la
 edición en español, redactada en español neutro latinoamericano
-informal. La edición en inglés no es traducción: se escribió en
-paralelo, con la misma estructura y los mismos ejemplos pero
-en la voz nativa de cada idioma.
+informal. La edición en inglés se escribió en paralelo, con la
+misma estructura y los mismos ejemplos, en la voz nativa de su
+idioma.
 
 ### Software vivo
 
-El compilador, el stdlib y este libro están en evolución. Las
-versiones avanzan, los ejemplos a veces dejan de compilar entre
-versiones, y los apéndices se desactualizan. Si encuentras una
-discrepancia entre el libro y el compilador que tienes
-instalado, manda un issue al
+El compilador, el stdlib y este libro están en evolución. Entre
+versiones, a veces un ejemplo deja de compilar o un apéndice se
+desactualiza. Si encuentras una discrepancia entre el libro y el
+compilador que tienes instalado, manda un issue al
 [repo del libro](https://github.com/kaikailang-org/kaikai-book/issues).
-El libro indica al inicio de cada edición contra qué versión
-del compilador se validó. Esta edición está validada contra
-**kaikai 0.164.0**, edición Hanga Roa del lenguaje.
+Cada edición indica al inicio contra qué versión del compilador
+se validó; esta, contra **kaikai 0.164.0**, edición Hanga Roa
+del lenguaje.
 
 ## Quién debería leer este libro
 
@@ -249,9 +244,7 @@ Programadores con experiencia en algún lenguaje:
 Python, JavaScript, Go, Java, C#, Rust, lo que sea, que tengan
 curiosidad por uno nuevo. No asumo background funcional: si
 nunca tocaste Haskell, OCaml o Elixir, los capítulos
-introductorios te apoyan. Si vienes de un mundo
-funcional, puedes saltar a la Parte III y leer directo lo
-distintivo de kaikai.
+introductorios te apoyan.
 
 No es un libro para principiantes absolutos en programación.
 Asumo que sabes qué es una función, una lista, un tipo, un test.
