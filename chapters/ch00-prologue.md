@@ -242,7 +242,7 @@ the book and the compiler you have installed, please file an
 issue against the
 [book's repo](https://github.com/kaikailang-org/kaikai-book/issues).
 Each edition records up front the compiler version it was
-validated against; this one, **kaikai 0.165.2**, the language's
+validated against; this one, **kaikai 0.166.0**, the language's
 Hanga Roa edition.
 
 ## Who should read this book

@@ -41,8 +41,9 @@ Three design decisions appear in these three lines:
   relative to the project root.
 - **Any `fn`, `type`, `effect`, or `let` can carry `pub`.**
   There is no visibility distinction between types and
-  functions: a construct is visible outside the module iff it
-  is marked `pub`.
+  functions: a construct is visible outside the module only if
+  it is marked `pub` (or `pub(pkg)`, which shows up in
+  section 8.5).
 
 Private functions let you break up a public one without
 polluting the importer's namespace: `helper` exists only inside
@@ -537,6 +538,33 @@ convention). After 1.0, standard semver.
 `[dependencies]` is the table where you declare which other
 projects yours needs. It stays empty if you depend only on the
 stdlib.
+
+### The package as a boundary
+
+`kai.toml` also draws a visibility boundary. The file tree
+under it is a **package**, and between private and `pub` there
+is a third level: `pub(pkg)` exports a declaration to the
+modules of the same package, its tests included, and to no one
+else.
+
+```kai
+# fragment: util.kai inside a project
+pub(pkg) fn helper(n: Int) : Int = n * 2   # every module under this kai.toml
+
+pub fn api(n: Int) : Int = helper(n)        # what other packages see
+```
+
+A module from another package that reads `helper` gets an
+error naming the declaration, and `kai doc` leaves it out.
+That's where the things your modules share with each other go,
+without committing to them as API.
+
+Inside a package, modules may also import each other in a
+cycle: `even.kai` imports `odd` and `odd.kai` imports `even`.
+Since every top-level signature is explicit, the compiler
+collects the whole cycle's signatures before reading any body.
+A cycle that crosses packages, runs through the stdlib, or
+joins files with no `kai.toml` is an error.
 
 ### `edition`
 
