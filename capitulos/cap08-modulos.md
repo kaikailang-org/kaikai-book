@@ -41,8 +41,8 @@ Tres decisiones de diseño aparecen en estas tres líneas:
   de la ruta relativa a la raíz del proyecto.
 - **Cualquier `fn`, `type`, `effect` o `let` puede llevar
   `pub`.** No hay diferencia en visibilidad entre tipos y
-  funciones: una construcción es visible afuera si y solo si
-  está marcada `pub`.
+  funciones: una construcción es visible afuera solo si está
+  marcada `pub` (o `pub(pkg)`, que aparece en la sección 8.5).
 
 Las funciones privadas te dejan descomponer una pública sin
 contaminar el namespace de quien importa: `helper` solo existe
@@ -541,6 +541,32 @@ flags y otros sustos.
 
 `[dependencies]` es la tabla donde declaras qué otros proyectos
 necesita el tuyo. Queda vacía si solo dependes del stdlib.
+
+### El paquete como frontera
+
+El `kai.toml` también marca una frontera de visibilidad. El
+árbol de archivos bajo él es un **paquete**, y entre lo privado
+y `pub` cabe un tercer nivel: `pub(pkg)` exporta una
+declaración a los módulos del mismo paquete, sus tests
+incluidos, y a nadie más.
+
+```kai
+# fragmento: util.kai dentro de un proyecto
+pub(pkg) fn auxiliar(n: Int) : Int = n * 2   # todo módulo bajo este kai.toml
+
+pub fn api(n: Int) : Int = auxiliar(n)        # lo que ven otros paquetes
+```
+
+Un módulo de otro paquete que lea `auxiliar` recibe un error
+que nombra la declaración, y `kai doc` la deja fuera. Ahí va lo
+que tus módulos comparten entre sí sin comprometerlo como API.
+
+Dentro de un paquete, los módulos también pueden importarse en
+ciclo: `par.kai` importa `impar` e `impar.kai` importa `par`.
+Como toda firma de primer nivel es explícita, el compilador
+recoge las de todo el ciclo antes de leer un cuerpo. Un ciclo
+que cruza paquetes, que pasa por el stdlib o que une archivos
+sin `kai.toml` es un error.
 
 ### `edition`
 

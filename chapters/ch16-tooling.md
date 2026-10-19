@@ -979,6 +979,14 @@ struct into a fresh record. The ABI classification (small struct
 in registers vs. memory, per SysV or AAPCS) is the C compiler's
 job, not kaikai's.
 
+On the kaikai side an `extern "C" type` is an ordinary record:
+`Vector2 { x: 1.0, y: 2.0 }` builds one, `Vector2 { ...v, x: 5.0 }`
+copies one with a field changed, and `v.x` reads a field. It
+follows the visibility rules of `type`, too: to use it from
+another module, or to name it in a `pub` signature, mark it
+`pub` after `extern "C"` (`extern "C" pub type Vector2 = ...`).
+The same goes for `extern "C" opaque`.
+
 On the C side, the shim includes the `kai_ffi.h` that kaikai
 generates beside the build, with one `typedef` per
 `extern "C" type`, and names those same types. That keeps one
@@ -1129,7 +1137,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.165.2 - hanga-roa (stage 2, self-hosted)
+kaikai 0.166.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org

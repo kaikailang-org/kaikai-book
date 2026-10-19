@@ -991,6 +991,15 @@ el struct devuelto en un record fresco. La clasificación del
 ABI (struct chico en registros vs memoria, según SysV o
 AAPCS) la decide el compilador C, no kaikai.
 
+Del lado kaikai, un `extern "C" type` es un record como
+cualquier otro: `Vector2 { x: 1.0, y: 2.0 }` construye uno,
+`Vector2 { ...v, x: 5.0 }` copia uno con un campo cambiado y
+`v.x` lee un campo. También sigue las reglas de visibilidad de
+`type`: para usarlo desde otro módulo, o nombrarlo en una firma
+`pub`, lo marcas `pub` después de `extern "C"`
+(`extern "C" pub type Vector2 = ...`). Lo mismo vale para
+`extern "C" opaque`.
+
 Del lado C, el shim incluye el `kai_ffi.h` que kaikai genera
 junto al build, con un `typedef` por cada `extern "C" type`, y
 nombra esos mismos tipos. Así hay una sola definición de cada
@@ -1144,7 +1153,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.165.2 - hanga-roa (stage 2, self-hosted)
+kaikai 0.166.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org
