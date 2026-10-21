@@ -835,14 +835,22 @@ tipo `ErrorEdad`". El valor exitoso está en el primer parámetro
 y el error en el segundo, como en Rust y la mayoría de los
 lenguajes modernos.
 
-Tres patrones que vas a ver mucho:
+Cuatro patrones que vas a ver mucho:
 
 - **Encadenar una falla con `!`.** Si tienes una expresión que
   devuelve `Result[A, E]` y quieres "si falla, propaga el
   error; si no, sigue con el valor", escribes `expr!`, como
   en §2.3.
+- **Un valor por defecto con `??`.** `o ?? d` es el valor que
+  trae `o` cuando es `Some`, y `d` cuando es `None`. El lado
+  derecho corre **solo** en el caso `None`, así que
+  `primer_par(xs) ?? calcular()` no calcula nada si encontró
+  algo. Es para `Option`; un `Result` entra como
+  `ok(r) ?? d`.
 - **Funciones de orden superior**: `option.map`, `option.and_then`,
-  `result.map_err`. Llegan en el capítulo 6.
+  `result.map_err`. Llegan en el capítulo 6, igual que los
+  pipes, que corren sobre `Option` y `Result` como sobre una
+  lista: `Some(2) | doble` es `Some(4)`.
 - **Convertir entre los dos**: `option.ok_or(error)` toma un
   `Option[a]` y un error de tipo `e` y devuelve un
   `Result[a, e]`. Útil cuando la pérdida de información del
@@ -1039,7 +1047,7 @@ fn contar(m: hashmap.HashMap[String, Int], p: String) : Unit / Mutable {
 
 `contar` escribe en una tabla ajena, así que declara `Mutable`.
 
-El `match` sobre el `Option` tiene atajo: `m[p].unwrap_or(0)`
+El `match` sobre el `Option` tiene atajo: `unwrap_or(m[p], 0)`
 hace lo mismo en una expresión, y es lo que usa el ejemplo.
 
 Un ejemplo completo: contar la frecuencia de cada palabra de
@@ -1052,7 +1060,7 @@ import collections.hashset as hashset
 
 fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] {
   let m = hashmap.empty()
-  palabras |! hashmap.put(m, ., m[.].unwrap_or(0) + 1)
+  palabras |! hashmap.put(m, ., unwrap_or(m[.], 0) + 1)
   m
 }
 

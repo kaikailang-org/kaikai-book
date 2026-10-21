@@ -186,8 +186,14 @@ use all the time:
 | `Serialize` | `to_string`, `from_string` | Text ↔ value conversion |
 
 The primitive types (`Int`, `Real`, `Bool`, `String`, `Char`)
-already implement all five. For a new type, you choose which
-ones are worth implementing.
+already implement all five. For a new type you choose which
+ones are worth implementing, with one exception: equality is
+not something you ask for. `==` over a data type compares
+structurally, field by field and constructor by constructor,
+with nothing declared. `impl Eq` is for when you want
+**another** equality, not for having one. The only thing with
+no possible equality is a value holding a function: comparing
+two functions means nothing, and the compiler says so.
 
 `Ord` is worth a note: it has **three operations**, not one.
 `cmp(a, b) : Int` returns a negative integer if `a < b`, zero
@@ -286,7 +292,7 @@ type Person = {
   age: Int,
 }
 
-#[derive(Show, Eq)]
+#[derive(Show, Ord)]
 type Point = {
   x: Int,
   y: Int,
@@ -326,7 +332,8 @@ You already used `#[derive(Show)]` on `Point` in the tour
 (§1.7); now you also know when the hand-written `impl` pays
 off.
 
-Two derived types, one with `Show` and one with both:
+Two derived types, one with `Show` and one with `Show` and
+`Ord`:
 
 ```kai
 # examples/ch09/03_derive.kai
@@ -336,7 +343,7 @@ type Person = {
   age: Int
 }
 
-#[derive(Show, Eq)]
+#[derive(Show, Ord)]
 type Point = {
   x: Int,
   y: Int
@@ -353,10 +360,13 @@ fn main() {
   let q = Point { x: 3, y: 4 }
   let r = Point { x: 5, y: 5 }
 
-  let pq_eq = eq(p, q)
-  let pr_eq = eq(p, r)
-  println("p == q: #{pq_eq}")  # true
-  println("p == r: #{pr_eq}")  # false
+  # Equality is not derived: `==` compares field by field.
+  println("p == q: #{p == q}")
+  println("p == r: #{p == r}")
+
+  # Ordering is, and it comes out lexicographic by field.
+  println("p < r: #{p < r}")
+  println("greater: #{max(p, r)}")
 }
 ```
 
@@ -366,6 +376,8 @@ Person { name: Ada, age: 30 }
 record: Person { name: Ada, age: 30 }
 p == q: true
 p == r: false
+p < r: true
+greater: Point { x: 5, y: 5 }
 ```
 
 ### Derives that aren't protocols: `Json`
@@ -736,13 +748,12 @@ declare `impl Eq for Account`, automatically `a1 == a2` (with
 `a1, a2 : Account`) calls your implementation.
 
 ```kai
-#[derive(Eq)]
 type Point = { x: Int, y: Int }
 
 fn main() {
   let p = Point { x: 3, y: 4 }
   let q = Point { x: 3, y: 4 }
-  if p == q { println("equal") }   # uses derived Eq.eq
+  if p == q { println("equal") }   # structural Eq.eq
 }
 ```
 
@@ -779,8 +790,9 @@ three cards that `cmp(c1, c2)` returns the expected
 numbers.
 
 **9.3.** Take any record from earlier chapters and add
-`#[derive(Show, Eq)]` above the declaration. Verify that
-`show` and `eq` work without you writing anything else.
+`#[derive(Show, Ord)]` above the declaration. Verify that
+`show` and `cmp` work without you writing anything else, and
+that `==` worked already before the derive.
 
 **9.4.** Declare your own protocol `Validable` with an
 operation `validate(x: Self) : Result[Self, String]`

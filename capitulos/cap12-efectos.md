@@ -163,7 +163,7 @@ el nombre pelado sirve mientras nada colisione.
 
 ## 12.3 Llamar a una operación: la firma cambia
 
-Para usar una operación, llamas al método del efecto:
+Para usar una operación, la llamas sobre el efecto:
 
 ```kai
 fn greet(name: String) : Unit / Log {
@@ -173,8 +173,8 @@ fn greet(name: String) : Unit / Log {
 
 Dos cosas nuevas:
 
-- **`Log.log(...)`** es la sintaxis de invocación. El efecto es el
-  nombre del namespace; la operación es el método.
+- **`Log.log(...)`** es la sintaxis de invocación. El efecto da
+  el namespace y la operación va después del punto.
 - **`: Unit / Log`** en la firma. La barra introduce la **fila de
   efectos** (effect row): los efectos que la función necesita para
   correr. Sin ese `/ Log`, la función no compila: usa una
@@ -529,7 +529,7 @@ fn dividir(a: Int, b: Int) : Int / Fail {
 fn main() : Unit / Stdout {
   let r = handle {
     let x = dividir(10, 2)
-    let y = dividir(20, 0)  # acá `Fail.fail` se invoca
+    let y = dividir(20, 0)  # aquí `Fail.fail` se invoca
     x + y  # nunca se evalúa
   } with Fail {
     fail(motivo, resume) -> {
@@ -809,7 +809,9 @@ fn rellenar(n: Int) : Array[Int] {
 
 `Ref[T]` es la versión de una sola celda: `Mutable.ref_make(v)`,
 `Mutable.ref_get(r)`, `Mutable.ref_set(r, v)`. No tiene azúcar
-de indexación, pero el resto es paralelo a `Array[T]`.
+de indexación, pero el resto es paralelo a `Array[T]`. Para el
+día a día tiene tres signos propios: `&v` arma la celda, `@r` la
+lee y `r := v` la escribe.
 
 Mira la firma de `rellenar`: `: Array[Int]`, **sin `Mutable`**,
 aunque la función claramente muta.

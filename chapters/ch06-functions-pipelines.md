@@ -180,32 +180,33 @@ When to use which? My suggestion:
 ### Point-free sections: projecting without naming the parameter
 
 Even more common than the placeholder is the lambda that only
-**reaches into the element** to pull out a field or call a
-method: `(p) => p.name`, `(s) => s.length()`. No computation,
-no operator, just a projection. That's what the **point-free
-section** is for: a leading `.` followed by the field, the
-field path, or the method call.
+**reaches into the element** for a field: `(p) => p.name`,
+`(p) => p.addr.city`. No computation, no operator, just a
+projection. That's what the **point-free
+section** is for: a leading `.` followed by the field or the
+field path.
 
 ```kai
 type Addr = { city: String }
 type Person = { name: String, age: Int, addr: Addr }
 
 let people = [Person { name: "ana", age: 30, addr: Addr { city: "Hanga Roa" } }]
-let names  = people | .name           # (p) => p.name
+let names  = people | .name            # (p) => p.name
 let cities = people | .addr.city       # (p) => p.addr.city
-let lengths = names | .length()        # (s) => s.length()
 ```
 
 The section reads as the projection itself, with no parameter
-name to invent. The receiver is implicit (the first argument
-by UFCS), so `.starts_with("a")` reads its written argument
-*after* the receiver. It works as the function of `|`, `||`,
-`|?`, `|!` and as a combinator argument (`.map`, `.and_then`,
-`.filter`):
+name to invent.
+
+When what you want is not a field but the result of a
+function, the `.` goes in as an **argument**. Stdlib functions
+take the data first, so `length(.)` is "the element's length"
+and `starts_with(., "a")` is "the element starts with a":
 
 ```kai
-let starts = names |? .starts_with("a")  # (s) => s.starts_with("a")
-let n      = Some("hi").map(.length())   # in argument position
+let lengths = names | length(.)              # (s) => length(s)
+let starts  = names |? starts_with(., "a")   # (s) => starts_with(s, "a")
+let n       = Some("hi") | length(.)         # the pipes run over Option
 ```
 
 Inside a pipe stage the projection does not have to stand alone.

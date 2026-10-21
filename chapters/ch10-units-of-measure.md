@@ -283,6 +283,10 @@ fn main() : Unit / Stdout {
   println("#{vr}")
   println("#{real.round_to(v, 1)}")
   println("#{real.round(v)}")
+
+  # The hole's spec formats without touching the value, and the
+  # unit travels with it.
+  println("#{v:.2}")
 }
 ```
 
@@ -292,12 +296,21 @@ $ kai run examples/ch10/07_rounding.kai
 10.44 m/sec
 10.4 m/sec
 10 m/sec
+10.44 m/sec
 ```
 
 The annotation on `vr` is the part that matters. The unit
 appearing in the printed text proves little; `Real<m / sec>`
 accepting the result proves the unit survived in the type, which
 is where the compiler checks it.
+
+There is a second tool worth not confusing with the first. If
+all you want is to **display** the number with two decimals,
+the interpolation hole takes the format spec from §3.2 and
+respects the unit: `#{v:.2}` prints `10.44 m/sec` without
+touching the value. Round with `real.round_to` when the rounded
+number is the one that keeps travelling through the program;
+use the spec when the rounding is only for the eye.
 
 ## 10.4 Generic units
 

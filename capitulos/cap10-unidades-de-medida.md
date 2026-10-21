@@ -283,6 +283,10 @@ fn main() : Unit / Stdout {
   println("#{vr}")
   println("#{real.round_to(v, 1)}")
   println("#{real.round(v)}")
+
+  # El spec del hueco formatea sin tocar el valor, y la unidad
+  # viaja con él.
+  println("#{v:.2}")
 }
 ```
 
@@ -292,12 +296,22 @@ $ kai run ejemplos/cap10/07_redondeo.kai
 10.44 m/sec
 10.4 m/sec
 10 m/sec
+10.44 m/sec
 ```
 
 La anotación de `vr` es la parte que importa. Que la unidad
 aparezca impresa prueba poco; que `Real<m / sec>` acepte el
 resultado prueba que la unidad sobrevivió en el tipo, que es
 donde el compilador la revisa.
+
+Hay una segunda herramienta que conviene no confundir con la
+primera. Si lo único que quieres es **mostrar** el número con
+dos decimales, el hueco de interpolación acepta el spec de
+formato del §3.2 y respeta la unidad: `#{v:.2}` imprime
+`10.44 m/sec` sin tocar el valor. Redondea con `real.round_to`
+cuando el número redondeado es el que sigue circulando por el
+programa; usa el spec cuando el redondeo es solo para la
+vista.
 
 ## 10.4 Unidades genéricas
 

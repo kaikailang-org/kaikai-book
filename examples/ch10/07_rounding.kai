@@ -18,4 +18,8 @@ fn main() : Unit / Stdout {
   println("#{vr}")
   println("#{real.round_to(v, 1)}")
   println("#{real.round(v)}")
+
+  # The hole's spec formats without touching the value, and the
+  # unit travels with it.
+  println("#{v:.2}")
 }

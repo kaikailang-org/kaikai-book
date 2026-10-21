@@ -480,7 +480,7 @@ desde un buffer:
 type Paquete = { magia: U32<be>, puerto: U16<be> }
 
 fn main() : Unit / Stdout {
-  let bytes = Paquete { magia: 0<be>, puerto: 0<be> }.to_bytes()
+  let bytes = Paquete { magia: 0<be>, puerto: 0<be> } |> to_bytes()
   match paquete_from_bytes(bytes, 0) {
     Ok(p)  -> println("puerto #{p.value.puerto}")
     Err(m) -> println(m)

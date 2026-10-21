@@ -16,10 +16,11 @@ level immediately above.
 | 2     | unary `-`, `not`                                | Prefix            |
 | 3     | `*`, `/`, `//`, `%`                             | Left              |
 | 4     | `+`, `-` (binary), `++` (string concat)         | Left              |
-| 5     | `==`, `!=`, `<`, `>`, `<=`, `>=`                | **Non-associative** |
-| 6     | `and`                                           | Left (short)      |
-| 7     | `or`                                            | Left (short)      |
-| 8     | `\|>`, `\|`, `\|\|`, `\|?`, `\|!`               | Left              |
+| 5     | `??` (`Option` default)                         | Right             |
+| 6     | `==`, `!=`, `<`, `>`, `<=`, `>=`                | **Non-associative** |
+| 7     | `and`                                           | Left (short)      |
+| 8     | `or`                                            | Left (short)      |
+| 9     | `\|>`, `\|`, `\|\|`, `\|?`, `\|!`               | Left              |
 
 ### Per-level details
 
@@ -32,14 +33,19 @@ level immediately above.
   associative: `a / b / c` is `(a / b) / c`.
 - **Level 4 (additive).** Binary `+` and `-` on numbers,
   `++` to concatenate strings.
-- **Level 5 (comparisons).** **Don't chain.**
+- **Level 5 (`??`).** The default for an `Option`: `o ?? d` is
+  what `o` carries when it is `Some`, and `d` when it is
+  `None`. Right-associative, so `a ?? b ?? c` is
+  `a ?? (b ?? c)`, and the right side runs only in the `None`
+  case.
+- **Level 6 (comparisons).** **Don't chain.**
   `a < b < c` is a syntax error; write `a < b and b < c`.
   That eliminates the bug class where
   `1 == 1 == true` parses unexpectedly.
-- **Level 6 (`and`) and 7 (`or`).** Short-circuit logical.
+- **Level 7 (`and`) and 8 (`or`).** Short-circuit logical.
   `and` binds tighter than `or`, so
   `a or b and c` is `a or (b and c)`.
-- **Level 8 (pipes).** Five operators at the same level:
+- **Level 9 (pipes).** Five operators at the same level:
   `|>` (apply), `|` (map), `||` (flat-map), `|?` (filter) and
   `|!` (each). All left-associative: `xs | f |> g` is
   `(xs | f) |> g`. `|!` returns `Unit`, so it ends the pipeline
@@ -56,9 +62,10 @@ separate syntactic constructs in kaikai:
   `name := expr` is the sugared form of
   `State.set(name, expr)`. It doesn't participate in the
   precedence table.
-- **`@name` (read from mutable cell)**: sugared read of
-  `State.get(name)`. It's a prefix of the name, doesn't
-  participate in the table.
+- **`&expr` and `@r` (`Ref[T]` cells)**: `&v` builds a cell
+  holding `v` and `@r` reads it. Both are prefixes and do not
+  participate in the table. A `var`'s cell is a different
+  thing: it reads naked, by its name.
 - **`->` (in `match`, in lambdas, in `handle`)**: syntactic
   separator, not an operator.
 - **`/` (in effect signature)**: separates the return type
@@ -93,7 +100,7 @@ when you want to see the mechanism underneath.
 | `a ++ b`        | `string_concat(a, b)` (when they're `String`) |
 | `a[i]`          | `Mutable.array_get(a, i)`                |
 | `a[i] := v`     | `Mutable.array_set(a, i, v)`             |
-| `@name`         | `State.get(name)` (with `var`)           |
+| `&v` / `@r`     | `Ref[T]` cell: make and read             |
 | `name := v`     | `State.set(name, v)` (with `var`)        |
 
 ## C.4 Reminder: comparison is non-associative

@@ -190,11 +190,11 @@ Reglas del placeholder:
 ### Secciones point-free: proyectar sin nombrar el parámetro
 
 Más común todavía que el placeholder es la lambda que solo
-**alcanza dentro del elemento** para sacarle un campo o
-llamarle un método: `(p) => p.nombre`, `(s) => s.length()`.
-Sin cómputo ni operador, solo una proyección. Para eso está
-la **sección point-free**: un `.` inicial seguido del campo,
-la ruta de campos o la llamada al método.
+**alcanza dentro del elemento** para sacarle un campo:
+`(p) => p.nombre`, `(p) => p.dir.ciudad`. Sin cómputo ni
+operador, solo una proyección. Para eso está la **sección
+point-free**: un `.` inicial seguido del campo o de la ruta de
+campos.
 
 ```kai
 type Dir = { ciudad: String }
@@ -203,19 +203,21 @@ type Persona = { nombre: String, edad: Int, dir: Dir }
 let personas = [Persona { nombre: "ana", edad: 30, dir: Dir { ciudad: "Hanga Roa" } }]
 let nombres  = personas | .nombre          # (p) => p.nombre
 let ciudades = personas | .dir.ciudad      # (p) => p.dir.ciudad
-let largos   = nombres   | .length()       # (s) => s.length()
 ```
 
 La sección se lee como la proyección misma, sin inventar un
-nombre para el parámetro. El receptor va implícito (es el
-primer argumento por UFCS), así que `.starts_with("a")` lee
-su argumento escrito *después* del receptor. Funciona como la
-función de `|`, `||`, `|?`, `|!` y como argumento de un
-combinador (`.map`, `.and_then`, `.filter`):
+nombre para el parámetro.
+
+Cuando lo que quieres no es un campo sino el resultado de una
+función, el `.` entra como **argumento**. Las funciones del
+stdlib reciben el dato primero, así que `length(.)` es "el
+largo del elemento" y `starts_with(., "a")` es "el elemento
+empieza con a":
 
 ```kai
-let inicia = nombres |? .starts_with("a")  # (s) => s.starts_with("a")
-let n      = Some("hi").map(.length())     # en posición de argumento
+let largos = nombres | length(.)             # (s) => length(s)
+let inicia = nombres |? starts_with(., "a")  # (s) => starts_with(s, "a")
+let n      = Some("hi") | length(.)          # los pipes corren sobre Option
 ```
 
 Dentro de una etapa de pipe la proyección no tiene que quedarse

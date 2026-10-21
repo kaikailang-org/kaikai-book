@@ -16,10 +16,11 @@ el nivel inmediatamente superior.
 | 2     | unario `-`, `not`                                | Prefija           |
 | 3     | `*`, `/`, `//`, `%`                              | Izquierda         |
 | 4     | `+`, `-` (binarios), `++` (concat de strings)    | Izquierda         |
-| 5     | `==`, `!=`, `<`, `>`, `<=`, `>=`                 | **No-asociativa** |
-| 6     | `and`                                            | Izquierda (corto) |
-| 7     | `or`                                             | Izquierda (corto) |
-| 8     | `\|>`, `\|`, `\|\|`, `\|?`, `\|!`                | Izquierda         |
+| 5     | `??` (default de `Option`)                       | Derecha           |
+| 6     | `==`, `!=`, `<`, `>`, `<=`, `>=`                 | **No-asociativa** |
+| 7     | `and`                                            | Izquierda (corto) |
+| 8     | `or`                                             | Izquierda (corto) |
+| 9     | `\|>`, `\|`, `\|\|`, `\|?`, `\|!`                | Izquierda         |
 
 ### Detalles por nivel
 
@@ -32,14 +33,18 @@ el nivel inmediatamente superior.
   `a / b / c` es `(a / b) / c`.
 - **Nivel 4 (aditivos).** `+` y `-` binarios sobre números, `++`
   para concatenar strings.
-- **Nivel 5 (comparaciones).** **No se encadenan.**
+- **Nivel 5 (`??`).** El default de un `Option`: `o ?? d` es el
+  valor que trae `o` cuando es `Some`, y `d` cuando es `None`.
+  Asocia a derecha, así que `a ?? b ?? c` es `a ?? (b ?? c)`, y
+  el lado derecho corre solo en el caso `None`.
+- **Nivel 6 (comparaciones).** **No se encadenan.**
   `a < b < c` es error de sintaxis; se escribe
   `a < b and b < c`. Así desaparece la clase de bugs donde
   `1 == 1 == true` parsea inesperadamente.
-- **Nivel 6 (`and`) y 7 (`or`).** Lógicos con corto-circuito.
+- **Nivel 7 (`and`) y 8 (`or`).** Lógicos con corto-circuito.
   `and` aprieta más fuerte que `or`, así que
   `a or b and c` es `a or (b and c)`.
-- **Nivel 8 (pipes).** Cinco operadores al mismo nivel:
+- **Nivel 9 (pipes).** Cinco operadores al mismo nivel:
   `|>` (apply), `|` (map), `||` (flat-map), `|?` (filter) y
   `|!` (each). Todos asocian a izquierda: `xs | f |> g` es
   `(xs | f) |> g`. `|!` devuelve `Unit`, así que cierra el
@@ -56,9 +61,10 @@ en kaikai, construcciones de sintaxis aparte:
   de `var`. `nombre := expr` es la forma azucarada de
   `State.set(nombre, expr)`. No participa en la tabla de
   precedencia.
-- **`@nombre` (lectura de celda mutable)**: lectura azucarada
-  de `State.get(nombre)`. Es un prefijo del nombre, no
-  participa en la tabla.
+- **`&expr` y `@r` (celdas `Ref[T]`)**: `&v` arma una celda
+  con `v` adentro y `@r` la lee. Son prefijos, no participan
+  en la tabla. La celda de un `var` es otra cosa: se lee
+  pelada, por su nombre.
 - **`->` (en `match`, en lambdas, en `handle`)**: separador
   sintáctico, no operador.
 - **`/` (en firma de efecto)**: separa el tipo de retorno de
@@ -94,7 +100,7 @@ parece funcionar o cuando quieres ver el mecanismo de abajo.
 | `a ++ b`        | `string_concat(a, b)` (cuando son `String`) |
 | `a[i]`          | `Mutable.array_get(a, i)`               |
 | `a[i] := v`     | `Mutable.array_set(a, i, v)`            |
-| `@nombre`       | `State.get(nombre)` (con `var`)         |
+| `&v` / `@r`     | celda `Ref[T]`: armar y leer            |
 | `nombre := v`   | `State.set(nombre, v)` (con `var`)      |
 
 ## C.4 Recordatorio: comparación no asociativa

@@ -11,7 +11,7 @@ import collections.hashset as hashset
 # Count how many times each word appears in a list.
 fn word_frequencies(words: [String]) : hashmap.HashMap[String, Int] {
   let m = hashmap.empty()
-  words |! hashmap.put(m, ., m[.].unwrap_or(0) + 1)
+  words |! hashmap.put(m, ., unwrap_or(m[.], 0) + 1)
   m
 }
 

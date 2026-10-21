@@ -827,14 +827,21 @@ type `AgeError`". The successful value is in the first parameter
 and the error in the second, as in Rust and most modern
 languages.
 
-Three patterns you'll see often:
+Four patterns you'll see often:
 
 - **Chain a failure with `!`.** If you have an expression that
   returns `Result[A, E]` and you want "if it fails, propagate
   the error; otherwise continue with the value", you write
   `expr!`, as in §2.3.
+- **A default with `??`.** `o ?? d` is whatever `o` carries
+  when it is `Some`, and `d` when it is `None`. The right side
+  runs **only** in the `None` case, so `first_even(xs) ??
+  compute()` computes nothing when it found something. It is
+  for `Option`; a `Result` goes in as `ok(r) ?? d`.
 - **Higher-order functions**: `option.map`, `option.and_then`,
-  `result.map_err`. They arrive in chapter 6.
+  `result.map_err`. They arrive in chapter 6, and so do the
+  pipes, which run over `Option` and `Result` just as over a
+  list: `Some(2) | double` is `Some(4)`.
 - **Convert between the two**: `option.ok_or(error)` takes an
   `Option[a]` and an error of type `e` and returns a
   `Result[a, e]`. Useful when the information lost by `None`
@@ -1032,7 +1039,7 @@ fn count(m: hashmap.HashMap[String, Int], w: String) : Unit / Mutable {
 `count` writes to a table it doesn't own, so it declares
 `Mutable`.
 
-The `match` on the `Option` has a shortcut: `m[w].unwrap_or(0)`
+The `match` on the `Option` has a shortcut: `unwrap_or(m[w], 0)`
 does the same in one expression, and it is what the example uses.
 
 A full example: count how often each word in a list appears,
@@ -1045,7 +1052,7 @@ import collections.hashset as hashset
 
 fn word_frequencies(words: [String]) : hashmap.HashMap[String, Int] {
   let m = hashmap.empty()
-  words |! hashmap.put(m, ., m[.].unwrap_or(0) + 1)
+  words |! hashmap.put(m, ., unwrap_or(m[.], 0) + 1)
   m
 }
 

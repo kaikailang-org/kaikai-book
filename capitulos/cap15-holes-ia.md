@@ -108,6 +108,7 @@ La gracia de los holes está en lo que el compilador te dice de
 ellos, más que en abortar bonito. Para cada hole, emite un
 **reporte**:
 
+<!-- transcripto: el reporte imprime la ruta completa del archivo; aquí va relativa -->
 ```
 $ kai build ejemplos/cap15/01_hole_basico.kai --holes
 ejemplos/cap15/01_hole_basico.kai:6:35: type hole ?formula
@@ -127,7 +128,7 @@ ejemplos/cap15/01_hole_basico.kai:6:35: type hole ?formula
     real_log10(r)
     real_sin(r)
 
-  567 more bindings in scope (--holes-scope lists them)
+  571 more bindings in scope (--holes-scope lists them)
 ```
 
 Cuatro piezas de información:
@@ -413,8 +414,8 @@ forma.kai:10:5: pattern hole
 ```
 
 El `match` con un brazo pendiente: los dos casos resueltos
-corren, y las advertencias señalan los bindings que el hole
-todavía no usa.
+corren sin ruido, y el hole se queda esperando a que alguien
+llame con un `Triangulo`.
 
 ```kai
 # ejemplos/cap15/04_hole_en_patron.kai
@@ -439,18 +440,6 @@ fn main() : Unit / Stdout {
 
 ```
 $ kai run ejemplos/cap15/04_hole_en_patron.kai
-warning: unused binding `h`
-  --> ejemplos/cap15/04_hole_en_patron.kai:15:18
-     |
-  15 |     Triangulo(b, h) -> ?formula_triangulo
-     |                  ^
-  = help: prefix with `_` to mark as intentionally unused
-warning: unused binding `b`
-  --> ejemplos/cap15/04_hole_en_patron.kai:15:15
-     |
-  15 |     Triangulo(b, h) -> ?formula_triangulo
-     |               ^
-  = help: prefix with `_` to mark as intentionally unused
 círculo 3 -> 28.259999999999998
 cuadrado 4 -> 16
 ```
