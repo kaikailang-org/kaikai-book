@@ -117,10 +117,12 @@ type Metros = Int                  # sin barra, un nombre: alias
 Si te equivocas, el error te lo dice:
 
 ```
-error: cannot find `Activo` in this scope
-  = help: `type ... = Activo` declares an alias, so `Activo` is
-    not a constructor — write `type ... = | Activo` for a
-    one-member sum
+error: unknown type `Activo`
+  --> x.kai:1:15
+    |
+  1 | type Estado = Activo
+    |               ^
+  = help: to declare a one-member sum, write `type Estado = | Activo`
 ```
 
 Un constructor sin payload nunca lleva paréntesis: se escribe
@@ -400,6 +402,7 @@ error: unreachable match arm: previous arm matched every value
   4 |     _      -> "inalcanzable"
     |     ^
   = note: an earlier unguarded `_` or bare binding already covers this case
+  = help: remove this arm, or move it before the catch-all
 ```
 
 Si querías comparar y la constante no estaba en scope, este es

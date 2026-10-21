@@ -645,6 +645,27 @@ f(5) = 26
 es la expresión de retorno. No hay `return`; el valor del bloque
 es el valor de la función.
 
+El salto de línea es lo que separa una expresión de la
+siguiente. No necesitas punto y coma, pero existe: cuando
+quieres dos expresiones en la misma línea, `;` va entre ellas.
+
+```kai
+let cuadrado = x * x; cuadrado + 1
+```
+
+Si las pegas sin separador, el compilador para en seco y te
+dice qué falta:
+
+```
+error: a second expression on the same line needs a separator; put `;` or a newline before it
+```
+
+Un `;` al final de una línea es inofensivo: el lenguaje lo
+acepta y no cambia nada, ni descarta el valor de la última
+expresión. Pero no lo escribas por costumbre. Una línea por
+expresión es la forma normal; el `;` es para cuando dos pasos
+cortos leen mejor juntos.
+
 Esto se compone con todo lo demás: una rama de `if` puede ser un
 bloque, una rama de `match` también, el cuerpo de una lambda
 también. Todo el lenguaje se reduce a expresiones que devuelven

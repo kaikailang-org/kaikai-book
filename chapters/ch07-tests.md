@@ -131,10 +131,12 @@ error: effect not handled: Ticker
     |
   6 |   assert Ticker.now() == 1234
     |                    ^
-  = note: enclosing row: (empty)
+  = note: this `test` block's row is empty
+  = note: missing effect: `Ticker`
+  = help: wrap the call in `handle { ... } with Ticker { ... }`
 ```
 
-That last note is the clue: the row surrounding the test is
+That first note is the clue: the row surrounding the test is
 empty, and there's nowhere to declare one. The way out is to
 install the handler inside the body — which is usually what you
 wanted anyway, since now the test decides what `Ticker.now()`

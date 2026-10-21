@@ -131,10 +131,12 @@ error: effect not handled: Reloj
     |
   6 |   assert Reloj.ahora() == 1234
     |                     ^
-  = note: enclosing row: (empty)
+  = note: this `test` block's row is empty
+  = note: missing effect: `Reloj`
+  = help: wrap the call in `handle { ... } with Reloj { ... }`
 ```
 
-La última nota es la pista: la fila que rodea al test está
+La primera nota es la pista: la fila que rodea al test está
 vacía, y no hay dónde declarar una. La salida es instalar el
 handler dentro del cuerpo, que suele ser lo que querías: el test
 decide qué devuelve el reloj en vez de depender del de verdad:

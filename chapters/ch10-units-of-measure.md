@@ -476,6 +476,15 @@ username, use a record with a private field (§4.1): the module
 exposes the function that validates and builds the value, and
 nobody else can make one.
 
+An alias doesn't launder the type. Declare `type Tag = String`
+and annotate it, and it makes no difference whether the alias
+comes from your module or another one: the compiler looks at
+the scalar underneath.
+
+```
+error: unit annotations apply only to Int, Real and Decimal, not `String`
+```
+
 Two of those cases in a program that runs. The commented-out
 lines are precisely the ones the compiler rejects:
 

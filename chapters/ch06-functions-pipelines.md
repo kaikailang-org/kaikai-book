@@ -805,6 +805,9 @@ as its sibling, at the same level of the pipe.
 
 ```
 error: cannot find `r` in this scope
+  = help: `r` is the parameter of the lambda before this `|`; a
+    lambda body ends at a top-level pipe, so this stage is
+    outside it. Wrap the body in parentheses: `(r) => ([0..2] | …)`
 ```
 
 `(c) => …` ended up as a stage of the outer pipe, so `r` was

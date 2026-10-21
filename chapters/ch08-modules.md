@@ -324,11 +324,14 @@ map(xs, double)      # ERROR: this `map` is gen's, not list's
 
 ```
 error: type mismatch in function call
-  = note: expected: (Gen[?t2, _], (?t2) -> ?t3) -> Gen[?t3, _]
+  = note: expected: (Gen[Int, _], (Int) -> Int) -> Gen[Int, _]
   = note: found:    ([Int], (Int) -> Int) -> ?t4
+  = note: in argument 1 of `gen.map`
 ```
 
-No guessing: the error shows you the signature it found. The
+No guessing: the error shows you the signature it found and,
+in that last note, which module the `map` that took the name
+came from. The
 ways out are the usual two, qualify or pipe:
 
 ```kai

@@ -326,12 +326,14 @@ map(xs, doble)       # ERROR: este `map` es el de gen, no el de list
 
 ```
 error: type mismatch in function call
-  = note: expected: (Gen[?t2, _], (?t2) -> ?t3) -> Gen[?t3, _]
+  = note: expected: (Gen[Int, _], (Int) -> Int) -> Gen[Int, _]
   = note: found:    ([Int], (Int) -> Int) -> ?t4
+  = note: in argument 1 of `gen.map`
 ```
 
-No hay que adivinar: el error te muestra la firma que
-encontró. Las salidas son las de siempre, calificar o usar el
+No hay que adivinar: el error te muestra la firma que encontró
+y, en la última nota, de qué módulo salió el `map` que se
+quedó con el nombre. Las salidas son las de siempre, calificar o usar el
 pipe:
 
 ```kai

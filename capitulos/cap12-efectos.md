@@ -807,6 +807,19 @@ fn rellenar(n: Int) : Array[Int] {
 - **`a[i] := v`** escribe la posición `i`. Azúcar para
   `Mutable.array_set(a, i, v)`.
 
+Con dos arreglos en la mano hay dos preguntas distintas, y el
+lenguaje las separa: `a == c` compara el contenido, y
+`array.same(a, c)` pregunta si son el mismo arreglo. Importa
+justamente cuando mutas: si son el mismo, escribir en `a` se ve
+desde `c`.
+
+```kai
+let a = Mutable.array_make(2, 7)
+let c = Mutable.array_make(2, 7)
+a == c              # true:  mismo contenido
+array.same(a, c)    # false: arreglos distintos
+```
+
 `Ref[T]` es la versión de una sola celda: `Mutable.ref_make(v)`,
 `Mutable.ref_get(r)`, `Mutable.ref_set(r, v)`. No tiene azúcar
 de indexación, pero el resto es paralelo a `Array[T]`. Para el

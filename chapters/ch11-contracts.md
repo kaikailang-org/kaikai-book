@@ -321,7 +321,8 @@ both ways:
 ```
 error: argument 1 of `zero`: `Array[Int where self >= 1 and self
 <= 65535]` does not fit `Array[Int]`: a mutable type keeps its
-refinements exactly
+refinements exactly, and these differ in `self >= 1 and self
+<= 65535`
 ```
 
 It has to be that way: if an `Array[Port]` could pass as an

@@ -638,6 +638,27 @@ f(5) = 26
 the return expression. There's no `return`; the block's value
 is the function's value.
 
+The newline is what separates one expression from the next.
+You don't need a semicolon, but one exists: when you want two
+expressions on the same line, `;` goes between them.
+
+```kai
+let square = x * x; square + 1
+```
+
+Run them together with no separator and the compiler stops and
+names what's missing:
+
+```
+error: a second expression on the same line needs a separator; put `;` or a newline before it
+```
+
+A `;` at the end of a line is harmless: the language accepts it
+and it changes nothing, not even the value of the last
+expression. Don't type it out of habit, though. One expression
+per line is the normal shape; `;` is for when two short steps
+read better together.
+
 This composes with everything else: an `if` branch can be a
 block, a `match` arm can be a block, a lambda body can be a
 block. The whole language reduces to expressions returning

@@ -623,6 +623,33 @@ a mutable value to another fiber, you send it through a
 mailbox (chapter 14) and the runtime copies the contents to
 the receiver's heap.
 
+The rule is checked at the `spawn` boundary, not when the
+program runs. If the thunk you hand `n.spawn` drags `Mutable`
+along in its effect row, the compiler rejects it right there:
+
+```kai
+fn touch(a: Array[Int]) : Unit / Mutable {
+  a[0] := 42
+}
+
+nursery { n ->
+  n.spawn(() => touch(a)) |> ignore   # ERROR
+}
+```
+
+```
+error: a spawned fiber cannot mutate state it did not create: `Mutable` in its effect row
+  = note: the spawned fiber gets a copy of what it captures, so a write is lost to the parent
+  = help: let one fiber own the state and send it the updates as messages (`kai info actors`)
+```
+
+The note is the whole point: the child would write to its own
+copy and the parent would never see the change. The compiler
+would rather not let you write code that looks like it shares
+state and doesn't. The way through is the one the help names:
+one fiber owns the state, the others send it messages. Chapter
+14 builds that with actors.
+
 That's why mutation doesn't introduce data races in kaikai.
 With threads and shared memory, a mutable `Array[T]` needs
 locks or atomics to be touched from several threads. In kaikai, the type system

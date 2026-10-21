@@ -475,6 +475,14 @@ nombre de usuario, usas un record con un campo privado (§4.1):
 el módulo expone la función que valida y construye, y nadie
 más fabrica el valor.
 
+Un alias no lava el tipo. Si declaras `type Etiqueta = String`
+y lo anotas, da igual que el alias venga de tu módulo o de
+otro: el compilador mira el escalar que hay debajo.
+
+```
+error: unit annotations apply only to Int, Real and Decimal, not `String`
+```
+
 Dos de esos casos en un programa que corre. Las líneas
 comentadas son justamente las que el compilador rechaza:
 
