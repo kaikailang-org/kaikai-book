@@ -327,7 +327,8 @@ direcciones:
 ```
 error: argument 1 of `cero`: `Array[Int where self >= 1 and self
 <= 65535]` does not fit `Array[Int]`: a mutable type keeps its
-refinements exactly
+refinements exactly, and these differ in `self >= 1 and self
+<= 65535`
 ```
 
 Tiene que ser así: si un `Array[Puerto]` pasara por

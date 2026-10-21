@@ -626,6 +626,34 @@ referencia entre fibras. Para darle un valor mutable a otra
 fibra, lo mandas por mailbox (cap. 14) y el runtime copia el
 contenido al heap del receptor.
 
+La regla se chequea en el borde del `spawn`, no cuando el
+programa corre. Si el thunk que le pasas a `n.spawn` arrastra
+`Mutable` en su fila de efectos, el compilador lo rechaza ahí
+mismo:
+
+```kai
+fn tocar(a: Array[Int]) : Unit / Mutable {
+  a[0] := 42
+}
+
+nursery { n ->
+  n.spawn(() => tocar(a)) |> ignore   # ERROR
+}
+```
+
+```
+error: a spawned fiber cannot mutate state it did not create: `Mutable` in its effect row
+  = note: the spawned fiber gets a copy of what it captures, so a write is lost to the parent
+  = help: let one fiber own the state and send it the updates as messages (`kai info actors`)
+```
+
+La nota es el punto completo: la hija escribiría sobre su
+propia copia y el padre nunca vería el cambio. El compilador
+prefiere no dejarte escribir código que parece compartir
+estado y no lo comparte. El camino es el que dice la ayuda:
+una fibra dueña del estado, y las demás le mandan mensajes.
+El cap. 14 lo arma con actores.
+
 Por eso la mutación no introduce data races en kaikai. Con
 threads y memoria compartida, un `Array[T]` mutable necesita
 locks o atomics para tocarse desde varios hilos. En kaikai, el

@@ -66,6 +66,10 @@ separate syntactic constructs in kaikai:
   holding `v` and `@r` reads it. Both are prefixes and do not
   participate in the table. A `var`'s cell is a different
   thing: it reads naked, by its name.
+- **`;` (expression separator)**: separates two expressions
+  written on the same line. A newline does the same, so you
+  rarely need it; at the end of a line it's harmless and does
+  not discard the expression's value (§3.7).
 - **`->` (in `match`, in lambdas, in `handle`)**: syntactic
   separator, not an operator.
 - **`/` (in effect signature)**: separates the return type

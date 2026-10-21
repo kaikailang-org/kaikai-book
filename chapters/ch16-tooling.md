@@ -156,11 +156,14 @@ error: type mismatch in function call
   = note: expected: (Int) -> Int
   = note: found:    (String) -> ?t0
   = note: in argument 1 of `double`
+    |
+  5 |   let n = double(s)
+    |                  ^
 ```
 
-The caret lands on the argument that doesn't fit, and the notes
-name which one it is (`in argument 1 of `double``) and what was
-expected there.
+The first caret marks the call and the second one the argument
+that doesn't fit; the notes name which one it is
+(`in argument 1 of `double``) and what was expected there.
 
 The point is what `typecheck` does **not** do. It runs the
 compiler's full front-end — lexer, parser, name resolution, HM
@@ -721,6 +724,11 @@ cases:
   checkout). To use an alternate version, point it here.
 - **`KAI_INCLUDE`**: override the runtime headers (`runtime.h`)
   root. Same principle as `KAI_STDLIB`.
+- **`KAI_PASS_CLOCK=1`**: prints the monotonic clock, in
+  nanoseconds, after each driver pass (`core`, `scope`,
+  `infer`, `mono`, `perceus`, `emit`, …). It's a raw dump —
+  the subtraction is yours to do. Useful when a compile feels
+  slow and you want to know which pass is eating it.
 
 For normal use you touch none of this: the binary finds its own
 things, and `kai env` shows you **what** it found, already
@@ -1161,7 +1169,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.169.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.170.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org

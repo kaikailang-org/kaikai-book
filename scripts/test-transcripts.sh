@@ -30,6 +30,9 @@
 #
 #     <!-- transcripto: tiempos, cambian en cada corrida -->
 #
+# Los capitulos en ingles lo escriben `<!-- transcript: ... -->`; el
+# script acepta las dos formas.
+#
 # El motivo es obligatorio y sale en el reporte con `-v`: un transcripto
 # sin verificar y sin razón escrita es exactamente lo que este script
 # existe para no dejar pasar.
@@ -83,9 +86,9 @@ for dir in "${DIRS[@]}"; do
         inb = 0; n = 0
       }
       # La marca de exención viaja en un comentario antes de la cerca.
-      /^<!-- *transcripto:/ {
+      /^<!-- *transcripto?:/ {
         pending = $0
-        sub(/^<!-- *transcripto: */, "", pending)
+        sub(/^<!-- *transcripto?: */, "", pending)
         sub(/ *-->.*$/, "", pending)
         next
       }

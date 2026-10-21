@@ -821,6 +821,19 @@ fn fill(n: Int) : Array[Int] {
 - **`a[i] := v`** writes index `i`. Sugar for
   `Mutable.array_set(a, i, v)`.
 
+With two arrays in hand there are two different questions, and
+the language keeps them apart: `a == c` compares the contents,
+and `array.same(a, c)` asks whether they are the same array.
+That matters precisely when you mutate: if they are the same,
+a write through `a` shows up through `c`.
+
+```kai
+let a = Mutable.array_make(2, 7)
+let c = Mutable.array_make(2, 7)
+a == c              # true:  same contents
+array.same(a, c)    # false: different arrays
+```
+
 `Ref[T]` is the single-cell version: `Mutable.ref_make(v)`,
 `Mutable.ref_get(r)`, `Mutable.ref_set(r, v)`. No indexing
 sugar, but everything else is parallel to `Array[T]`. For

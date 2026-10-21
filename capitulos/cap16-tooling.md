@@ -156,11 +156,14 @@ error: type mismatch in function call
   = note: expected: (Int) -> Int
   = note: found:    (String) -> ?t0
   = note: in argument 1 of `doble`
+    |
+  5 |   let n = doble(s)
+    |                 ^
 ```
 
-El cursor cae sobre el argumento que no calza, y las notas
-nombran cuál es (`in argument 1 of `doble``) y qué se esperaba
-ahí.
+El primer cursor marca la llamada y el segundo el argumento que
+no calza; las notas dicen cuál es (`in argument 1 of `doble``) y
+qué se esperaba ahí.
 
 La clave es lo que `typecheck` **no** hace. Corre el front-end
 completo del compilador (lexer, parser, resolución de nombres,
@@ -731,6 +734,12 @@ especiales:
   apuntas aquí.
 - **`KAI_INCLUDE`**: override de la raíz de los headers
   del runtime (`runtime.h`). Mismo principio que `KAI_STDLIB`.
+- **`KAI_PASS_CLOCK=1`**: imprime el reloj monotónico, en
+  nanosegundos, después de cada pass del driver (`core`,
+  `scope`, `infer`, `mono`, `perceus`, `emit`...). Es un dump
+  en bruto: las restas las haces tú. Sirve cuando una
+  compilación se siente lenta y quieres saber qué pass se la
+  está llevando.
 
 Para uso normal no tocas nada de esto: el binario encuentra
 todo lo suyo, y `kai env` te muestra **qué** encontró, ya
@@ -1178,7 +1187,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.169.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.170.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org

@@ -235,7 +235,7 @@ desactualiza. Si encuentras una discrepancia entre el libro y el
 compilador que tienes instalado, manda un issue al
 [repo del libro](https://github.com/kaikailang-org/kaikai-book/issues).
 Cada edición indica al inicio contra qué versión del compilador
-se validó; esta, contra **kaikai 0.166.0**, edición Hanga Roa
+se validó; esta, contra **kaikai 0.170.0**, edición Hanga Roa
 del lenguaje.
 
 ## Quién debería leer este libro

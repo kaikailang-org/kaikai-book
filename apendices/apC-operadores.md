@@ -65,6 +65,10 @@ en kaikai, construcciones de sintaxis aparte:
   con `v` adentro y `@r` la lee. Son prefijos, no participan
   en la tabla. La celda de un `var` es otra cosa: se lee
   pelada, por su nombre.
+- **`;` (separador de expresiones)**: separa dos expresiones
+  escritas en la misma línea. El salto de línea hace lo mismo,
+  así que casi nunca lo necesitas; al final de una línea es
+  inofensivo y no descarta el valor de la expresión (§3.7).
 - **`->` (en `match`, en lambdas, en `handle`)**: separador
   sintáctico, no operador.
 - **`/` (en firma de efecto)**: separa el tipo de retorno de

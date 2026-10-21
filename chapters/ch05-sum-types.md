@@ -114,10 +114,12 @@ type Meters = Int                  # no bar, one name: an alias
 Get it wrong and the error says so:
 
 ```
-error: cannot find `Active` in this scope
-  = help: `type ... = Active` declares an alias, so `Active` is
-    not a constructor — write `type ... = | Active` for a
-    one-member sum
+error: unknown type `Active`
+  --> x.kai:1:14
+    |
+  1 | type State = Active
+    |              ^
+  = help: to declare a one-member sum, write `type State = | Active`
 ```
 
 A constructor with no payload never takes parentheses: write
@@ -393,6 +395,7 @@ error: unreachable match arm: previous arm matched every value
   4 |     _      -> "unreachable"
     |     ^
   = note: an earlier unguarded `_` or bare binding already covers this case
+  = help: remove this arm, or move it before the catch-all
 ```
 
 If you meant to compare and the constant wasn't in scope, this
