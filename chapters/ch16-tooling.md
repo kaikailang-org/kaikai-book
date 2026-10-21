@@ -113,6 +113,13 @@ against the runtime goes through `cc`. For larger programs
 there's a cache (chapter 8 §8.8 covers the package cache; the
 per-file compilation cache is another story).
 
+When you want to start from scratch, `kai clean` deletes the
+package's `.kai-cache` and reports the path it removed and how
+many MiB that freed. With `--cache` it
+also deletes the shared user caches — compiled modules, native
+objects, fetched dependencies — which the next build refills
+with whatever it needs.
+
 That "under a second" is the steady state, the one you live
 in: the chapter-17 case study — about 430 lines across five modules —
 builds in about 0.6 seconds. With a cold cache it costs several
@@ -231,6 +238,12 @@ The three commands share two properties:
   `check` and `bench`; `kai check` ignores `test` and `bench`.
 - **The blocks don't land in the production binary.** `kai
   run` and `kai build` drop them entirely.
+
+For an external runner there are two flags that run nothing:
+`kai test --json --list` prints the blocks the run would
+report, with their id, file and line, and `kai test --json
+--deps` adds, per test file, the sources its build reads. They
+are there to build a CI plan without compiling.
 
 A fourth command runs none of those blocks: it puts them to the
 test. `kai mutate` breaks the code on purpose, one construct at a
@@ -615,7 +628,7 @@ Modules:
   collections/stack    LIFO stack, a wrapper over `[a]`.
   date                 Civil calendar dates (proleptic Gregorian).
   encoding/base64      Base64 encoder/decoder.
-  encoding/hex         Hexadecimal encoding/decoding.
+  encoding/hex         Hexadecimal encoding of `[Int]` byte lists.
   path                 POSIX path manipulation.
   string_builder       `StringBuilder` — an amortised text accumulator.
   uuid                 RFC 4122 UUID v4 generator + parser.
@@ -1035,6 +1048,17 @@ calls the C destructor explicitly (`PQfinish` above). Passing
 the handle to two calls doesn't free it twice. Opaque handles
 work on both backends.
 
+An extern type, `opaque` or `type`, is private unless you mark
+it, like any other declaration. While the handle stays inside
+the module that is fine; the day a `pub` signature names it or
+another module imports it, write
+`extern "C" pub opaque Conn`. Forget it and the compiler names
+both the type and the signature leaking it:
+
+```
+error: pub fn `open` exposes non-pub type `Conn` from module `conn`; mark `Conn` as `pub` or remove it from the signature
+```
+
 ### What FFI still rejects
 
 Out of scope, rejected at compile time:
@@ -1137,7 +1161,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.166.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.169.0 - hanga-roa (stage 2, self-hosted)
 demos baseline: 37
 native p2:      active
 home:           https://kaikai-lang.org

@@ -18,4 +18,8 @@ fn main() : Unit / Stdout {
   println("#{vr}")
   println("#{real.round_to(v, 1)}")
   println("#{real.round(v)}")
+
+  # El spec del hueco formatea sin tocar el valor, y la unidad
+  # viaja con él.
+  println("#{v:.2}")
 }

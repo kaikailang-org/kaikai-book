@@ -3,7 +3,8 @@
 #
 # For `Show`, this produces the canonical format
 # `TypeName { field1: ..., field2: ... }` reusing the `Show`
-# of each field type.
+# of each field type. For `Ord`, it compares field by field in
+# declaration order.
 
 #[derive(Show)]
 type Person = {
@@ -11,7 +12,7 @@ type Person = {
   age: Int
 }
 
-#[derive(Show, Eq)]
+#[derive(Show, Ord)]
 type Point = {
   x: Int,
   y: Int
@@ -28,8 +29,11 @@ fn main() {
   let q = Point { x: 3, y: 4 }
   let r = Point { x: 5, y: 5 }
 
-  let pq_eq = eq(p, q)
-  let pr_eq = eq(p, r)
-  println("p == q: #{pq_eq}")  # true
-  println("p == r: #{pr_eq}")  # false
+  # Equality is not derived: `==` compares field by field.
+  println("p == q: #{p == q}")
+  println("p == r: #{p == r}")
+
+  # Ordering is, and it comes out lexicographic by field.
+  println("p < r: #{p < r}")
+  println("greater: #{max(p, r)}")
 }

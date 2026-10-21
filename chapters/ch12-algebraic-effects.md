@@ -176,8 +176,8 @@ fn greet(name: String) : Unit / Log {
 
 Two new things:
 
-- **`Log.log(...)`** is the invocation syntax. The effect is
-  the namespace; the operation is the method.
+- **`Log.log(...)`** is the invocation syntax. The effect
+  supplies the namespace; the operation follows the dot.
 - **`: Unit / Log`** in the signature. The slash introduces
   the **effect row**: the effects the function needs to run.
   Without `/ Log`, the function doesn't compile: it uses a
@@ -823,7 +823,9 @@ fn fill(n: Int) : Array[Int] {
 
 `Ref[T]` is the single-cell version: `Mutable.ref_make(v)`,
 `Mutable.ref_get(r)`, `Mutable.ref_set(r, v)`. No indexing
-sugar, but everything else is parallel to `Array[T]`.
+sugar, but everything else is parallel to `Array[T]`. For
+day-to-day use it has three signs of its own: `&v` builds the
+cell, `@r` reads it and `r := v` writes it.
 
 Look at the signature of `fill`: `: Array[Int]`, **without
 `Mutable`**, though the function obviously mutates.

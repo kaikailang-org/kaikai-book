@@ -418,6 +418,27 @@ En la práctica:
   println("max = #{limites.PUERTO_MAX}")
   ```
 
+Entre `pub` y privado hay un grado intermedio: `pub(pkg)`.
+Una declaración marcada así la ven todos los módulos de su
+propio paquete, y no existe para quien lo use como
+dependencia. Es lo que quieres para el helper que dos de tus
+módulos comparten y que no es parte del contrato:
+
+```kai
+# util/interno.kai
+pub(pkg) fn secreto() : Int = 42
+pub fn publico() : Int = 1
+```
+
+Desde otro módulo del mismo paquete los dos nombres están ahí.
+Desde un paquete que te declara como dependencia solo está
+`publico`, y pedir el otro es un error que nombra lo que sí
+hay:
+
+```
+error: module 'interno' does not export 'secreto'; available exports: publico
+```
+
 La mayoría de los lenguajes con visibilidad pública por
 defecto acaban con módulos cuyo "API real" se mezcla con
 todo el resto. kaikai invierte eso: lo público es lo que

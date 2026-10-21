@@ -108,6 +108,7 @@ The point of holes is what the compiler tells you about them,
 more than how nicely they abort. For each hole, it emits a
 **report**:
 
+<!-- transcript: the report prints the file's full path; here it is relative -->
 ```
 $ kai build examples/ch15/01_basic_hole.kai --holes
 examples/ch15/01_basic_hole.kai:6:34: type hole ?formula
@@ -127,7 +128,7 @@ examples/ch15/01_basic_hole.kai:6:34: type hole ?formula
     real_log10(r)
     real_sin(r)
 
-  567 more bindings in scope (--holes-scope lists them)
+  571 more bindings in scope (--holes-scope lists them)
 ```
 
 Four pieces of information:
@@ -413,9 +414,9 @@ shape.kai:10:5: pattern hole
     Triangle(_, _)
 ```
 
-The `match` with one arm pending: the two resolved cases run,
-and the warnings point at the bindings the hole doesn't use
-yet.
+The `match` with one arm pending: the two resolved cases run
+without noise, and the hole sits waiting for someone to call
+with a `Triangle`.
 
 ```kai
 # examples/ch15/04_hole_in_pattern.kai
@@ -440,18 +441,6 @@ fn main() : Unit / Stdout {
 
 ```
 $ kai run examples/ch15/04_hole_in_pattern.kai
-warning: unused binding `h`
-  --> examples/ch15/04_hole_in_pattern.kai:15:17
-     |
-  15 |     Triangle(b, h) -> ?triangle_formula
-     |                 ^
-  = help: prefix with `_` to mark as intentionally unused
-warning: unused binding `b`
-  --> examples/ch15/04_hole_in_pattern.kai:15:14
-     |
-  15 |     Triangle(b, h) -> ?triangle_formula
-     |              ^
-  = help: prefix with `_` to mark as intentionally unused
 circle 3 -> 28.259999999999998
 square 4 -> 16
 ```

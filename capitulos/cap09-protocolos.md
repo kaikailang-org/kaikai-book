@@ -165,7 +165,13 @@ vas a usar todo el tiempo:
 
 Los tipos primitivos (`Int`, `Real`, `Bool`, `String`, `Char`)
 ya implementan los cinco. Para un tipo nuevo, eliges cuáles
-vale la pena implementar.
+vale la pena implementar, con una excepción: la igualdad no se
+pide. `==` sobre un tipo de datos compara estructuralmente,
+campo a campo y constructor a constructor, sin que declares
+nada. `impl Eq` es para cuando quieres **otra** igualdad, no
+para tener una. Lo único sin igualdad posible es un valor que
+guarda una función: comparar dos funciones no significa nada, y
+el compilador lo dice así.
 
 `Ord` merece una nota: tiene **tres operaciones**, no una.
 `cmp(a, b) : Int` devuelve un entero negativo si `a < b`, cero
@@ -265,7 +271,7 @@ type Persona = {
   edad: Int,
 }
 
-#[derive(Show, Eq)]
+#[derive(Show, Ord)]
 type Punto = {
   x: Int,
   y: Int,
@@ -304,7 +310,8 @@ La regla práctica:
 Ya usaste `#[derive(Show)]` sobre `Punto` en el tour (§1.7);
 ahora sabes también cuándo conviene el `impl` manual.
 
-Dos tipos derivados, uno con `Show` y otro con los dos:
+Dos tipos derivados, uno con `Show` y otro con `Show` y
+`Ord`:
 
 ```kai
 # ejemplos/cap09/03_derive.kai
@@ -314,7 +321,7 @@ type Persona = {
   edad: Int
 }
 
-#[derive(Show, Eq)]
+#[derive(Show, Ord)]
 type Punto = {
   x: Int,
   y: Int
@@ -331,10 +338,13 @@ fn main() {
   let q = Punto { x: 3, y: 4 }
   let r = Punto { x: 5, y: 5 }
 
-  let igual_pq = eq(p, q)
-  let igual_pr = eq(p, r)
-  println("p == q: #{igual_pq}")  # true
-  println("p == r: #{igual_pr}")  # false
+  # La igualdad no se deriva: `==` compara campo a campo.
+  println("p == q: #{p == q}")
+  println("p == r: #{p == r}")
+
+  # El orden sí, y queda lexicográfico por campos.
+  println("p < r: #{p < r}")
+  println("mayor: #{max(p, r)}")
 }
 ```
 
@@ -344,6 +354,8 @@ Persona { nombre: Ada, edad: 30 }
 registro: Persona { nombre: Ada, edad: 30 }
 p == q: true
 p == r: false
+p < r: true
+mayor: Punto { x: 5, y: 5 }
 ```
 
 ### Derives que no son protocolos: `Json`
@@ -718,13 +730,12 @@ automáticamente `c1 == c2` (con `c1, c2 : Cuenta`) llama a tu
 implementación.
 
 ```kai
-#[derive(Eq)]
 type Punto = { x: Int, y: Int }
 
 fn main() {
   let p = Punto { x: 3, y: 4 }
   let q = Punto { x: 3, y: 4 }
-  if p == q { println("iguales") }   # usa Eq.eq derivado
+  if p == q { println("iguales") }   # Eq.eq estructural
 }
 ```
 
@@ -759,9 +770,10 @@ dale `impl Ord` que ordene por `valor`. Verifica con tres
 cartas que `cmp(c1, c2)` devuelve los números esperados.
 
 **9.3.** Toma cualquier record que hayas escrito en capítulos
-anteriores y agrégale `#[derive(Show, Eq)]` arriba de la
-declaración. Verifica que `show` y `eq` funcionan sin que
-hayas escrito nada más.
+anteriores y agrégale `#[derive(Show, Ord)]` arriba de la
+declaración. Verifica que `show` y `cmp` funcionan sin que
+hayas escrito nada más, y que `==` ya funcionaba antes del
+derive.
 
 **9.4.** Declara un protocolo propio `Validable` con una
 operación `validar(x: Self) : Result[Self, String]` que

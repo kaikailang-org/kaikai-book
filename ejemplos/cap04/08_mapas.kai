@@ -11,7 +11,7 @@ import collections.hashset as hashset
 # Cuenta cuántas veces aparece cada palabra de una lista.
 fn frecuencias(palabras: [String]) : hashmap.HashMap[String, Int] {
   let m = hashmap.empty()
-  palabras |! hashmap.put(m, ., m[.].unwrap_or(0) + 1)
+  palabras |! hashmap.put(m, ., unwrap_or(m[.], 0) + 1)
   m
 }
 

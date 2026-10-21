@@ -415,6 +415,27 @@ In practice:
   println("max = #{limits.MAX_PORT}")
   ```
 
+Between `pub` and private there is a middle grade:
+`pub(pkg)`. A declaration marked that way is visible to every
+module of its own package and does not exist for whoever uses
+it as a dependency. It is what you want for the helper two of
+your modules share and that is not part of the contract:
+
+```kai
+# util/internal.kai
+pub(pkg) fn secret() : Int = 42
+pub fn public() : Int = 1
+```
+
+From another module of the same package both names are there.
+From a package that declares you as a dependency only `public`
+is, and asking for the other is an error that names what there
+is:
+
+```
+error: module 'internal' does not export 'secret'; available exports: public
+```
+
 Most languages with public-by-default end up with modules
 whose "real API" is mixed with everything else. kaikai
 inverts that: public is what you named explicitly.
