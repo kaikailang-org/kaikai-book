@@ -108,7 +108,6 @@ The point of holes is what the compiler tells you about them,
 more than how nicely they abort. For each hole, it emits a
 **report**:
 
-<!-- transcript: the report prints the file's full path; here it is relative -->
 ```
 $ kai build examples/ch15/01_basic_hole.kai --holes
 examples/ch15/01_basic_hole.kai:6:34: type hole ?formula
@@ -120,15 +119,15 @@ examples/ch15/01_basic_hole.kai:6:34: type hole ?formula
 
   candidates that fit:
     r
-    real_sqrt(r)
-    real_cbrt(r)
-    real_exp(r)
-    real_log(r)
-    real_log2(r)
-    real_log10(r)
-    real_sin(r)
+    real_rem(r, r)
+    real_atan2(r, r)
+    real_pow(r, r)
+    real_signum(r)
+    real_tanh(r)
+    real_cosh(r)
+    real_sinh(r)
 
-  571 more bindings in scope (--holes-scope lists them)
+  569 more bindings in scope (--holes-scope lists them)
 ```
 
 Four pieces of information:
@@ -144,7 +143,7 @@ Four pieces of information:
   hole, with their types. Here just `r : Real`, the parameter.
   The `(local)` matters: the report shows you your own names
   and counts the rest on the last line, because listing the
-  nearly three hundred things the prelude brings along helps
+  nearly six hundred things the prelude brings along helps
   nobody. When you want them, `--holes-scope`.
 - **`candidates that fit`**: expressions the compiler can
   synthesize that have the expected type. The synthesis is
@@ -496,20 +495,21 @@ the formatting:
     "kind": "hole",
     "name": "formula",
     "message": null,
+    "remaining": null,
     "expected_type": "Real",
     "in_scope": [
       {"name": "r", "type": "Real"}
     ],
-    "scope_elided": 567,
+    "scope_elided": 569,
     "candidates": [
       {"expr": "r", "kind": "synth"},
-      {"expr": "real_sqrt(r)", "kind": "synth"},
-      {"expr": "real_cbrt(r)", "kind": "synth"},
-      {"expr": "real_exp(r)", "kind": "synth"},
-      {"expr": "real_log(r)", "kind": "synth"},
-      {"expr": "real_log2(r)", "kind": "synth"},
-      {"expr": "real_log10(r)", "kind": "synth"},
-      {"expr": "real_sin(r)", "kind": "synth"}
+      {"expr": "real_rem(r, r)", "kind": "synth"},
+      {"expr": "real_atan2(r, r)", "kind": "synth"},
+      {"expr": "real_pow(r, r)", "kind": "synth"},
+      {"expr": "real_signum(r)", "kind": "synth"},
+      {"expr": "real_tanh(r)", "kind": "synth"},
+      {"expr": "real_cosh(r)", "kind": "synth"},
+      {"expr": "real_sinh(r)", "kind": "synth"}
     ],
     "candidates_needing_effects": [],
     "doc": null
@@ -649,15 +649,16 @@ The agent runs `kai typecheck --holes-json` and receives:
     "kind": "hole",
     "name": "body",
     "message": null,
+    "remaining": null,
     "expected_type": "[String]",
     "in_scope": [
       {"name": "grades", "type": "[Pair[String, Int]]"}
     ],
-    "scope_elided": 566,
+    "scope_elided": 568,
     "candidates": [],
     "candidates_needing_effects": [
-      {"expr": "Env.args()", "kind": "synth", "effects": ["Env"]},
-      {"expr": "args()", "kind": "synth", "effects": ["Env"]}
+      {"expr": "args()", "kind": "synth", "effects": ["Env"]},
+      {"expr": "Env.args()", "kind": "synth", "effects": ["Env"]}
     ],
     "doc": null
   }
