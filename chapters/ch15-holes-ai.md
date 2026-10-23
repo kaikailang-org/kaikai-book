@@ -41,7 +41,7 @@ aborts with a clear message:
 
 ```
 $ kai run examples/ch15/01_basic_hole.kai
-panic: unfilled hole: ?formula at line 6 col 34
+panic: unfilled hole: ?formula at line 6 col 34, expected Real
 ```
 
 A hole is a **deferred promise**: you left a gap that you'll
@@ -99,7 +99,7 @@ fn main() : Unit / Stdout {
 
 ```
 $ kai run examples/ch15/03_shared_hole.kai
-panic: unfilled hole: ?word at line 8 col 5
+panic: unfilled hole: ?word at line 8 col 5, expected String
 ```
 
 ## 15.2 The conversation with the compiler
@@ -339,7 +339,7 @@ panic: todo: parser still missing
 So far it looks like `?`, which also compiles and also panics:
 
 ```
-panic: unfilled hole: ?formula at line 6 col 34
+panic: unfilled hole: ?formula at line 6 col 34, expected Real
 ```
 
 The difference is in the compiler, not the runtime. A `?` is

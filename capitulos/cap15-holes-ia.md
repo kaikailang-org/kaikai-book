@@ -40,7 +40,7 @@ con un mensaje claro:
 
 ```
 $ kai run ejemplos/cap15/01_hole_basico.kai
-panic: unfilled hole: ?formula at line 6 col 35
+panic: unfilled hole: ?formula at line 6 col 35, expected Real
 ```
 
 Un hole es una **promesa diferida**: te dejaste un agujero que
@@ -99,7 +99,7 @@ fn main() : Unit / Stdout {
 
 ```
 $ kai run ejemplos/cap15/03_hole_compartido.kai
-panic: unfilled hole: ?palabra at line 9 col 5
+panic: unfilled hole: ?palabra at line 9 col 5, expected String
 ```
 
 ## 15.2 La conversación con el compilador
@@ -338,7 +338,7 @@ Hasta aquí se parece al `?`, que también compila y también
 revienta:
 
 ```
-panic: unfilled hole: ?formula at line 6 col 35
+panic: unfilled hole: ?formula at line 6 col 35, expected Real
 ```
 
 La diferencia está en el compilador, no en el runtime. Un `?`
