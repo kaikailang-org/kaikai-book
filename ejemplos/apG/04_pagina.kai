@@ -1,0 +1,11 @@
+type Figura = Circulo(Int) | Rectangulo(Int, Int)
+
+fn area(f: Figura) : Int = match f {
+  Circulo(r) -> 3 * r * r
+  Rectangulo(a, b) -> a * b
+}
+
+fn main() {
+  println("hola desde la página")
+  [Circulo(2), Rectangulo(3, 4)] |! println("área #{area(.)}")
+}

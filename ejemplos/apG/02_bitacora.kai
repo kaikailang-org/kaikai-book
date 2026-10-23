@@ -1,0 +1,10 @@
+import fs.file
+
+fn main() : Unit / Stdout + File {
+  let ruta = "bitacora.txt"
+  file.write(ruta, "lunes: compilé a wasm\n")
+  file.append(ruta, "martes: lo corrí en wasmtime\n")
+  println(file.read(ruta) |> trim())
+  let _ = file.delete(ruta)
+  println("¿quedó el archivo? #{file.exists(ruta)}")
+}

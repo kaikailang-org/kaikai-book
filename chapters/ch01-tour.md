@@ -795,6 +795,15 @@ file, run it, look at the output, edit again. That loop is the
 one I cared most about making fast when I designed the tooling,
 because it is where the time actually goes.
 
+The same programs can also leave your machine as WebAssembly. With
+`--target=wasm32-wasi`, `kai run` builds a module and runs it on
+`wasmtime`; with `--target=wasm32-browser`, `kai build` produces
+the module along with the page that loads it. The interesting part
+is who decides whether a program fits each target: `main`'s effect
+row. A program that spawns fibers doesn't build for WASI, and the
+compiler tells you so before generating anything. Appendix G walks
+through both targets.
+
 Chapter 16 covers the rest of the tooling: `fmt`, `lsp`,
 `watch`, editor integration, and the package commands (`init`,
 `add`, `fetch`, `update`). For now, `run` is enough.

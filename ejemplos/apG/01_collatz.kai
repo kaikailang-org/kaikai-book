@@ -1,0 +1,10 @@
+# Cuántos pasos le toma a cada número llegar a 1.
+
+fn pasos(n: Int, k: Int) : Int =
+  if n == 1 { k }
+  else if n % 2 == 0 { pasos(n / 2, k + 1) }
+  else { pasos(3 * n + 1, k + 1) }
+
+fn main() {
+  [6, 7, 27, 97] |! println("#{.} llega a 1 en #{pasos(., 0)} pasos")
+}

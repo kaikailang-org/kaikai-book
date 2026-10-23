@@ -1,0 +1,6 @@
+import spawn
+
+fn main() : Unit / Stdout + Spawn {
+  let f = spawn.spawn { println("from another fiber") }
+  spawn.await(f)
+}

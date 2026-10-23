@@ -1,0 +1,10 @@
+# How many steps each number takes to reach 1.
+
+fn steps(n: Int, k: Int) : Int =
+  if n == 1 { k }
+  else if n % 2 == 0 { steps(n / 2, k + 1) }
+  else { steps(3 * n + 1, k + 1) }
+
+fn main() {
+  [6, 7, 27, 97] |! println("#{.} reaches 1 in #{steps(., 0)} steps")
+}

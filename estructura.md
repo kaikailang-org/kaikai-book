@@ -464,10 +464,15 @@ regiones son cinco entradas del mismo catálogo.
 - **F. Para seguir.** Lecturas recomendadas: Effekt, Koka,
   Erlang/Elixir, Perceus paper, *No Silver Bullet*, *Simple Made
   Easy*.
+- **G. WebAssembly.** Los destinos `wasm32-wasi` y
+  `wasm32-browser`: qué produce cada uno, cómo la fila de efectos
+  de `main` decide si un programa cabe, archivos preabiertos en
+  WASI, la página como efectos (`web.run`, `Dom`) y fibras en el
+  navegador.
 
 ## Cuenta gruesa
 
-- 19 capítulos + 6 apéndices.
+- 19 capítulos + 7 apéndices.
 - ≈ 400 páginas en la edición impresa estimada (asumiendo 18–22
   páginas promedio por capítulo principal; el cap. 15 es algo
   más largo que la versión "solo holes").

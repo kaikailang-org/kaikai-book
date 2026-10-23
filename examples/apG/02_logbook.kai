@@ -1,0 +1,10 @@
+import fs.file
+
+fn main() : Unit / Stdout + File {
+  let path = "logbook.txt"
+  file.write(path, "monday: compiled to wasm\n")
+  file.append(path, "tuesday: ran it on wasmtime\n")
+  println(file.read(path) |> trim())
+  let _ = file.delete(path)
+  println("is the file still there? #{file.exists(path)}")
+}
