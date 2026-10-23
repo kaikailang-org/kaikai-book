@@ -34,7 +34,9 @@ done
 
 # ============================================================
 # Manifiesto: cada línea es "modo|ruta|expect"
-#   modo:   build | run | test | bench | check | project
+#   modo:   build | run | test | bench | check | project | wasi | web
+#           wasi: `kai run --target=wasm32-wasi` (pide wasmtime >= 49 en PATH)
+#           web:  `kai build --target=wasm32-browser`, sin abrir la página
 #   ruta:   relativa a $ROOT (archivo o directorio para project)
 #   expect: ok | fail | run_panic
 #
@@ -51,6 +53,8 @@ done
 #   - cap11/02_violacion: el programa demuestra que un contrato violado
 #     con un valor dinámico aborta; termina con panic a propósito →
 #     expect=fail
+#   - apG/03_fibras: lanza una fibra, que wasm32-wasi no tiene; el
+#     compilador lo rechaza a propósito → expect=fail
 #   - cap13/03_cancel: una hija que se cae cancela a sus hermanas y el
 #     nursery re-lanza la caída; en la fibra raíz eso termina el proceso
 #     con código 1 → expect=fail
@@ -229,6 +233,14 @@ run|ejemplos/cap19/08_shape.kai|ok
 run|ejemplos/cap19/09_perm.kai|ok
 run|ejemplos/cap19/10_dim.kai|ok
 
+# Apéndice G — WebAssembly
+wasi|ejemplos/apG/01_collatz.kai|ok
+wasi|ejemplos/apG/02_bitacora.kai|ok
+wasi|ejemplos/apG/03_fibras.kai|fail
+web|ejemplos/apG/04_pagina.kai|ok
+web|ejemplos/apG/05_contador.kai|ok
+web|ejemplos/apG/06_relojes.kai|ok
+
 # ===== Edición inglés =====
 
 # Chapter 1
@@ -402,6 +414,14 @@ run|examples/ch19/07_layout.kai|ok
 run|examples/ch19/08_shape.kai|ok
 run|examples/ch19/09_perm.kai|ok
 run|examples/ch19/10_dim.kai|ok
+
+# Appendix G — WebAssembly
+wasi|examples/apG/01_collatz.kai|ok
+wasi|examples/apG/02_logbook.kai|ok
+wasi|examples/apG/03_fibers.kai|fail
+web|examples/apG/04_page.kai|ok
+web|examples/apG/05_counter.kai|ok
+web|examples/apG/06_clocks.kai|ok
 EOF
 
 # ============================================================
@@ -449,6 +469,14 @@ run_case() {
       ;;
     check)
       out=$(cd "$cwd" && kai check "$target" 2>&1); rc=$?
+      ;;
+    # Los destinos wasm compilan siempre por C; KAI_BACKEND=native los haría negarse.
+    wasi)
+      out=$(cd "$cwd" && env -u KAI_BACKEND kai run --target=wasm32-wasi "$target" 2>&1); rc=$?
+      ;;
+    web)
+      out=$(cd "$cwd" && env -u KAI_BACKEND kai build --target=wasm32-browser "$target" -o "$TMP/web/app" 2>&1); rc=$?
+      rm -rf "$TMP/web"
       ;;
   esac
 

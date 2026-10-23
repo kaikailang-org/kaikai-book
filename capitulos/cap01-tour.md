@@ -805,6 +805,15 @@ libro. Edita un archivo, córrelo, mira la salida, vuelve a editar.
 Ese ciclo es el que más me importó dejar rápido cuando diseñé el
 tooling, porque es donde se pasa el tiempo de verdad.
 
+Los mismos programas también pueden salir de tu máquina como
+WebAssembly. Con `--target=wasm32-wasi`, `kai run` compila un
+módulo y lo corre en `wasmtime`; con `--target=wasm32-browser`,
+`kai build` produce el módulo junto con la página que lo carga.
+Lo interesante es quién decide si un programa cabe en cada
+destino: la fila de efectos de `main`. Un programa que lanza
+fibras no compila para WASI, y el compilador te lo dice antes de
+generar nada. El apéndice G recorre los dos destinos.
+
 El capítulo 16 cubre el resto del tooling: `fmt`, `lsp`,
 `watch`, la integración con editores y los comandos de paquetes
 (`init`, `add`, `fetch`, `update`). Por ahora con `run` te

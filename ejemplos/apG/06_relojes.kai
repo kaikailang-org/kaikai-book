@@ -1,0 +1,17 @@
+import spawn
+import time
+import loop
+
+fn reloj(nombre: String, ms: Int, veces: Int) : Unit / Stdout + Clock {
+  loop.repeat(veces) {
+    time.sleep(time.millis(ms))
+    println("#{nombre}: tic")
+  }
+}
+
+fn main() : Unit / Stdout + Clock + Spawn {
+  let lento = spawn.spawn { reloj("lento", 250, 2) }
+  reloj("rápido", 100, 4)
+  spawn.await(lento)
+  println("listo")
+}

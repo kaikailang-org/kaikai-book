@@ -1,0 +1,21 @@
+import web.dom
+import web.run
+
+fn contar(boton: Node, n: Int) : Unit / Dom {
+  let e = Dom.next_event()
+  if e.kind == "click" {
+    Dom.set_text(boton, "clics: #{n + 1}")
+    contar(boton, n + 1)
+  } else {
+    contar(boton, n)
+  }
+}
+
+fn main() : Unit / Js + Ffi + Clock =
+  run.run(() => {
+    let boton = Dom.create("button")
+    Dom.set_text(boton, "clics: 0")
+    Dom.append(Dom.query("body") ?? boton, boton)
+    Dom.listen(boton, "click")
+    contar(boton, 0)
+  })
