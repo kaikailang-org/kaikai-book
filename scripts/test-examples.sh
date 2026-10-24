@@ -35,7 +35,9 @@ done
 # ============================================================
 # Manifiesto: cada línea es "modo|ruta|expect"
 #   modo:   build | run | test | bench | check | project | wasi | web
-#           wasi: `kai run --target=wasm32-wasi` (pide wasmtime >= 49 en PATH)
+#           wasi: `kai run --target=wasm32-wasi`. Pide wasmtime 49 o
+#                 posterior en el PATH; con uno más viejo, o sin wasmtime,
+#                 esas líneas salen SKIP con la razón escrita.
 #           web:  `kai build --target=wasm32-browser`, sin abrir la página
 #   ruta:   relativa a $ROOT (archivo o directorio para project)
 #   expect: ok | fail | run_panic
@@ -432,6 +434,23 @@ OK=0; FAIL=0; XFAIL=0; XPASS=0; SKIP=0
 FAILED_LINES=""
 XPASS_LINES=""
 
+# Los casos `wasi` corren el módulo con el wasmtime del PATH. Un programa
+# con handlers compila a manejo de excepciones de WebAssembly, que wasmtime
+# trae activado desde la 49; con uno más viejo el módulo no se puede ni
+# parsear. Eso no es una falla del libro, así que esas líneas se saltan con
+# la razón escrita en vez de reportarse como FAIL.
+WASMTIME_WHY=""
+if ! command -v wasmtime >/dev/null 2>&1; then
+  WASMTIME_WHY="no hay wasmtime en el PATH"
+else
+  wt_ver="$(wasmtime --version 2>/dev/null | awk '{print $2}')"
+  wt_major="${wt_ver%%.*}"
+  case "$wt_major" in
+    ''|*[!0-9]*) WASMTIME_WHY="no se pudo leer la versión de wasmtime" ;;
+    *) [ "$wt_major" -lt 49 ] && WASMTIME_WHY="wasmtime $wt_ver, se necesita 49 o posterior" ;;
+  esac
+fi
+
 run_case() {
   local mode="$1" path="$2" expect="$3" entry="${4:-main.kai}" cflags="${5:-}" backend="${6:-}"
   local cwd target out rc
@@ -454,6 +473,12 @@ run_case() {
     return
   fi
 
+  if [ "$mode" = wasi ] && [ -n "$WASMTIME_WHY" ]; then
+    SKIP=$((SKIP+1))
+    printf "  %-7s %-60s %s\n" "SKIP" "$key" "($WASMTIME_WHY)"
+    return
+  fi
+
   case "$mode" in
     build|project)
       out=$(cd "$cwd" && KAI_BACKEND="${backend:-$KAI_BACKEND}" CFLAGS="$cflags" kai build "$target" -o "$TMP/bin" 2>&1); rc=$?
@@ -470,7 +495,9 @@ run_case() {
     check)
       out=$(cd "$cwd" && kai check "$target" 2>&1); rc=$?
       ;;
-    # Los destinos wasm compilan siempre por C; KAI_BACKEND=native los haría negarse.
+    # El nativo es el backend por default de los destinos wasm cuando este
+    # kaic2 trae el target de WebAssembly. Se corre sin KAI_BACKEND para
+    # ejercitar justamente ese default.
     wasi)
       out=$(cd "$cwd" && env -u KAI_BACKEND kai run --target=wasm32-wasi "$target" 2>&1); rc=$?
       ;;

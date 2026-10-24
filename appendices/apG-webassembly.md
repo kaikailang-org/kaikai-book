@@ -24,8 +24,13 @@ targets with that idea in hand.
 | `wasm32-wasi` | console programs on a WASI runtime | a single `.wasm` |
 | `wasm32-browser` | programs that live in a page | the `.wasm`, the page that loads it, and the code that hosts it |
 
-Both compile through the C backend (Chapter 16 explains why there
-are two backends) with a pinned toolchain: the first time you use
+The module comes out of the native backend, through the LLVM `kai`
+carries inside, when your `kai` was built with the WebAssembly
+target; otherwise it comes out of the C backend (Chapter 16
+explains why there are two). The files are the same either way, and
+`--backend` or `KAI_BACKEND` picks one if you want a closer look.
+
+Both targets share a pinned toolchain: the first time you use
 either one, `kai` downloads wasi-sdk 34 into your cache, checks its
 SHA-256 against the value baked into `kai`, and reuses it from then
 on. If the download fails or the checksum doesn't match, the build
@@ -332,8 +337,7 @@ What each target needs, in one place:
   continuation) it also needs JSPI: Chrome and Edge 137, Firefox
   153, Safari 27. The host refuses to load the program on a browser
   without it, rather than failing halfway through.
-- **Both:** the C backend, since `--backend=native` doesn't emit
-  WebAssembly. Non-tail recursion is bounded by the engine's stack,
+- **Both:** non-tail recursion is bounded by the engine's stack,
   around 6,000 calls in Chrome: less than your machine gives you, so
   a recursive function over a long list is better written with tail
   recursion or with pipes.

@@ -24,9 +24,14 @@ con esa idea a mano.
 | `wasm32-wasi` | programas de consola en un runtime WASI | un único `.wasm` |
 | `wasm32-browser` | programas que viven en una página | el `.wasm`, la página que lo carga y el código que lo hospeda |
 
-Los dos compilan por el backend C (el capítulo 16 cuenta por qué
-hay dos backends) con un toolchain fijo: la primera vez que usas
-cualquiera de ellos, `kai` descarga el wasi-sdk 34 a tu caché,
+El módulo lo emite el backend nativo, con el LLVM que `kai` trae
+adentro, cuando tu `kai` fue armado con el target de WebAssembly;
+si no, lo emite el backend C (el capítulo 16 cuenta por qué hay
+dos). Los archivos que salen son los mismos, y `--backend` o
+`KAI_BACKEND` elige si quieres mirarlo de cerca.
+
+Los dos destinos comparten un toolchain fijo: la primera vez que
+usas cualquiera de ellos, `kai` descarga el wasi-sdk 34 a tu caché,
 verifica su SHA-256 contra el valor que trae grabado y lo reutiliza
 de ahí en adelante. Si la descarga falla o el checksum no calza, la
 compilación se detiene; `kai` nunca cae en silencio a otro
@@ -331,12 +336,11 @@ Lo que necesita cada destino, en un solo lugar:
   manejo de excepciones de WebAssembly.
 - **`wasm32-browser`:** un navegador con manejo de excepciones de
   WebAssembly (Chrome y Edge 137, Firefox 131, Safari 18.4). Si el
-  programa suspende —una fibra, un `sleep`, un handler que guarda
-  la continuación— necesita además JSPI: Chrome y Edge 137,
+  programa suspende (una fibra, un `sleep`, un handler que guarda
+  la continuación) necesita además JSPI: Chrome y Edge 137,
   Firefox 153, Safari 27. El host se niega a cargar el programa en
   un navegador que no lo tenga, en vez de fallar a medio camino.
-- **En los dos:** el backend C, porque `--backend=native` no
-  genera WebAssembly. La recursión que no es de cola queda limitada
+- **En los dos:** la recursión que no es de cola queda limitada
   por la pila del motor, del orden de 6.000 llamadas en Chrome:
   menos de lo que te da tu máquina, así que una función recursiva
   que procesa una lista larga conviene escribirla con recursión de
@@ -344,9 +348,9 @@ Lo que necesita cada destino, en un solo lugar:
 - **`kai test`** no tiene `--target`: las pruebas corren siempre en
   tu máquina.
 
-Para lo que este apéndice no cubre —llamar a JavaScript con
+Para lo que este apéndice no cubre (llamar a JavaScript con
 `extern "js"`, declarar módulos JavaScript en `[js]` dentro de
-`kai.toml`, o pintar un frame completo con `Dom.put_pixels`— la
+`kai.toml`, o pintar un frame completo con `Dom.put_pixels`), la
 referencia está a un comando de distancia:
 
 ```
