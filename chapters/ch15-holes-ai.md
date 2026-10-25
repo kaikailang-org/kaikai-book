@@ -127,7 +127,7 @@ examples/ch15/01_basic_hole.kai:6:34: type hole ?formula
     real_cosh(r)
     real_sinh(r)
 
-  569 more bindings in scope (--holes-scope lists them)
+  577 more bindings in scope (--holes-scope lists them)
 ```
 
 Four pieces of information:
@@ -500,7 +500,7 @@ the formatting:
     "in_scope": [
       {"name": "r", "type": "Real"}
     ],
-    "scope_elided": 569,
+    "scope_elided": 577,
     "candidates": [
       {"expr": "r", "kind": "synth"},
       {"expr": "real_rem(r, r)", "kind": "synth"},
@@ -654,7 +654,7 @@ The agent runs `kai typecheck --holes-json` and receives:
     "in_scope": [
       {"name": "grades", "type": "[Pair[String, Int]]"}
     ],
-    "scope_elided": 568,
+    "scope_elided": 576,
     "candidates": [],
     "candidates_needing_effects": [
       {"expr": "args()", "kind": "synth", "effects": ["Env"]},
