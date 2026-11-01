@@ -1,4 +1,4 @@
-# `Vec[T]` is the value vector: flat buffer, O(1) access, and
+# `Vec[t]` is the value vector: flat buffer, O(1) access, and
 # functional semantics. The operations live in `collections.vec`,
 # and none of them modifies the vector it gets: they return another.
 #

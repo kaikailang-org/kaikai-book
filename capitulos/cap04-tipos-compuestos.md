@@ -424,8 +424,8 @@ que abortar en runtime.
 Dos cosas más sobre el acceso por índice. Es **`O(n)`**: las
 listas son enlazadas, no indexadas; recorrer hasta la
 posición `i` cuesta `i` pasos. Para acceso aleatorio hay
-otros dos tipos: `Vec[T]`, que viene en un momento, y
-`Array[T]`, que conocerás en el capítulo 12.
+otros dos tipos: `Vec[t]`, que viene en un momento, y
+`Array[t]`, que conocerás en el capítulo 12.
 
 Y la sintaxis `xs[i]` que algunos lenguajes usan para listas
 el typer la rechaza sobre una lista: indexar es para `Vec` y
@@ -478,10 +478,10 @@ pares : longitud=10, suma=110
 combo : longitud=7, suma=41
 ```
 
-### `Vec[T]`: indexar sin renunciar a los valores
+### `Vec[t]`: indexar sin renunciar a los valores
 
 Cuando de verdad necesitas indexar, la respuesta es
-`Vec[T]`: un buffer plano y contiguo, con acceso `O(1)`, que
+`Vec[t]`: un buffer plano y contiguo, con acceso `O(1)`, que
 **se comporta como un valor**, sin efectos ni operaciones
 mutables.
 
@@ -541,7 +541,7 @@ Un slice es una vista de costo constante: `a[1..2]` no copia
 elementos, comparte el buffer. Los extremos van incluidos, igual
 que en un literal de rango.
 
-Y `Array[T]`, que aparece en el capítulo 12, es la otra cara:
+Y `Array[t]`, que aparece en el capítulo 12, es la otra cara:
 la referencia **mutable**, donde las escrituras sí se observan
 desde todos los alias y cada una exige `/ Mutable`. La regla es
 corta: `Vec` cuando quieras una colección que se comporte como
@@ -607,7 +607,8 @@ fn main() {
   println("chars:      #{list.length(string.chars(s))}")  # 4
   println("bytes list: #{list.length(string.bytes(s))}")  # 5
   println("de vuelta:  #{string.from_bytes(string.bytes(s))}")
-  println("slice(2,2):      #{string.slice(s, 2, 2)}")
+  println("char_slice(2,2): #{string.char_slice(s, 2, 2)}")
+  println("slice(2,3):      #{string.slice(s, 2, 3)}")
   println("byte_slice(2,3): #{string.byte_slice(s, 2, 3)}")
   println("byte_slice(2,2): #{string.byte_slice(s, 2, 2)}")
 }
@@ -620,48 +621,60 @@ codepoints: 4
 chars:      4
 bytes list: 5
 de vuelta:  café
-slice(2,2):      fé
+char_slice(2,2): fé
+slice(2,3):      fé
 byte_slice(2,3): Some(fé)
 byte_slice(2,2): None
 ```
 
-Las últimas tres líneas muestran las dos maneras de sacar un
-pedazo de un string, que difieren en la unidad:
+Las últimas cuatro líneas muestran las maneras de sacar un pedazo
+de un string, que difieren en la unidad y en qué hacen con un corte
+imposible:
 
 ```
+char_slice(s: String, desde: Int, largo: Int) : String
 slice(s: String, desde: Int, largo: Int) : String
 byte_slice(s: String, desde: Int, largo: Int) : Option[String]
 ```
 
-`slice` cuenta **codepoints**. Sacar `"fé"` de `"café"` es pedir dos
-caracteres desde el índice 2, contando desde cero:
-`slice(s, 2, 2)`. Si te pasas del largo recorta en vez de fallar
-(`slice(s, 1, 9)` devuelve `"afé"`) y nunca te puede entregar un
-string roto, porque no sabe cortar por la mitad de un carácter.
+`char_slice` cuenta **codepoints**. Sacar `"fé"` de `"café"` es
+pedir dos caracteres desde el índice 2, contando desde cero:
+`char_slice(s, 2, 2)`. Si te pasas del largo recorta en vez de
+fallar (`char_slice(s, 1, 9)` devuelve `"afé"`) y nunca te puede
+entregar un string roto, porque no sabe cortar por la mitad de un
+carácter. A cambio, cada llamada recorre el string desde el
+principio para llegar al índice: en un bucle sobre posiciones, eso
+es cuadrático.
 
-`byte_slice` cuenta **bytes**, que es lo que necesitas cuando los
-offsets vienen de otra parte: de un `index_of`, de un parser, de un
-protocolo que mide en octetos. Como un byte cualquiera puede caer
-dentro de un carácter, devuelve `Option`: `byte_slice(s, 2, 3)` da
+`slice` y `byte_slice` cuentan **bytes**, que es lo que necesitas
+cuando los offsets vienen de otra parte: de un `index_of`, de un
+parser, de un protocolo que mide en octetos. La `é` ocupa dos bytes,
+así que el mismo `"fé"` es `slice(s, 2, 3)`. Un byte cualquiera
+puede caer dentro de un carácter, y ahí las dos se separan. `slice`
+aborta con un `panic`, porque un offset así es un bug de quien
+llama. `byte_slice` devuelve `Option`: `byte_slice(s, 2, 3)` da
 `Some("fé")` porque 2 y 5 son bordes de codepoint, y
 `byte_slice(s, 2, 2)` da `None` porque el 4 cae en medio de la `é`.
-Si prefieres ajustar el offset en vez de que te lo rechacen, ahí
-están `is_char_boundary`, `floor_char_boundary` y
-`ceil_char_boundary`.
+Un offset que sale de `index_of` nunca cae en medio, así que con él
+`slice` es la elección natural. Si prefieres ajustar el offset en
+vez de que te lo rechacen, ahí están `is_char_boundary`,
+`floor_char_boundary` y `ceil_char_boundary`.
 
-La regla mental es corta: **el nombre te dice la unidad.**
-`length`, `byte_length`, `bytes` y `byte_slice` hablan de bytes;
-`char_count`, `chars` y `slice` hablan de codepoints. La búsqueda
-sigue el mismo par: `index_of` devuelve un offset de byte, que
-alimenta a `byte_slice`, y `char_index_of` devuelve un índice de
-codepoint, que alimenta a `slice`.
+La regla mental es corta: **sin prefijo, bytes; con `char_`,
+codepoints.** `length`, `byte_length`, `bytes`, `slice` y
+`byte_slice` hablan de bytes; `char_count`, `chars` y `char_slice`
+hablan de codepoints. La búsqueda sigue el mismo par: `index_of`
+devuelve un offset de byte, que alimenta a `slice`, y
+`char_index_of` devuelve un índice de codepoint, que alimenta a
+`char_slice`.
 
-Que `length` cuente bytes y `slice` cuente codepoints no es un
-descuido de coherencia. `length` es O(1) y no puede romper nada; un
-corte por byte sí. Cada operación se queda con la unidad que no te
-va a salir cara. (Grafemas como "é" compuesta de `e` + tilde
-combinante son otra capa todavía; ahí ni los codepoints alcanzan,
-pero rara vez los necesitas.)
+Que la unidad por defecto sea el byte no es un descuido. `length`
+es O(1), `slice` llega a su offset sin recorrer nada, y los dos
+comparten unidad con `index_of`, así que lo que devuelve una
+búsqueda se usa tal cual. Contar codepoints obliga a caminar el
+string, y ese costo queda a la vista en el nombre. (Grafemas como
+"é" compuesta de `e` + tilde combinante son otra capa todavía; ahí
+ni los codepoints alcanzan, pero rara vez los necesitas.)
 
 El mismo cuidado aplica a mayúsculas y minúsculas. `core.char`
 trae `to_upper`, `to_lower`, `is_upper` e `is_lower` para ASCII.
@@ -838,7 +851,7 @@ lenguajes modernos.
 Cuatro patrones que vas a ver mucho:
 
 - **Encadenar una falla con `!`.** Si tienes una expresión que
-  devuelve `Result[A, E]` y quieres "si falla, propaga el
+  devuelve `Result[a, e]` y quieres "si falla, propaga el
   error; si no, sigue con el valor", escribes `expr!`, como
   en §2.3.
 - **Un valor por defecto con `??`.** `o ?? d` es el valor que
@@ -945,8 +958,8 @@ fn main() {
 ```
 
 Por dentro, las tuplas son azúcar sobre tres records del
-stdlib: `Pair[A, B]` para arity 2, `Triple[A, B, C]` para 3,
-`Quad[A, B, C, D]` para 4. La declaración
+stdlib: `Pair[a, b]` para arity 2, `Triple[a, b, c]` para 3,
+`Quad[a, b, c, d]` para 4. La declaración
 
 ```kai
 let p = (1, 2)

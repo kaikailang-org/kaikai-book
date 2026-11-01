@@ -184,7 +184,7 @@ B.
 
 The only exceptions are mutation mechanisms kaikai provides
 deliberately: local `var` (which the compiler masks and
-restricts), `Ref[T]`, actor mailboxes, mutable arrays. All
+restricts), `Ref[t]`, actor mailboxes, mutable arrays. All
 of them have specific disciplines that prevent cycles
 (mailboxes, for example, belong to a single actor, and the
 actor's handler frees its mailbox in a `finally` clause when

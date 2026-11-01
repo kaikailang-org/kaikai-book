@@ -96,11 +96,18 @@ directory, so a program that sticks to relative paths just works:
 # examples/apG/02_logbook.kai
 import fs.file
 
+fn write_logbook(path: String) : Result[String, String] / File {
+  file.write(path, "monday: compiled to wasm\n")!
+  file.append(path, "tuesday: ran it on wasmtime\n")!
+  file.read(path)
+}
+
 fn main() : Unit / Stdout + File {
   let path = "logbook.txt"
-  file.write(path, "monday: compiled to wasm\n")
-  file.append(path, "tuesday: ran it on wasmtime\n")
-  println(file.read(path) |> trim())
+  match write_logbook(path) {
+    Ok(text) -> println(text |> trim())
+    Err(e) -> println("could not write the logbook: " ++ e)
+  }
   let _ = file.delete(path)
   println("is the file still there? #{file.exists(path)}")
 }
@@ -113,8 +120,11 @@ tuesday: ran it on wasmtime
 is the file still there? false
 ```
 
-Change `path` to `/tmp/logbook.txt` and the same program dies with
-`panic: file.write: write failed`. That isn't the operating system
+`file.write`, `file.append` and `file.read` return a `Result`: the
+`!` carries the first error out of `write_logbook`, and `main`
+decides what to do with it. Change `path` to `/tmp/logbook.txt` and
+you'll see that branch at work: the program prints `could not write the logbook:
+write_file: cannot open file`. That isn't the operating system
 denying permission: as far as the module is concerned, `/tmp` does
 not exist. To open other directories, `KAI_WASI_DIRS` takes a
 `:`-separated list that replaces the current directory:

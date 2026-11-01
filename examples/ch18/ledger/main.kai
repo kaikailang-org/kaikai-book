@@ -6,7 +6,7 @@
 #
 # Two structural notes (carried over from chapter 14 and 17):
 #
-#   1. `Actor[T]` has no top-level default handler. `main`
+#   1. `Actor[t]` has no top-level default handler. `main`
 #      installs the two mailboxes it needs by nesting two
 #      `with_mailbox` blocks before spawning the actors.
 #
@@ -49,7 +49,7 @@ fn step(
 fn main() : Int / Stdout + File + Spawn + Cancel {
   persistence.reset_log(LOG_PATH)
 
-  # `step()` touches three Actor[T] effects:
+  # `step()` touches three Actor[t] effects:
   #   - Actor[StoreMsg]  : send commands to the store
   #   - Actor[StoreResp] : receive its reply
   #   - Actor[Event]     : send a log line to persistence

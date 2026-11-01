@@ -767,7 +767,7 @@ definirse **en términos de sí misma**.
 import seq
 
 # Los naturales: el cero, seguido de los naturales más uno.
-const nat: Seq[Int] = lazy [0, ...seq.map(nat, (x) => x + 1)]
+const NAT: Seq[Int] = lazy [0, ...seq.map(NAT, (x) => x + 1)]
 
 # La criba sin cota: una etapa de filtro por cada primo encontrado.
 fn criba(xs: Seq[Int]) : Seq[Int] = match xs {
@@ -783,7 +783,7 @@ primos hasta 30: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
 el primo 1000: 7919
 ```
 
-`nat` aparece dentro de su propia definición sin problema:
+`NAT` aparece dentro de su propia definición sin problema:
 cuando `map` pide la celda siguiente, la anterior ya está
 computada y guardada. La criba es la misma idea trabajando. Por
 cada primo que encuentra agrega una etapa de filtro sobre el

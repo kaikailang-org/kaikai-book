@@ -6,7 +6,7 @@
 #
 # Dos notas estructurales (heredadas de los cap. 14 y 17):
 #
-#   1. `Actor[T]` no tiene un handler default en el scope de
+#   1. `Actor[t]` no tiene un handler default en el scope de
 #      `main`. Acá instalamos los tres mailboxes que `step`
 #      toca anidando tres bloques `with_mailbox` antes de
 #      spawnear los actores.
@@ -52,7 +52,7 @@ fn paso(
 fn main() : Int / Stdout + File + Spawn + Cancel {
   persistencia.reset_log(PATH_LOG)
 
-  # `paso()` toca tres efectos Actor[T]:
+  # `paso()` toca tres efectos Actor[t]:
   #   - Actor[AlmacenMsg]  : manda comandos al almacén
   #   - Actor[AlmacenResp] : recibe su respuesta
   #   - Actor[Evento]      : manda una línea de log a persistencia

@@ -426,7 +426,7 @@ call back (p2)
 
 The mapping rules are the ones you'd expect, and the compiler
 applies them without asking. Field
-names go to the wire verbatim — no case conversion. An `Option[T]`
+names go to the wire verbatim — no case conversion. An `Option[t]`
 field accepts an explicit `null` and a missing key alike — both
 decode to `None`; **every other field is required**. Keys the
 record does not declare are ignored. And if decoding fails, the
@@ -576,7 +576,7 @@ sort a list. In kaikai the function can take the
 **comparator as an explicit argument**:
 
 ```kai
-fn sort_by[T](xs: [T], cmp: (T, T) -> Int) : [T] = ...
+fn sort_by[t](xs: [t], cmp: (t, t) -> Int) : [t] = ...
 ```
 
 And the call site **names** the comparator. If `Transaction`
@@ -589,9 +589,9 @@ list.sort_by(transactions, cmp)   # cmp comes from impl Ord for Transaction
 
 It's little to type, but the conceptual difference is big:
 what travels implicitly in Haskell, you write in kaikai.
-`sort_by` doesn't "demand" that `T` have `Ord`, only that
+`sort_by` doesn't "demand" that `t` have `Ord`, only that
 **someone pass it a comparison function**.
-That this function comes from an `impl Ord for T` is the
+That this function comes from an `impl Ord for t` is the
 caller's decision, not the signature's.
 
 **No higher-kinded types** (HKT). `protocol Functor[F[_]]`
@@ -630,15 +630,15 @@ abstractions I wanted to prioritize live in the effect system
 
 So far protocols showed up in the `impl` that implements
 them and the call site that calls an operation. There's a
-third place: a generic function over some `T` can **require
-that `T` implement a protocol**, and say so in the signature:
+third place: a generic function over some `t` can **require
+that `t` implement a protocol**, and say so in the signature:
 
 ```kai
-fn show_two[T: Show](a: T, b: T) : String =
+fn show_two[t: Show](a: t, b: t) : String =
   "#{show(a)} and #{show(b)}"
 ```
 
-The bound `[T: Show]` reads "for any `T` that implements
+The bound `[t: Show]` reads "for any `t` that implements
 `Show`". Inside the body, the protocol's operations are
 available: `show(a)` dispatches to the `impl Show` of
 whatever concrete type arrives at each call.
@@ -661,11 +661,11 @@ Bounds stack with `+` when the body uses more than one
 protocol, and each type parameter carries its own:
 
 ```kai
-fn label[T: Show + Eq](a: T, b: T) : String =
+fn label[t: Show + Eq](a: t, b: t) : String =
   if eq(a, b) { "equal: #{show(a)}" }
   else { "#{show(a)} and #{show(b)}" }
 
-fn pair[T: Show, U: Show](a: T, b: U) : String =
+fn pair[t: Show, u: Show](a: t, b: u) : String =
   "#{show(a)}, #{show(b)}"
 ```
 
@@ -674,8 +674,8 @@ that takes the `larger` of two values asks for `Ord`; one
 that renders asks for your `Drawable`:
 
 ```kai
-fn larger[T: Ord](a: T, b: T) : T = max(a, b)
-fn render[T: Drawable](x: T) : String = "[" ++ draw(x) ++ "]"
+fn larger[t: Ord](a: t, b: t) : t = max(a, b)
+fn render[t: Drawable](x: t) : String = "[" ++ draw(x) ++ "]"
 ```
 
 Read carefully, because this is where kaikai parts ways with
@@ -689,7 +689,7 @@ always. The bound documents the contract in the signature and
 makes the error, when a type doesn't implement the protocol,
 clear: `no impl of 'Ord' for type 'X'`.
 
-It's the natural next step from a generic over a bare `T`:
+It's the natural next step from a generic over a bare `t`:
 from "this function works for any type" to "this function
 works for any type that knows how to `show`". Without
 Haskell's implicit resolver or its propagation, the bound
@@ -711,11 +711,11 @@ impl Drawable for Circle {
   fn draw(c: Circle) : String = "circle of radius #{show(c.radius)}"
 }
 
-fn larger[T: Ord](a: T, b: T) : T = max(a, b)
+fn larger[t: Ord](a: t, b: t) : t = max(a, b)
 
-fn render[T: Drawable](x: T) : String = "[" ++ draw(x) ++ "]"
+fn render[t: Drawable](x: t) : String = "[" ++ draw(x) ++ "]"
 
-fn label[T: Show + Eq](a: T, b: T) : String =
+fn label[t: Show + Eq](a: t, b: t) : String =
   if eq(a, b) {
     "equal: #{show(a)}"
   } else {

@@ -1187,16 +1187,13 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.177.1 - hanga-roa (stage 2, self-hosted)
-demos baseline: 37
-native p2:      active
-home:           https://kaikai-lang.org
+kaikai 0.189.0 - hanga-roa (stage 2, self-hosted)
+backend: native
 ```
 
-La primera línea te da versión y edición. Las otras tres son
-diagnóstico del build (cuántas demos cubre la baseline, qué
-backend nativo quedó activo) y las vas a querer cuando
-reportes un problema.
+La primera línea te da versión y edición; la segunda, el backend
+con que `kai run` compila por defecto. Las dos son lo primero que
+vas a querer pegar cuando reportes un problema.
 
 Si el `kai.toml` omite el campo, el compilador asume la
 edición default de la instalación. En cuanto un paquete va a

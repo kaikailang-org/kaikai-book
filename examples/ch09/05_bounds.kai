@@ -8,11 +8,11 @@ impl Drawable for Circle {
   fn draw(c: Circle) : String = "circle of radius #{show(c.radius)}"
 }
 
-fn larger[T: Ord](a: T, b: T) : T = max(a, b)
+fn larger[t: Ord](a: t, b: t) : t = max(a, b)
 
-fn render[T: Drawable](x: T) : String = "[" ++ draw(x) ++ "]"
+fn render[t: Drawable](x: t) : String = "[" ++ draw(x) ++ "]"
 
-fn label[T: Show + Eq](a: T, b: T) : String =
+fn label[t: Show + Eq](a: t, b: t) : String =
   if eq(a, b) {
     "equal: #{show(a)}"
   } else {

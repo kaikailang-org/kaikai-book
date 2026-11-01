@@ -1,5 +1,5 @@
 # `var` introduces a local cell. It's syntactic sugar over
-# `State[T]`: the compiler inserts a `handle ... with State[Int]`
+# `State[t]`: the compiler inserts a `handle ... with State[Int]`
 # right where the `var` appears, so the effect closes in the
 # same block and the function's signature stays effect-free.
 

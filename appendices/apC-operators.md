@@ -62,7 +62,7 @@ separate syntactic constructs in kaikai:
   `name := expr` is the sugared form of
   `State.set(name, expr)`. It doesn't participate in the
   precedence table.
-- **`&expr` and `@r` (`Ref[T]` cells)**: `&v` builds a cell
+- **`&expr` and `@r` (`Ref[t]` cells)**: `&v` builds a cell
   holding `v` and `@r` reads it. Both are prefixes and do not
   participate in the table. A `var`'s cell is a different
   thing: it reads naked, by its name.
@@ -76,7 +76,7 @@ separate syntactic constructs in kaikai:
   from the effect row: `fn f() : Int / Log`. Only appears
   in signature position.
 - **`!` (propagation of `Option`/`Result`)**: postfix on
-  expressions returning `Option[T]` or `Result[E, T]`,
+  expressions returning `Option[t]` or `Result[t, e]`,
   performs early propagation of the error or `None`. Rough
   equivalent of Rust's `?`. It isn't a binary operator.
 - **`?` and `?name` (holes)**: hole markers, not operators.
@@ -104,7 +104,7 @@ when you want to see the mechanism underneath.
 | `a ++ b`        | `string_concat(a, b)` (when they're `String`) |
 | `a[i]`          | `Mutable.array_get(a, i)`                |
 | `a[i] := v`     | `Mutable.array_set(a, i, v)`             |
-| `&v` / `@r`     | `Ref[T]` cell: make and read             |
+| `&v` / `@r`     | `Ref[t]` cell: make and read             |
 | `name := v`     | `State.set(name, v)` (with `var`)        |
 
 ## C.4 Reminder: comparison is non-associative

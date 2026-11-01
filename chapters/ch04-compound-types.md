@@ -414,8 +414,8 @@ type rather than abort at runtime.
 
 Two more things about indexed access. It is **`O(n)`** — lists
 are linked, not indexed; walking to position `i` costs `i`
-steps. For random access there are two other types: `Vec[T]`,
-coming up in a moment, and `Array[T]`, which you'll meet in
+steps. For random access there are two other types: `Vec[t]`,
+coming up in a moment, and `Array[t]`, which you'll meet in
 chapter 12.
 
 And the syntax `xs[i]` that some languages use for lists is a
@@ -469,9 +469,9 @@ evens:  length=10, sum=110
 combo:  length=7, sum=41
 ```
 
-### `Vec[T]` — indexing without giving up values
+### `Vec[t]` — indexing without giving up values
 
-When you genuinely need to index, the answer is `Vec[T]`: a
+When you genuinely need to index, the answer is `Vec[t]`: a
 flat, contiguous buffer with `O(1)` access that **behaves like
 a value**. Not one of its operations carries `Mutable` in its
 row.
@@ -532,7 +532,7 @@ memory once.
 A slice is a constant-cost view: `a[1..2]` copies no elements, it
 shares the buffer. Both ends are included, as in a range literal.
 
-And `Array[T]`, which shows up in chapter 12, is the other
+And `Array[t]`, which shows up in chapter 12, is the other
 face: the **mutable** reference, where writes are observable
 through every alias and each one demands `/ Mutable`. The rule
 is short: `Vec` when you want a collection that behaves like a
@@ -598,7 +598,8 @@ fn main() {
   println("chars:      #{list.length(string.chars(s))}")  # 4
   println("bytes list: #{list.length(string.bytes(s))}")  # 5
   println("round trip: #{string.from_bytes(string.bytes(s))}")
-  println("slice(2,2):      #{string.slice(s, 2, 2)}")
+  println("char_slice(2,2): #{string.char_slice(s, 2, 2)}")
+  println("slice(2,3):      #{string.slice(s, 2, 3)}")
   println("byte_slice(2,3): #{string.byte_slice(s, 2, 3)}")
   println("byte_slice(2,2): #{string.byte_slice(s, 2, 2)}")
 }
@@ -611,49 +612,58 @@ codepoints: 4
 chars:      4
 bytes list: 5
 round trip: café
-slice(2,2):      fé
+char_slice(2,2): fé
+slice(2,3):      fé
 byte_slice(2,3): Some(fé)
 byte_slice(2,2): None
 ```
 
-The last three lines show the two ways to take a piece out of a
-string, which differ in the unit:
+The last four lines show the ways to take a piece out of a string,
+which differ in the unit and in what they do with an impossible
+cut:
 
 ```
+char_slice(s: String, from: Int, len: Int) : String
 slice(s: String, from: Int, len: Int) : String
 byte_slice(s: String, from: Int, len: Int) : Option[String]
 ```
 
-`slice` counts **codepoints**. Taking `"fé"` out of `"café"` is
-asking for two characters from index 2, counting from zero:
-`slice(s, 2, 2)`. Overrun the length and it clamps rather than
-failing — `slice(s, 1, 9)` gives `"afé"` — and it can never hand
-you a broken string, because it does not know how to cut a
-character in half.
+`char_slice` counts **codepoints**. Taking `"fé"` out of `"café"`
+is asking for two characters from index 2, counting from zero:
+`char_slice(s, 2, 2)`. Overrun the length and it clamps rather than
+failing — `char_slice(s, 1, 9)` gives `"afé"` — and it can never
+hand you a broken string, because it does not know how to cut a
+character in half. The price: each call walks the string from the
+start to reach the index, so a loop over positions is quadratic.
 
-`byte_slice` counts **bytes**, which is what you need when the
-offsets come from somewhere else: an `index_of`, a parser, a
-protocol that measures in octets. Since any byte can land inside a
-character, it returns `Option`: `byte_slice(s, 2, 3)` gives
-`Some("fé")` because 2 and 5 are codepoint boundaries, and
-`byte_slice(s, 2, 2)` gives `None` because 4 sits in the middle of
-the `é`. If you would rather snap the offset than have it refused,
-that is what `is_char_boundary`, `floor_char_boundary` and
-`ceil_char_boundary` are for.
+`slice` and `byte_slice` count **bytes**, which is what you need
+when the offsets come from somewhere else: an `index_of`, a parser,
+a protocol that measures in octets. The `é` takes two bytes, so the
+same `"fé"` is `slice(s, 2, 3)`. Any byte can land inside a
+character, and that is where the two part ways. `slice` stops with
+a `panic`, because such an offset is the caller's bug. `byte_slice`
+returns `Option`: `byte_slice(s, 2, 3)` gives `Some("fé")` because
+2 and 5 are codepoint boundaries, and `byte_slice(s, 2, 2)` gives
+`None` because 4 sits in the middle of the `é`. An offset that
+comes from `index_of` never lands mid-character, so with one of
+those `slice` is the natural pick. If you would rather snap the
+offset than have it refused, that is what `is_char_boundary`,
+`floor_char_boundary` and `ceil_char_boundary` are for.
 
-The mental rule is short: **the name tells you the unit.**
-`length`, `byte_length`, `bytes` and `byte_slice` speak bytes;
-`char_count`, `chars` and `slice` speak codepoints. Search comes in
-the same pairs: `index_of` returns a byte offset, which feeds
-`byte_slice`, and `char_index_of` returns a codepoint index, which
-feeds `slice`.
+The mental rule is short: **no prefix means bytes; `char_` means
+codepoints.** `length`, `byte_length`, `bytes`, `slice` and
+`byte_slice` speak bytes; `char_count`, `chars` and `char_slice`
+speak codepoints. Search comes in the same pairs: `index_of`
+returns a byte offset, which feeds `slice`, and `char_index_of`
+returns a codepoint index, which feeds `char_slice`.
 
-That `length` counts bytes while `slice` counts codepoints is not a
-lapse in coherence. `length` is O(1) and can't break anything; a
-cut by byte can. Each operation keeps the unit that won't cost you.
-(Graphemes like an "é" built from `e` plus a combining accent are
-yet another layer; there even codepoints fall short, but you rarely
-need them.)
+Making the byte the default unit is not a lapse. `length` is O(1),
+`slice` reaches its offset without walking anything, and both share
+a unit with `index_of`, so what a search returns is used as is.
+Counting codepoints means walking the string, and the name puts that
+cost in plain view. (Graphemes like an "é" built from `e` plus a
+combining accent are yet another layer; there even codepoints fall
+short, but you rarely need them.)
 
 The same care shows up in case folding. `core.char` ships
 `to_upper`, `to_lower`, `is_upper` and `is_lower` for ASCII. Its
@@ -830,7 +840,7 @@ languages.
 Four patterns you'll see often:
 
 - **Chain a failure with `!`.** If you have an expression that
-  returns `Result[A, E]` and you want "if it fails, propagate
+  returns `Result[a, e]` and you want "if it fails, propagate
   the error; otherwise continue with the value", you write
   `expr!`, as in §2.3.
 - **A default with `??`.** `o ?? d` is whatever `o` carries
@@ -937,8 +947,8 @@ fn main() {
 ```
 
 Internally, tuples are sugar over three records from the
-stdlib: `Pair[A, B]` for arity 2, `Triple[A, B, C]` for 3,
-`Quad[A, B, C, D]` for 4. The declaration
+stdlib: `Pair[a, b]` for arity 2, `Triple[a, b, c]` for 3,
+`Quad[a, b, c, d]` for 4. The declaration
 
 ```kai
 let p = (1, 2)

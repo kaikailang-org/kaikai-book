@@ -17,7 +17,7 @@ lets a `handle` decide what each operation means at any
 point in the program.
 
 **Array.** Data structure with constant-time indexed
-access. In kaikai, `Array[T]` is mutable; mutation lives
+access. In kaikai, `Array[t]` is mutable; mutation lives
 under the `Mutable` effect.
 
 **Assert.** Construct used inside `test`, `check`, and
@@ -154,8 +154,8 @@ Chapter 15.
 
 **Immutability by default.** Values in kaikai are
 immutable by construction: `let x = ...` declares a binding
-that doesn't change. Mutable constructs (`var`, `Ref[T]`,
-`Array[T]`) are the explicit exception.
+that doesn't change. Mutable constructs (`var`, `Ref[t]`,
+`Array[t]`) are the explicit exception.
 
 ## L
 
@@ -271,8 +271,8 @@ is about to be created, the same memory is reused without
 touching counters. Appendix B.
 
 **Row variable.** A polymorphic variable representing "the
-rest of the effects" in a signature: `fn map[A, B, e](xs:
-[A], f: (A) -> B / e) : [B] / e`.
+rest of the effects" in a signature: `fn map[a, b, e](xs:
+[a], f: (a) -> b / e) : [b] / e`.
 
 ## S
 
@@ -296,9 +296,9 @@ where an error occurred.
 bootstrap. Stage 0 in C, stage 1 in kaikai-minimal, stage 2
 in full kaikai. Appendix A.
 
-**State[T].** Stdlib effect for carrying encapsulated
+**State[t].** Stdlib effect for carrying encapsulated
 mutable state. The sugared form `var name = init` desugars
-to `handle ... with State[T](init)` (chapter 12 §12.7).
+to `handle ... with State[t](init)` (chapter 12 §12.7).
 
 **Stdout, Stderr, Stdin.** Standard output, standard error,
 standard input. In kaikai each is its own effect, one per file
@@ -344,7 +344,7 @@ mix incompatible units. Chapter 10.
 ## V
 
 **Var.** Construct that declares a local mutable cell.
-Syntactic sugar over `State[T]`. Chapter 12 §12.7.
+Syntactic sugar over `State[t]`. Chapter 12 §12.7.
 
 ## Y
 

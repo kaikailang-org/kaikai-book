@@ -10,7 +10,7 @@
 #      we cannot factor the accept loop into a free function
 #      that takes `n` as a parameter.
 #
-#   2. `Actor[T]` has no top-level default handler.  Every
+#   2. `Actor[t]` has no top-level default handler.  Every
 #      fiber that calls `Actor.send` / `Actor.receive` must
 #      run under a `with_mailbox` (or `spawn_actor`).  `main`
 #      installs the two mailboxes it needs (`StoreResp` for
@@ -18,7 +18,7 @@
 #      can send to persistence) by nesting two `with_mailbox`
 #      blocks before opening the nursery.
 #
-#   3. `Pid[T]` is region-branded to the nursery scope that
+#   3. `Pid[t]` is region-branded to the nursery scope that
 #      owns the Spawn handler.  We therefore spawn the two
 #      actors *inside* the `nursery { n -> ... }` block and
 #      use their pids from the same block.
@@ -80,7 +80,7 @@ fn read_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
 # synchronous `store.ask` inside `handle_request` lands the
 # reply on this fiber's mailbox.
 #
-# The row declares every Actor[T] the body touches.  The
+# The row declares every Actor[t] the body touches.  The
 # `with_mailbox` block in main closes StoreResp before
 # spawning, but the spawn body still carries Actor[StoreMsg]
 # (sends to the store) and Actor[Event] (sends to persistence)

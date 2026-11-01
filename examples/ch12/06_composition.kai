@@ -6,9 +6,9 @@ effect Log {
   log(msg: String) : Unit
 }
 
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
+effect State[t] {
+  get() : t
+  set(v: t) : Unit
 }
 
 # `accumulate` uses two effects: it reads and writes state,

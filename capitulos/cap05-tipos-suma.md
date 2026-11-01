@@ -707,7 +707,7 @@ categorías claras, el patrón natural es:
 
 1. Cada categoría es un sum type pequeño.
 2. El error compuesto es la unión de las categorías.
-3. Cada función devuelve `Result[T, ErrorCompuesto]`.
+3. Cada función devuelve `Result[t, ErrorCompuesto]`.
 4. El operador `!` propaga el error de cualquier capa hasta
    el `Result` compuesto, vía el upcast implícito.
 
@@ -747,7 +747,7 @@ let cuenta = match check_identidad(req) {
 }
 ```
 
-Sobre `Option[A]` el desugar es análogo: `Some(x)` desempaca,
+Sobre `Option[a]` el desugar es análogo: `Some(x)` desempaca,
 `None` provoca `return None`.
 
 Tres cosas que fijar:

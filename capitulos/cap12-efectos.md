@@ -612,9 +612,9 @@ Pero un handler puede llevar **su propio estado** sin que el body
 se entere. Esto reemplaza la mutación global.
 
 ```kai
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
+effect State[t] {
+  get() : t
+  set(v: t) : Unit
 }
 
 fn suma(xs: [Int]) : Int {
@@ -631,7 +631,7 @@ fn suma(xs: [Int]) : Int {
 
 Lo nuevo:
 
-- **`State[T]` es paramétrico.** `T` es lo que el estado guarda;
+- **`State[t]` es paramétrico.** `t` es lo que el estado guarda;
   aquí, `Int`.
 - **`with State[Int](0)`** instala el handler con estado inicial
   `0`. El argumento entre paréntesis es el valor inicial.
@@ -659,9 +659,9 @@ Un acumulador que vive en el handler, no en el cuerpo:
 
 ```kai
 # ejemplos/cap12/05_state.kai
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
+effect State[t] {
+  get() : t
+  set(v: t) : Unit
 }
 
 # Suma los elementos de una lista usando un acumulador "mutable"
@@ -690,15 +690,15 @@ suma([1,2,3,4,5]) = 15
 suma([]) = 0
 ```
 
-## 12.7 `var`, `Ref[T]` y `Array[T]`: dos mecanismos distintos
+## 12.7 `var`, `Ref[t]` y `Array[t]`: dos mecanismos distintos
 
-`State[T]` es la herramienta general para llevar un valor que
+`State[t]` es la herramienta general para llevar un valor que
 cambia, pero escribir `handle ... with State[Int](0)` para cada
 contador local sería tedioso. Por eso kaikai trae azúcar
 sintáctica y, aparte, un efecto del stdlib para la memoria que
 sobrevive al bloque. No los confundas.
 
-### `var`: azúcar sobre `State[T]`
+### `var`: azúcar sobre `State[t]`
 
 La forma corta de una celda local:
 
@@ -721,7 +721,7 @@ El `:=` es la única marca de mutabilidad:
 - **`n`** lee el valor actual: un nombre desnudo, sin marca.
 
 ¿Cómo funciona por dentro? **`var` es azúcar sintáctico sobre
-`State[T]`.** El compilador reescribe
+`State[t]`.** El compilador reescribe
 
 ```kai
 var n := 0
@@ -753,7 +753,7 @@ Tampoco es caro: el compilador detecta el patrón "celda local con
 frame, como una variable mutable de C. Costo cero frente al
 código imperativo equivalente.
 
-Un contador con `var`: el mismo `State[T]`, escrito como en un
+Un contador con `var`: el mismo `State[t]`, escrito como en un
 lenguaje imperativo:
 
 ```kai
@@ -780,13 +780,13 @@ pares en [1..10] = 5
 pares en [] = 0
 ```
 
-### `Mutable`: el efecto detrás de `Ref[T]` y `Array[T]`
+### `Mutable`: el efecto detrás de `Ref[t]` y `Array[t]`
 
 `var` cubre celdas locales. A veces la memoria tiene que
 **sobrevivir al bloque**: un arreglo que vas a devolver, una
 celda que pasas entre funciones, una estructura que comparten
 varias rutinas. Para eso kaikai trae dos tipos del stdlib,
-`Ref[T]` y `Array[T]`, ambos bajo el efecto **`Mutable`**.
+`Ref[t]` y `Array[t]`, ambos bajo el efecto **`Mutable`**.
 
 ```kai
 fn rellenar(n: Int) : Array[Int] {
@@ -820,9 +820,9 @@ a == c              # true:  mismo contenido
 array.same(a, c)    # false: arreglos distintos
 ```
 
-`Ref[T]` es la versión de una sola celda: `Mutable.ref_make(v)`,
+`Ref[t]` es la versión de una sola celda: `Mutable.ref_make(v)`,
 `Mutable.ref_get(r)`, `Mutable.ref_set(r, v)`. No tiene azúcar
-de indexación, pero el resto es paralelo a `Array[T]`. Para el
+de indexación, pero el resto es paralelo a `Array[t]`. Para el
 día a día tiene tres signos propios: `&v` arma la celda, `@r` la
 lee y `r := v` la escribe.
 
@@ -859,18 +859,18 @@ Rige la regla de §12.3, como con cualquier efecto: toda función
 que produce un efecto observable lo declara. No hay
 "asignaciones secretas".
 
-### `Mutable` versus `State[T]`
+### `Mutable` versus `State[t]`
 
 Ambos representan estado mutable:
 
-- **`var` (que es `State[T]`)**: la celda vive dentro del
+- **`var` (que es `State[t]`)**: la celda vive dentro del
   bloque. No sobrevive a la función ni se pasa a otras rutinas;
   es un acumulador o contador local. La firma queda limpia.
-- **`Mutable` con `Ref[T]` o `Array[T]`**: la memoria sobrevive
+- **`Mutable` con `Ref[t]` o `Array[t]`**: la memoria sobrevive
   al bloque o se comparte entre funciones. Aparece en la
   firma cuando la mutación es observable para quien llama.
 
-Si pasas un `Ref[T]` o un `Array[T]` como argumento, o lo
+Si pasas un `Ref[t]` o un `Array[t]` como argumento, o lo
 devuelves después de mutarlo, estás en territorio de
 `Mutable`. Si solo necesitas un contador local, es `var`.
 
@@ -928,9 +928,9 @@ effect Log {
   log(msg: String) : Unit
 }
 
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
+effect State[t] {
+  get() : t
+  set(v: t) : Unit
 }
 
 # `acumular` usa dos efectos: lee y escribe estado, y registra
@@ -1097,9 +1097,9 @@ Mira esa firma con calma. `Cell` aparece como **tipo de
 parámetro**, no en la fila de efectos. Son dos modos de pedir lo
 mismo:
 
-- **En la fila** (`fn f() : T / Cell`): el efecto se *demanda*, y
+- **En la fila** (`fn f() : t / Cell`): el efecto se *demanda*, y
   lo satisface un `handle` que envuelva la llamada, o un default.
-- **Como parámetro** (`fn f(c: Cell) : T`): el capability lo
+- **Como parámetro** (`fn f(c: Cell) : t`): el capability lo
   *provee* quien llama, pasándolo explícito. No va en la fila,
   porque la función no le pide nada al contexto: ya tiene su
   evidencia en la mano.
@@ -1134,7 +1134,7 @@ de operaciones, pero no puede *escapar*: no lo guardas en un
 record, no lo devuelves, no lo capturas en una closure que
 sobreviva al `handle`, no lo cruzas a una fibra con `spawn`. Un
 handler es una promesa con alcance léxico; lo que necesita vivir
-más que su `handle` es un `Ref[T]` bajo `Mutable` (§12.7) o un
+más que su `handle` es un `Ref[t]` bajo `Mutable` (§12.7) o un
 actor (capítulo 14).
 
 Si vienes de la inyección de dependencias, esto te suena: pasar
@@ -1391,7 +1391,7 @@ tabla completa.
 Como ejemplo, en cambio, es inmejorable: la forma más corta de
 mostrar una operación que no vuelve.
 
-Lo mismo vale para `State[T]`, `Reader[T]`, `Writer[W]`: efectos
+Lo mismo vale para `State[t]`, `Reader[t]`, `Writer[w]`: efectos
 genéricos sin una implementación razonable fuera de contexto, así
 que pedirte que la escribas es disciplina y no ceremonia.
 
@@ -1407,7 +1407,7 @@ tu programa siempre quiere otro, el patrón idiomático es una
 **función envoltorio**:
 
 ```kai
-fn with_test_log[A](body: () -> A / MyLog) : A {
+fn with_test_log[a](body: () -> a / MyLog) : a {
   handle {
     body()
   } with MyLog {
@@ -1449,7 +1449,7 @@ fn greet(name: String) : Unit / Log {
 
 # El "default" del usuario: una función que toma un body y lo
 # corre con el handler estándar para Log.
-fn with_default_log[A](body: () -> A / Log) : A / Stdout {
+fn with_default_log[a](body: () -> a / Log) : a / Stdout {
   handle {
     body()
   } with Log {
@@ -1757,9 +1757,9 @@ effect Log {
   log(msg: String) : Unit
 }
 
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
+effect State[t] {
+  get() : t
+  set(v: t) : Unit
 }
 
 effect Fail {

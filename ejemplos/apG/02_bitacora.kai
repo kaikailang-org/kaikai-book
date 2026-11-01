@@ -1,10 +1,17 @@
 import fs.file
 
+fn escribir_bitacora(ruta: String) : Result[String, String] / File {
+  file.write(ruta, "lunes: compilé a wasm\n")!
+  file.append(ruta, "martes: lo corrí en wasmtime\n")!
+  file.read(ruta)
+}
+
 fn main() : Unit / Stdout + File {
   let ruta = "bitacora.txt"
-  file.write(ruta, "lunes: compilé a wasm\n")
-  file.append(ruta, "martes: lo corrí en wasmtime\n")
-  println(file.read(ruta) |> trim())
+  match escribir_bitacora(ruta) {
+    Ok(texto) -> println(texto |> trim())
+    Err(e) -> println("no pude escribir la bitácora: " ++ e)
+  }
   let _ = file.delete(ruta)
   println("¿quedó el archivo? #{file.exists(ruta)}")
 }

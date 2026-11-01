@@ -1,12 +1,12 @@
-# A handler can carry its own state. `State[T]` is the
+# A handler can carry its own state. `State[t]` is the
 # canonical pattern: a `get` operation reads the current
 # state, `set` updates it, and what looks like mutation lives
 # entirely inside the handler. For the body of `handle`, the
 # state doesn't exist; only the handler sees it.
 
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
+effect State[t] {
+  get() : t
+  set(v: t) : Unit
 }
 
 # Sum the elements of a list using a "mutable" accumulator

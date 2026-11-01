@@ -8,11 +8,11 @@ impl Dibujable for Circulo {
   fn dibujar(c: Circulo) : String = "círculo de radio #{show(c.radio)}"
 }
 
-fn mayor[T: Ord](a: T, b: T) : T = max(a, b)
+fn mayor[t: Ord](a: t, b: t) : t = max(a, b)
 
-fn render[T: Dibujable](x: T) : String = "[" ++ dibujar(x) ++ "]"
+fn render[t: Dibujable](x: t) : String = "[" ++ dibujar(x) ++ "]"
 
-fn etiquetar[T: Show + Eq](a: T, b: T) : String =
+fn etiquetar[t: Show + Eq](a: t, b: t) : String =
   if eq(a, b) {
     "iguales: #{show(a)}"
   } else {

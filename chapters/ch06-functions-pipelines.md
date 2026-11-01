@@ -714,7 +714,7 @@ itself**.
 import seq
 
 # The naturals: zero, followed by the naturals plus one.
-const nat: Seq[Int] = lazy [0, ...seq.map(nat, (x) => x + 1)]
+const NAT: Seq[Int] = lazy [0, ...seq.map(NAT, (x) => x + 1)]
 
 # The unbounded sieve: one filter stage per prime found.
 fn sieve(xs: Seq[Int]) : Seq[Int] = match xs {
@@ -730,7 +730,7 @@ primes up to 30: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
 the 1000th prime: 7919
 ```
 
-`nat` names itself inside its own definition, and that's fine:
+`NAT` names itself inside its own definition, and that's fine:
 when `map` asks for the next cell, the previous one is already
 computed and stored. The sieve is the same idea at work. For every
 prime it finds it adds a filter stage over the rest, so the chain

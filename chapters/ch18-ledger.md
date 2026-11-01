@@ -241,7 +241,7 @@ transaction, which also stays in the history.
 That immutability is free in kaikai. Lists are immutable by
 construction; adding an element creates a new list.
 "Destructive modification" isn't available to the actor's
-loop unless you ask for it with `var` or `Array[T]`. And
+loop unless you ask for it with `var` or `Array[t]`. And
 since the actor recurses with the new state, every
 "version" of the ledger survives intact until the next
 step.
@@ -264,9 +264,9 @@ pub type Event = Line(String)
 
 pub fn persistence_loop(path: String) : Unit / Actor[Event] + File {
   match Actor.receive() {
-    Line(s) -> {
-      file.append(path, s ++ "\n")
-      persistence_loop(path)
+    Line(s) -> match file.append(path, s ++ "\n") {
+      Ok(_) -> persistence_loop(path)
+      Err(e) -> panic("could not write the log: " ++ e)
     }
   }
 }
@@ -292,7 +292,7 @@ sequence of operations to show the system in action.
 fn main() : Int / Stdout + File + Spawn + Cancel {
   persistence.reset_log(LOG_PATH)
 
-  # `step()` touches three Actor[T] effects, so `main` nests
+  # `step()` touches three Actor[t] effects, so `main` nests
   # three `with_mailbox` blocks to close them before reaching
   # its own row.
   with_mailbox {

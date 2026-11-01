@@ -62,7 +62,7 @@ Comparación lado a lado:
 | Comunicación | Un valor de retorno vía `await` | Mensajes vía `send`/`receive` |
 | Ciclo de vida | Arranca, calcula, devuelve, muere | Arranca, queda en bucle procesando, muere cuando decide |
 | Cómo se crea | `spawn.spawn` o `n.spawn` | `spawn_actor` |
-| Cómo le hablas | `await` para obtener su `T` | `send` cualquier cantidad de veces |
+| Cómo le hablas | `await` para obtener su `t` | `send` cualquier cantidad de veces |
 | Cuándo elegirlo | Cálculo discreto concurrente | Servicio de larga vida, estado interno, consultas |
 
 La regla mental:
@@ -119,7 +119,7 @@ en el stdlib:
 # `import actor`.
 pub effect Actor[Msg] {
   self()                        : Pid[Msg]
-  send[T](pid: Pid[T], msg: T)  : Unit
+  send[t](pid: Pid[t], msg: t)  : Unit
   receive()                     : Msg
   receive_timeout(nanos: Int)   : Option[Msg]
 }
@@ -128,7 +128,7 @@ pub effect Actor[Msg] {
 - **`self()`** devuelve el `Pid` del actor actual. El `Pid` es
   el handle con el que otros le mandan mensajes.
 - **`send(pid, msg)`** encola `msg` en el mailbox de `pid`.
-  Fíjate en el `[T]`: el tipo del mensaje es **el del
+  Fíjate en el `[t]`: el tipo del mensaje es **el del
   destino**, elegido llamada por llamada, y no tiene nada que
   ver con el `Msg` del que manda. Un actor con mailbox de
   `Reply` puede mandarle un `Request` a un `Pid[Request]`, como
@@ -145,7 +145,7 @@ pub effect Actor[Msg] {
 
 `Msg` es el tipo concreto de los mensajes que ese actor
 **recibe**. Un actor recibe un solo tipo de mensaje; mandar es
-otra cosa, y de eso se encarga el `[T]` de `send`. Si necesitas
+otra cosa, y de eso se encarga el `[t]` de `send`. Si necesitas
 mezclar shapes en lo que recibes, los unificas con un sum type:
 
 ```kai
@@ -167,7 +167,7 @@ mensaje de tipo `Notificación`. Esta es la diferencia más
 fuerte con Erlang: en Erlang los PIDs son no tipados; en
 kaikai son específicos al tipo de mensaje.
 
-Como `Fiber[T]` del cap. 13, `Pid[Msg]` está **atado al scope
+Como `Fiber[t]` del cap. 13, `Pid[Msg]` está **atado al scope
 que lo creó**. No puedes guardarlo en un record que sobreviva
 al nursery, devolverlo de una función fuera de la familia
 estándar, ni pasarlo entre estructuras de datos no aprobadas.
@@ -221,27 +221,25 @@ Para arrancar un actor que corre en su propia fibra:
 ```kai
 # ejemplos/cap14/02_spawn_actor.kai
 import actor
-import spawn
 
-fn trabajador() : Unit / Actor[String] + Stdout {
+fn trabajador(jefe: Pid[String]) : Unit / Actor[String] + Stdout {
   let t1 = Actor.receive()
   Stdout.print("trabajando: " ++ t1)
   let t2 = Actor.receive()
   Stdout.print("trabajando: " ++ t2)
   let t3 = Actor.receive()
   Stdout.print("trabajando: " ++ t3)
+  Actor.send(jefe, "listo")
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
-    let pid = spawn_actor(() => trabajador())
+    let yo = Actor.self()
+    let pid = spawn_actor(() => trabajador(yo))
     Actor.send(pid, "tarea-1")
     Actor.send(pid, "tarea-2")
     Actor.send(pid, "tarea-3")
-    spawn.yield()
-    spawn.yield()
-    spawn.yield()
-    spawn.yield()
+    Stdout.print("el trabajador dice: " ++ Actor.receive())
   }
 }
 ```
@@ -251,6 +249,7 @@ $ kai run ejemplos/cap14/02_spawn_actor.kai
 trabajando: tarea-1
 trabajando: tarea-2
 trabajando: tarea-3
+el trabajador dice: listo
 ```
 
 `spawn_actor` arranca una fibra nueva, le instala un mailbox,
@@ -265,9 +264,13 @@ las atiende, y un efecto manejado no sale del bloque. El `pid`
 ya identifica al mailbox destino; el handler solo despacha la
 operación.
 
-Los `spawn.yield()` del final le dan al scheduler la chance de
-correr al trabajador. Sin ellos, `main` saldría antes de que el
-trabajador procesara nada.
+El último `Actor.receive()` de `main` es lo que lo mantiene vivo
+hasta que el trabajador termina. Para que el trabajador pueda
+contestar, `main` le pasa su propio `Pid` (`Actor.self()`) al
+arrancarlo. Sin esa espera, `main` saldría de inmediato, y cuando
+`main` termina se cancelan los actores que siguen vivos: el
+trabajador alcanzaría a procesar algunas tareas, todas o ninguna, según
+cómo lo repartiera el scheduler.
 
 ### `receive_timeout`: recibir con plazo
 
@@ -895,7 +898,7 @@ abrir varias fibras dentro de un nursery o agrupar respuestas
 con un correlation id.
 
 **14.4.** En el caso de estudio §14.7, el supervisor reintenta
-dos veces. Generaliza: escribe una función `con_reintentos[T,
+dos veces. Generaliza: escribe una función `con_reintentos[t,
 e](n: Int, intento: () -> ResultadoLote / e) : ResultadoLote /
 e` que reintente `n` veces antes de rendirse.
 

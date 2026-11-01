@@ -21,7 +21,7 @@ permite que un `handle` decida en cada punto del programa qué
 significa cada operación.
 
 **Array** *(arreglo)*. Estructura de datos con acceso por
-índice en tiempo constante. En kaikai, `Array[T]` es mutable;
+índice en tiempo constante. En kaikai, `Array[t]` es mutable;
 la mutación está bajo el efecto `Mutable`.
 
 **Assert** *(aserción)*. Construcción dentro de bloques
@@ -157,8 +157,8 @@ para agentes IA. Cap. 15.
 
 **Inmutabilidad por defecto.** Los valores en kaikai son
 inmutables por construcción: `let x = ...` declara un binding
-que no cambia. Las construcciones mutables (`var`, `Ref[T]`,
-`Array[T]`) son la excepción explícita.
+que no cambia. Las construcciones mutables (`var`, `Ref[t]`,
+`Array[t]`) son la excepción explícita.
 
 **Instancia nombrada** *(named instance)*. Un handler ligado a
 un nombre con `with Eff(init) as x`. Permite que varios
@@ -273,7 +273,7 @@ la misma memoria sin tocar contadores. Apéndice B.
 
 **Row variable** *(variable de fila)*. Una variable
 polimórfica que representa "el resto de los efectos" en una
-firma: `fn map[A, B, e](xs: [A], f: (A) -> B / e) : [B] / e`.
+firma: `fn map[a, b, e](xs: [a], f: (a) -> b / e) : [b] / e`.
 
 ## S
 
@@ -298,9 +298,9 @@ efecto `Spawn`.
 bootstrap de kaikai. Stage 0 en C, stage 1 en kaikai-minimal,
 stage 2 en kaikai completo. Apéndice A.
 
-**State[T].** Efecto del stdlib para llevar estado mutable
+**State[t].** Efecto del stdlib para llevar estado mutable
 encapsulado. La forma azucarada `var nombre = init` desazucara
-a `handle ... with State[T](init)` (cap. 12 §12.7).
+a `handle ... with State[t](init)` (cap. 12 §12.7).
 
 **Stdout, Stderr, Stdin.** Salida estándar, salida de error
 estándar, entrada estándar. En kaikai cada una es un efecto
@@ -349,7 +349,7 @@ mezclan unidades incompatibles. Cap. 10.
 ## V
 
 **Var.** Construcción de declaración de celda mutable local.
-Es azúcar sobre `State[T]`. Cap. 12 §12.7.
+Es azúcar sobre `State[t]`. Cap. 12 §12.7.
 
 ## Y
 

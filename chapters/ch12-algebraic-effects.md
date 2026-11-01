@@ -624,9 +624,9 @@ resume. But a handler can carry **its own state** without the
 body noticing. This replaces global mutation.
 
 ```kai
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
+effect State[t] {
+  get() : t
+  set(v: t) : Unit
 }
 
 fn sum(xs: [Int]) : Int {
@@ -643,7 +643,7 @@ fn sum(xs: [Int]) : Int {
 
 What's new:
 
-- **`State[T]` is parametric.** `T` is what the state holds;
+- **`State[t]` is parametric.** `t` is what the state holds;
   here, `Int`.
 - **`with State[Int](0)`** installs the handler with initial
   state `0`. The argument in parentheses is the initial
@@ -673,9 +673,9 @@ An accumulator that lives in the handler, not in the body:
 
 ```kai
 # examples/ch12/05_state.kai
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
+effect State[t] {
+  get() : t
+  set(v: t) : Unit
 }
 
 # Sum the elements of a list using a "mutable" accumulator
@@ -704,15 +704,15 @@ sum([1,2,3,4,5]) = 15
 sum([]) = 0
 ```
 
-## 12.7 `var`, `Ref[T]` and `Array[T]`: two distinct mechanisms
+## 12.7 `var`, `Ref[t]` and `Array[t]`: two distinct mechanisms
 
-`State[T]` is the general tool for carrying a changing value,
+`State[t]` is the general tool for carrying a changing value,
 but writing `handle ... with State[Int](0)` for every local
 counter would be tedious. So kaikai ships syntactic sugar and,
 separately, a stdlib effect for memory that outlives a block.
 Keep the two apart.
 
-### `var`: sugar over `State[T]`
+### `var`: sugar over `State[t]`
 
 The short form for a local cell:
 
@@ -734,7 +734,7 @@ fn count_evens(xs: [Int]) : Int {
 - **`n := v`** writes `v`.
 - **`n`** reads the current value: a bare name, no marker.
 
-How does it work? **`var` is syntactic sugar over `State[T]`.**
+How does it work? **`var` is syntactic sugar over `State[t]`.**
 The compiler rewrites
 
 ```kai
@@ -767,7 +767,7 @@ with one-shot resume" and specializes it down to a stack frame
 slot, like a C mutable variable. Zero cost compared to the
 equivalent imperative code.
 
-A counter with `var` — the same `State[T]`, written as you would
+A counter with `var` — the same `State[t]`, written as you would
 in an imperative language:
 
 ```kai
@@ -794,12 +794,12 @@ evens in [1..10] = 5
 evens in [] = 0
 ```
 
-### `Mutable`: the effect behind `Ref[T]` and `Array[T]`
+### `Mutable`: the effect behind `Ref[t]` and `Array[t]`
 
 `var` covers local cells. Sometimes memory needs to **outlive
 a block**: an array you'll return, a cell you'll pass between
 functions, a structure shared by several routines. For that
-kaikai ships two stdlib types, `Ref[T]` and `Array[T]`, both
+kaikai ships two stdlib types, `Ref[t]` and `Array[t]`, both
 under the **`Mutable`** effect.
 
 ```kai
@@ -834,9 +834,9 @@ a == c              # true:  same contents
 array.same(a, c)    # false: different arrays
 ```
 
-`Ref[T]` is the single-cell version: `Mutable.ref_make(v)`,
+`Ref[t]` is the single-cell version: `Mutable.ref_make(v)`,
 `Mutable.ref_get(r)`, `Mutable.ref_set(r, v)`. No indexing
-sugar, but everything else is parallel to `Array[T]`. For
+sugar, but everything else is parallel to `Array[t]`. For
 day-to-day use it has three signs of its own: `&v` builds the
 cell, `@r` reads it and `r := v` writes it.
 
@@ -872,20 +872,20 @@ The rule from §12.3 applies as for any other effect: every
 function producing an observable effect declares it. There are
 no hidden assignments.
 
-### `Mutable` versus `State[T]`
+### `Mutable` versus `State[t]`
 
 Both represent mutable state:
 
-- **`var` (which is `State[T]`)**: the cell lives inside the
+- **`var` (which is `State[t]`)**: the cell lives inside the
   block. It doesn't outlive the function or get passed to
   other routines — just a local accumulator or counter. The
   signature stays clean.
-- **`Mutable` with `Ref[T]` or `Array[T]`**: memory outlives
+- **`Mutable` with `Ref[t]` or `Array[t]`**: memory outlives
   the block or is shared across functions. Appears in the
   signature whenever the mutation is observable to the
   caller.
 
-If you pass a `Ref[T]` or `Array[T]` as argument, or return
+If you pass a `Ref[t]` or `Array[t]` as argument, or return
 one after mutating it, you're in `Mutable` territory. If you
 just need a local counter, it's `var`.
 
@@ -942,9 +942,9 @@ effect Log {
   log(msg: String) : Unit
 }
 
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
+effect State[t] {
+  get() : t
+  set(v: t) : Unit
 }
 
 # `accumulate` uses two effects: it reads and writes state,
@@ -1110,10 +1110,10 @@ Look at that signature carefully. `Cell` appears as a
 **parameter type**, not in the effect row. They're two ways of
 asking for the same thing:
 
-- **In the row** (`fn f() : T / Cell`): the effect is
+- **In the row** (`fn f() : t / Cell`): the effect is
   *demanded* — satisfied by a `handle` wrapping the call, or by
   a default.
-- **As a parameter** (`fn f(c: Cell) : T`): the capability is
+- **As a parameter** (`fn f(c: Cell) : t`): the capability is
   *provided* by the caller, passed explicitly. It doesn't go in
   the row, because the function asks nothing of its context: it
   already holds its evidence in hand.
@@ -1148,7 +1148,7 @@ receiver of operations — but it cannot *escape*: you can't
 store it in a record, return it, capture it in a closure that
 outlives the `handle`, or carry it into a fiber with `spawn`. A
 handler is a promise with lexical scope; what needs to outlive
-its `handle` is a `Ref[T]` under `Mutable` (§12.7) or an actor
+its `handle` is a `Ref[t]` under `Mutable` (§12.7) or an actor
 (chapter 14).
 
 If you come from dependency injection, this rings a bell:
@@ -1401,7 +1401,7 @@ Appendix D has the full table.
 As an example, though, it's unbeatable: the shortest way to show
 an operation that never returns.
 
-The same applies to `State[T]`, `Reader[T]`, `Writer[W]`: generic
+The same applies to `State[t]`, `Reader[t]`, `Writer[w]`: generic
 effects with **no** reasonable implementation outside a context,
 so asking you to write one is discipline, not ceremony.
 
@@ -1417,7 +1417,7 @@ exists but your program always wants a different one, the
 idiomatic pattern is a **wrapper function**:
 
 ```kai
-fn with_test_log[A](body: () -> A / MyLog) : A {
+fn with_test_log[a](body: () -> a / MyLog) : a {
   handle {
     body()
   } with MyLog {
@@ -1459,7 +1459,7 @@ fn greet(name: String) : Unit / Log {
 
 # The user's "default": a function that takes a body and runs
 # it under the standard handler for Log.
-fn with_default_log[A](body: () -> A / Log) : A / Stdout {
+fn with_default_log[a](body: () -> a / Log) : a / Stdout {
   handle {
     body()
   } with Log {
@@ -1772,9 +1772,9 @@ effect Log {
   log(msg: String) : Unit
 }
 
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
+effect State[t] {
+  get() : t
+  set(v: t) : Unit
 }
 
 effect Fail {

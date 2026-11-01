@@ -240,7 +240,7 @@ queda en el historial.
 Esa inmutabilidad sale gratis en kaikai. Las listas son
 inmutables por construcción; agregar un elemento crea una
 lista nueva. El bucle del actor no tiene "modificación
-destructiva" a mano salvo que la pidas con `var` o `Array[T]`.
+destructiva" a mano salvo que la pidas con `var` o `Array[t]`.
 Y como el actor recursa con el estado nuevo, cada "versión"
 del ledger sobrevive intacta hasta el próximo paso.
 
@@ -263,9 +263,9 @@ pub type Evento = Linea(String)
 
 pub fn persistencia_loop(path: String) : Unit / Actor[Evento] + File {
   match Actor.receive() {
-    Linea(s) -> {
-      file.append(path, s ++ "\n")
-      persistencia_loop(path)
+    Linea(s) -> match file.append(path, s ++ "\n") {
+      Ok(_) -> persistencia_loop(path)
+      Err(e) -> panic("no pude escribir el log: " ++ e)
     }
   }
 }
@@ -290,7 +290,7 @@ de operaciones para mostrar el sistema en acción.
 fn main() : Int / Stdout + File + Spawn + Cancel {
   persistencia.reset_log(PATH_LOG)
 
-  # `paso()` toca tres efectos Actor[T], así que `main` anida
+  # `paso()` toca tres efectos Actor[t], así que `main` anida
   # tres `with_mailbox` para cerrarlos antes de llegar a su
   # propia fila.
   with_mailbox {

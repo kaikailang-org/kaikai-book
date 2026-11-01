@@ -1,5 +1,5 @@
 # `var` introduce una celda local. Es azúcar sintáctico sobre
-# `State[T]`: el compilador inserta un `handle ... with State[Int]`
+# `State[t]`: el compilador inserta un `handle ... with State[Int]`
 # justo donde aparece el `var`, así que el efecto se cierra en el
 # mismo bloque y la firma de la función queda sin efectos.
 

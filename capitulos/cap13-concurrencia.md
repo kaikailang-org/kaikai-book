@@ -281,8 +281,8 @@ B
 `nursery { n -> ... }` abre un scope. Adentro, `n` es la
 capacidad para crear fibras:
 
-- `n.spawn(f)` crea una fibra hija. Devuelve un `Fiber[T]`
-  donde `T` es el tipo que `f` devuelve. Aquí no lo necesitas,
+- `n.spawn(f)` crea una fibra hija. Devuelve un `Fiber[t]`
+  donde `t` es el tipo que `f` devuelve. Aquí no lo necesitas,
   porque el nursery espera a las fibras de todos modos, y
   `|> ignore` dice que lo descartas a propósito.
 - `n.await(f)` espera a esa fibra y devuelve su valor. Solo lo
@@ -386,15 +386,15 @@ declarado así en el stdlib:
 
 ```kai
 effect Spawn {
-  spawn[T, e](f: () -> T / e) : Fiber[T]
-  await[T](f: Fiber[T])       : T
-  select[T](fs: [Fiber[T]])   : T
+  spawn[t, e](f: () -> t / e) : Fiber[t]
+  await[t](f: Fiber[t])       : t
+  select[t](fs: [Fiber[t]])   : t
   yield()                     : Unit
-  cancel[T](f: Fiber[T])      : Unit
+  cancel[t](f: Fiber[t])      : Unit
 }
 ```
 
-Es un efecto ordinario, declarado igual que `Log` o `State[T]`
+Es un efecto ordinario, declarado igual que `Log` o `State[t]`
 del cap. 12. Y `nursery { n -> body }` se reescribe en tiempo
 de compilación a `handle { body } with Spawn as n { ... }`,
 con un handler interno que gestiona el árbol de fibras hijas,
@@ -613,13 +613,13 @@ kai: nursery child cancelled; no survivors
 ## 13.6 Memoria mutable por fibra
 
 En el cap. 12 §12.7 conociste `var` (celdas locales, azúcar
-sobre `State[T]`) y el efecto `Mutable` (que rige a `Ref[T]` y
-`Array[T]` cuando la mutación es observable). Todo eso funciona
+sobre `State[t]`) y el efecto `Mutable` (que rige a `Ref[t]` y
+`Array[t]` cuando la mutación es observable). Todo eso funciona
 igual que en código secuencial, con una sola adición del modelo
 de fibras: **la memoria mutable vive en el heap de la fibra que
 la creó**.
 
-Cuando una fibra crea un `Array[T]` o un `Ref[T]`, el espacio
+Cuando una fibra crea un `Array[t]` o un `Ref[t]`, el espacio
 sale de su propio heap y ninguna otra fibra tiene cómo
 acceder a él: no hay punteros compartidos ni paso por
 referencia entre fibras. Para darle un valor mutable a otra
@@ -655,19 +655,19 @@ una fibra dueña del estado, y las demás le mandan mensajes.
 El cap. 14 lo arma con actores.
 
 Por eso la mutación no introduce data races en kaikai. Con
-threads y memoria compartida, un `Array[T]` mutable necesita
+threads y memoria compartida, un `Array[t]` mutable necesita
 locks o atomics para tocarse desde varios hilos. En kaikai, el
-sistema de tipos garantiza que ningún `Array[T]` está siendo
+sistema de tipos garantiza que ningún `Array[t]` está siendo
 modificado por dos fibras al mismo tiempo, porque ningún
-`Array[T]` es accesible desde dos fibras al mismo tiempo. La
+`Array[t]` es accesible desde dos fibras al mismo tiempo. La
 aislación de memoria del §13.1 cubre también las celdas
 mutables.
 
 ## 13.7 Por qué las fibras no pueden escapar de su nursery
 
-Un detalle del sistema de tipos: **`Fiber[T]` es un handle
+Un detalle del sistema de tipos: **`Fiber[t]` es un handle
 atado a su nursery**. Ninguna función puede devolverlo, ni solo
-ni envuelto: el compilador rechaza `Fiber[T]` en cualquier
+ni envuelto: el compilador rechaza `Fiber[t]` en cualquier
 parte del tipo de retorno, sea `Option[Fiber[Int]]`,
 `[Fiber[Int]]` o el payload de un tipo suma.
 
@@ -683,7 +683,7 @@ Una fibra solo tiene sentido dentro del nursery que la creó.
 Si pudieras devolverla, ¿quién la esperaría? ¿Quién la
 cancelaría al terminar el nursery? La estructura se rompe.
 
-Dentro del nursery, en cambio, puedes guardar un `Fiber[T]` en
+Dentro del nursery, en cambio, puedes guardar un `Fiber[t]` en
 una lista, un `Option` o un record, o capturarlo en la clausura
 de una fibra hermana que lo espere. Una lista de fibras es el
 caso típico:
@@ -901,8 +901,8 @@ modifica con `a[i] := v`. Después termina sin pasarlo a nadie.
 esté corriendo concurrentemente? Da el argumento en dos líneas,
 en términos del modelo de memoria por fibra de §13.1.
 
-**13.3.** Implementa una función `with_timeout[T](ms: Int, f: ()
--> T / Spawn) : Option[T] / Spawn + Cancel + Time`. Usa
+**13.3.** Implementa una función `with_timeout[t](ms: Int, f: ()
+-> t / Spawn) : Option[t] / Spawn + Cancel + Time`. Usa
 `n.select` para correr `f` contra una fibra que hace
 `Time.sleep(ms)` y devuelve `None`. Pista: necesitas un tipo
 suma local para distinguir "completó" de "timeout".

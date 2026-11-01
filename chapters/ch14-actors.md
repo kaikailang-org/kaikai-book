@@ -61,7 +61,7 @@ Side by side:
 | Communication | One return value via `await` | Messages via `send`/`receive` |
 | Lifecycle | Start, compute, return, die | Start, loop processing, die when it decides |
 | How to create | `spawn.spawn` or `n.spawn` | `spawn_actor` |
-| How you talk to it | `await` to get its `T` | `send` any number of times |
+| How you talk to it | `await` to get its `t` | `send` any number of times |
 | When to pick | Discrete concurrent computation | Long-lived service, internal state, queries |
 
 The mental rule:
@@ -116,7 +116,7 @@ stdlib:
 # `import actor`.
 pub effect Actor[Msg] {
   self()                        : Pid[Msg]
-  send[T](pid: Pid[T], msg: T)  : Unit
+  send[t](pid: Pid[t], msg: t)  : Unit
   receive()                     : Msg
   receive_timeout(nanos: Int)   : Option[Msg]
 }
@@ -125,7 +125,7 @@ pub effect Actor[Msg] {
 - **`self()`** returns the `Pid` of the current actor. The
   `Pid` is the handle others use to send it messages.
 - **`send(pid, msg)`** enqueues `msg` in `pid`'s mailbox. Note
-  the `[T]`: the message type is **the destination's**, picked
+  the `[t]`: the message type is **the destination's**, picked
   per call, and has nothing to do with the sender's own `Msg`.
   An actor whose mailbox is `Reply` can send a `Request` to a
   `Pid[Request]`, the way Erlang's `!` sends to any pid. If the
@@ -141,7 +141,7 @@ pub effect Actor[Msg] {
 
 `Msg` is the concrete type of the messages that actor
 **receives**. An actor receives a single message type; sending
-is a different matter, and that's what `send`'s `[T]` is for.
+is a different matter, and that's what `send`'s `[t]` is for.
 If you need to mix shapes in what you receive, unify them with
 a sum type:
 
@@ -164,7 +164,7 @@ compiler doesn't let you send a `Notification` message to a
 in Erlang, PIDs are untyped; in kaikai, they're specific to
 the message type.
 
-Like `Fiber[T]` from chapter 13, `Pid[Msg]` is **tied to the
+Like `Fiber[t]` from chapter 13, `Pid[Msg]` is **tied to the
 scope that created it**. You can't store it in a record that
 outlives the nursery, return it from a function outside the
 standard family, or pass it between data structures that
@@ -218,27 +218,25 @@ To start an actor that runs in its own fiber:
 ```kai
 # examples/ch14/02_spawn_actor.kai
 import actor
-import spawn
 
-fn worker() : Unit / Actor[String] + Stdout {
+fn worker(boss: Pid[String]) : Unit / Actor[String] + Stdout {
   let t1 = Actor.receive()
   Stdout.print("working: " ++ t1)
   let t2 = Actor.receive()
   Stdout.print("working: " ++ t2)
   let t3 = Actor.receive()
   Stdout.print("working: " ++ t3)
+  Actor.send(boss, "done")
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
-    let pid = spawn_actor(() => worker())
+    let me = Actor.self()
+    let pid = spawn_actor(() => worker(me))
     Actor.send(pid, "task-1")
     Actor.send(pid, "task-2")
     Actor.send(pid, "task-3")
-    spawn.yield()
-    spawn.yield()
-    spawn.yield()
-    spawn.yield()
+    Stdout.print("the worker says: " ++ Actor.receive())
   }
 }
 ```
@@ -248,6 +246,7 @@ $ kai run examples/ch14/02_spawn_actor.kai
 working: task-1
 working: task-2
 working: task-3
+the worker says: done
 ```
 
 `spawn_actor` starts a new fiber, installs a mailbox on it,
@@ -262,9 +261,13 @@ that serves them, and a handled effect doesn't leave the
 block. The `pid` already identifies the destination mailbox;
 the handler only dispatches the operation.
 
-The `spawn.yield()`s at the end give the scheduler a chance
-to run the worker. Without them, `main` would exit before
-the worker processed anything.
+The last `Actor.receive()` in `main` is what keeps it alive
+until the worker is done. So the worker can answer, `main`
+hands it its own `Pid` (`Actor.self()`) when spawning it.
+Without that wait, `main` would exit right away, and when
+`main` returns the actors still alive are cancelled: the worker
+might get through some of the tasks, all of them or none, depending on
+how the scheduler dealt the cards.
 
 ### `receive_timeout`: receive with a deadline
 
@@ -895,7 +898,7 @@ open several fibers in a nursery or group replies with a
 correlation id.
 
 **14.4.** In the §14.7 case study, the supervisor retries
-twice. Generalize: write a function `with_retries[T,
+twice. Generalize: write a function `with_retries[t,
 e](n: Int, attempt: () -> BatchResult / e) : BatchResult /
 e` that retries `n` times before giving up.
 

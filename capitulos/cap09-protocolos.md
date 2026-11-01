@@ -406,7 +406,7 @@ llamar (p2)
 Las reglas del mapeo son las esperables, y el compilador las
 aplica sin preguntar. Los nombres
 de campo van al JSON tal cual, sin conversión de mayúsculas. Un
-campo `Option[T]` acepta un `null` explícito y una clave ausente
+campo `Option[t]` acepta un `null` explícito y una clave ausente
 por igual (ambos decodifican a `None`); **cualquier otro campo es
 obligatorio**. Las claves que el record no declara se ignoran. Y
 si algo falla al decodificar, el error trae la ruta JSON al nodo
@@ -557,7 +557,7 @@ ordenas una lista. En kaikai la función puede recibir el
 **comparador como un argumento explícito**:
 
 ```kai
-fn sort_by[T](xs: [T], cmp: (T, T) -> Int) : [T] = ...
+fn sort_by[t](xs: [t], cmp: (t, t) -> Int) : [t] = ...
 ```
 
 Y el call site **nombra** el comparador. Si `Transaccion`
@@ -570,9 +570,9 @@ list.sort_by(transacciones, cmp)   # cmp viene de impl Ord for Transaccion
 
 Cuesta poco escribirla, pero la distinción conceptual pesa: lo
 que en Haskell viaja implícito, en kaikai lo escribes tú.
-`sort_by` no "exige" que `T` tenga `Ord`, solo que **alguien
+`sort_by` no "exige" que `t` tenga `Ord`, solo que **alguien
 le pase una función de comparación**. Que
-esa función venga de un `impl Ord for T` es decisión del que
+esa función venga de un `impl Ord for t` es decisión del que
 llama, no de la firma de `sort_by`.
 
 **Sin tipos de orden superior** (HKT). `protocol Functor[F[_]]`
@@ -611,16 +611,16 @@ efectos (cap. 12) y no en el de tipos.
 
 Hasta aquí los protocolos aparecían en el `impl` que los
 implementa y en el call site que llama la operación. Falta un
-tercer lugar: una función genérica sobre un `T` cualquiera
-puede **exigir que ese `T` implemente un protocolo**, y
+tercer lugar: una función genérica sobre un `t` cualquiera
+puede **exigir que ese `t` implemente un protocolo**, y
 escribirlo en la firma:
 
 ```kai
-fn mostrar_dos[T: Show](a: T, b: T) : String =
+fn mostrar_dos[t: Show](a: t, b: t) : String =
   "#{show(a)} y #{show(b)}"
 ```
 
-La cota `[T: Show]` se lee "para cualquier `T` que implemente
+La cota `[t: Show]` se lee "para cualquier `t` que implemente
 `Show`". Dentro del cuerpo, las operaciones del protocolo
 están disponibles: `show(a)` despacha al `impl Show` del tipo
 concreto que llegue en cada llamada.
@@ -643,11 +643,11 @@ Las cotas se apilan con `+` cuando el cuerpo usa más de un
 protocolo, y cada parámetro de tipo lleva la suya:
 
 ```kai
-fn etiquetar[T: Show + Eq](a: T, b: T) : String =
+fn etiquetar[t: Show + Eq](a: t, b: t) : String =
   if eq(a, b) { "iguales: #{show(a)}" }
   else { "#{show(a)} y #{show(b)}" }
 
-fn par[T: Show, U: Show](a: T, b: U) : String =
+fn par[t: Show, u: Show](a: t, b: u) : String =
   "#{show(a)}, #{show(b)}"
 ```
 
@@ -656,8 +656,8 @@ función que toma el `mayor` de dos valores pide `Ord`; una que
 renderiza pide tu `Dibujable`:
 
 ```kai
-fn mayor[T: Ord](a: T, b: T) : T = max(a, b)
-fn render[T: Dibujable](x: T) : String = "[" ++ dibujar(x) ++ "]"
+fn mayor[t: Ord](a: t, b: t) : t = max(a, b)
+fn render[t: Dibujable](x: t) : String = "[" ++ dibujar(x) ++ "]"
 ```
 
 Lee con cuidado, porque aquí kaikai se separa de Haskell
@@ -670,7 +670,7 @@ despacho estático de siempre. La cota documenta el contrato en
 la firma y hace que el error, cuando un tipo no implementa el
 protocolo, sea claro: `no impl of 'Ord' for type 'X'`.
 
-Es el paso natural desde un genérico sobre un `T` cualquiera:
+Es el paso natural desde un genérico sobre un `t` cualquiera:
 de "esta función sirve para cualquier tipo" a "esta función
 sirve para cualquier tipo que sepa hacer `show`". Sin el
 resolver implícito de Haskell ni la propagación, la cota deja
@@ -692,11 +692,11 @@ impl Dibujable for Circulo {
   fn dibujar(c: Circulo) : String = "círculo de radio #{show(c.radio)}"
 }
 
-fn mayor[T: Ord](a: T, b: T) : T = max(a, b)
+fn mayor[t: Ord](a: t, b: t) : t = max(a, b)
 
-fn render[T: Dibujable](x: T) : String = "[" ++ dibujar(x) ++ "]"
+fn render[t: Dibujable](x: t) : String = "[" ++ dibujar(x) ++ "]"
 
-fn etiquetar[T: Show + Eq](a: T, b: T) : String =
+fn etiquetar[t: Show + Eq](a: t, b: t) : String =
   if eq(a, b) {
     "iguales: #{show(a)}"
   } else {

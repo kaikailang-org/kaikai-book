@@ -301,7 +301,7 @@ introduce.
 #### En qué backend se valida
 
 **El backend que cuenta es `native`.** Es el que usa `kai run` —el
-banner del compilador lo confirma con `native p2: active`— y por lo
+`kai --version` lo confirma con `backend: native`— y por lo
 tanto es el que obtiene un lector que copia un snippet y lo corre.
 La promesa del libro se cumple o se rompe ahí.
 

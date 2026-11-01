@@ -280,8 +280,8 @@ B
 `nursery { n -> ... }` opens a scope. Inside, `n` is the
 capability to create fibers:
 
-- `n.spawn(f)` creates a child fiber. Returns a `Fiber[T]`
-  where `T` is what `f` returns. You don't need it here, since
+- `n.spawn(f)` creates a child fiber. Returns a `Fiber[t]`
+  where `t` is what `f` returns. You don't need it here, since
   the nursery waits for the fibers anyway, and `|> ignore` says
   you are dropping it on purpose.
 - `n.await(f)` waits for that fiber and returns its value. You
@@ -384,16 +384,16 @@ in the stdlib:
 
 ```kai
 effect Spawn {
-  spawn[T, e](f: () -> T / e) : Fiber[T]
-  await[T](f: Fiber[T])       : T
-  select[T](fs: [Fiber[T]])   : T
+  spawn[t, e](f: () -> t / e) : Fiber[t]
+  await[t](f: Fiber[t])       : t
+  select[t](fs: [Fiber[t]])   : t
   yield()                     : Unit
-  cancel[T](f: Fiber[T])      : Unit
+  cancel[t](f: Fiber[t])      : Unit
 }
 ```
 
 It's an ordinary effect, declared the same way `Log` or
-`State[T]` were in chapter 12. And `nursery { n -> body }`
+`State[t]` were in chapter 12. And `nursery { n -> body }`
 is rewritten at compile time to `handle { body } with Spawn
 as n { ... }`, with an internal handler that manages the
 child tree, waits for pending children on exit, and
@@ -610,13 +610,13 @@ kai: nursery child cancelled; no survivors
 ## 13.6 Per-fiber mutable memory
 
 In chapter 12 §12.7 you met `var` (local cells, sugar over
-`State[T]`) and the `Mutable` effect (which rules `Ref[T]`
-and `Array[T]` when the mutation is observable). All of it
+`State[t]`) and the `Mutable` effect (which rules `Ref[t]`
+and `Array[t]` when the mutation is observable). All of it
 works the same as in sequential code, with one addition from
 the fiber model: **mutable memory lives in the heap of the
 fiber that created it**.
 
-When a fiber creates an `Array[T]` or a `Ref[T]`, the space
+When a fiber creates an `Array[t]` or a `Ref[t]`, the space
 comes from its own heap, and no other fiber can reach it: no
 shared pointers, no reference passing between fibers. To give
 a mutable value to another fiber, you send it through a
@@ -651,18 +651,18 @@ one fiber owns the state, the others send it messages. Chapter
 14 builds that with actors.
 
 That's why mutation doesn't introduce data races in kaikai.
-With threads and shared memory, a mutable `Array[T]` needs
+With threads and shared memory, a mutable `Array[t]` needs
 locks or atomics to be touched from several threads. In kaikai, the type system
-guarantees that no `Array[T]` is being modified by two
-fibers at the same time, because no `Array[T]` is reachable
+guarantees that no `Array[t]` is being modified by two
+fibers at the same time, because no `Array[t]` is reachable
 from two fibers at the same time. The memory isolation of
 §13.1 covers mutable cells too.
 
 ## 13.7 Why fibers can't escape their nursery
 
-A detail of the type system: **`Fiber[T]` is a handle bound
+A detail of the type system: **`Fiber[t]` is a handle bound
 to its nursery**. No function can return one, bare or
-wrapped: the compiler rejects `Fiber[T]` anywhere in a return
+wrapped: the compiler rejects `Fiber[t]` anywhere in a return
 type, be it `Option[Fiber[Int]]`, `[Fiber[Int]]` or the
 payload of a sum type.
 
@@ -679,7 +679,7 @@ If you could return it, who would await it? Who would cancel
 it when the nursery ends? The structure breaks.
 
 Inside the nursery, on the other hand, you can keep a
-`Fiber[T]` in a list, an `Option` or a record, or capture it
+`Fiber[t]` in a list, an `Option` or a record, or capture it
 in the closure of a sibling fiber that awaits it. A list of
 fibers is the typical case:
 
@@ -899,8 +899,8 @@ it to anyone. Why doesn't this program introduce data races
 even if another fiber is running concurrently? Answer in two
 lines, in terms of the per-fiber memory model from §13.1.
 
-**13.3.** Implement a function `with_timeout[T](ms: Int, f:
-() -> T / Spawn) : Option[T] / Spawn + Cancel + Time`. Use
+**13.3.** Implement a function `with_timeout[t](ms: Int, f:
+() -> t / Spawn) : Option[t] / Spawn + Cancel + Time`. Use
 `n.select` to run `f` against a fiber that does
 `Time.sleep(ms)` and returns `None`. Hint: you'll need a
 local sum type to distinguish "completed" from "timeout".

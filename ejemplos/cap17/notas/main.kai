@@ -11,7 +11,7 @@
 #      podemos factorizar el bucle accept a una función libre
 #      que reciba `n` como parámetro.
 #
-#   2. `Actor[T]` no tiene un handler default a nivel `main`.
+#   2. `Actor[t]` no tiene un handler default a nivel `main`.
 #      Toda fibra que llama `Actor.send` / `Actor.receive`
 #      debe correr bajo un `with_mailbox` (o `spawn_actor`).
 #      `main` instala los dos mailboxes que necesita
@@ -20,7 +20,7 @@
 #      persistencia) anidando dos bloques `with_mailbox` antes
 #      de abrir el nursery.
 #
-#   3. `Pid[T]` está branded por la región del nursery que
+#   3. `Pid[t]` está branded por la región del nursery que
 #      tiene el handler de Spawn. Por eso spawn-eamos los dos
 #      actores *dentro* del bloque `nursery { n -> ... }` y
 #      usamos sus pids desde el mismo bloque.
@@ -78,7 +78,7 @@ fn leer_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
 # `almacen.preguntar` sincrónico dentro de `manejar_request`
 # aterrice la respuesta en el mailbox de esta fibra.
 #
-# La fila declara cada Actor[T] que toca el cuerpo. El bloque
+# La fila declara cada Actor[t] que toca el cuerpo. El bloque
 # `with_mailbox` en main cierra AlmacenResp antes del spawn,
 # pero el cuerpo del spawn sigue llevando Actor[AlmacenMsg]
 # (envíos al almacén) y Actor[Evento] (envíos a persistencia)

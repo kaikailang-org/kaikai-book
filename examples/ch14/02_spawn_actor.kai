@@ -1,31 +1,29 @@
 # `spawn_actor` starts a new fiber with its own mailbox. The
 # parent gets a `Pid[Msg]` as the handle to send messages.
 #
-# Here the parent starts a "worker" that reads three tasks
-# and processes them. Then the parent sends the three tasks
-# and ends.
+# Here the parent starts a "worker" that reads three tasks,
+# processes them and reports when it is done. The parent sends
+# the three tasks and waits for that report before exiting.
 
 import actor
-import spawn
 
-fn worker() : Unit / Actor[String] + Stdout {
+fn worker(boss: Pid[String]) : Unit / Actor[String] + Stdout {
   let t1 = Actor.receive()
   Stdout.print("working: " ++ t1)
   let t2 = Actor.receive()
   Stdout.print("working: " ++ t2)
   let t3 = Actor.receive()
   Stdout.print("working: " ++ t3)
+  Actor.send(boss, "done")
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
-    let pid = spawn_actor(() => worker())
+    let me = Actor.self()
+    let pid = spawn_actor(() => worker(me))
     Actor.send(pid, "task-1")
     Actor.send(pid, "task-2")
     Actor.send(pid, "task-3")
-    spawn.yield()
-    spawn.yield()
-    spawn.yield()
-    spawn.yield()
+    Stdout.print("the worker says: " ++ Actor.receive())
   }
 }

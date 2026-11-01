@@ -356,28 +356,28 @@ orderly shutdown — `Signal.on(SigInt); match Signal.await()
 
 ## D.5 State
 
-### `State[T]`
+### `State[t]`
 
 ```kai
-effect State[T] {
-  get() : T
-  set(v: T) : Unit
+effect State[t] {
+  get() : t
+  set(v: t) : Unit
 }
 ```
 
 The canonical effect for carrying mutable state in an
 encapsulated way. The syntax `var name = init` is sugar
-over a `State[T]` `handle` (chapter 12 §12.7).
+over a `State[t]` `handle` (chapter 12 §12.7).
 
-### `Reader[T]` and `Writer[W]`
+### `Reader[t]` and `Writer[w]`
 
 ```kai
-effect Reader[T] {
-  ask() : T
+effect Reader[t] {
+  ask() : t
 }
 
-effect Writer[W] {
-  tell(w: W) : Unit
+effect Writer[w] {
+  tell(w: w) : Unit
 }
 ```
 
@@ -389,24 +389,24 @@ patterns.
 
 ```kai
 effect Mutable {
-  array_make[T](n: Int, init: T)             : Array[T]
-  array_length[T](a: Array[T])               : Int
-  array_get[T](a: Array[T], i: Int)          : T
-  array_set[T](a: Array[T], i: Int, v: T)    : Array[T]
-  array_grow[T](a: Array[T], n: Int, init: T) : Array[T]
-  ref_make[T](init: T)                       : Ref[T]
-  ref_get[T](r: Ref[T])                      : T
-  ref_set[T](r: Ref[T], v: T)                : Unit
+  array_make[t](n: Int, init: t)             : Array[t]
+  array_length[t](a: Array[t])               : Int
+  array_get[t](a: Array[t], i: Int)          : t
+  array_set[t](a: Array[t], i: Int, v: t)    : Array[t]
+  array_grow[t](a: Array[t], n: Int, init: t) : Array[t]
+  ref_make[t](init: t)                       : Ref[t]
+  ref_get[t](r: Ref[t])                      : t
+  ref_set[t](r: Ref[t], v: t)                : Unit
 }
 ```
 
-The effect behind `Ref[T]` and `Array[T]`. Follows the
+The effect behind `Ref[t]` and `Array[t]`. Follows the
 discipline of **observable effects** (chapter 12 §12.7): an
 `array_set` requires `Mutable` in the row only when the
 mutation is visible to the caller. An array created locally
 and returned doesn't require `Mutable`.
 
-`array_set` and `array_grow` return the `Array[T]` rather than
+`array_set` and `array_grow` return the `Array[t]` rather than
 `Unit` without copying: they hand back the same array so
 Perceus (appendix B) can reason about the last use and decide
 whether to mutate in place. Chaining the operation is idiomatic.
@@ -480,10 +480,10 @@ handled: Fail`) rather than a runtime abort.
 ```kai
 effect Spawn {
   yield()                       : Unit
-  spawn[T](thunk: () -> T / e)  : Fiber[T]
-  await[T](fiber: Fiber[T])     : T
-  select[T](fibers: [Fiber[T]]) : T
-  cancel[T](fiber: Fiber[T])    : Unit
+  spawn[t](thunk: () -> t / e)  : Fiber[t]
+  await[t](fiber: Fiber[t])     : t
+  select[t](fibers: [Fiber[t]]) : t
+  cancel[t](fiber: Fiber[t])    : Unit
   set_trap_exit(on: Bool)       : Unit
   scope_enter()                 : Unit
   scope_exit()                  : Unit

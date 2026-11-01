@@ -252,17 +252,24 @@ pub type Evento = Linea(String)
 
 pub fn persistencia_loop(path: String) : Unit / Actor[Evento] + File {
   match Actor.receive() {
-    Linea(s) -> {
-      file.append(path, s ++ "\n")
-      persistencia_loop(path)
+    Linea(s) -> match file.append(path, s ++ "\n") {
+      Ok(_) -> persistencia_loop(path)
+      Err(e) -> panic("no pude escribir el log: " ++ e)
     }
   }
 }
 
 pub fn reset_log(path: String) : Unit / File {
-  file.write(path, "")
+  match file.write(path, "") {
+    Ok(_) -> ()
+    Err(e) -> panic("no pude truncar el log: " ++ e)
+  }
 }
 ```
+
+`file.append` y `file.write` devuelven `Result[Unit, String]`.
+Aquí la decisión es caerse con un `panic` que dice por qué: un log que pierde líneas en silencio es
+peor que uno que se detiene.
 
 Aislar la escritura en su propio actor tiene dos beneficios:
 
@@ -368,7 +375,7 @@ Leído de afuera hacia adentro:
 
 1. Los dos `with_mailbox` anidados le dan a `main` los buzones
    que necesita para hablarle al almacén y al persistor. De paso
-   son la razón de que la firma no liste ningún `Actor[X]`: un
+   son la razón de que la firma no liste ningún `Actor[x]`: un
    efecto manejado deja de estar en la fila.
 2. `reset_log` deja el archivo de auditoría en blanco.
 3. El `nursery` abre el scope donde van a vivir las fibras hijas.

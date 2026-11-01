@@ -3,7 +3,7 @@
 import seq
 
 # Los naturales: el cero, seguido de los naturales más uno.
-const nat: Seq[Int] = lazy [0, ...seq.map(nat, (x) => x + 1)]
+const NAT: Seq[Int] = lazy [0, ...seq.map(NAT, (x) => x + 1)]
 
 # La criba sin cota: una etapa de filtro por cada primo encontrado.
 fn criba(xs: Seq[Int]) : Seq[Int] = match xs {
@@ -12,7 +12,7 @@ fn criba(xs: Seq[Int]) : Seq[Int] = match xs {
 }
 
 fn main() : Unit / Stdout {
-  println("naturales: #{nat |> take(8) |> to_list()}")
+  println("naturales: #{NAT |> take(8) |> to_list()}")
 
   let primos = criba(lazy [2..])
   println("primos hasta 30: #{primos |> take_while((p) => p <= 30) |> to_list()}")

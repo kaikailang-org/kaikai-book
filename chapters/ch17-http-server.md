@@ -253,17 +253,24 @@ pub type Event = Line(String)
 
 pub fn persistence_loop(path: String) : Unit / Actor[Event] + File {
   match Actor.receive() {
-    Line(s) -> {
-      file.append(path, s ++ "\n")
-      persistence_loop(path)
+    Line(s) -> match file.append(path, s ++ "\n") {
+      Ok(_) -> persistence_loop(path)
+      Err(e) -> panic("could not write the log: " ++ e)
     }
   }
 }
 
 pub fn reset_log(path: String) : Unit / File {
-  file.write(path, "")
+  match file.write(path, "") {
+    Ok(_) -> ()
+    Err(e) -> panic("could not truncate the log: " ++ e)
+  }
 }
 ```
+
+`file.append` and `file.write` return `Result[Unit, String]`.
+The choice here is to stop with a `panic` that says why: a log that silently drops lines is
+worse than one that halts.
 
 Isolating the file write in its own actor has two benefits:
 
@@ -368,7 +375,7 @@ Read from the outside in:
 
 1. The two nested `with_mailbox` blocks give `main` the
    mailboxes it needs to talk to the store and the persister.
-   They are also why the signature lists no `Actor[X]`: a
+   They are also why the signature lists no `Actor[x]`: a
    handled effect leaves the row.
 2. `reset_log` starts the audit file empty.
 3. The `nursery` opens the scope the child fibers will live in.

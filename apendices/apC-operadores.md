@@ -61,7 +61,7 @@ en kaikai, construcciones de sintaxis aparte:
   de `var`. `nombre := expr` es la forma azucarada de
   `State.set(nombre, expr)`. No participa en la tabla de
   precedencia.
-- **`&expr` y `@r` (celdas `Ref[T]`)**: `&v` arma una celda
+- **`&expr` y `@r` (celdas `Ref[t]`)**: `&v` arma una celda
   con `v` adentro y `@r` la lee. Son prefijos, no participan
   en la tabla. La celda de un `var` es otra cosa: se lee
   pelada, por su nombre.
@@ -75,7 +75,7 @@ en kaikai, construcciones de sintaxis aparte:
   la fila de efectos: `fn f() : Int / Log`. Solo aparece en
   posición de firma.
 - **`!` (propagación de `Option`/`Result`)**: postfijo sobre
-  expresiones que devuelven `Option[T]` o `Result[E, T]`,
+  expresiones que devuelven `Option[t]` o `Result[t, e]`,
   hace propagación temprana del error o el `None`. Equivale
   más o menos al `?` de Rust. No es un operador binario.
 - **`?` y `?nombre` (holes)**: marcadores de agujero, no
@@ -104,7 +104,7 @@ parece funcionar o cuando quieres ver el mecanismo de abajo.
 | `a ++ b`        | `string_concat(a, b)` (cuando son `String`) |
 | `a[i]`          | `Mutable.array_get(a, i)`               |
 | `a[i] := v`     | `Mutable.array_set(a, i, v)`            |
-| `&v` / `@r`     | celda `Ref[T]`: armar y leer            |
+| `&v` / `@r`     | celda `Ref[t]`: armar y leer            |
 | `nombre := v`   | `State.set(nombre, v)` (con `var`)      |
 
 ## C.4 Recordatorio: comparación no asociativa

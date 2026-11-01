@@ -181,7 +181,7 @@ desde B.
 
 Las únicas excepciones son los mecanismos de mutación que kaikai
 provee deliberadamente: `var` local (que el compilador enmascara
-y limita), `Ref[T]`, mailboxes de actores, arrays mutables.
+y limita), `Ref[t]`, mailboxes de actores, arrays mutables.
 Todos ellos tienen disciplinas específicas que evitan ciclos
 (cada mailbox, por ejemplo, pertenece a un solo actor, y el
 handler del actor la libera en su `finally` cuando el actor

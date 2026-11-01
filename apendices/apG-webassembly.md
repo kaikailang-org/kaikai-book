@@ -97,11 +97,18 @@ que un programa que trabaja con rutas relativas funciona sin más:
 # ejemplos/apG/02_bitacora.kai
 import fs.file
 
+fn escribir_bitacora(ruta: String) : Result[String, String] / File {
+  file.write(ruta, "lunes: compilé a wasm\n")!
+  file.append(ruta, "martes: lo corrí en wasmtime\n")!
+  file.read(ruta)
+}
+
 fn main() : Unit / Stdout + File {
   let ruta = "bitacora.txt"
-  file.write(ruta, "lunes: compilé a wasm\n")
-  file.append(ruta, "martes: lo corrí en wasmtime\n")
-  println(file.read(ruta) |> trim())
+  match escribir_bitacora(ruta) {
+    Ok(texto) -> println(texto |> trim())
+    Err(e) -> println("no pude escribir la bitácora: " ++ e)
+  }
   let _ = file.delete(ruta)
   println("¿quedó el archivo? #{file.exists(ruta)}")
 }
@@ -114,8 +121,11 @@ martes: lo corrí en wasmtime
 ¿quedó el archivo? false
 ```
 
-Cambia `ruta` por `/tmp/bitacora.txt` y el mismo programa se cae
-con `panic: file.write: write failed`. No es un error de permisos
+`file.write`, `file.append` y `file.read` devuelven `Result`: el `!`
+propaga el primer error fuera de `escribir_bitacora`, y `main` decide
+qué hacer con él. Cambia `ruta` por `/tmp/bitacora.txt` y verás ese
+error en acción: el programa imprime `no pude escribir la bitácora:
+write_file: cannot open file`. No es un error de permisos
 del sistema operativo: `/tmp` simplemente no existe para el módulo.
 Para abrirle otros directorios, `KAI_WASI_DIRS` recibe una lista
 separada por `:` que reemplaza al directorio actual:

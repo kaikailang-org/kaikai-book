@@ -16,9 +16,9 @@ pub type Evento = Linea(String)
 # recursivamente a la espera del próximo evento.
 pub fn persistencia_loop(path: String) : Unit / Actor[Evento] + File {
   match Actor.receive() {
-    Linea(s) -> {
-      file.append(path, s ++ "\n")
-      persistencia_loop(path)
+    Linea(s) -> match file.append(path, s ++ "\n") {
+      Ok(_) -> persistencia_loop(path)
+      Err(e) -> panic("no pude escribir el log: " ++ e)
     }
   }
 }
@@ -26,5 +26,8 @@ pub fn persistencia_loop(path: String) : Unit / Actor[Evento] + File {
 # Trunca el archivo de log antes de arrancar el actor para
 # que cada corrida empiece con un log vacío.
 pub fn reset_log(path: String) : Unit / File {
-  file.write(path, "")
+  match file.write(path, "") {
+    Ok(_) -> ()
+    Err(e) -> panic("no pude truncar el log: " ++ e)
+  }
 }

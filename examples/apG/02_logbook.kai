@@ -1,10 +1,17 @@
 import fs.file
 
+fn write_logbook(path: String) : Result[String, String] / File {
+  file.write(path, "monday: compiled to wasm\n")!
+  file.append(path, "tuesday: ran it on wasmtime\n")!
+  file.read(path)
+}
+
 fn main() : Unit / Stdout + File {
   let path = "logbook.txt"
-  file.write(path, "monday: compiled to wasm\n")
-  file.append(path, "tuesday: ran it on wasmtime\n")
-  println(file.read(path) |> trim())
+  match write_logbook(path) {
+    Ok(text) -> println(text |> trim())
+    Err(e) -> println("could not write the logbook: " ++ e)
+  }
   let _ = file.delete(path)
   println("is the file still there? #{file.exists(path)}")
 }

@@ -1169,16 +1169,13 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.177.1 - hanga-roa (stage 2, self-hosted)
-demos baseline: 37
-native p2:      active
-home:           https://kaikai-lang.org
+kaikai 0.189.0 - hanga-roa (stage 2, self-hosted)
+backend: native
 ```
 
-The first line gives you version and edition. The other three
-are build diagnostics — how many demos the baseline covers,
-which native backend came up active — and you'll want them
-when you report a problem.
+The first line gives you version and edition; the second, the
+backend `kai run` compiles with by default. Both are the first
+thing you'll want to paste when you report a problem.
 
 If `kai.toml` omits the field, the compiler assumes the
 installation's default edition. As soon as a package is going

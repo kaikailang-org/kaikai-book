@@ -2,30 +2,29 @@
 # El padre obtiene un `Pid[Msg]` que es el handle para mandarle
 # mensajes.
 #
-# Aquí el padre arranca un "trabajador" que lee tres tareas y las
-# procesa. Después el padre le manda las tres tareas y termina.
+# Aquí el padre arranca un "trabajador" que lee tres tareas, las
+# procesa y avisa cuando termina. El padre le manda las tres
+# tareas y espera ese aviso antes de salir.
 
 import actor
-import spawn
 
-fn trabajador() : Unit / Actor[String] + Stdout {
+fn trabajador(jefe: Pid[String]) : Unit / Actor[String] + Stdout {
   let t1 = Actor.receive()
   Stdout.print("trabajando: " ++ t1)
   let t2 = Actor.receive()
   Stdout.print("trabajando: " ++ t2)
   let t3 = Actor.receive()
   Stdout.print("trabajando: " ++ t3)
+  Actor.send(jefe, "listo")
 }
 
 fn main() : Unit / Stdout + Spawn + Cancel {
   with_mailbox {
-    let pid = spawn_actor(() => trabajador())
+    let yo = Actor.self()
+    let pid = spawn_actor(() => trabajador(yo))
     Actor.send(pid, "tarea-1")
     Actor.send(pid, "tarea-2")
     Actor.send(pid, "tarea-3")
-    spawn.yield()
-    spawn.yield()
-    spawn.yield()
-    spawn.yield()
+    Stdout.print("el trabajador dice: " ++ Actor.receive())
   }
 }

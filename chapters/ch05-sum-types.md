@@ -697,7 +697,7 @@ the natural pattern is:
 
 1. Each category is a small sum type.
 2. The composite error is the union of the categories.
-3. Each function returns `Result[T, CompositeError]`.
+3. Each function returns `Result[t, CompositeError]`.
 4. The `!` operator propagates the error of any layer up to
    the composite `Result`, via the implicit upcast.
 
@@ -736,7 +736,7 @@ let acc = match check_identity(req) {
 }
 ```
 
-For `Option[A]` the desugar is analogous: `Some(x)` unpacks,
+For `Option[a]` the desugar is analogous: `Some(x)` unpacks,
 `None` triggers `return None`.
 
 Three things to pin down:

@@ -1,4 +1,4 @@
-# `Vec[T]` es el vector de valor: buffer plano, acceso O(1), y
+# `Vec[t]` es el vector de valor: buffer plano, acceso O(1), y
 # semántica funcional. Las operaciones viven en `collections.vec`
 # y ninguna modifica el vector que recibe: devuelven otro.
 #
