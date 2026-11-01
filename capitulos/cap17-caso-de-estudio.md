@@ -267,8 +267,8 @@ pub fn reset_log(path: String) : Unit / File {
 }
 ```
 
-`file.append` y `file.write` devuelven `Result[Unit, String]`.
-Aquí la decisión es caerse con un `panic` que dice por qué: un log que pierde líneas en silencio es
+`file.append` y `file.write` devuelven `Result[Unit, String]`, y si
+lo dejas caer el compilador te avisa. Aquí la decisión es caerse con un `panic` que dice por qué: un log que pierde líneas en silencio es
 peor que uno que se detiene.
 
 Aislar la escritura en su propio actor tiene dos beneficios:

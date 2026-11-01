@@ -60,10 +60,6 @@ done
 #   - cap13/03_cancel: una hija que se cae cancela a sus hermanas y el
 #     nursery re-lanza la caída; en la fibra raíz eso termina el proceso
 #     con código 1 → expect=fail
-#   - cap17/notas y cap18/ledger: el compilador lee la anotación
-#     `Actor[A] + Actor[B]` de una función como si fuera solo `Actor[A]`
-#     y rechaza el cuerpo del actor; el libro conserva la forma correcta
-#     → expect=fail hasta que se arregle (un XPASS avisa)
 # ============================================================
 
 read -r -d '' MANIFEST <<'EOF' || true
@@ -222,10 +218,10 @@ project|ejemplos/cap16/ffi/03_shim|ok|app.kai|shim.c|c
 
 # Capítulo 17 — caso notas
 build|ejemplos/cap17/01_senal.kai|ok
-project|ejemplos/cap17/notas|fail
+project|ejemplos/cap17/notas|ok
 
 # Capítulo 18 — caso ledger
-project|ejemplos/cap18/ledger|fail
+project|ejemplos/cap18/ledger|ok
 
 # Capítulo 19 — kinds (06 no compila a propósito: Currency sin producto)
 build|ejemplos/cap19/01_generica_sobre_unidades.kai|ok
@@ -404,10 +400,10 @@ project|examples/ch16/ffi/03_shim|ok|app.kai|shim.c|c
 
 # Chapter 17
 build|examples/ch17/01_signal.kai|ok
-project|examples/ch17/notes|fail
+project|examples/ch17/notes|ok
 
 # Chapter 18
-project|examples/ch18/ledger|fail
+project|examples/ch18/ledger|ok
 
 # Chapter 19 — kinds (06 fails on purpose: Currency has no product)
 build|examples/ch19/01_generic_over_units.kai|ok

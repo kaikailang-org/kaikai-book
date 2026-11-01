@@ -268,8 +268,8 @@ pub fn reset_log(path: String) : Unit / File {
 }
 ```
 
-`file.append` and `file.write` return `Result[Unit, String]`.
-The choice here is to stop with a `panic` that says why: a log that silently drops lines is
+`file.append` and `file.write` return `Result[Unit, String]`, and
+the compiler warns if you drop it. The choice here is to stop with a `panic` that says why: a log that silently drops lines is
 worse than one that halts.
 
 Isolating the file write in its own actor has two benefits:

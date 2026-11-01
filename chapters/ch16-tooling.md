@@ -1169,7 +1169,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.189.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.191.0 - hanga-roa (stage 2, self-hosted)
 backend: native
 ```
 
