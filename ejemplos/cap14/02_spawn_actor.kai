@@ -1,5 +1,5 @@
 # `spawn_actor` arranca una fibra nueva con su propio mailbox.
-# El padre obtiene un `Pid[Msg]` que es el handle para mandarle
+# El padre obtiene un `Pid[msg]` que es el handle para mandarle
 # mensajes.
 #
 # Aquí el padre arranca un "trabajador" que lee tres tareas, las

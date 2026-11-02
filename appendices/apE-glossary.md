@@ -8,7 +8,7 @@ are short and point to the chapter where the term appears.
 **Actor.** A fiber with a typed mailbox on top. It processes
 incoming messages in order and keeps internal state between
 them. In kaikai, actors are a library built on the
-`Actor[Msg]` effect.
+`Actor[msg]` effect.
 
 **Algebraic effect.** An effect in the sense of chapter 12:
 a language construct that declares operations (with their
@@ -234,7 +234,7 @@ by Reinking, Xie, de Moura, and Leijen (PLDI 2021).
 Appendix B and chapter 13 §13.2.
 
 **Pid (process id).** Typed handle of an actor:
-`Pid[Msg]`. Identifies a mailbox and also guarantees that
+`Pid[msg]`. Identifies a mailbox and also guarantees that
 only messages of type `Msg` can be sent to it.
 
 **Pipe.** Operators `|>`, `|`, `||`, `|?`, `|!`. Chain

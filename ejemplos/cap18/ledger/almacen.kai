@@ -156,11 +156,10 @@ fn delta_de(m: dominio.Movimiento) : (Int<CuentaId>, Real<USD>) = match m {
 
 # Cuerpo del actor. Recibe una `Pregunta`, llama a `procesar`,
 # manda la respuesta de vuelta, recursa con el nuevo estado.
-# Lleva tanto Actor[AlmacenMsg] (el mailbox propio del actor,
-# instalado por spawn_actor) como Actor[AlmacenResp] (usado
-# solo por `Actor.send` — el mailbox es propiedad de la fibra
-# que llama).
-pub fn almacen_loop(s: Estado) : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] {
+# La fila lleva solo Actor[AlmacenMsg], el buzón propio del
+# actor que instala spawn_actor: la respuesta sale por ese
+# mismo buzón, porque `send` solo necesita el `Pid` del destino.
+pub fn almacen_loop(s: Estado) : Unit / Actor[AlmacenMsg] {
   match Actor.receive() {
     Pregunta(c, cliente) -> {
       let (resp, s2) = procesar(c, s)
@@ -173,8 +172,8 @@ pub fn almacen_loop(s: Estado) : Unit / Actor[AlmacenMsg] + Actor[AlmacenResp] {
 # Helper del lado del cliente. El que llama debe tener un
 # mailbox Actor[AlmacenResp] (la respuesta cae ahí).
 pub fn preguntar(almacen: Pid[AlmacenMsg], c: dominio.Comando) : dominio.Respuesta / Actor[
-  AlmacenMsg
-] + Actor[AlmacenResp] {
+  AlmacenResp
+] {
   Actor.send(almacen, Pregunta(c, Actor.self()))
   match Actor.receive() {
     Respondido(r) -> r

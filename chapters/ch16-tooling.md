@@ -529,7 +529,7 @@ $ kai info
 kai info — language reference, organized by topic.
 
 Topics:
-  actors       Message-passing concurrency built on fibers — `Actor[Msg]` effect
+  actors       Message-passing concurrency built on fibers — `Actor[msg]` effect
   contracts    Design-by-Contract — `requires` / `ensures` on a function, and
   deltas       Where kaikai deliberately differs from Rust/Go/Python/JS/Haskell
   effects      Algebraic effects and handlers — kaikai's first-class mechanism for
@@ -553,7 +553,7 @@ Topics:
   syntax       One-page reference of the forms kaikai actually has. Every form on
   testing      Test blocks, assertions, benchmarks, property checks.
   units        Units of measure on `Real` — phantom-type discipline, zero runtime
-  vec          `Vec[T]` — the pure value vector: flat contiguous storage with
+  vec          `Vec[t]` — the pure value vector: flat contiguous storage with
 ...
 ```
 
@@ -1169,7 +1169,7 @@ And to check the active edition of your installation:
 
 ```
 $ kai --version
-kaikai 0.191.0 - hanga-roa (stage 2, self-hosted)
+kaikai 0.192.0 - hanga-roa (stage 2, self-hosted)
 backend: native
 ```
 

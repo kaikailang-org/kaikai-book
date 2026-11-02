@@ -305,7 +305,7 @@ memoria es por-fibra.
 
 #### Capítulo 14 · Actores
 
-- 14.1 `Actor[Msg]`: el efecto
+- 14.1 `Actor[msg]`: el efecto
 - 14.2 `with_mailbox`: dar mailbox a la fibra actual
 - 14.3 `spawn_actor`: crear un actor nuevo
 - 14.4 Policies de mailbox: qué pasa cuando se llena

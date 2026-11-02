@@ -292,46 +292,42 @@ sequence of operations to show the system in action.
 fn main() : Int / Stdout + File + Spawn + Cancel {
   persistence.reset_log(LOG_PATH)
 
-  # `step()` touches three Actor[t] effects, so `main` nests
-  # three `with_mailbox` blocks to close them before reaching
-  # its own row.
+  # `step()` reads the store's reply, so `main` installs that
+  # mailbox. Sends to the store and to the persister go out
+  # through the same mailbox.
   with_mailbox {
-    with_mailbox {
-      with_mailbox {
-        let store_body: () -> Unit / Actor[store.StoreMsg] + Actor[store.StoreResp] = () => store.store_loop(store.initial_state())
-        let log_body:   () -> Unit / Actor[persistence.Event] + File = () => persistence.persistence_loop(LOG_PATH)
-        let store_pid = spawn_actor(store_body)
-        let log_pid   = spawn_actor(log_body)
+    let store_body: () -> Unit / Actor[store.StoreMsg] = () => store.store_loop(store.initial_state())
+    let log_body:   () -> Unit / Actor[persistence.Event] + File = () => persistence.persistence_loop(LOG_PATH)
+    let store_pid = spawn_actor(store_body)
+    let log_pid   = spawn_actor(log_body)
 
-        println("== creating accounts ==")
-        step(store_pid, log_pid, domain.CreateAccount("cash"))
-        step(store_pid, log_pid, domain.CreateAccount("sales"))
-        step(store_pid, log_pid, domain.CreateAccount("expenses"))
+    println("== creating accounts ==")
+    step(store_pid, log_pid, domain.CreateAccount("cash"))
+    step(store_pid, log_pid, domain.CreateAccount("sales"))
+    step(store_pid, log_pid, domain.CreateAccount("expenses"))
 
-        println("== recording a sale ==")
-        step(store_pid, log_pid, domain.Register("card sale", [
-          domain.Debit(1<AccountId>, 50.0<USD>),
-          domain.Credit(2<AccountId>, 50.0<USD>),
-        ]))
+    println("== recording a sale ==")
+    step(store_pid, log_pid, domain.Register("card sale", [
+      domain.Debit(1<AccountId>, 50.0<USD>),
+      domain.Credit(2<AccountId>, 50.0<USD>),
+    ]))
 
-        println("== paying an expense ==")
-        step(store_pid, log_pid, domain.Register("team coffee", [
-          domain.Debit(3<AccountId>, 8.0<USD>),
-          domain.Credit(1<AccountId>, 8.0<USD>),
-        ]))
+    println("== paying an expense ==")
+    step(store_pid, log_pid, domain.Register("team coffee", [
+      domain.Debit(3<AccountId>, 8.0<USD>),
+      domain.Credit(1<AccountId>, 8.0<USD>),
+    ]))
 
-        println("== unbalanced attempt (should fail) ==")
-        step(store_pid, log_pid, domain.Register("error", [
-          domain.Debit(1<AccountId>, 100.0<USD>),
-          domain.Credit(2<AccountId>, 50.0<USD>),
-        ]))
+    println("== unbalanced attempt (should fail) ==")
+    step(store_pid, log_pid, domain.Register("error", [
+      domain.Debit(1<AccountId>, 100.0<USD>),
+      domain.Credit(2<AccountId>, 50.0<USD>),
+    ]))
 
-        println("== final balances ==")
-        step(store_pid, log_pid, domain.QueryBalance(1<AccountId>))
-        step(store_pid, log_pid, domain.QueryBalance(2<AccountId>))
-        step(store_pid, log_pid, domain.QueryBalance(3<AccountId>))
-      }
-    }
+    println("== final balances ==")
+    step(store_pid, log_pid, domain.QueryBalance(1<AccountId>))
+    step(store_pid, log_pid, domain.QueryBalance(2<AccountId>))
+    step(store_pid, log_pid, domain.QueryBalance(3<AccountId>))
   }
   0
 }

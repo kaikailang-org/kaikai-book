@@ -12,7 +12,7 @@ lenguaje, aquí encuentras rápido a qué se refieren.
 **Actor.** Una fibra con un mailbox tipado encima. Procesa en
 orden los mensajes que recibe y mantiene estado interno entre
 ellos. En kaikai, los actores son una biblioteca construida
-sobre el efecto `Actor[Msg]`.
+sobre el efecto `Actor[msg]`.
 
 **Algebraic effect** *(efecto algebraico)*. Un efecto en el
 sentido del cap. 12: una construcción del lenguaje que declara
@@ -234,7 +234,7 @@ Inventado por Reinking, Xie, de Moura y Leijen (PLDI 2021).
 Apéndice B y cap. 13 §13.2.
 
 **Pid** *(process id, identificador de proceso)*. Handle
-tipado de un actor: `Pid[Msg]`. Identifica un mailbox y
+tipado de un actor: `Pid[msg]`. Identifica un mailbox y
 también garantiza que solo se pueden enviar mensajes de tipo
 `Msg` a ese mailbox.
 

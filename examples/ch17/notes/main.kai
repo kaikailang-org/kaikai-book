@@ -12,11 +12,10 @@
 #
 #   2. `Actor[t]` has no top-level default handler.  Every
 #      fiber that calls `Actor.send` / `Actor.receive` must
-#      run under a `with_mailbox` (or `spawn_actor`).  `main`
-#      installs the two mailboxes it needs (`StoreResp` for
-#      receiving the store's replies, `Event` so the server
-#      can send to persistence) by nesting two `with_mailbox`
-#      blocks before opening the nursery.
+#      run under its own `with_mailbox` (or `spawn_actor`): a
+#      mailbox never crosses a spawn.  `main` neither sends
+#      nor receives, so it installs none; each connection
+#      fiber installs its own.
 #
 #   3. `Pid[t]` is region-branded to the nursery scope that
 #      owns the Spawn handler.  We therefore spawn the two
@@ -43,7 +42,7 @@ fn handle_request(
   raw: String,
   store_pid: Pid[store.StoreMsg],
   log_pid: Pid[persistence.Event]
-) : String / Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] {
+) : String / Actor[store.StoreResp] {
   let reply = match web.parse_request(raw) {
     Err(msg) -> domain.ClientError(msg)
     Ok(req) -> match web.route(req) {
@@ -57,9 +56,7 @@ fn handle_request(
   web.serialize_reply(reply)
 }
 
-fn record_event(log_pid: Pid[persistence.Event], c: domain.Command) : Unit / Actor[
-  persistence.Event
-] = match c {
+fn record_event[m](log_pid: Pid[persistence.Event], c: domain.Command) : Unit / Actor[m] = match c {
   domain.Create(body) -> Actor.send(log_pid, persistence.Line("CREATE " ++ body))
   domain.Delete(id) -> Actor.send(log_pid, persistence.Line("DELETE #{id}"))
   _ -> ()
@@ -70,26 +67,20 @@ fn read_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
   Err(_) -> ""
 }
 
-# Serve one connection end to end.  Spawns its own
-# `with_mailbox[StoreResp]` because the call to `store.ask`
-# does `Actor.send(store, Ask(c, Actor.self()))` and the
-# returned reply must arrive in *this fiber's* mailbox.
 # Serve one connection end to end.  Spawns under the nursery
 # in `main`; the calling fiber will install its own
 # Actor[StoreResp] mailbox via `with_mailbox` so that the
 # synchronous `store.ask` inside `handle_request` lands the
 # reply on this fiber's mailbox.
 #
-# The row declares every Actor[t] the body touches.  The
-# `with_mailbox` block in main closes StoreResp before
-# spawning, but the spawn body still carries Actor[StoreMsg]
-# (sends to the store) and Actor[Event] (sends to persistence)
-# because those mailboxes are owned by *other* fibers.
+# The row carries only that mailbox.  Sends to the store and
+# to persistence go through it: a fiber never uses another
+# fiber's mailbox.
 fn serve_connection(
   conn: Conn,
   store_pid: Pid[store.StoreMsg],
   log_pid: Pid[persistence.Event]
-) : Unit / NetTcp + Actor[store.StoreMsg] + Actor[store.StoreResp] + Actor[persistence.Event] + Cancel {
+) : Unit / NetTcp + Actor[store.StoreResp] + Cancel {
   let raw = read_request(conn)
   let wire = handle_request(raw, store_pid, log_pid)
   let _ = NetTcp.send(conn, web.string_to_bytes(wire))
@@ -97,44 +88,34 @@ fn serve_connection(
 }
 
 fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel {
-  # Outer mailbox: lets `main` send `StoreMsg` to the store
-  # actor.  (Strictly, only Actor.send is needed here, but the
-  # handler shape requires the mailbox to exist.)
-  with_mailbox {
-    # Inner mailbox: lets `main` send `Event` to the
-    # persistence actor.
-    with_mailbox {
-      persistence.reset_log(LOG_PATH)
-      nursery { n ->
-        let store_body: () -> Unit / Actor[store.StoreMsg] + Actor[store.StoreResp] =
-          () => store.store_loop([], 1)
-        let log_body: () -> Unit / Actor[persistence.Event] + File =
-          () => persistence.persistence_loop(LOG_PATH)
-        let store_pid = spawn_actor(store_body)
-        let log_pid = spawn_actor(log_body)
-        match NetTcp.listen("0.0.0.0", PORT) {
-          Err(msg) -> println("failed to start the server: " ++ msg)
-          Ok(listener) -> {
-            println("server listening on port #{PORT}")
-            # Accept loop: each connection becomes a child
-            # fiber spawned through the nursery cap `n`.  The
-            # closure captures `n`, `store_pid`, and
-            # `log_pid` from the surrounding nursery scope.
-            forever(
-              () => match NetTcp.accept(listener) {
-                Err(_) -> ()
-                Ok(conn) -> {
-                  # Each connection fiber installs its own
-                  # Actor[StoreResp] mailbox to receive the
-                  # store's reply on it (see `serve_connection`).
-                  let _ =
-                    n.spawn(() => with_mailbox(() => serve_connection(conn, store_pid, log_pid)))
-                  ()
-                }
-              }
-            )
+  persistence.reset_log(LOG_PATH)
+  nursery { n ->
+    let store_body: () -> Unit / Actor[store.StoreMsg] = () => store.store_loop([], 1)
+    let log_body: () -> Unit / Actor[persistence.Event] + File =
+      () => persistence.persistence_loop(LOG_PATH)
+    let store_pid = spawn_actor(store_body)
+    let log_pid = spawn_actor(log_body)
+    match NetTcp.listen("0.0.0.0", PORT) {
+      Err(msg) -> println("failed to start the server: " ++ msg)
+      Ok(listener) -> {
+        println("server listening on port #{PORT}")
+        # Accept loop: each connection becomes a child
+        # fiber spawned through the nursery cap `n`.  The
+        # closure captures `n`, `store_pid`, and
+        # `log_pid` from the surrounding nursery scope.
+        forever(
+          () => match NetTcp.accept(listener) {
+            Err(_) -> ()
+            Ok(conn) -> {
+              # Each connection fiber installs its own
+              # Actor[StoreResp] mailbox to receive the
+              # store's reply on it (see `serve_connection`).
+              let _ =
+                n.spawn(() => with_mailbox(() => serve_connection(conn, store_pid, log_pid)))
+              ()
+            }
           }
-        }
+        )
       }
     }
   }

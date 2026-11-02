@@ -96,7 +96,7 @@ def parse_effects(text: str, pub_only: bool) -> dict[str, dict[str, str]]:
 def load_stdlib(root: Path) -> dict[str, dict[str, str]]:
     effects: dict[str, dict[str, str]] = {}
     for f in sorted(root.rglob("*.kai")):
-        effects.update(parse_effects(f.read_text(), pub_only=True))
+        effects.update(parse_effects(join_wrapped(f.read_text()), pub_only=True))
     return effects
 
 

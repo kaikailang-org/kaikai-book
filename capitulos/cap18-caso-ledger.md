@@ -290,46 +290,42 @@ de operaciones para mostrar el sistema en acción.
 fn main() : Int / Stdout + File + Spawn + Cancel {
   persistencia.reset_log(PATH_LOG)
 
-  # `paso()` toca tres efectos Actor[t], así que `main` anida
-  # tres `with_mailbox` para cerrarlos antes de llegar a su
-  # propia fila.
+  # `paso()` lee la respuesta del almacén, así que `main`
+  # instala ese buzón. Los envíos al almacén y al persistor
+  # salen por el mismo buzón.
   with_mailbox {
-    with_mailbox {
-      with_mailbox {
-        let almacen_body: () -> Unit / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] = () => almacen.almacen_loop(almacen.estado_inicial())
-        let log_body:     () -> Unit / Actor[persistencia.Evento] + File = () => persistencia.persistencia_loop(PATH_LOG)
-        let almacen_pid = spawn_actor(almacen_body)
-        let log_pid     = spawn_actor(log_body)
+    let almacen_body: () -> Unit / Actor[almacen.AlmacenMsg] = () => almacen.almacen_loop(almacen.estado_inicial())
+    let log_body:     () -> Unit / Actor[persistencia.Evento] + File = () => persistencia.persistencia_loop(PATH_LOG)
+    let almacen_pid = spawn_actor(almacen_body)
+    let log_pid     = spawn_actor(log_body)
 
-        println("== creando cuentas ==")
-        paso(almacen_pid, log_pid, dominio.CrearCuenta("caja"))
-        paso(almacen_pid, log_pid, dominio.CrearCuenta("ventas"))
-        paso(almacen_pid, log_pid, dominio.CrearCuenta("gastos"))
+    println("== creando cuentas ==")
+    paso(almacen_pid, log_pid, dominio.CrearCuenta("caja"))
+    paso(almacen_pid, log_pid, dominio.CrearCuenta("ventas"))
+    paso(almacen_pid, log_pid, dominio.CrearCuenta("gastos"))
 
-        println("== registrando una venta ==")
-        paso(almacen_pid, log_pid, dominio.Registrar("venta de tarjeta", [
-          dominio.Debito(1<CuentaId>, 50.0<USD>),
-          dominio.Credito(2<CuentaId>, 50.0<USD>),
-        ]))
+    println("== registrando una venta ==")
+    paso(almacen_pid, log_pid, dominio.Registrar("venta de tarjeta", [
+      dominio.Debito(1<CuentaId>, 50.0<USD>),
+      dominio.Credito(2<CuentaId>, 50.0<USD>),
+    ]))
 
-        println("== pagando un gasto ==")
-        paso(almacen_pid, log_pid, dominio.Registrar("café del equipo", [
-          dominio.Debito(3<CuentaId>, 8.0<USD>),
-          dominio.Credito(1<CuentaId>, 8.0<USD>),
-        ]))
+    println("== pagando un gasto ==")
+    paso(almacen_pid, log_pid, dominio.Registrar("café del equipo", [
+      dominio.Debito(3<CuentaId>, 8.0<USD>),
+      dominio.Credito(1<CuentaId>, 8.0<USD>),
+    ]))
 
-        println("== intento descuadrado (debe fallar) ==")
-        paso(almacen_pid, log_pid, dominio.Registrar("error", [
-          dominio.Debito(1<CuentaId>, 100.0<USD>),
-          dominio.Credito(2<CuentaId>, 50.0<USD>),
-        ]))
+    println("== intento descuadrado (debe fallar) ==")
+    paso(almacen_pid, log_pid, dominio.Registrar("error", [
+      dominio.Debito(1<CuentaId>, 100.0<USD>),
+      dominio.Credito(2<CuentaId>, 50.0<USD>),
+    ]))
 
-        println("== saldos finales ==")
-        paso(almacen_pid, log_pid, dominio.ConsultarSaldo(1<CuentaId>))
-        paso(almacen_pid, log_pid, dominio.ConsultarSaldo(2<CuentaId>))
-        paso(almacen_pid, log_pid, dominio.ConsultarSaldo(3<CuentaId>))
-      }
-    }
+    println("== saldos finales ==")
+    paso(almacen_pid, log_pid, dominio.ConsultarSaldo(1<CuentaId>))
+    paso(almacen_pid, log_pid, dominio.ConsultarSaldo(2<CuentaId>))
+    paso(almacen_pid, log_pid, dominio.ConsultarSaldo(3<CuentaId>))
   }
   0
 }

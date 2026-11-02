@@ -149,11 +149,11 @@ fn delta_of(m: domain.Movement) : (Int<AccountId>, Real<USD>) = match m {
 }
 
 # Actor body. Receives an `Ask`, calls `process`, sends the
-# reply back, recurses with the new state. Carries both
-# Actor[StoreMsg] (own mailbox, installed by spawn_actor)
-# and Actor[StoreResp] (used by `Actor.send` only — the
-# caller's fiber owns that mailbox).
-pub fn store_loop(s: State) : Unit / Actor[StoreMsg] + Actor[StoreResp] {
+# reply back, recurses with the new state. The row carries only
+# Actor[StoreMsg], the actor's own mailbox that spawn_actor
+# installs: the reply goes out through that same mailbox, because
+# `send` only needs the destination's `Pid`.
+pub fn store_loop(s: State) : Unit / Actor[StoreMsg] {
   match Actor.receive() {
     Ask(c, client) -> {
       let (resp, s2) = process(c, s)
@@ -165,9 +165,7 @@ pub fn store_loop(s: State) : Unit / Actor[StoreMsg] + Actor[StoreResp] {
 
 # Client-side helper. The caller must own an
 # Actor[StoreResp] mailbox (the reply lands there).
-pub fn ask(store: Pid[StoreMsg], c: domain.Command) : domain.Response / Actor[StoreMsg] + Actor[
-  StoreResp
-] {
+pub fn ask(store: Pid[StoreMsg], c: domain.Command) : domain.Response / Actor[StoreResp] {
   Actor.send(store, Ask(c, Actor.self()))
   match Actor.receive() {
     Reply(r) -> r

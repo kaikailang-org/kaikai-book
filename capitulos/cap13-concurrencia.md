@@ -404,7 +404,7 @@ El lenguaje core, entonces, **no tiene primitivas de
 concurrencia**: tiene efectos. Las fibras, los nurseries y la
 cancelación son una biblioteca sobre dos efectos del stdlib
 (`Spawn` y `Cancel`). En el cap. 14 los actores repiten el
-patrón (efecto `Actor[Msg]`): lo distintivo de kaikai es que
+patrón (efecto `Actor[msg]`): lo distintivo de kaikai es que
 **todas sus construcciones son la misma** (efectos
 algebraicos) con nombres distintos.
 

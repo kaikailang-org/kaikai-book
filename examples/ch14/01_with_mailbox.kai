@@ -1,5 +1,5 @@
 # `with_mailbox` installs a mailbox on the current fiber.
-# Inside you have access to the `Actor[Msg]` effect, with
+# Inside you have access to the `Actor[msg]` effect, with
 # three operations: `Actor.self()`, `Actor.send(pid, msg)`,
 # and `Actor.receive()`.
 #

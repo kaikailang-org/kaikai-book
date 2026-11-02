@@ -1,5 +1,5 @@
 # `spawn_actor` starts a new fiber with its own mailbox. The
-# parent gets a `Pid[Msg]` as the handle to send messages.
+# parent gets a `Pid[msg]` as the handle to send messages.
 #
 # Here the parent starts a "worker" that reads three tasks,
 # processes them and reports when it is done. The parent sends

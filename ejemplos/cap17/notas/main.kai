@@ -13,12 +13,10 @@
 #
 #   2. `Actor[t]` no tiene un handler default a nivel `main`.
 #      Toda fibra que llama `Actor.send` / `Actor.receive`
-#      debe correr bajo un `with_mailbox` (o `spawn_actor`).
-#      `main` instala los dos mailboxes que necesita
-#      (`AlmacenResp` para recibir las respuestas del almacén,
-#      `Evento` para que el servidor pueda mandar a
-#      persistencia) anidando dos bloques `with_mailbox` antes
-#      de abrir el nursery.
+#      debe correr bajo su propio `with_mailbox` (o
+#      `spawn_actor`): un buzón nunca cruza un spawn. `main`
+#      no envía ni recibe, así que no instala ninguno; cada
+#      fibra de conexión instala el suyo.
 #
 #   3. `Pid[t]` está branded por la región del nursery que
 #      tiene el handler de Spawn. Por eso spawn-eamos los dos
@@ -45,7 +43,7 @@ fn manejar_request(
   raw: String,
   almacen_pid: Pid[almacen.AlmacenMsg],
   log_pid: Pid[persistencia.Evento]
-) : String / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[persistencia.Evento] {
+) : String / Actor[almacen.AlmacenResp] {
   let resp = match web.parsear_request(raw) {
     Err(msg) -> dominio.ErrorCliente(msg)
     Ok(req) -> match web.enrutar(req) {
@@ -59,9 +57,7 @@ fn manejar_request(
   web.serializar_respuesta(resp)
 }
 
-fn registrar(log_pid: Pid[persistencia.Evento], c: dominio.Comando) : Unit / Actor[
-  persistencia.Evento
-] = match c {
+fn registrar[m](log_pid: Pid[persistencia.Evento], c: dominio.Comando) : Unit / Actor[m] = match c {
   dominio.Crear(cuerpo) -> Actor.send(log_pid, persistencia.Linea("CREAR " ++ cuerpo))
   dominio.Borrar(id) -> Actor.send(log_pid, persistencia.Linea("BORRAR #{id}"))
   _ -> ()
@@ -78,18 +74,14 @@ fn leer_request(conn: Conn) : String / NetTcp = match NetTcp.recv(conn, 4096) {
 # `almacen.preguntar` sincrónico dentro de `manejar_request`
 # aterrice la respuesta en el mailbox de esta fibra.
 #
-# La fila declara cada Actor[t] que toca el cuerpo. El bloque
-# `with_mailbox` en main cierra AlmacenResp antes del spawn,
-# pero el cuerpo del spawn sigue llevando Actor[AlmacenMsg]
-# (envíos al almacén) y Actor[Evento] (envíos a persistencia)
-# porque esos mailboxes son propiedad de *otras* fibras.
+# La fila lleva solo ese buzón. Los envíos al almacén y a
+# persistencia pasan por él: una fibra nunca usa el buzón de
+# otra.
 fn atender_conexion(
   conn: Conn,
   almacen_pid: Pid[almacen.AlmacenMsg],
   log_pid: Pid[persistencia.Evento]
-) : Unit / NetTcp + Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] + Actor[
-  persistencia.Evento
-] + Cancel {
+) : Unit / NetTcp + Actor[almacen.AlmacenResp] + Cancel {
   let raw = leer_request(conn)
   let wire = manejar_request(raw, almacen_pid, log_pid)
   let _ = NetTcp.send(conn, web.string_to_bytes(wire))
@@ -97,45 +89,34 @@ fn atender_conexion(
 }
 
 fn main() : Int / Stdout + NetTcp + File + Spawn + Cancel {
-  # Mailbox externo: permite que `main` mande `AlmacenMsg` al
-  # actor almacén. (Estrictamente, acá solo hace falta
-  # Actor.send, pero la forma del handler exige que el mailbox
-  # exista.)
-  with_mailbox {
-    # Mailbox interno: permite que `main` mande `Evento` al
-    # actor de persistencia.
-    with_mailbox {
-      persistencia.reset_log(PATH_LOG)
-      nursery { n ->
-        let almacen_body: () -> Unit / Actor[almacen.AlmacenMsg] + Actor[almacen.AlmacenResp] =
-          () => almacen.almacen_loop([], 1)
-        let log_body: () -> Unit / Actor[persistencia.Evento] + File =
-          () => persistencia.persistencia_loop(PATH_LOG)
-        let almacen_pid = spawn_actor(almacen_body)
-        let log_pid = spawn_actor(log_body)
-        match NetTcp.listen("0.0.0.0", PUERTO) {
-          Err(msg) -> println("error al arrancar el servidor: " ++ msg)
-          Ok(listener) -> {
-            println("servidor escuchando en puerto #{PUERTO}")
-            # Bucle accept: cada conexión se vuelve una fibra
-            # hija spawn-eada vía el cap `n` del nursery. El
-            # closure captura `n`, `almacen_pid` y `log_pid`
-            # del scope del nursery que lo rodea.
-            forever(
-              () => match NetTcp.accept(listener) {
-                Err(_) -> ()
-                Ok(conn) -> {
-                  # Cada fibra de conexión instala su propio
-                  # mailbox Actor[AlmacenResp] para recibir la
-                  # respuesta del almacén (ver `atender_conexion`).
-                  let _ =
-                    n.spawn(() => with_mailbox(() => atender_conexion(conn, almacen_pid, log_pid)))
-                  ()
-                }
-              }
-            )
+  persistencia.reset_log(PATH_LOG)
+  nursery { n ->
+    let almacen_body: () -> Unit / Actor[almacen.AlmacenMsg] = () => almacen.almacen_loop([], 1)
+    let log_body: () -> Unit / Actor[persistencia.Evento] + File =
+      () => persistencia.persistencia_loop(PATH_LOG)
+    let almacen_pid = spawn_actor(almacen_body)
+    let log_pid = spawn_actor(log_body)
+    match NetTcp.listen("0.0.0.0", PUERTO) {
+      Err(msg) -> println("error al arrancar el servidor: " ++ msg)
+      Ok(listener) -> {
+        println("servidor escuchando en puerto #{PUERTO}")
+        # Bucle accept: cada conexión se vuelve una fibra
+        # hija spawn-eada vía el cap `n` del nursery. El
+        # closure captura `n`, `almacen_pid` y `log_pid`
+        # del scope del nursery que lo rodea.
+        forever(
+          () => match NetTcp.accept(listener) {
+            Err(_) -> ()
+            Ok(conn) -> {
+              # Cada fibra de conexión instala su propio
+              # mailbox Actor[AlmacenResp] para recibir la
+              # respuesta del almacén (ver `atender_conexion`).
+              let _ =
+                n.spawn(() => with_mailbox(() => atender_conexion(conn, almacen_pid, log_pid)))
+              ()
+            }
           }
-        }
+        )
       }
     }
   }

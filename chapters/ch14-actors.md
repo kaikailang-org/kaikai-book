@@ -93,32 +93,32 @@ process decades ago, and I took it almost unchanged.
 ## Actors are not language primitives
 
 In kaikai, actors aren't a core construct. They're a **layer built with
-algebraic effects**: the `Actor[Msg]` effect declares the
+algebraic effects**: the `Actor[msg]` effect declares the
 operations (`self`, `send`, `receive`); the stdlib provides
 functions like `with_mailbox` and `spawn_actor` that install
-the `Actor[Msg]` handler on top of an ordinary fiber.
+the `Actor[msg]` handler on top of an ordinary fiber.
 
 It's the same principle as `nursery` from chapter 13: the
 language core has only effects; the use patterns (fibers,
 actors, supervision) appear in libraries you can read. If
 after this chapter you wonder how `spawn_actor`
 works inside, the answer is a `spawn.spawn` plus a
-`handle ... with Actor[Msg]`.
+`handle ... with Actor[msg]`.
 
-## 14.1 `Actor[Msg]`: the effect
+## 14.1 `Actor[msg]`: the effect
 
-An actor is a fiber inside a `handle ... with Actor[Msg]`
+An actor is a fiber inside a `handle ... with Actor[msg]`
 that grants it access to four operations, declared in the
 stdlib:
 
 ```kai
 # Declared in stdlib/effects/concurrent.kai, accessible via
 # `import actor`.
-pub effect Actor[Msg] {
-  self()                        : Pid[Msg]
+pub effect Actor[msg] {
+  self()                        : Pid[msg]
   send[t](pid: Pid[t], msg: t)  : Unit
-  receive()                     : Msg
-  receive_timeout(nanos: Int)   : Option[Msg]
+  receive()                     : msg
+  receive_timeout(nanos: Int)   : Option[msg]
 }
 ```
 
@@ -156,15 +156,15 @@ The actor knows it'll receive only one of those three
 constructors, and the exhaustive `match` on `receive()`
 guarantees you cover every case.
 
-### `Pid[Msg]`: typed handle
+### `Pid[msg]`: typed handle
 
-A `Pid[Msg]` is a mailbox identifier. It has a type, so the
+A `Pid[msg]` is a mailbox identifier. It has a type, so the
 compiler doesn't let you send a `Notification` message to a
 `Pid[Task]`. This is the strongest difference from Erlang:
 in Erlang, PIDs are untyped; in kaikai, they're specific to
 the message type.
 
-Like `Fiber[t]` from chapter 13, `Pid[Msg]` is **tied to the
+Like `Fiber[t]` from chapter 13, `Pid[msg]` is **tied to the
 scope that created it**. You can't store it in a record that
 outlives the nursery, return it from a function outside the
 standard family, or pass it between data structures that
@@ -174,7 +174,7 @@ model: every PID has a known parent, and dies with it.
 ## 14.2 `with_mailbox`: give the current fiber a mailbox
 
 The simplest way to start is to give a mailbox to the fiber
-you're already in. `with_mailbox` installs the `Actor[Msg]`
+you're already in. `with_mailbox` installs the `Actor[msg]`
 handler and hands control to its body:
 
 ```kai
@@ -484,7 +484,7 @@ what to do.
 
 kaikai ships the same model, expressed as two effects living
 in `stdlib/effects/concurrent.kai`, next to `Spawn` and
-`Actor[Msg]`:
+`Actor[msg]`:
 
 ```kai
 pub effect Link {
@@ -743,7 +743,7 @@ guarantees mailboxes are respected.
 Keep two things from this chapter:
 
 1. **Actors are not language primitives.** They're a library
-   built on the `Actor[Msg]` effect, which is in turn an
+   built on the `Actor[msg]` effect, which is in turn an
    ordinary effect declaration. The stdlib provides
    `with_mailbox`, `spawn_actor`, and the policies, and you
    can read the code: underneath, `spawn_actor` is a `handle`
@@ -751,7 +751,7 @@ Keep two things from this chapter:
 
 2. **Every actor has a fixed message type.** The compiler
    guarantees you don't send the wrong message to the wrong
-   mailbox. `Pid[Msg]` is typed, not a string. So an actor
+   mailbox. `Pid[msg]` is typed, not a string. So an actor
    system in kaikai is more statically verifiable than its
    equivalent in Erlang.
 

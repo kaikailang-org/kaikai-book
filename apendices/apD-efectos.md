@@ -295,6 +295,7 @@ effect Process {
               pipe_stdin: Bool, pipe_stdout: Bool,
               pipe_stderr: Bool)      : Result[Child, String]
   kill_group(c: Child, sig: Int)      : Result[Unit, String]
+  uid()                               : Int
 }
 ```
 
@@ -329,6 +330,8 @@ optativo porque un hijo fuera del grupo en primer plano de la
 terminal no recibe Ctrl-C y queda detenido si intenta leer de
 ella: un paginador o un editor siguen yendo por `start` o
 `start_piped`.
+
+`uid()` devuelve el uid efectivo del proceso actual.
 
 ### `Signal`
 
@@ -476,6 +479,26 @@ default, así que un `fail` sin manejar es un error de
 compilación (`effect not handled: Fail`), no un aborto en
 tiempo de ejecución.
 
+### `Emit[t]` y `Yield[t]`
+
+```kai
+effect Emit[t] {
+  emit(v: t) : Unit
+}
+
+effect Yield[t] {
+  yield(v: t) : Unit
+}
+```
+
+Generadores sobre un efecto. Un productor llama `emit` o `yield`
+por cada elemento y el handler decide qué hacer con él.
+`Emit[t]` es la base de `Stream`: los streams del stdlib son
+productores perezosos que recorren un archivo línea por línea
+con memoria constante. `Yield[t]` es la base de `gen.generate`,
+que convierte al productor en un `Gen` que el consumidor avanza
+de a un elemento.
+
 ## D.7 Concurrencia
 
 ### `Spawn`
@@ -502,20 +525,23 @@ operaciones son la maquinaria detrás de esa azúcar:
 la caída de un peer enlazado como mensaje en vez de morir con
 él (cap. 14 §14.6).
 
-### `Actor[Msg]`
+### `Actor[msg]`
 
 ```kai
-effect Actor[Msg] {
-  self()                        : Pid[Msg]
-  send(pid: Pid[Msg], msg: Msg) : Unit
-  receive()                     : Msg
-  receive_timeout(nanos: Int)   : Option[Msg]
+effect Actor[msg] {
+  self()                       : Pid[msg]
+  send[t](pid: Pid[t], msg: t) : Unit
+  receive()                    : msg
+  receive_timeout(nanos: Int)  : Option[msg]
 }
 ```
 
 El efecto que da forma al modelo de actores del cap. 14.
 `with_mailbox { ... }` y `spawn_actor(...)` son los wrappers
-del stdlib que instalan este handler. `receive_timeout`
+del stdlib que instalan este handler. `send` toma el tipo del
+mensaje del `Pid` de destino, no del buzón propio: con un
+buzón de `Resp` puedes enviarle un `Req` a un `Pid[Req]`.
+`receive_timeout`
 devuelve `None` si no llegó nada en el plazo, y así evita que
 un actor quede colgado esperando un mensaje que no
 va a llegar.
@@ -554,6 +580,79 @@ cubre la sintaxis de declaración, el mapeo de tipos en el
 borde, el enlazado con shims C, y qué soporta y qué no
 FFI v1.
 
+### `Js`
+
+```kai
+effect Js {}
+```
+
+El marcador que cargan las firmas `extern "js"`, como `Ffi` para
+`extern "C"`. No tiene operaciones ni handler por defecto: un
+programa cuyo `main` lo alcanza solo compila para un target con
+un host JavaScript (apéndice G).
+
+### `Dom`, `Fetch`, `Storage` y `Timer`
+
+```kai
+effect Dom {
+  query(selector: String) : Option[Node]
+  create(tag: String) : Node
+  append(parent: Node, child: Node) : Unit
+  remove(n: Node) : Unit
+  set_text(n: Node, text: String) : Unit
+  set_attr(n: Node, name: String, value: String) : Unit
+  set_style(n: Node, name: String, value: String) : Unit
+  listen(n: Node, kind: String) : Unit
+  next_event() : Event
+  poll_event() : Option[Event]
+  context_2d(canvas: Node) : Ctx2d
+  set_fill_style(c: Ctx2d, css: String) : Unit
+  set_stroke_style(c: Ctx2d, css: String) : Unit
+  set_font(c: Ctx2d, css: String) : Unit
+  fill_rect(c: Ctx2d, x: Int, y: Int, w: Int, h: Int) : Unit
+  clear_rect(c: Ctx2d, x: Int, y: Int, w: Int, h: Int) : Unit
+  begin_path(c: Ctx2d) : Unit
+  arc(c: Ctx2d, x: Real, y: Real, r: Real, from: Real, to: Real) : Unit
+  fill(c: Ctx2d) : Unit
+  stroke(c: Ctx2d) : Unit
+  fill_text(c: Ctx2d, text: String, x: Int, y: Int) : Unit
+  new_image(w: Int, h: Int) : Image
+  set_pixel(img: Image, index: Int, pixel: Int) : Unit
+  put_image_data(c: Ctx2d, img: Image, x: Int, y: Int) : Unit
+  put_pixels(c: Ctx2d, rgba: Array[Byte], w: Int, h: Int, x: Int, y: Int) : Unit
+  get_image_data(c: Ctx2d, x: Int, y: Int, w: Int, h: Int) : Image
+  get_pixel(img: Image, index: Int) : Int
+}
+
+effect Fetch {
+  get(url: String) : Response
+}
+
+effect Storage {
+  get(key: String) : Option[String]
+  set(key: String, value: String) : Unit
+  remove(key: String) : Unit
+}
+
+effect Timer {
+  now_ms() : Int
+  sleep_ms(ms: Int) : Unit
+  animation_frame() : Real
+  every(ms: Int, kind: String) : Unit
+}
+```
+
+La página web vista como efectos, para el target WebAssembly.
+`Dom` consulta y construye nodos, dibuja en un canvas 2D y
+entrega los eventos como valores: `listen` le pide al host que
+encole eventos de un tipo y `next_event` estaciona la fibra
+hasta que llega uno, así que nada en JavaScript llama de vuelta
+al programa. `Fetch` hace requests HTTP desde la página,
+`Storage` es el `localStorage` y `Timer` da el reloj, las
+esperas, los cuadros de animación y los ticks periódicos.
+Ninguno tiene handler por defecto: los instala `web.run`
+(apéndice G).
+
 ## D.9 Composición: los alias `Console` e `Io`
 
 ```kai
@@ -587,6 +686,9 @@ runtime instala automáticamente un handler por defecto:
 - `Log` → cada mensaje a stderr como `[ISO8601Z] NIVEL mensaje`.
 - `Mutable` → asignaciones reales en heap.
 - `Spawn`, `Cancel` → el scheduler de fibras del runtime.
+
+Los efectos de la página (`Dom`, `Fetch`, `Storage`, `Timer`) no
+están en esta lista: los instala `web.run`, no el runtime.
 
 Estos handlers se pueden interceptar: cualquier `handle ...
 with X { ... }` que instales gana sobre el handler del runtime

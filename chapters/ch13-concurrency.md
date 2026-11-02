@@ -403,7 +403,7 @@ So the language core **has no concurrency primitives**: it
 has effects. Fibers, nurseries, and cancellation are a
 library built on two stdlib effects (`Spawn` and `Cancel`).
 In chapter 14 actors repeat the pattern (effect
-`Actor[Msg]`): what's distinctive about kaikai is that all
+`Actor[msg]`): what's distinctive about kaikai is that all
 its constructs are the same one — algebraic effects — under
 different names.
 
