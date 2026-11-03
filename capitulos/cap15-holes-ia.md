@@ -127,7 +127,7 @@ ejemplos/cap15/01_hole_basico.kai:6:35: type hole ?formula
     real_cosh(r)
     real_sinh(r)
 
-  579 more bindings in scope (--holes-scope lists them)
+  584 more bindings in scope (--holes-scope lists them)
 ```
 
 Cuatro piezas de información:
@@ -500,7 +500,7 @@ sin el formateo:
     "in_scope": [
       {"name": "r", "type": "Real"}
     ],
-    "scope_elided": 579,
+    "scope_elided": 584,
     "candidates": [
       {"expr": "r", "kind": "synth"},
       {"expr": "real_rem(r, r)", "kind": "synth"},
