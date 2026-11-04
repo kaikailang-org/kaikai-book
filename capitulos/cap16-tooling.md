@@ -1187,7 +1187,7 @@ Y para verificar la edición activa de tu instalación:
 
 ```
 $ kai --version
-kaikai 0.192.3 - hanga-roa (stage 2, self-hosted)
+kaikai 0.192.4 - hanga-roa (stage 2, self-hosted)
 backend: native
 ```
 
